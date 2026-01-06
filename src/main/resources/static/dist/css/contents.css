@@ -17,6 +17,7 @@ button, input, select, textarea {outline: none}
 .header {display: flex; justify-content: space-between; align-items: center; padding:0 20px; height:100px; border-bottom:1px solid #1162F8;}
 .header .nav {display: flex; align-items: center; gap:20px;}
 .header_box {flex:none;}
+.header .logo_img img {height:80px; display: block; }
 /*header (E)*/
 
 .content_box {flex:1; height:100%;}
