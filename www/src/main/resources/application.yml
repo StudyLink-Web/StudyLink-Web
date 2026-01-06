@@ -1,0 +1,32 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: StudyLink-Web
+  config:
+    import: optional:classpath:application.properties
+
+  # JPA Configuration
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+  # DevTools / Thymeleaf
+  thymeleaf:
+    cache: false
+
+  # File Upload (Commented out as in request)
+  # servlet:
+  #   multipart:
+  #     enabled: true
+  #     max-file-size: 10MB
+  #     max-request-size: 20MB
+  #     file-size-threshold: 20MB
+  #     location: D:\web_0826_kkj\_myProject\_java\_fileUpload
