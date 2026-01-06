@@ -3,16 +3,11 @@
 
 <div th:fragment="header" class="header_box">
 	<div class="header">
-		<div class="logo_img">
-			<img src="/dist/img/logo_img.png" alt="이미지">
-		</div>
+
 
 		<ul class="nav">
 			<li>
-				<a th:href="@{/}"><span>문의하기</span></a>
-			</li>
-			<li>
-				<a th:href="@{/}"><span>로그인</span></a>
+				<a th:href="@{/login}"><span>로그인</span></a>
 			</li>
 			<li>
 				<a th:href="@{/}"><span>회원가입</span></a>
@@ -21,7 +16,7 @@
 				<a th:href="@{/}"><span>마이페이지</span></a>
 			</li>
 			<li>
-				<a th:href="@{/}"><span>LogOut</span></a>
+				<a th:href="@{/}"><span>문의하기</span></a>
 			</li>
 		</ul>
 

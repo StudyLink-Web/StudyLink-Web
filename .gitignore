@@ -36,3 +36,29 @@ out/
 
 ### VS Code ###
 .vscode/
+
+
+# 개인 설정 파일 (API 키 포함)
+application-local.yml
+application-local.properties
+application-dev.yml
+application-dev.properties
+
+# Build
+.gradle/
+target/
+*.class
+*.jar
+*.war
+
+# Spring Boot
+.m2/
+/bin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log

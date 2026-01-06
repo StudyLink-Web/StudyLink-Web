@@ -1,0 +1,22 @@
+# application-local.yml (로컬 개발용 - API 키 포함)
+# 이 파일은 .gitignore에 있어서 GitHub에 올라가지 않습니다!
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          # 구글 - 본인의 실제 API 키 입력
+          google:
+            client-id: YOUR_GOOGLE_CLIENT_ID_HERE
+            client-secret: YOUR_GOOGLE_CLIENT_SECRET_HERE
+
+          # 카카오 - 본인의 실제 API 키 입력
+          kakao:
+            client-id: YOUR_KAKAO_CLIENT_ID_HERE
+            client-secret: YOUR_KAKAO_CLIENT_SECRET_HERE
+
+          # 네이버 - 본인의 실제 API 키 입력
+          naver:
+            client-id: YOUR_NAVER_CLIENT_ID_HERE
+            client-secret: YOUR_NAVER_CLIENT_SECRET_HERE
