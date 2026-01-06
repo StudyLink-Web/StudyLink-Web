@@ -1,6 +1,29 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
-<div th:fragment="header">
-	<h1>header</h1>
+<div th:fragment="header" class="header_box">
+	<div class="header">
+		<div class="logo_img">
+			<img src="https://via.placeholder.com/100x70" alt="이미지">
+		</div>
+
+		<ul class="nav">
+			<li>
+				<a th:href="@{/}"><span>문의하기</span></a>
+			</li>
+			<li>
+				<a th:href="@{/}"><span>로그인</span></a>
+			</li>
+			<li>
+				<a th:href="@{/}"><span>회원가입</span></a>
+			</li>
+			<li>
+				<a th:href="@{/}"><span>마이페이지</span></a>
+			</li>
+			<li>
+				<a th:href="@{/}"><span>LogOut</span></a>
+			</li>
+		</ul>
+
+	</div>
 </div>
