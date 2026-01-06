@@ -1,0 +1,220 @@
+/* ===== Reset & Base ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    overflow: hidden;
+}
+
+/* ===== Login Container ===== */
+.login-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+/* ===== Login Box ===== */
+.login-box {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
+    padding: 56px 48px;
+    width: 100%;
+    max-width: 420px;
+    animation: fadeUp 0.8s ease;
+}
+
+/* ===== Header ===== */
+.login-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.login-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: #2d2d2d;
+    margin-bottom: 8px;
+}
+
+.login-subtitle {
+    font-size: 14px;
+    color: #777;
+}
+
+/* ===== OAuth Section ===== */
+.oauth-section {
+    margin-top: 24px;
+}
+
+.oauth-title {
+    text-align: center;
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.oauth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* ===== OAuth Button (Common) ===== */
+.oauth-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 54px;
+    padding: 0 20px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* hover */
+.oauth-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== OAuth Logo Image ===== */
+.oauth-logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* ===== Button Text ===== */
+.oauth-btn span {
+    flex: 1;
+    text-align: center;
+}
+
+/* ===== Google ===== */
+.google-btn {
+    background: #ffffff;
+    color: #333;
+    border: 1px solid #e5e5e5;
+}
+
+/* ===== Kakao ===== */
+.kakao-btn {
+    background: #FEE500;
+    color: #3C1E1E;
+}
+
+/* ===== Naver ===== */
+.naver-btn {
+    background: #03C75A;
+    color: #ffffff;
+}
+
+/* ===== Footer ===== */
+.login-footer {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.footer-text {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.privacy-text {
+    font-size: 12px;
+}
+
+.privacy-text a {
+    color: #888;
+    text-decoration: none;
+}
+
+.privacy-text a:hover {
+    text-decoration: underline;
+}
+
+/* ===== Background Animation ===== */
+
+.background-animation,
+.background-animation * {
+    pointer-events: none;
+}
+
+
+.background-animation {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.shape {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: float 12s infinite ease-in-out;
+}
+
+.shape-1 {
+    width: 280px;
+    height: 280px;
+    background: #ffffff;
+    top: -60px;
+    left: -60px;
+}
+
+.shape-2 {
+    width: 200px;
+    height: 200px;
+    background: #ffd6ff;
+    bottom: -40px;
+    right: -40px;
+    animation-delay: 2s;
+}
+
+.shape-3 {
+    width: 160px;
+    height: 160px;
+    background: #cdb4db;
+    bottom: 120px;
+    left: 60px;
+    animation-delay: 4s;
+}
+
+/* ===== Animations ===== */
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}

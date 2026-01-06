@@ -1,0 +1,70 @@
+<!-- src/main/resources/templates/login/login.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyLink - 로그인</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+    <link rel="stylesheet" th:href="@{/css/header-style.css}">
+    <link rel="stylesheet" th:href="@{/css/contents.css}">
+</head>
+<body>
+<div class="login-container">
+    <div class="login-box">
+        <!-- 로고 및 제목 -->
+        <div class="login-header">
+            <h1 class="login-title">📚 StudyLink</h1>
+            <p class="login-subtitle">고등학생을 위한 대학생 멘토링 플랫폼</p>
+        </div>
+
+        <!-- 에러 메시지 -->
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <!-- 소셜 로그인 버튼 -->
+        <div class="oauth-section">
+            <p class="oauth-title">소셜 계정으로 간편하게 로그인하세요</p>
+
+            <div class="oauth-buttons">
+                <!-- 구글 로그인 -->
+                <a href="/oauth2/authorization/google" class="oauth-btn google-btn" id="googleBtn">
+                    <span class="oauth-icon">🔵</span>
+                    <span class="oauth-text">Google로 로그인</span>
+                </a>
+
+                <!-- 카카오 로그인 -->
+                <a href="/oauth2/authorization/kakao" class="oauth-btn kakao-btn" id="kakaoBtn">
+                    <span class="oauth-icon">💛</span>
+                    <span class="oauth-text">Kakao로 로그인</span>
+                </a>
+
+                <!-- 네이버 로그인 -->
+                <a href="/oauth2/authorization/naver" class="oauth-btn naver-btn" id="naverBtn">
+                    <span class="oauth-icon">💚</span>
+                    <span class="oauth-text">Naver로 로그인</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 하단 안내 -->
+        <div class="login-footer">
+            <p class="footer-text">StudyLink와 함께 대학입시 준비를 시작하세요!</p>
+            <p class="privacy-text">
+                <a href="/privacy">개인정보처리방침</a> |
+                <a href="/terms">이용약관</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- 배경 애니메이션 -->
+    <div class="background-animation">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+</div>
+
+<script th:src="@{/js/login.js}"></script>
+
+</body>
+</html>
