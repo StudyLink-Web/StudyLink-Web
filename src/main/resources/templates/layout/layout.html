@@ -3,43 +3,38 @@
 				xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
 	<meta charset="UTF-8">
-	<title>Title</title>
+	<title>StudyLink</title>
 	<!--/*부트스트랩 링크*/-->
 	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
 	<link rel="stylesheet" th:href="@{/css/header-style.css}">
 	<link rel="stylesheet" th:href="@{/css/contents.css}">
+	<script th:src="@{/js/header.js}"></script>
 
 	<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 </head>
 <body>
-<!--
+
 	<div class="wrap">
 		<div th:replace="~{fragments/header :: header}"></div>
 
-		<div layout:fragment="content" ></div>
+		<div layout:fragment="content"></div>
 
 		<div th:replace="~{fragments/footer :: footer}"></div>
 	</div>
--->
 
-<div class="wrap">
-	<!-- Header Fragment -->
-	<div th:insert="~{fragments/header :: header}"></div>
 
-	<!-- Main Content -->
-	<div class="content_box">
-		<div class="main-container">
-			<div class="hero-section">
-				<h1>StudyLink</h1>
-				<p class="subtitle">고등학생을 위한 대학생 멘토링 플랫폼</p>
-				<p class="description">꿈을 향한 여정에 함께하는 선배들</p>
-			</div>
-		</div>
-	</div>
+<!--<div class="wrap">-->
+<!--	&lt;!&ndash; Header Fragment &ndash;&gt;-->
+<!--	<div th:insert="~{fragments/header :: header}"></div>-->
 
-	<!-- Footer Fragment -->
-	<div th:insert="~{fragments/footer :: footer}"></div>
-</div>
+<!--	&lt;!&ndash; Main Content &ndash;&gt;-->
+<!--	<div class="content_box">-->
+
+<!--	</div>-->
+
+<!--	&lt;!&ndash; Footer Fragment &ndash;&gt;-->
+<!--	<div th:insert="~{fragments/footer :: footer}"></div>-->
+<!--</div>-->
 
 </body>
 </html>

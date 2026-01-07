@@ -3,9 +3,11 @@
 
 <div th:fragment="header" class="header_box">
 	<div class="header">
-
-
 		<ul class="nav">
+			<li>
+				<span>홍길동님 안녕하세요.</span> <!-- 로그인 이후 보여지는 곳, 로그인 전에는 안보임 -->
+			</li>
+
 			<li>
 				<a th:href="@{/login}"><span>로그인</span></a>
 			</li>
@@ -13,12 +15,18 @@
 				<a th:href="@{/signup}"><span>회원가입</span></a>
 			</li>
 			<li>
-				<a th:href="@{/}"><span>마이페이지</span></a>
+				<a th:href="@{/}"><span>나의 정보</span></a> <!-- 로그인 이후 보여지는 곳, 로그인 전에는 안보임 -->
 			</li>
 			<li>
 				<a th:href="@{/}"><span>문의하기</span></a>
 			</li>
+			<li>
+				<a th:href="@{/}"><span>로그아웃</span></a> <!-- 로그인 이후 보여지는 곳, 로그인 전에는 안보임 -->
+			</li>
 		</ul>
 
+		<div class="dday">
+			<p>2027 수능 <span id="csatDday" >D-</span></p>
+		</div>
 	</div>
 </div>
