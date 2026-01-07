@@ -20,6 +20,9 @@ public class StudentProfileService {
     private final StudentProfileRepository studentProfileRepository;
     private final UserRepository userRepository;
 
+    /**
+     * 학생 프로필 생성
+     */
     @Transactional
     public StudentProfile createStudentProfile(Long userId, String targetUniversity,
                                                String targetMajor, String regionPreference) {
@@ -39,18 +42,24 @@ public class StudentProfileService {
                 .targetUniversity(targetUniversity)
                 .targetMajor(targetMajor)
                 .regionPreference(regionPreference)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now())  // ✅ 필드 추가 후 사용 가능
+                .updatedAt(LocalDateTime.now())  // ✅ 필드 추가 후 사용 가능
                 .build();
 
         return studentProfileRepository.save(profile);
     }
 
+    /**
+     * 학생 프로필 조회 (Optional 타입 반환)
+     */
     @Transactional(readOnly = true)
-    public Optional<StudentProfile> getStudentProfile(Long userId) {  // ✅ Optional<StudentProfile> 추가
+    public Optional<StudentProfile> getStudentProfile(Long userId) {
         return studentProfileRepository.findByUser_UserId(userId);
     }
 
+    /**
+     * 학생 프로필 업데이트
+     */
     @Transactional
     public StudentProfile updateStudentProfile(Long userId, String targetUniversity,
                                                String targetMajor, String regionPreference) {
@@ -62,10 +71,12 @@ public class StudentProfileService {
         if (regionPreference != null) profile.setRegionPreference(regionPreference);
 
         profile.setUpdatedAt(LocalDateTime.now());
-
         return studentProfileRepository.save(profile);
     }
 
+    /**
+     * 학생 프로필 삭제
+     */
     @Transactional
     public void deleteStudentProfile(Long userId) {
         StudentProfile profile = studentProfileRepository.findByUser_UserId(userId)

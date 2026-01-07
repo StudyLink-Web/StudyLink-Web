@@ -9,7 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/student-profile")
@@ -17,55 +19,81 @@ import java.util.Map;
 @Slf4j
 public class StudentProfileController {
 
-    private final StudentProfileService studentProfileService;  // ✅ student_profile_service → studentProfileService
+    private final StudentProfileService studentProfileService;
 
+    /**
+     * 학생 프로필 생성
+     */
     @PostMapping("/create")
-    public ResponseEntity<Map<String, Object>> createStudentProfile(@RequestBody CreateStudentProfileRequest request) {
+    public ResponseEntity<Map<String, Object>> createStudentProfile(
+            @RequestBody CreateStudentProfileRequest request) {
         try {
             StudentProfile profile = studentProfileService.createStudentProfile(
-                    request.getUserId(),  // ✅ getUser_id() → getUserId()
-                    request.getTargetUniversity(),  // ✅ getTarget_university() → getTargetUniversity()
-                    request.getTargetMajor(),  // ✅ getTarget_major() → getTargetMajor()
-                    request.getRegionPreference()  // ✅ getRegion_preference() → getRegionPreference()
+                    request.getUserId(),
+                    request.getTargetUniversity(),
+                    request.getTargetMajor(),
+                    request.getRegionPreference()
             );
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                    "profileId", profile.getProfileId(),  // ✅ getProfile_id() → getProfileId()
-                    "userId", profile.getUser().getUserId(),  // ✅ getUserId() + user 필드 이용
-                    "targetUniversity", profile.getTargetUniversity(),  // ✅ getTargetUniversity()
-                    "targetMajor", profile.getTargetMajor(),  // ✅ getTargetMajor()
-                    "regionPreference", profile.getRegionPreference(),  // ✅ getRegionPreference()
-                    "message", "학생 프로필이 생성되었습니다."
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "학생 프로필이 생성되었습니다");
+            response.put("data", Map.of(
+                    "userId", profile.getUserId(),  // ✅ getUserId() 사용 (PK)
+                    "targetUniversity", profile.getTargetUniversity(),
+                    "targetMajor", profile.getTargetMajor(),
+                    "regionPreference", profile.getRegionPreference()
             ));
 
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "PROFILE_ERROR",
-                    "message", e.getMessage()
-            ));
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
         }
     }
 
+    /**
+     * 학생 프로필 조회
+     */
     @GetMapping("/{userId}")
-    public ResponseEntity<?> getStudentProfile(@PathVariable Long userId) {  // ✅ ResponseEntity<?> 사용
-        return studentProfileService.getStudentProfile(userId)
-                .map(profile -> ResponseEntity.ok(Map.of(
-                        "profileId", profile.getProfileId(),
-                        "userId", profile.getUser().getUserId(),
-                        "targetUniversity", profile.getTargetUniversity(),
-                        "targetMajor", profile.getTargetMajor(),
-                        "regionPreference", profile.getRegionPreference()
-                )))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                        "error", "NOT_FOUND",
-                        "message", "학생 프로필을 찾을 수 없습니다."
-                )));
+    public ResponseEntity<Map<String, Object>> getStudentProfile(@PathVariable Long userId) {
+        try {
+            Optional<StudentProfile> profileOpt = studentProfileService.getStudentProfile(userId);
+
+            if (profileOpt.isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "학생 프로필을 찾을 수 없습니다");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            }
+
+            StudentProfile profile = profileOpt.get();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", Map.of(
+                    "userId", profile.getUserId(),  // ✅ getUserId() 사용
+                    "targetUniversity", profile.getTargetUniversity(),
+                    "targetMajor", profile.getTargetMajor(),
+                    "regionPreference", profile.getRegionPreference()
+            ));
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
     }
 
-
-    @PutMapping("/{userId}")  // ✅ /{user_id} → /{userId}
+    /**
+     * 학생 프로필 업데이트
+     */
+    @PutMapping("/{userId}")
     public ResponseEntity<Map<String, Object>> updateStudentProfile(
-            @PathVariable Long userId,  // ✅ user_id → userId
+            @PathVariable Long userId,
             @RequestBody UpdateStudentProfileRequest request) {
         try {
             StudentProfile profile = studentProfileService.updateStudentProfile(
@@ -75,42 +103,53 @@ public class StudentProfileController {
                     request.getRegionPreference()
             );
 
-            return ResponseEntity.ok(Map.of(
-                    "profileId", profile.getProfileId(),  // ✅ getProfileId()
-                    "userId", profile.getUser().getUserId(),  // ✅ getUserId() + user 필드
-                    "message", "학생 프로필이 업데이트되었습니다."
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "학생 프로필이 업데이트되었습니다");
+            response.put("data", Map.of(
+                    "userId", profile.getUserId(),  // ✅ getUserId() 사용
+                    "targetUniversity", profile.getTargetUniversity(),
+                    "targetMajor", profile.getTargetMajor(),
+                    "regionPreference", profile.getRegionPreference()
             ));
 
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "PROFILE_ERROR",
-                    "message", e.getMessage()
-            ));
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
         }
     }
 
-    @DeleteMapping("/{userId}")  // ✅ /{user_id} → /{userId}
-    public ResponseEntity<Map<String, Object>> deleteStudentProfile(@PathVariable Long userId) {  // ✅ user_id → userId
+    /**
+     * 학생 프로필 삭제
+     */
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Map<String, Object>> deleteStudentProfile(@PathVariable Long userId) {
         try {
             studentProfileService.deleteStudentProfile(userId);
 
-            return ResponseEntity.ok(Map.of(
-                    "message", "학생 프로필이 삭제되었습니다."
-            ));
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "학생 프로필이 삭제되었습니다");
 
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "PROFILE_ERROR",
-                    "message", e.getMessage()
-            ));
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
         }
     }
 
     // ========== Request 클래스 ==========
 
+    /**
+     * 프로필 생성 요청
+     */
     public static class CreateStudentProfileRequest {
-
-        @JsonProperty("user_id")  // ✅ JSON ↔ Java 매핑
+        @JsonProperty("user_id")
         private Long userId;
 
         @JsonProperty("target_university")
@@ -135,8 +174,10 @@ public class StudentProfileController {
         public void setRegionPreference(String regionPreference) { this.regionPreference = regionPreference; }
     }
 
+    /**
+     * 프로필 업데이트 요청
+     */
     public static class UpdateStudentProfileRequest {
-
         @JsonProperty("target_university")
         private String targetUniversity;
 

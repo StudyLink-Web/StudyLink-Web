@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,29 +17,37 @@ import java.time.LocalDateTime;
 public class StudentProfile {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "profile_id")
-    private Long profileId;  // ✅ profile_id → profileId
+    @Column(name = "user_id")
+    private Long userId;
 
-    // ========== Users 테이블과 1:1 관계 ==========
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", unique = true, nullable = false)
+    @MapsId
+    @JoinColumn(name = "user_id")
     private Users user;
 
-    // ========== 학생 정보 ==========
-    @Column(name = "target_university", length = 100)
-    private String targetUniversity;  // ✅ target_university → targetUniversity
+    @Column(length = 100)
+    private String targetUniversity;
 
-    @Column(name = "target_major", length = 100)
-    private String targetMajor;  // ✅ target_major → targetMajor
+    @Column(length = 100)
+    private String targetMajor;
 
-    @Column(name = "region_preference", length = 50)
-    private String regionPreference;  // ✅ region_preference → regionPreference
+    @Column(length = 50)
+    private String regionPreference;
 
-    // ========== 타임스탬프 ==========
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;  // ✅ created_at → createdAt
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;  // ✅ updated_at → updatedAt
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
