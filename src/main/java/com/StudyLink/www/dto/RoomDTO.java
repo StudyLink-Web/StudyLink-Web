@@ -25,6 +25,7 @@ public class RoomDTO {
     private Integer rating;
 
     public enum Status {
+        TEMP,
         PENDING,
         IN_PROGRESS,
         COMPLETED
@@ -42,4 +43,3 @@ public class RoomDTO {
         this.rating = room.getRating();
     }
 }
-

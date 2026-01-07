@@ -49,6 +49,7 @@ public class Room {
     private Integer rating;
 
     public enum Status {
+        TEMP,
         PENDING,
         IN_PROGRESS,
         COMPLETED

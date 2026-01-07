@@ -35,6 +35,9 @@ public class SecurityConfig {
                         // ✅ API는 모두 공개 (테스트용)
                         .requestMatchers("/api/**").permitAll()
 
+                        // ✅ quiz관련 모두 허용. 나중에 분리 - 김광주
+                        .requestMatchers("/room/**").permitAll()
+
                         // ✅ 나머지 페이지는 인증 필요
                         .anyRequest().authenticated()
                 )
