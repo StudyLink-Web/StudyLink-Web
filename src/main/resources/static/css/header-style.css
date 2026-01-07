@@ -32,3 +32,13 @@
     transform: translateY(0);
     box-shadow: 0 2px 8px rgba(50, 184, 198, 0.3);
 }
+
+.dday p {
+    color:#666;
+    font-weight:bold;
+    margin-bottom:0;
+}
+
+.dday span {
+    color:crimson;
+}
