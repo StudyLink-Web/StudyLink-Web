@@ -39,10 +39,9 @@ out/
 
 
 # 개인 설정 파일 (API 키 포함)
-application-local.yml
-application-local.properties
-application-dev.yml
-application-dev.properties
+/src/main/resources/application-local.yml
+/src/main/resources/application-dev.yml
+/src/main/resources/application-dev.properties
 
 # Build
 .gradle/

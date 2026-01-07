@@ -5,15 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users", indexes = {
-        @Index(name = "idx_email", columnList = "email"),
-        @Index(name = "idx_username", columnList = "username")
-})
+@Table(name = "users")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,57 +17,41 @@ public class Users {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
+    @Column(name = "user_id")
+    private Long userId;  // ✅ user_id → userId
 
-    // ========== 기본 정보 ==========
-    @Column(unique = true, nullable = false, length = 100)
+    @Column(length = 100, unique = true, nullable = false)
     private String email;
 
-    @Column(unique = true, nullable = false, length = 50)
-    private String username;
-
-    @Column(nullable = false, length = 255)
+    @Column(length = 255, nullable = false)
     private String password;
 
-    @Column(nullable = false, length = 50)
+    @Column(length = 50, nullable = false)
     private String name;
 
-    @Column(length = 50)
+    @Column(length = 50, unique = true)
     private String nickname;
 
-    // ========== 추가 정보 ==========
-    @Column(length = 20)
-    private String phone;
+    @Column(length = 20, nullable = false)
+    private String role; // 'STUDENT', 'MENTOR', 'ADMIN'
 
-    @Column(length = 20)
-    private String gradeYear;
-
-    @Column(length = 255)
-    private String interests;
-
-    // ========== 역할 및 인증 ==========
-    @Column(nullable = false, length = 50)
-    private String role;
-
-    @Column(nullable = false)
-    private Boolean emailVerified = false;
-
-    // ========== OAuth 정보 ==========
-    @Column(length = 50)
-    private String oauthProvider;
-
-    private String oauthId;
-
-    private String profileImageUrl;
-
-    // ========== 타임스탬프 ==========
-    // 여기 수정 @CreationTimestamp 추가
-    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();  // ✅ created_at → createdAt
 
-    // 여기 수정 @UpdateTimestamp 추가
-    @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt = LocalDateTime.now();  // ✅ updated_at → updatedAt
+
+    // ========== 관계설정 (Phase 2에서 사용) ==========
+    // =================== 임시 주석 ===================
+    /*
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private StudentProfile studentProfile;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private MentorProfile mentorProfile;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private java.util.List mentorAvailabilities;
+    */
+    // =============================================
 }

@@ -12,39 +12,37 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    /**
-     * PasswordEncoder Bean - BCrypt 암호화
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * SecurityFilterChain - Spring Security 설정
-     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // CSRF 비활성화 (API 테스트 시 필요)
                 .csrf(csrf -> csrf.disable())
-
-                // 요청 권한 설정
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/login", "/signup", "/error").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()  // 인증 API는 모두 허용
+                        // ✅ 홈페이지는 누구나 접근 가능
+                        .requestMatchers("/").permitAll()
+
+                        // ✅ 로그인 관련
+                        .requestMatchers("/login", "/signup", "/error").permitAll()
+
+                        // ✅ 정적 리소스 (CSS, JS, 이미지)
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/img/**").permitAll()
                         .requestMatchers("/static/**", "/static.dist/**").permitAll()
+
+                        // ✅ API는 모두 공개 (테스트용)
+                        .requestMatchers("/api/**").permitAll()
+
+                        // ✅ 나머지 페이지는 인증 필요
                         .anyRequest().authenticated()
                 )
-
-                // 로그인 페이지
                 .formLogin(form -> form
                         .loginPage("/login")
+                        .defaultSuccessUrl("/")
                         .permitAll()
                 )
-
-                // 로그아웃
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - StudyLink</title>
+    <link rel="stylesheet" href="/css/signup.css">
+</head>
+<body>
+<div class="signup-container">
+    <h1>StudyLink 가입</h1>
+    <div id="error" class="error"></div>
+
+    <form id="signupForm">
+        <div class="form-group">
+            <label for="email">이메일</label>
+            <input type="email" id="email" name="email" required>
+            <small id="emailError" class="error-text"></small>
+        </div>
+
+        <div class="form-group">
+            <label for="password">비밀번호 (8자 이상)</label>
+            <input type="password" id="password" name="password" required minlength="8">
+        </div>
+
+        <div class="form-group">
+            <label for="name">이름</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="nickname">닉네임</label>
+            <input type="text" id="nickname" name="nickname" required>
+            <small id="nicknameError" class="error-text"></small>
+        </div>
+
+        <div class="form-group">
+            <label for="role">역할</label>
+            <select id="role" name="role" required>
+                <option value="">선택하세요</option>
+                <option value="STUDENT">학생</option>
+                <option value="MENTOR">멘토</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-primary">가입하기</button>
+    </form>
+
+    <div class="login-link">
+        이미 계정이 있으신가요? <a href="/login">로그인</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="/js/signup.js"></script>
+</body>
+</html>

@@ -19,30 +19,33 @@ public class AuthService {
 
     /**
      * 회원가입
+     * Users 엔티티: email, password, name, nickname, role 필드만 사용
      */
     @Transactional
-    public Users signup(String username, String password, String email,
-                        String name, String phone, String gradeYear,
-                        String interests, String role) {
+    public Users signup(String email, String password, String name,
+                        String nickname, String role) {
 
-        if (userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
-        }
-
+        // 이메일 중복 확인
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("이미 가입된 이메일입니다.");
         }
 
+        // 닉네임 중복 확인
+        if (nickname != null && userRepository.existsByNickname(nickname)) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
+
+        // 역할 검증
+        if (!role.equals("STUDENT") && !role.equals("MENTOR")) {
+            throw new IllegalArgumentException("역할은 STUDENT 또는 MENTOR여야 합니다.");
+        }
+
         Users user = Users.builder()
-                .username(username)
-                .password(passwordEncoder.encode(password))
                 .email(email)
+                .password(passwordEncoder.encode(password))
                 .name(name)
-                .phone(phone)
-                .gradeYear(gradeYear)
-                .interests(interests)
-                .role(role)  // 'STUDENT' 또는 'MENTOR'
-                .emailVerified(false)
+                .nickname(nickname)
+                .role(role)
                 .build();
 
         return userRepository.save(user);
@@ -50,25 +53,18 @@ public class AuthService {
 
     /**
      * 로그인
+     * email과 password로 사용자 확인
      */
     @Transactional(readOnly = true)
-    public Users login(String username, String password) {
-        Users user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    public Users login(String email, String password) {
+        Users user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
         return user;
-    }
-
-    /**
-     * 아이디 중복 확인
-     */
-    @Transactional(readOnly = true)
-    public boolean isUsernameAvailable(String username) {
-        return !userRepository.existsByUsername(username);
     }
 
     /**
@@ -80,10 +76,29 @@ public class AuthService {
     }
 
     /**
-     * 사용자 정보 조회
+     * 닉네임 중복 확인
      */
     @Transactional(readOnly = true)
-    public Optional<Users> getUserByUsername(String username) {
-        return userRepository.findByUsername(username);
+    public boolean isNicknameAvailable(String nickname) {
+        if (nickname == null || nickname.isEmpty()) {
+            return true;
+        }
+        return !userRepository.existsByNickname(nickname);
+    }
+
+    /**
+     * 이메일로 사용자 조회
+     */
+    @Transactional(readOnly = true)
+    public Optional<Users> getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    /**
+     * user_id로 사용자 조회
+     */
+    @Transactional(readOnly = true)
+    public Optional<Users> getUserById(Long user_id) {
+        return userRepository.findById(user_id);
     }
 }

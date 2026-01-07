@@ -22,7 +22,7 @@ public class AuthController {
      * POST /api/auth/signup - 회원가입
      */
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
+    public ResponseEntity<Map<String, Object>> signup(@RequestBody SignupRequest request) {
         try {
             // 1단계: role이 null인지 먼저 확인
             if (request.getRole() == null || request.getRole().isEmpty()) {
@@ -33,10 +33,10 @@ public class AuthController {
             }
 
             // 2단계: 입력값 검증
-            if (!isValidUsername(request.getUsername())) {
+            if (!isValidEmail(request.getEmail())) {
                 return ResponseEntity.badRequest().body(Map.of(
-                        "error", "INVALID_USERNAME",
-                        "message", "아이디는 영문, 숫자, _, -만 사용 가능합니다. (최소 3자)"
+                        "error", "INVALID_EMAIL",
+                        "message", "유효한 이메일을 입력하세요."
                 ));
             }
 
@@ -47,7 +47,7 @@ public class AuthController {
                 ));
             }
 
-            // 3단계: 역할 검증 (이제 null 체크가 위에 있어서 안전함)
+            // 3단계: 역할 검증
             if (!request.getRole().equals("STUDENT") && !request.getRole().equals("MENTOR")) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "error", "INVALID_ROLE",
@@ -57,23 +57,21 @@ public class AuthController {
 
             // 회원가입 처리
             Users user = authService.signup(
-                    request.getUsername(),
-                    request.getPassword(),
                     request.getEmail(),
+                    request.getPassword(),
                     request.getName(),
-                    request.getPhone(),
-                    request.getGradeYear(),
-                    request.getInterests(),
+                    request.getNickname(),
                     request.getRole()
             );
 
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                    "userId", user.getUserId(),
-                    "username", user.getUsername(),
+                    "userId", user.getUserId(),  // ✅ 수정: getUser_id() → getUserId()
                     "email", user.getEmail(),
+                    "name", user.getName(),
                     "role", user.getRole(),
                     "message", "회원가입이 완료되었습니다."
             ));
+
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "SIGNUP_ERROR",
@@ -88,24 +86,23 @@ public class AuthController {
         }
     }
 
-
     /**
      * POST /api/auth/login - 로그인
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest request) {
         try {
-            Users user = authService.login(request.getUsername(), request.getPassword());
+            Users user = authService.login(request.getEmail(), request.getPassword());
 
             return ResponseEntity.ok(Map.of(
-                    "userId", user.getUserId(),
-                    "username", user.getUsername(),
+                    "userId", user.getUserId(),  // ✅ 수정: getUser_id() → getUserId()
                     "email", user.getEmail(),
                     "name", user.getName(),
                     "role", user.getRole(),
                     "redirectUrl", "/dashboard",
                     "message", "로그인 성공"
             ));
+
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error", "LOGIN_FAILED",
@@ -120,26 +117,11 @@ public class AuthController {
         }
     }
 
-
-    /**
-     * POST /api/auth/check-username - 아이디 중복 확인
-     */
-    @PostMapping("/check-username")
-    public ResponseEntity<?> checkUsername(@RequestBody Map<String, String> request) {
-        String username = request.get("username");
-        boolean available = authService.isUsernameAvailable(username);
-
-        return ResponseEntity.ok(Map.of(
-                "available", available,
-                "message", available ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다."
-        ));
-    }
-
     /**
      * POST /api/auth/check-email - 이메일 중복 확인
      */
     @PostMapping("/check-email")
-    public ResponseEntity<?> checkEmail(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, Object>> checkEmail(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         boolean available = authService.isEmailAvailable(email);
 
@@ -149,13 +131,27 @@ public class AuthController {
         ));
     }
 
+    /**
+     * POST /api/auth/check-nickname - 닉네임 중복 확인
+     */
+    @PostMapping("/check-nickname")
+    public ResponseEntity<Map<String, Object>> checkNickname(@RequestBody Map<String, String> request) {
+        String nickname = request.get("nickname");
+        boolean available = authService.isNicknameAvailable(nickname);
+
+        return ResponseEntity.ok(Map.of(
+                "available", available,
+                "message", available ? "사용 가능한 닉네임입니다." : "이미 사용 중인 닉네임입니다."
+        ));
+    }
+
     // ========== Validation 메서드 ==========
 
-    private boolean isValidUsername(String username) {
-        if (username == null || username.length() < 3) {
+    private boolean isValidEmail(String email) {
+        if (email == null || email.isEmpty()) {
             return false;
         }
-        return username.matches("^[a-zA-Z0-9_-]+$");
+        return email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
     }
 
     private boolean isValidPassword(String password) {
@@ -165,46 +161,34 @@ public class AuthController {
     // ========== DTO 클래스 ==========
 
     public static class SignupRequest {
-        private String username;
-        private String password;
         private String email;
+        private String password;
         private String name;
-        private String phone;
-        private String gradeYear;
-        private String interests;
-        private String role;  // 'STUDENT' 또는 'MENTOR'
-
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
-
-        public String getPassword() { return password; }
-        public void setPassword(String password) { this.password = password; }
+        private String nickname;
+        private String role; // 'STUDENT' 또는 'MENTOR'
 
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
 
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
+
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
 
-        public String getPhone() { return phone; }
-        public void setPhone(String phone) { this.phone = phone; }
-
-        public String getGradeYear() { return gradeYear; }
-        public void setGradeYear(String gradeYear) { this.gradeYear = gradeYear; }
-
-        public String getInterests() { return interests; }
-        public void setInterests(String interests) { this.interests = interests; }
+        public String getNickname() { return nickname; }
+        public void setNickname(String nickname) { this.nickname = nickname; }
 
         public String getRole() { return role; }
         public void setRole(String role) { this.role = role; }
     }
 
     public static class LoginRequest {
-        private String username;
+        private String email;
         private String password;
 
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
 
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
