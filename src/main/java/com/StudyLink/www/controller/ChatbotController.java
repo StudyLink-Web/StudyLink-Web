@@ -15,12 +15,12 @@ public class ChatbotController {
 
     private final ChatbotService chatbotService;
 
-    @GetMapping("/chatbot")
+    @GetMapping("/room/chatbot")
     public String chatbot() {
         return "chatbot"; // templates/chatbot.html 반환
     }
 
-    @PostMapping("/chatbot/send")
+    @PostMapping("/room/chatbot/send")
     @ResponseBody
     public ChatbotDTO.Response send(@RequestBody ChatbotDTO.Request request) {
         return chatbotService.getChatResponse(request.getQuery());
