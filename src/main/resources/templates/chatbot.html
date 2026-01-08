@@ -4,6 +4,8 @@
       layout:decorate="~{layout/layout}">
 
 <th:block layout:fragment="content">
+    <!-- 1. 마크다운 변환 라이브러리 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         .chat-container {
             max-width: 900px;
@@ -121,6 +123,58 @@
             margin-bottom: 1rem;
             width: fit-content;
         }
+
+        /* 2. 카드 UI (표 및 마크다운) 스타일링 */
+        .message.bot table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 1rem 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+        }
+
+        .message.bot th {
+            background-color: #f1f4ff;
+            color: #4a5568;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .message.bot td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #4a5568;
+        }
+
+        .message.bot tr:last-child td {
+            border-bottom: none;
+        }
+
+        .message.bot h3, .message.bot h4 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #2d3748;
+            border-left: 4px solid #667eea;
+            padding-left: 10px;
+        }
+
+        .message.bot strong {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .message.bot ul, .message.bot ol {
+            padding-left: 1.5rem;
+            margin: 1rem 0;
+        }
     </style>
 
     <div class="chat-container">
@@ -159,7 +213,14 @@
         function addMessage(text, isUser = false) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${isUser ? 'user' : 'bot'}`;
-            msgDiv.innerText = text;
+            
+            if (isUser) {
+                msgDiv.innerText = text;
+            } else {
+                // AI 답변은 마크다운으로 파싱하여 HTML로 삽입
+                msgDiv.innerHTML = marked.parse(text);
+            }
+            
             chatMessages.appendChild(msgDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
