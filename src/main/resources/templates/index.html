@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	  layout:decorate="~{layout/layout}">
-
-<div layout:fragment="content" class="content_box">
-	<div class="wrap">
-		<div class="content_box">
-			<a href="/room/list">문제 리스트</a>
-		</div>
-	</div>
-</div>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/layout}"
+>
+  <div layout:fragment="content" class="content_box">
+        <a href="/room/list" class="btn btn-primary">문제 리스트</a>
+        <!-- ✅ 챗봇 페이지 및 API 공개 (실험용) -->
+        <a href="/room/chatbot" class="btn btn-success">🤖 AI 대입 상담 챗봇</a>
+        <a href="/board/board_list" class="btn btn-success">대학생활 게시판</a>
+  </div>
+</html>
