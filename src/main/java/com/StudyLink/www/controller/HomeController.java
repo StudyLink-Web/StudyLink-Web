@@ -7,7 +7,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class HomeController {
 
     @GetMapping("/")
-    public String index() {
-        return "index";  // ✅ templates/index.html을 반환
+    public String home() {
+        return "index";  // templates/index.html 로드
+    }
+
+    @GetMapping("/home")
+    public String homePage() {
+        return "index";  // templates/index.html 로드
     }
 }

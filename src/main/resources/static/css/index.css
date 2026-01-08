@@ -1,0 +1,9 @@
+/* 메인 상단 탭 */
+.question_tab {display: flex; align-items: center; justify-content: center; gap:20px; margin-top:30px;}
+.question_tab p {border-radius: 10px;  color:var(--bg-white); font-weight: bold; margin-bottom:0; padding:10px;}
+.question_tab p:nth-child(1) {background: var(--primary-color); border: 1px solid var(--primary-color);}
+.question_tab a {cursor:pointer; background:crimson; border:1px solid crimson; height:100%; display: block; padding:10px; border-radius: 10px; color:var(--bg-white); font-weight: 700;}
+.search_question {margin-top:20px; width:100%; max-width:600px; margin:30px auto 0;}
+.search_question_flex {display: flex; align-items: center; gap:10px;}
+.search_question_select {display: flex; align-items: center; gap:10px; width:100%;}
+search_question input {width:100%; display: block;}

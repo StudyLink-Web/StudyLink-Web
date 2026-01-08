@@ -1,220 +1,283 @@
-/* ===== Reset & Base ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
 }
 
 body {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: #f8fafc;
+    color: #1e293b;
+}
+
+/* ===== 헤더: 가로 정렬 강화 ===== */
+.header {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 40px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 48px; /* 로고와 메뉴 사이의 간격 */
+}
+
+.header-logo {
+    font-size: 22px;
+    font-weight: 800;
+    color: #21808d;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-nav {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+}
+
+.header-nav a {
+    text-decoration: none;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.header-nav a:hover {
+    color: #21808d;
+}
+
+.header-right {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-header {
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-header-login {
+    background: white;
+    color: #21808d;
+    border: 1px solid #21808d;
+}
+
+.btn-header-signup {
+    background: #21808d;
+    color: white;
+    border: none;
+}
+
+/* ===== 로그인 컨테이너 ===== */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 72px);
+    padding: 40px 20px;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 1040px;
+    background: white;
+    display: flex;
+    border-radius: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
     overflow: hidden;
 }
 
-/* ===== Login Container ===== */
-.login-container {
-    position: relative;
-    width: 100%;
-    height: 100vh;
+.login-card {
+    flex: 1;
+    padding: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2;
 }
 
-/* ===== Login Box ===== */
-.login-box {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 24px;
-    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
-    padding: 56px 48px;
+.card-content {
     width: 100%;
     max-width: 420px;
-    animation: fadeUp 0.8s ease;
 }
 
-/* ===== Header ===== */
-.login-header {
-    text-align: center;
-    margin-bottom: 36px;
-}
 
-.login-title {
+.logo-title {
     font-size: 32px;
     font-weight: 800;
-    color: #2d2d2d;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    color: #0f172a;
 }
 
-.login-subtitle {
-    font-size: 14px;
-    color: #777;
+.logo-subtitle {
+    color: #64748b;
+    font-size: 15px;
+    margin-bottom: 40px;
 }
 
-/* ===== OAuth Section ===== */
-.oauth-section {
-    margin-top: 24px;
-}
-
-.oauth-title {
-    text-align: center;
-    font-size: 14px;
-    color: #555;
-    margin-bottom: 20px;
-}
-
-.oauth-buttons {
+/* 폼 스타일 */
+.login-form {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 20px;
 }
 
-/* ===== OAuth Button (Common) ===== */
-.oauth-btn {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    height: 54px;
-    padding: 0 20px;
-    border-radius: 14px;
-    font-size: 15px;
+
+.form-label {
+    display: block;
+    font-size: 14px;
     font-weight: 600;
-    text-decoration: none;
-    transition: all 0.25s ease;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-/* hover */
-.oauth-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
-}
-
-/* ===== OAuth Logo Image ===== */
-.oauth-logo {
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-    flex-shrink: 0;
-}
-
-/* ===== Button Text ===== */
-.oauth-btn span {
-    flex: 1;
-    text-align: center;
-}
-
-/* ===== Google ===== */
-.google-btn {
-    background: #ffffff;
-    color: #333;
-    border: 1px solid #e5e5e5;
-}
-
-/* ===== Kakao ===== */
-.kakao-btn {
-    background: #FEE500;
-    color: #3C1E1E;
-}
-
-/* ===== Naver ===== */
-.naver-btn {
-    background: #03C75A;
-    color: #ffffff;
-}
-
-/* ===== Footer ===== */
-.login-footer {
-    margin-top: 40px;
-    text-align: center;
-}
-
-.footer-text {
-    font-size: 13px;
-    color: #666;
     margin-bottom: 8px;
 }
 
-.privacy-text {
-    font-size: 12px;
+.form-control {
+    width: 100%;
+    height: 52px;
+    padding: 0 16px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: all 0.2s;
 }
 
-.privacy-text a {
-    color: #888;
+.form-control:focus {
+    outline: none;
+    border-color: #21808d;
+    box-shadow: 0 0 0 4px rgba(33, 128, 141, 0.1);
+}
+
+.password-input-wrapper {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    padding: 4px;
+}
+
+.toggle-password:hover {
+    color: #21808d;
+}
+
+.toggle-password svg {
+    display: block;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.btn-login {
+    width: 100%;
+    height: 56px;
+    background: #21808d;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-login:hover {
+    background: #1a6671;
+}
+
+/* ===== 오른쪽 섹션 디자인 ===== */
+.login-side {
+    flex: 1;
+    background: linear-gradient(135deg, #21808d 0%, #145e67 100%);
+    color: white;
+    padding: 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-side h2 { font-size: 32px; margin-bottom: 20px; }
+.login-side p { font-size: 16px; opacity: 0.9; line-height: 1.6; }
+
+.feature-list {
+    list-style: none;
+    margin: 32px 0;
+    font-size: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.social-login-section {
+    margin-top: 40px;
+}
+
+.social-login-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.social-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btn-social {
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.2s;
 }
 
-.privacy-text a:hover {
-    text-decoration: underline;
-}
+.btn-social:hover { transform: translateY(-2px); }
 
-/* ===== Background Animation ===== */
+.btn-kakao { background: #fee500; color: #3c1e1e; }
+.btn-naver { background: #03c75a; color: #ffffff; }
+.btn-google { background: #ffffff; color: #1e293b; }
 
-.background-animation,
-.background-animation * {
-    pointer-events: none;
-}
+.signup-prompt { margin-top: 40px; font-size: 14px; }
+.signup-link { color: white; font-weight: 700; text-decoration: underline; }
 
+.mobile-signup-prompt { display: none; margin-top: 24px; text-align: center; font-size: 14px; color: #64748b; }
+.mobile-signup-prompt a { color: #21808d; font-weight: 600; text-decoration: none; }
 
-.background-animation {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    z-index: 1;
-}
-
-.shape {
-    position: absolute;
-    border-radius: 50%;
-    opacity: 0.3;
-    animation: float 12s infinite ease-in-out;
-}
-
-.shape-1 {
-    width: 280px;
-    height: 280px;
-    background: #ffffff;
-    top: -60px;
-    left: -60px;
-}
-
-.shape-2 {
-    width: 200px;
-    height: 200px;
-    background: #ffd6ff;
-    bottom: -40px;
-    right: -40px;
-    animation-delay: 2s;
-}
-
-.shape-3 {
-    width: 160px;
-    height: 160px;
-    background: #cdb4db;
-    bottom: 120px;
-    left: 60px;
-    animation-delay: 4s;
-}
-
-/* ===== Animations ===== */
-@keyframes fadeUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-20px);
-    }
+/* 반응형 */
+@media (max-width: 960px) {
+    .login-container { flex-direction: column; }
+    .login-side { display: none; }
+    .mobile-signup-prompt { display: block; }
 }

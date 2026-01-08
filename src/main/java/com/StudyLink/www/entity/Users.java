@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Users (사용자 통합)
@@ -33,7 +34,7 @@ public class Users {
     private String email;
 
     @Column(length = 255, nullable = false)
-    private String password;  // BCrypt 암호화된 비밀번호
+    private String password; // BCrypt 암호화된 비밀번호
 
     @Column(length = 50, nullable = false)
     private String name;
@@ -41,7 +42,6 @@ public class Users {
     @Column(length = 50, unique = true, nullable = false)
     private String nickname;
 
-    // 추가
     @Column(length = 50, unique = true, nullable = false)
     private String username;
 
@@ -54,7 +54,6 @@ public class Users {
     @Column(length = 20, nullable = false)
     private String role;
 
-    // 추가
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
@@ -88,20 +87,20 @@ public class Users {
      * 멘토 활동 가능 시간 (MentorAvailability)
      */
     @OneToMany(mappedBy = "mentor", cascade = CascadeType.ALL, orphanRemoval = true)
-    private java.util.List<MentorAvailability> mentorAvailabilities;
+    private List<MentorAvailability> mentorAvailabilities;
 
     /**
      * 1:N 관계
      * 즐겨찾기한 멘토 목록 (Favorite - 학생이 저장)
      */
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
-    private java.util.List<Favorite> favoritedMentors;
+    private List<Favorite> favoritedMentors;
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        if (this.emailVerified == null) {  // ← @PrePersist 메서드 안에!
+        if (this.emailVerified == null) {
             this.emailVerified = false;
         }
     }
@@ -110,6 +109,4 @@ public class Users {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
-
 }

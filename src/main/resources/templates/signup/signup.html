@@ -1,57 +1,139 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/layout}">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>회원가입 - StudyLink</title>
+    <title>StudyLink - 회원가입</title>
     <link rel="stylesheet" href="/css/signup.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
-<div class="signup-container">
-    <h1>StudyLink 가입</h1>
-    <div id="error" class="error"></div>
-
-    <form id="signupForm">
-        <div class="form-group">
-            <label for="email">이메일</label>
-            <input type="email" id="email" name="email" required>
-            <small id="emailError" class="error-text"></small>
+<div class="container">
+    <div class="signup-wrapper">
+        <!-- 헤더 -->
+        <div class="signup-header">
+            <h1>StudyLink</h1>
+            <p class="subtitle">학생과 멘토를 연결하는 플랫폼</p>
         </div>
 
-        <div class="form-group">
-            <label for="password">비밀번호 (8자 이상)</label>
-            <input type="password" id="password" name="password" required minlength="8">
+        <!-- 에러/성공 메시지 -->
+        <div id="error" class="alert" style="display: none;"></div>
+
+        <!-- 회원가입 폼 -->
+        <form id="signupForm" class="signup-form">
+
+            <!-- 이메일 입력 -->
+            <div class="form-group">
+                <label for="email" class="form-label">이메일</label>
+                <input
+                        type="email"
+                        id="email"
+                        class="form-control"
+                        placeholder="example@gmail.com"
+                        required
+                >
+                <div id="emailError" class="form-help-text"></div>
+            </div>
+
+            <!-- 비밀번호 입력 -->
+            <div class="form-group">
+                <label for="password" class="form-label">비밀번호</label>
+                <div class="password-input-wrapper">
+                    <input
+                            type="password"
+                            id="password"
+                            class="form-control"
+                            placeholder="8자 이상 (대문자, 소문자, 숫자 권장)"
+                            required
+                    >
+                    <button
+                            type="button"
+                            class="password-toggle"
+                            id="passwordToggle"
+                            aria-label="비밀번호 표시/숨김"
+                            title="비밀번호 표시/숨김"
+                    >
+                        <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <!-- 눈 열림 아이콘 -->
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+                <div id="passwordError" class="form-help-text"></div>
+                <small class="form-hint">최소 8자 이상이어야 합니다</small>
+            </div>
+
+            <!-- 이름 입력 -->
+            <div class="form-group">
+                <label for="name" class="form-label">이름</label>
+                <input
+                        type="text"
+                        id="name"
+                        class="form-control"
+                        placeholder="홍길동"
+                        required
+                >
+                <div id="nameError" class="form-help-text"></div>
+            </div>
+
+            <!-- 닉네임 입력 -->
+            <div class="form-group">
+                <label for="nickname" class="form-label">닉네임</label>
+                <input
+                        type="text"
+                        id="nickname"
+                        class="form-control"
+                        placeholder="홍길동"
+                        required
+                >
+                <div id="nicknameError" class="form-help-text"></div>
+                <small class="form-hint">2자 이상 20자 이하</small>
+            </div>
+
+            <!-- 역할 선택 -->
+            <div class="form-group">
+                <label for="role" class="form-label">역할 선택</label>
+                <select id="role" class="form-control" required>
+                    <option value="">-- 역할을 선택하세요 --</option>
+                    <option value="STUDENT">학생</option>
+                    <option value="MENTOR">멘토</option>
+                </select>
+            </div>
+
+            <!-- 약관 동의 -->
+            <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="agreeTerms" required>
+                    <span>이용약관에 동의합니다</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="agreePrivacy" required>
+                    <span>개인정보 처리방침에 동의합니다</span>
+                </label>
+            </div>
+
+            <!-- 제출 버튼 -->
+            <button type="submit" class="btn btn-primary btn-full-width">
+                회원가입
+            </button>
+        </form>
+
+        <!-- 로그인 링크 -->
+        <div class="signup-footer">
+            <p>이미 계정이 있으신가요?
+                <a href="/login" class="link">로그인</a>
+            </p>
         </div>
-
-        <div class="form-group">
-            <label for="name">이름</label>
-            <input type="text" id="name" name="name" required>
-        </div>
-
-        <div class="form-group">
-            <label for="nickname">닉네임</label>
-            <input type="text" id="nickname" name="nickname" required>
-            <small id="nicknameError" class="error-text"></small>
-        </div>
-
-        <div class="form-group">
-            <label for="role">역할</label>
-            <select id="role" name="role" required>
-                <option value="">선택하세요</option>
-                <option value="STUDENT">학생</option>
-                <option value="MENTOR">멘토</option>
-            </select>
-        </div>
-
-        <button type="submit" class="btn-primary">가입하기</button>
-    </form>
-
-    <div class="login-link">
-        이미 계정이 있으신가요? <a href="/login">로그인</a>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<!-- JavaScript -->
 <script src="/js/signup.js"></script>
 </body>
 </html>

@@ -1,32 +1,64 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<header th:fragment="header"
+		class="site-header"
+		xmlns:th="http://www.thymeleaf.org"
+		xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
-<div th:fragment="header" class="header_box">
 	<div class="header">
-		<ul class="nav">
-			<li>
-				<span>홍길동님 안녕하세요.</span> <!-- 로그인 이후 보여지는 곳, 로그인 전에는 안보임 -->
-			</li>
+		<div class="header-inner">
 
-			<li>
-				<a th:href="@{/login}"><span>로그인</span></a>
-			</li>
-			<li>
-				<a th:href="@{/signup}"><span>회원가입</span></a>
-			</li>
-			<li>
-				<a th:href="@{/}"><span>나의 정보</span></a> <!-- 로그인 이후 보여지는 곳, 로그인 전에는 안보임 -->
-			</li>
-			<li>
-				<a th:href="@{/}"><span>문의하기</span></a>
-			</li>
-			<li>
-				<a th:href="@{/}"><span>로그아웃</span></a> <!-- 로그인 이후 보여지는 곳, 로그인 전에는 안보임 -->
-			</li>
-		</ul>
+			<!-- 로고 -->
+			<a href="/" class="logo">🎓 StudyLink</a>
 
-		<div class="dday">
-			<p>2027 수능 <span id="csatDday" >D-</span></p>
+			<!-- 로그인 전 -->
+			<sec:authorize access="isAnonymous()">
+				<ul class="header-nav">
+					<li>
+						<a th:href="@{/login}" class="header-nav-link">로그인</a>
+					</li>
+					<li>
+						<a th:href="@{/signup}" class="header-nav-link">회원가입</a>
+					</li>
+				</ul>
+			</sec:authorize>
+
+			<!-- 로그인 후 -->
+			<sec:authorize access="isAuthenticated()">
+				<ul class="header-nav">
+					<li><a th:href="@{/dashboard}" class="header-nav-link">대시보드</a></li>
+					<li><a th:href="@{/questions}" class="header-nav-link">질문목록</a></li>
+					<li><a th:href="@{/my-page}" class="header-nav-link">마이페이지</a></li>
+
+					<li class="dropdown">
+						<a href="#"
+						   class="header-nav-link dropdown-toggle"
+						   id="userDropdown"
+						   role="button"
+						   data-bs-toggle="dropdown"
+						   aria-expanded="false">
+							👤 <span sec:authentication="name"></span>
+						</a>
+
+						<ul class="dropdown-menu dropdown-menu-end">
+							<li><a class="dropdown-item" href="/profile">프로필</a></li>
+							<li><a class="dropdown-item" href="/settings">설정</a></li>
+							<li><hr class="dropdown-divider"></li>
+							<li>
+								<form method="post" action="/logout">
+									<button type="submit" class="dropdown-item">
+										로그아웃
+									</button>
+								</form>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</sec:authorize>
+
+			<!-- D-Day -->
+			<div class="dday">
+				<p>수능까지 <span id="csatDday">D-000</span></p>
+			</div>
+
 		</div>
 	</div>
-</div>
+</header>
