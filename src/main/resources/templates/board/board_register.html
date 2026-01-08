@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<body>
+<div layout:fragment="content" class="content_box">
+    <h1>대학생활 등록하기</h1>
+
+    <form th:action="@{/board/board_register}" method="post" enctype="multipart/form-data">
+
+        <div class="mb-3">
+            <label for="t" class="form-label">제목</label>
+            <input type="text" name="title" class="form-control" id="t" placeholder="제목을 입력하세요.">
+        </div>
+
+        <div class="mb-3">
+            <label for="w" class="form-label">작성자</label>
+            <input type="text" name="writer" class="form-control" id="w" placeholder="작성자를 입력하세요.">
+        </div>
+
+        <div class="mb-3">
+            <label for="w" class="form-label">학과</label>
+            <input type="text" name="department" class="form-control" id="d" placeholder="학과를 입력하세요.">
+        </div>
+
+        <div class="mb-3">
+            <label for="c" class="form-label">내용</label>
+            <textarea class="form-control" name="content" id="c" rows="5" placeholder="내용을 입력하세요."></textarea>
+        </div>
+
+        <!-- file upload -->
+        <div class="mb-3">
+            <input type="file" name="files" class="form-control" id="file" multiple style="display:none">
+            <button type="button" class="btn btn-outline-dark" id="trigger">file upload</button>
+        </div>
+
+        <!-- file list print -->
+        <div class="mb-3" id="fileZone"></div>
+
+        <button type="submit" class="btn btn-primary" id="regBtn">register</button>
+    </form>
+
+    <!-- 스크립트는 form 밖이 더 안전 -->
+    <script th:src="@{/js/board.js}"></script>
+</div>
+</body>
+</html>
