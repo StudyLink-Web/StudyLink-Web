@@ -214,6 +214,9 @@
         const chatMessages = document.getElementById('chatMessages');
         const userInput = document.getElementById('userInput');
         const typingIndicator = document.getElementById('typingIndicator');
+        
+        // 대화 내역 저장을 위한 배열
+        let chatHistory = [];
 
         function handleKeyPress(e) {
             if (e.key === 'Enter') {
@@ -234,13 +237,20 @@
             
             chatMessages.appendChild(msgDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // 히스토리에 추가 (최대 10개까지만 유지하여 전송량 조절)
+            chatHistory.push({
+                role: isUser ? "user" : "assistant",
+                content: text
+            });
+            if (chatHistory.length > 10) chatHistory.shift();
         }
 
         function sendMessage() {
             const text = userInput.value.trim();
             if (!text) return;
 
-            addMessage(text, true);
+            addMessage(text, true); // 내 메시지 추가 및 히스토리 저장
             userInput.value = '';
             
             typingIndicator.style.display = 'block';
@@ -250,13 +260,16 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ query: text }),
+                body: JSON.stringify({ 
+                    query: text,
+                    history: chatHistory.slice(0, -1) // 현재 질문을 제외한 이전 대화만 history로 전달
+                }),
             })
             .then(response => response.json())
             .then(data => {
                 typingIndicator.style.display = 'none';
                 if (data.answer) {
-                    addMessage(data.answer);
+                    addMessage(data.answer); // AI 메시지 추가 및 히스토리 저장
                 } else {
                     addMessage("죄송합니다. 답변을 가져오지 못했습니다.");
                 }

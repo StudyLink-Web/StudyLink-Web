@@ -23,6 +23,6 @@ public class ChatbotController {
     @PostMapping("/room/chatbot/send")
     @ResponseBody
     public ChatbotDTO.Response send(@RequestBody ChatbotDTO.Request request) {
-        return chatbotService.getChatResponse(request.getQuery());
+        return chatbotService.getChatResponse(request);
     }
 }
