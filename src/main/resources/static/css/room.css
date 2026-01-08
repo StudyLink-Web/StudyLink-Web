@@ -1,0 +1,26 @@
+#messageArea {
+    height: 500px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+
+.message {
+    max-width: 70%;
+    padding: 8px 12px;
+    margin: 4px 0;
+    border-radius: 12px;
+    word-wrap: break-word;
+}
+
+.message-left {
+    background-color: #e0e0e0;
+    align-self: flex-start; /* 왼쪽 정렬 */
+}
+
+.message-right {
+    background-color: #0084ff;
+    color: white;
+    align-self: flex-end; /* 오른쪽 정렬 */
+}

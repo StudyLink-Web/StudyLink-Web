@@ -5,8 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Getter
 @Setter
@@ -14,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class File{
+public class RoomFile {
     @Id
     private String uuid;
 
@@ -27,14 +25,8 @@ public class File{
     @Column(name = "file_type", nullable = false, columnDefinition = "int default 0")
     private int fileType;
 
-    private long bno;
+    private long roomId;
 
     @Column(name = "file_size")
     private long fileSize;
-
-    @Column
-    private LocalDateTime regDate;
-
-    @Column
-    private LocalDateTime modDate;
 }

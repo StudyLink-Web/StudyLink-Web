@@ -2,20 +2,17 @@ package com.StudyLink.www.dto;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
 @Setter
 @Getter
-public class FileDTO {
+public class RoomFileDTO {
     private String uuid;
     private String saveDir;
     private String fileName;
     private int fileType;
-    private long bno;
+    private long roomId;
     private long fileSize;
-    private LocalDateTime regDate, modDate;
 }
