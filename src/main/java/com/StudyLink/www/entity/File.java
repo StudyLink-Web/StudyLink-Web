@@ -27,14 +27,8 @@ public class File{
     @Column(name = "file_type", nullable = false, columnDefinition = "int default 0")
     private int fileType;
 
-    private long bno;
+    private long roomId;
 
     @Column(name = "file_size")
     private long fileSize;
-
-    @Column
-    private LocalDateTime regDate;
-
-    @Column
-    private LocalDateTime modDate;
 }
