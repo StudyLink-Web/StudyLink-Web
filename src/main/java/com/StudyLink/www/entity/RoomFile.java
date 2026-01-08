@@ -1,11 +1,14 @@
 package com.StudyLink.www.entity;
 
+import com.StudyLink.www.dto.RoomFileDTO;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.*;
 
 @Entity
+@Table(name = "room_file")
 @Getter
 @Setter
 @ToString
@@ -29,4 +32,13 @@ public class RoomFile {
 
     @Column(name = "file_size")
     private long fileSize;
+
+    public RoomFile(RoomFileDTO roomFileDTO) {
+        this.uuid = roomFileDTO.getUuid();
+        this.saveDir = roomFileDTO.getSaveDir();
+        this.fileName = roomFileDTO.getFileName();
+        this.fileType = roomFileDTO.getFileType();
+        this.roomId = roomFileDTO.getRoomId();
+        this.fileSize = roomFileDTO.getFileSize();
+    }
 }
