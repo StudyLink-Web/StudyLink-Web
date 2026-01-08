@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -20,5 +22,10 @@ public class MessageSerivceImpl implements MessageService {
         } else if (message.getMessageType() == MessageDTO.MessageType.IMAGE) {
 
         }
+    }
+
+    @Override
+    public List<MessageDTO> loadMessage(long roomId) {
+        return messageRepository.findByRoomId(roomId);
     }
 }

@@ -16,6 +16,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Slf4j
 @Controller
@@ -31,6 +33,12 @@ public class WebSocketController {
         messageService.insert(message);
         log.info(">>> message {}", message);
         return message;
+    }
+
+    @GetMapping("/loadMessage/{roomId}")
+    @ResponseBody
+    public List<MessageDTO> loadMessage(@PathVariable long roomId){
+        return messageService.loadMessage(roomId);
     }
 
 
