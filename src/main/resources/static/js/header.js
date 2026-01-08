@@ -1,50 +1,114 @@
 /* ===========================
-   StudyLink - Header JavaScript
-   =========================== */
+StudyLink - Header JavaScript
+=========================== */
 
 /**
  * 페이지 로드 완료 시 실행
  */
 document.addEventListener('DOMContentLoaded', function () {
     console.log('✅ StudyLink Header 로드됨');
-
     setupMenuEvents();
     highlightActiveMenu();
     setupMobileMenuAutoClose();
-    calculateCSATDday();
+    updateDday();
 });
 
 /**
- * 2027 수능 D-day 계산
+ * D-day 업데이트 (Thymeleaf에서 받은 값 활용)
  */
-function calculateCSATDday() {
+function updateDday() {
     try {
-        const today = new Date();
-        const csatDate = new Date(2027, 10, 11); // 2027-11-11
+        // .dday 섹션의 span 요소 찾기
+        const ddaySpans = document.querySelectorAll('.dday span');
 
-        const timeDiff = csatDate.getTime() - today.getTime();
-        const dayDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        console.log('🔍 찾은 D-day span 개수:', ddaySpans.length);
 
-        const ddayElement = document.getElementById('csatDday');
-
-        if (!ddayElement) return;
-
-        if (dayDiff > 0) {
-            ddayElement.textContent = `D-${dayDiff}`;
-            ddayElement.style.color = '#667eea';
-        } else if (dayDiff === 0) {
-            ddayElement.textContent = 'D-DAY 🎯';
-            ddayElement.style.color = '#ff6b6b';
-            ddayElement.style.fontWeight = 'bold';
-        } else {
-            ddayElement.textContent = `D+${Math.abs(dayDiff)}`;
-            ddayElement.style.color = '#95a5a6';
+        if (ddaySpans.length === 0) {
+            console.warn('⚠️ D-day 요소를 찾을 수 없습니다');
+            return;
         }
 
-        console.log(`📅 D-day 계산 완료: ${ddayElement.textContent}`);
+        // 모든 D-day 요소 업데이트 (로그인/비로그인 상태 모두 대응)
+        ddaySpans.forEach((span, index) => {
+            // 원본 텍스트 출력
+            const originalText = span.textContent.trim();
+            console.log(`📌 Span ${index} 원본 텍스트:`, `"${originalText}"`);
+
+            // 빈 문자열이나 공백만 있는 경우 처리
+            if (!originalText || originalText === '' || isNaN(originalText)) {
+                console.warn(`⚠️ Span ${index}에 유효한 값이 없습니다. 기본값 사용`);
+
+                // ✅ 새로운 방법: HTML 데이터 속성 확인
+                const ddayValue = span.getAttribute('data-dday') || span.parentElement.getAttribute('data-dday');
+
+                if (!ddayValue) {
+                    console.warn(`⚠️ 데이터 속성도 없습니다. 요소 내용:`, span.outerHTML);
+                    return;
+                }
+
+                processAndDisplayDday(span, ddayValue);
+            } else {
+                processAndDisplayDday(span, originalText);
+            }
+        });
+
+        // 매일 자정에 자동 갱신 (선택사항)
+        scheduleNextDayUpdate();
+
     } catch (e) {
-        console.error('❌ D-day 계산 오류', e);
+        console.error('❌ D-day 업데이트 오류', e);
     }
+}
+
+/**
+ * D-day 값 처리 및 표시
+ */
+function processAndDisplayDday(span, ddayValue) {
+    try {
+        const dayDiff = parseInt(ddayValue, 10);
+
+        console.log(`📊 처리된 D-day 값:`, dayDiff);
+
+        if (isNaN(dayDiff)) {
+            console.warn(`⚠️ parseInt 실패. 원본 값: "${ddayValue}"`);
+            return;
+        }
+
+        // D-day 표시 로직
+        if (dayDiff > 0) {
+            span.textContent = `D-${dayDiff}`;
+            span.style.color = '#667eea';
+            span.style.fontWeight = '700';
+            console.log(`✅ 양수 D-day 적용: D-${dayDiff}`);
+        } else if (dayDiff === 0) {
+            span.textContent = 'D-DAY 🎯';
+            span.style.color = '#ff6b6b';
+            span.style.fontWeight = 'bold';
+            console.log(`✅ D-DAY 적용`);
+        } else {
+            span.textContent = `D+${Math.abs(dayDiff)}`;
+            span.style.color = '#95a5a6';
+            span.style.fontWeight = '600';
+            console.log(`✅ 음수 D-day 적용: D+${Math.abs(dayDiff)}`);
+        }
+    } catch (e) {
+        console.error(`❌ D-day 처리 오류:`, e);
+    }
+}
+
+/**
+ * 매일 자정에 D-day 자동 갱신 (선택사항)
+ */
+function scheduleNextDayUpdate() {
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    const timeUntilMidnight = tomorrow.getTime() - now.getTime();
+
+    setTimeout(() => {
+        console.log('🔄 D-day 자동 갱신 시간입니다. 페이지를 새로고침하세요.');
+        // window.location.reload(); // 필요시 활성화
+        scheduleNextDayUpdate(); // 재귀적으로 매일 실행
+    }, timeUntilMidnight);
 }
 
 /**
@@ -52,7 +116,6 @@ function calculateCSATDday() {
  */
 function setupMenuEvents() {
     const navLinks = document.querySelectorAll('.header-nav-link');
-
     navLinks.forEach(link => {
         link.addEventListener('click', function () {
             console.log('🔗 메뉴 클릭:', this.textContent.trim());
@@ -60,7 +123,6 @@ function setupMenuEvents() {
     });
 
     const dropdownItems = document.querySelectorAll('.dropdown-item');
-
     dropdownItems.forEach(item => {
         item.addEventListener('click', function () {
             console.log('📌 드롭다운 클릭:', this.textContent.trim());
@@ -92,7 +154,6 @@ function highlightActiveMenu() {
  */
 function setupMobileMenuAutoClose() {
     const navLinks = document.querySelectorAll('.header-nav-link, .dropdown-item');
-
     navLinks.forEach(link => {
         link.addEventListener('click', function () {
             console.log('📱 모바일 메뉴 닫기 트리거');

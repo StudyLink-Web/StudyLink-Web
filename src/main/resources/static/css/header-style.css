@@ -1,3 +1,25 @@
+/* ✅ 모든 페이지 통일: font 우선순위 높임 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;  /* ✅ 기본 글자 크기 통일 */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: inherit;  /* ✅ header-style에서 상속 */
+    font-size: inherit;
+    line-height: 1.5;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 /* =========================
    Header Wrapper
    ========================= */
@@ -18,23 +40,27 @@
     border-bottom: 2px solid #1162F8;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     height: auto;
-    min-height: 60px;
+    min-height: 70px;  /* ✅ 고정 높이 설정 */
+    font-family: 'Inter', -apple-system, sans-serif;
 }
 
 /* =========================
    Header Inner (핵심 레이아웃)
    ========================= */
 
+/* header-inner 수정 */
 .header-inner {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0.8rem 1rem;
+    padding: 1rem;
     display: flex;
     align-items: center;
     gap: 2rem;
     width: 100%;
+    font-family: 'Inter', -apple-system, sans-serif;
+    height: 70px;
+    justify-content: flex-start; /* ✅ 추가 */
 }
-
 /* =========================
    Logo
    ========================= */
@@ -47,6 +73,7 @@
     white-space: nowrap;
     transition: color 0.2s ease;
     flex-shrink: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
 }
 
 .logo:hover {
@@ -65,6 +92,7 @@
     margin: 0;
     padding: 0;
     flex-wrap: nowrap;
+    font-family: 'Inter', -apple-system, sans-serif;
 }
 
 .header-nav li {
@@ -84,6 +112,7 @@
     white-space: nowrap;
     padding: 0.3rem 0;
     line-height: 1.4;
+    font-family: 'Inter', -apple-system, sans-serif;
 }
 
 .header-nav-link:hover,
@@ -95,6 +124,47 @@
     color: #1162F8;
     font-weight: 600;
 }
+
+
+
+
+/* ✅ 추가: header-buttons 스타일 */
+/* header-buttons 수정 */
+.header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    /* ✅ margin-left: auto 제거! */
+    flex-shrink: 0;
+    order: 3; /* 모바일에서 순서 조정 */
+}
+
+/* ✅ 추가: signup-btn 스타일 */
+.signup-btn {
+    background: linear-gradient(135deg, #667eea, #5a67d8);
+    color: #fff !important;
+    padding: 0.55rem 1.6rem;
+    border-radius: 25px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    transition: all 0.25s ease;
+    text-decoration: none !important;
+    display: inline-block;
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 14px;
+}
+
+.signup-btn:hover {
+    background: linear-gradient(135deg, #5a67d8, #4c51bf);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: #fff !important;
+}
+
+
+
 
 /* =========================
    Login Button
@@ -216,14 +286,19 @@
 }
 
 /* =========================
-   D-Day (오른쪽 정렬)
+   D-Day (오른쪽 정렬 - 로그인/비로그인 모두)
    ========================= */
 
+/* dday 수정 */
 .dday {
-    font-size: 0.95rem;
+    font-size: 0.95rem !important;
     white-space: nowrap;
-    margin-left: auto;
+    margin-left: auto; /* ✅ 오른쪽 정렬 유지 */
     flex-shrink: 0;
+    display: flex !important;
+    align-items: center;
+    gap: 4px;
+    order: 2; /* 로그인 상태: 버튼보다 먼저 */
 }
 
 .dday p {

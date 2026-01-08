@@ -1,7 +1,6 @@
 package com.StudyLink.www.config;
 
 import com.StudyLink.www.service.CustomUserDetailsService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,13 +12,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * Spring Security 설정
- * - 일반 로그인 (Username/Password)
- * - OAuth2 소셜 로그인 (카카오, 네이버, 구글)
- * - 사용자 검증
- */
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -27,18 +19,11 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
-    /**
-     * 비밀번호 인코더
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * 인증 매니저 설정
-     * UserDetailsService를 사용해 사용자 검증
-     */
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder =
@@ -49,18 +34,15 @@ public class SecurityConfig {
         return authenticationManagerBuilder.build();
     }
 
-    /**
-     * 보안 필터 체인 설정
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // ⭐ CSRF 설정: 로그인/회원가입은 허용, 나머지는 보호
+                // ✅ CSRF 설정: REST API와 폼 로그인 모두 지원
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
-                                "/login", "/signup",
-                                "/api/auth/**",
-                                "/loginProc", "/logout"
+                                "/api/auth/**",          // REST API는 CSRF 토큰 필요 없음
+                                "/loginProc",             // 폼 기반 로그인
+                                "/logout"
                         )
                 )
 
@@ -77,19 +59,20 @@ public class SecurityConfig {
                                 "/js/**",
                                 "/img/**",
                                 "/api/auth/**",
+                                "/.well-known/**",      // ✅ Chrome DevTools 에러 무시
                                 "/oauth2/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
 
-                // ⭐ Form Login 설정 (매우 중요!)
+                // ✅ Form Login (폼 기반 로그인)
                 .formLogin(form -> form
-                        .loginPage("/login")                    // 로그인 페이지 경로
-                        .loginProcessingUrl("/loginProc")       // 폼 제출 처리 경로
-                        .usernameParameter("email")             // 이메일 필드명
-                        .passwordParameter("password")          // 비밀번호 필드명
-                        .defaultSuccessUrl("/", false)          // 성공 시 홈으로
-                        .failureUrl("/login?error=true")        // 실패 시 에러 메시지
+                        .loginPage("/login")
+                        .loginProcessingUrl("/loginProc")
+                        .usernameParameter("email")
+                        .passwordParameter("password")
+                        .defaultSuccessUrl("/", false)
+                        .failureUrl("/login?error=true")
                         .permitAll()
                 )
 

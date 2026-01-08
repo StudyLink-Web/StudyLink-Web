@@ -1,268 +1,192 @@
-/* ============================
-   Reset
-============================ */
+/* ✅ 수정: body 리셋 */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* ============================
-   Page background
-============================ */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin: 0;  /* ✅ 추가 */
+    padding: 0; /* ✅ 추가 */
+    color: #1e293b;
+}
+
+/* 전체 래퍼 */
+.signup-wrapper {
+    min-height: calc(100vh - 70px);  /* ✅ 헤더 높이 70px */
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 40px 20px;
+    background-color: #f8fafc;
 }
 
-/* ============================
-   Outer container
-============================ */
-.container {
+/* 단일 카드 */
+.signup-card-single {
     width: 100%;
-    padding: 20px;
-}
-
-/* ============================
-   Card
-============================ */
-.signup-wrapper {
+    max-width: 480px;
     background: #ffffff;
-    max-width: 420px;
-    margin: 0 auto;
-    padding: 40px;
-    border-radius: 14px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    border-radius: 24px;
+    padding: 56px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05),
+    0 10px 10px -5px rgba(0,0,0,0.02);
 }
 
-/* ============================
-   Header
-============================ */
+.card-content {
+    width: 100%;
+}
+
+/* 헤더 */
 .signup-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 36px;
 }
 
-.signup-header h1 {
-    font-size: 30px;
-    font-weight: 700;
-    color: #333;
+.title {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 8px;
 }
 
 .subtitle {
-    margin-top: 8px;
-    font-size: 14px;
-    color: #777;
+    font-size: 15px;
+    color: #64748b;
 }
 
-/* ============================
-   Alert
-============================ */
-.alert {
-    margin-bottom: 15px;
-    padding: 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    text-align: center;
-}
-
-.alert.error {
-    background-color: #fadbd8;
-    color: #c0392b;
-}
-
-/* ============================
-   Form
-============================ */
+/* 폼 */
 .signup-form {
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .form-group {
-    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
 }
 
 .form-label {
-    display: block;
-    margin-bottom: 6px;
     font-size: 14px;
     font-weight: 600;
-    color: #555;
+    margin-bottom: 6px;
 }
 
 .form-control {
-    width: 100%;
-    padding: 12px 14px;
-    font-size: 14px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    transition: all 0.2s ease;
+    height: 52px;
+    padding: 0 16px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 15px;
 }
 
 .form-control:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    border-color: #21808d;
+    box-shadow: 0 0 0 4px rgba(33,128,141,0.1);
 }
 
-/* ============================
-   Password input + toggle
-============================ */
+/* 에러 */
+.form-error {
+    min-height: 18px;
+    font-size: 13px;
+    color: #e11d48;
+    margin-top: 4px;
+}
+
+.form-global-error {
+    margin-bottom: 20px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* 비밀번호 */
 .password-input-wrapper {
     position: relative;
-    display: flex;
-    align-items: center;
 }
 
-/* input 오른쪽 여백 확보 */
+/* ✅ 수정 1 - 부모를 통해 선택 */
 .password-input-wrapper .form-control {
-    padding-right: 44px;
+    width: 368px !important;
 }
 
-/* 눈 아이콘 버튼 */
 .password-toggle {
     position: absolute;
-    right: 10px;
+    right: 14px;
     top: 50%;
     transform: translateY(-50%);
-
-    background: transparent;
+    background: none;
     border: none;
-    padding: 6px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
     cursor: pointer;
-    color: #888;
-    border-radius: 6px;
-
-    transition: background-color 0.2s ease, color 0.2s ease;
+    color: #94a3b8;
+    padding: 4px;
 }
 
-/* hover / focus */
 .password-toggle:hover {
-    background-color: rgba(102, 126, 234, 0.12);
-    color: #667eea;
+    color: #21808d;
 }
 
-.password-toggle:focus {
-    outline: none;
-    background-color: rgba(102, 126, 234, 0.18);
-}
-
-/* input 포커스 시 아이콘 강조 */
-.password-input-wrapper:focus-within .password-toggle {
-    color: #667eea;
-}
-
-/* eye icon */
-.eye-icon {
-    width: 20px;
-    height: 20px;
-    pointer-events: none;
-}
-
-/* ============================
-   Help text
-============================ */
-.form-help-text {
-    margin-top: 4px;
-    font-size: 12px;
-    color: #e74c3c;
-}
-
-.form-hint {
+.password-toggle svg {
     display: block;
-    margin-top: 4px;
-    font-size: 12px;
-    color: #999;
 }
 
-/* ============================
-   Checkbox
-============================ */
-.checkbox-group {
-    margin: 20px 0;
+
+
+/* 약관 */
+.terms-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
 }
 
 .checkbox-label {
     display: flex;
     align-items: center;
-    font-size: 13px;
-    color: #555;
-    margin-bottom: 8px;
+    gap: 8px;
+    font-size: 14px;
 }
 
-.checkbox-label input {
-    margin-right: 8px;
-}
-
-/* ============================
-   Button
-============================ */
-.btn {
-    display: inline-block;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-}
-
+/* 버튼 */
 .btn-primary {
-    width: 100%;
-    padding: 13px;
+    height: 56px;
+    margin-top: 10px;
+    background: #21808d;
+    color: white;
+    border: none;
+    border-radius: 12px;
     font-size: 16px;
-    font-weight: 600;
-    color: #fff;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+    font-weight: 700;
+    cursor: pointer;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.35);
+    background: #1a6671;
 }
 
-/* ============================
-   Footer
-============================ */
+/* 푸터 */
 .signup-footer {
-    margin-top: 25px;
+    margin-top: 28px;
     text-align: center;
     font-size: 14px;
-    color: #666;
 }
 
-.signup-footer .link {
-    color: #667eea;
+.signup-footer a {
+    color: #21808d;
     font-weight: 600;
     text-decoration: none;
 }
 
-.signup-footer .link:hover {
-    color: #764ba2;
-}
-
-/* ============================
-   Responsive
-============================ */
+/* 모바일 */
 @media (max-width: 480px) {
-    .signup-wrapper {
-        padding: 28px 22px;
+    .signup-card-single {
+        padding: 40px 24px;
     }
 
-    .signup-header h1 {
-        font-size: 26px;
-    }
-
-    .password-toggle {
-        padding: 8px; /* 모바일 터치 영역 확대 */
+    .title {
+        font-size: 28px;
     }
 }

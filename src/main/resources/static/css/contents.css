@@ -168,19 +168,19 @@ button, input, select, textarea { outline: none; }
 /* ===== Main Content (E) ===== */
 
 /* ===== Footer (S) ===== */
-.footer_box {
-    flex: none;
-    background-color: var(--text-dark);
-    color: var(--bg-white);
-    padding: 30px 40px;
-    text-align: center;
-    border-top: 1px solid var(--border-color);
-}
+/*.footer_box {*/
+/*    flex: none;*/
+/*    background-color: transparent;*/
+/*    color: var(--bg-white);*/
+/*    padding: 30px 40px;*/
+/*    text-align: center;*/
+/*    border-top: 1px solid var(--border-color);*/
+/*}*/
 
-.footer_box p {
-    font-size: 14px;
-    margin: 5px 0;
-}
+/*.footer_box p {*/
+/*    font-size: 14px;*/
+/*    margin: 5px 0;*/
+/*}*/
 
 /* ===== Footer (E) ===== */
 

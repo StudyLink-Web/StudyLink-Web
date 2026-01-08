@@ -14,14 +14,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const emailInput = document.getElementById('email');
     const nicknameInput = document.getElementById('nickname');
     const passwordInput = document.getElementById('password');
-    const passwordToggle = document.getElementById('passwordToggle');
 
     // 이벤트 리스너 등록
-    emailInput.addEventListener('blur', checkEmailAvailability);
-    nicknameInput.addEventListener('blur', checkNicknameAvailability);
-    passwordInput.addEventListener('input', validatePassword);
-    passwordToggle.addEventListener('click', togglePasswordVisibility);
-    signupForm.addEventListener('submit', handleSignup);
+    if (emailInput) emailInput.addEventListener('blur', checkEmailAvailability);
+    if (nicknameInput) nicknameInput.addEventListener('blur', checkNicknameAvailability);
+    if (passwordInput) passwordInput.addEventListener('input', validatePassword);
+
+    // ✅ 폼 제출 이벤트
+    if (signupForm) {
+        signupForm.addEventListener('submit', handleSignup);
+    }
+
+    // ✅ 비밀번호 토글 버튼 초기화
+    initPasswordToggle();
 
     console.log('✅ 회원가입 폼 초기화 완료');
 });
@@ -30,31 +35,30 @@ document.addEventListener('DOMContentLoaded', function() {
 // 비밀번호 표시/숨김 기능
 // ============================================
 
-function togglePasswordVisibility() {
+function initPasswordToggle() {
     const passwordInput = document.getElementById('password');
-    const passwordToggle = document.getElementById('passwordToggle');
-    const eyeIcon = passwordToggle.querySelector('.eye-icon');
+    const toggleBtn = document.querySelector('.password-toggle');
 
-    // 입력 타입 전환
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
+    if (!passwordInput || !toggleBtn) return;
 
-        // SVG를 눈 닫힘 아이콘으로 변경
-        eyeIcon.innerHTML = `
-            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-            <line x1="1" y1="1" x2="23" y2="23"></line>
-        `;
-        passwordInput.focus();
-    } else {
-        passwordInput.type = 'password';
+    toggleBtn.addEventListener('click', function(e) {
+        e.preventDefault();
 
-        // SVG를 눈 열림 아이콘으로 변경
-        eyeIcon.innerHTML = `
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-        `;
-        passwordInput.focus();
-    }
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+
+        // SVG 아이콘 토글
+        const svgs = toggleBtn.querySelectorAll('svg');
+        if (svgs.length >= 2) {
+            if (isPassword) {
+                svgs.style.display = 'none';  // eye closed 숨김
+                svgs.style.display = 'block'; // eye open 표시
+            } else {
+                svgs.style.display = 'block';  // eye closed 표시
+                svgs.style.display = 'none';   // eye open 숨김
+            }
+        }
+    });
 }
 
 // ============================================
@@ -64,6 +68,8 @@ function togglePasswordVisibility() {
 async function checkEmailAvailability() {
     const email = document.getElementById('email').value;
     const emailError = document.getElementById('emailError');
+
+    if (!emailError) return;
 
     // 입력값이 없으면 메시지 제거
     if (!email) {
@@ -80,10 +86,18 @@ async function checkEmailAvailability() {
     }
 
     try {
-        // API 호출
-        const response = await axios.post(`${API_BASE_URL}/api/auth/check-email`, { email });
+        // ✅ fetch로 변경 (axios 제거)
+        const response = await fetch(`${API_BASE_URL}/api/auth/check-email`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email })
+        });
 
-        if (!response.data.available) {
+        const data = await response.json();
+
+        if (!data.available) {
             emailError.textContent = '❌ 이미 사용 중인 이메일입니다.';
             emailError.style.color = '#dc2626';
         } else {
@@ -92,13 +106,7 @@ async function checkEmailAvailability() {
         }
     } catch (error) {
         console.error('이메일 확인 오류:', error);
-
-        // 오류 응답 처리
-        if (error.response?.status === 409) {
-            emailError.textContent = '❌ 이미 사용 중인 이메일입니다.';
-        } else {
-            emailError.textContent = '⚠️ 이메일 확인 중 오류가 발생했습니다.';
-        }
+        emailError.textContent = '⚠️ 이메일 확인 중 오류가 발생했습니다.';
         emailError.style.color = '#dc2626';
     }
 }
@@ -110,6 +118,8 @@ async function checkEmailAvailability() {
 async function checkNicknameAvailability() {
     const nickname = document.getElementById('nickname').value;
     const nicknameError = document.getElementById('nicknameError');
+
+    if (!nicknameError) return;
 
     // 입력값이 없으면 메시지 제거
     if (!nickname) {
@@ -132,10 +142,18 @@ async function checkNicknameAvailability() {
     }
 
     try {
-        // API 호출
-        const response = await axios.post(`${API_BASE_URL}/api/auth/check-nickname`, { nickname });
+        // ✅ fetch로 변경 (axios 제거)
+        const response = await fetch(`${API_BASE_URL}/api/auth/check-nickname`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ nickname })
+        });
 
-        if (!response.data.available) {
+        const data = await response.json();
+
+        if (!data.available) {
             nicknameError.textContent = '❌ 이미 사용 중인 닉네임입니다.';
             nicknameError.style.color = '#dc2626';
         } else {
@@ -144,13 +162,7 @@ async function checkNicknameAvailability() {
         }
     } catch (error) {
         console.error('닉네임 확인 오류:', error);
-
-        // 오류 응답 처리
-        if (error.response?.status === 409) {
-            nicknameError.textContent = '❌ 이미 사용 중인 닉네임입니다.';
-        } else {
-            nicknameError.textContent = '⚠️ 닉네임 확인 중 오류가 발생했습니다.';
-        }
+        nicknameError.textContent = '⚠️ 닉네임 확인 중 오류가 발생했습니다.';
         nicknameError.style.color = '#dc2626';
     }
 }
@@ -214,7 +226,9 @@ async function handleSignup(e) {
     e.preventDefault();
 
     const errorDiv = document.getElementById('error');
-    errorDiv.classList.remove('show');
+    if (errorDiv) {
+        errorDiv.classList.remove('show');
+    }
 
     // 폼 데이터 수집
     const email = document.getElementById('email').value;
@@ -283,42 +297,59 @@ async function handleSignup(e) {
     submitBtn.textContent = '⏳ 가입 중...';
 
     try {
-        // API 호출
-        const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, {
-            email,
-            password,
-            name: name.trim(),
-            nickname,
-            role
+        // ✅ fetch로 변경 (axios 제거)
+        const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email,
+                password,
+                name: name.trim(),
+                nickname,
+                role
+            })
         });
 
-        // 성공 처리
-        showSuccess('✅ 회원가입이 완료되었습니다! 로그인 페이지로 이동합니다...');
+        const data = await response.json();
 
-        // 2초 후 로그인 페이지로 이동
-        setTimeout(() => {
-            window.location.href = '/login';
-        }, 2000);
+        if (response.ok) {
+            // 성공 처리
+            showSuccess('✅ 회원가입이 완료되었습니다! 로그인 페이지로 이동합니다...');
+
+            // 2초 후 로그인 페이지로 이동
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
+        } else {
+            // ✅ 에러 응답 처리
+            let errorMessage = data.message || '회원가입 실패';
+
+            if (data.error === 'INVALID_EMAIL') {
+                showError('❌ ' + errorMessage);
+            } else if (data.error === 'INVALID_PASSWORD') {
+                showError('❌ ' + errorMessage);
+            } else if (data.error === 'INVALID_ROLE') {
+                showError('❌ ' + errorMessage);
+            } else if (data.error === 'INVALID_NICKNAME') {
+                showError('❌ ' + errorMessage);
+            } else if (data.error === 'INVALID_NAME') {
+                showError('❌ ' + errorMessage);
+            } else if (data.error === 'SIGNUP_ERROR') {
+                showError('❌ ' + errorMessage);
+            } else {
+                showError('❌ 회원가입 실패: ' + errorMessage);
+            }
+
+            // 버튼 복원
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
 
     } catch (error) {
         console.error('회원가입 오류:', error);
-
-        // 오류 메시지 처리
-        let errorMessage = '회원가입 실패: ';
-
-        if (error.response?.data?.message) {
-            errorMessage += error.response.data.message;
-        } else if (error.response?.status === 409) {
-            errorMessage += '이미 사용 중인 이메일 또는 닉네임입니다.';
-        } else if (error.response?.status === 400) {
-            errorMessage += '입력값이 올바르지 않습니다.';
-        } else if (error.response?.status === 500) {
-            errorMessage += '서버 오류가 발생했습니다.';
-        } else {
-            errorMessage += error.message || '알 수 없는 오류가 발생했습니다.';
-        }
-
-        showError('❌ ' + errorMessage);
+        showError('❌ 회원가입 중 오류가 발생했습니다.');
 
         // 버튼 복원
         submitBtn.disabled = false;
@@ -361,6 +392,7 @@ function showError(message) {
     errorDiv.style.marginBottom = '16px';
     errorDiv.style.border = '1px solid #fecaca';
     errorDiv.classList.add('show');
+    errorDiv.style.display = 'block';
 
     // 5초 후 자동으로 숨기기
     setTimeout(() => {
@@ -392,6 +424,7 @@ function showSuccess(message) {
     errorDiv.style.marginBottom = '16px';
     errorDiv.style.border = '1px solid #bbf7d0';
     errorDiv.classList.add('show');
+    errorDiv.style.display = 'block';
 
     // 3초 후 자동으로 숨기기
     setTimeout(() => {

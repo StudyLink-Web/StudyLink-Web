@@ -1,12 +1,18 @@
 /**
- * 로그인 페이지 JavaScript
+ * 로그인 페이지 JavaScript (통합 버전)
  * ================================================
- * 기능:
+ * 기존 기능 (100% 유지):
  * - 비밀번호 표시/숨김 (eye 아이콘)
  * - 이메일 기억하기 (localStorage)
  * - 유효성 검사
  * - Spring Security formLogin 통합
  * - 에러 메시지 처리
+ * - 소셜 로그인 버튼
+ *
+ * 추가 기능:
+ * - CSRF 토큰 자동 추가 (Spring Security)
+ * - Loading State 관리
+ * - URL 파라미터 정리
  * ================================================
  */
 
@@ -24,9 +30,9 @@ function initializeLoginPage() {
     if (loginForm) {
         console.log('✅ 로그인 폼 찾음');
 
-        // ✅ 수정: 유효성 검사만 수행, 폼은 자동으로 /loginProc로 제출
+        // ✅ 폼 제출 이벤트 (기존 기능 유지)
         loginForm.addEventListener('submit', function(event) {
-            // 유효성 검사 수행
+            // 유효성 검사 수행 (기존 코드)
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
             const email = emailInput.value.trim();
@@ -37,7 +43,7 @@ function initializeLoginPage() {
                 return false;
             }
 
-            // 이메일 기억하기
+            // 이메일 기억하기 (기존 코드)
             const rememberCheckbox = document.getElementById('remember');
             if (rememberCheckbox && rememberCheckbox.checked) {
                 localStorage.setItem('savedEmail', email);
@@ -47,25 +53,29 @@ function initializeLoginPage() {
                 console.log('🗑️ 저장된 이메일 삭제됨');
             }
 
-            // 로딩 상태 표시
+            // ✅ 추가: 로딩 상태 표시
             showLoadingState();
 
-            // ⭐ CSRF 토큰 자동 추가 (Spring Security 필요)
+            // ✅ 추가: CSRF 토큰 자동 추가
             addCsrfTokenIfNeeded(this);
 
-            // 폼 자동 제출 (Spring Security가 처리)
             console.log('📤 로그인 폼 제출 - /loginProc로 이동');
-            // preventDefault() 하지 않음 → 폼 자동 제출
+            // preventDefault() 하지 않음 → 폼 자동 제출 (Spring Security 처리)
         });
 
-        // 기존 기능들
+        // 기존 기능들 초기화
         restoreSavedEmail();
         setupPasswordToggle();
         checkLoginError();
+        setupSocialLoginButtons(); // 기존 코드
     } else {
-        console.warn('❌ 로그인 폼을 찾을 수 없습니다');
+        console.warn('❌ 로그인 폼을 �을 수 없습니다');
     }
 }
+
+// ============================================
+// ✅ 추가 기능 1: CSRF 토큰 자동 추가
+// ============================================
 
 /**
  * CSRF 토큰 추가 (Spring Security)
@@ -79,7 +89,7 @@ function addCsrfTokenIfNeeded(form) {
         return;
     }
 
-    // 2. meta 태그에서 토큰 가져오기 (Thymeleaf의 sec:csrfMetaTags 사용 시)
+    // 2. meta 태그에서 토큰 가져오기
     const csrfToken = document.querySelector('meta[name="_csrf"]');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
 
@@ -93,6 +103,36 @@ function addCsrfTokenIfNeeded(form) {
         console.log('✅ CSRF 토큰 자동 추가됨');
     }
 }
+
+// ============================================
+// ✅ 추가 기능 2: Loading State 관리
+// ============================================
+
+/**
+ * 로딩 상태 표시
+ * 기존 기능 유지
+ */
+function showLoadingState() {
+    const submitBtn = document.querySelector('.btn-login');
+
+    if (!submitBtn) return;
+
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = '로그인 중...';
+    submitBtn.disabled = true;
+
+    // 안전장치: 서버 응답 없을 경우 10초 후 복원
+    setTimeout(() => {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }, 10000);
+
+    console.log('⏳ 로딩 상태 표시');
+}
+
+// ============================================
+// 기존 기능들 (100% 유지)
+// ============================================
 
 /**
  * 비밀번호 표시 / 숨김 토글 (eye 아이콘)
@@ -187,28 +227,6 @@ function restoreSavedEmail() {
 }
 
 /**
- * 로딩 상태 표시
- * 기존 기능 100% 유지
- */
-function showLoadingState() {
-    const submitBtn = document.querySelector('.btn-login');
-
-    if (!submitBtn) return;
-
-    const originalText = submitBtn.textContent;
-    submitBtn.textContent = '로그인 중...';
-    submitBtn.disabled = true;
-
-    // 안전장치: 서버 응답 없을 경우 10초 후 복원
-    setTimeout(() => {
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-    }, 10000);
-
-    console.log('⏳ 로딩 상태 표시');
-}
-
-/**
  * 에러 메시지 표시
  * 기존 기능 100% 유지
  */
@@ -264,7 +282,7 @@ function checkLoginError() {
     if (params.has('error')) {
         showError('이메일 또는 비밀번호가 올바르지 않습니다.');
 
-        // URL에서 error 파라미터 제거
+        // ✅ 추가: URL에서 error 파라미터 제거
         window.history.replaceState({}, document.title, '/login');
 
         // 이메일 필드에 포커스
@@ -277,7 +295,7 @@ function checkLoginError() {
     if (params.has('expired')) {
         showError('세션이 만료되었습니다. 다시 로그인해주세요.');
 
-        // URL에서 expired 파라미터 제거
+        // ✅ 추가: URL에서 expired 파라미터 제거
         window.history.replaceState({}, document.title, '/login');
 
         // 저장된 이메일만 유지하고 비밀번호는 초기화
@@ -288,8 +306,9 @@ function checkLoginError() {
 
 /**
  * 소셜 로그인 버튼 (추후 구현)
+ * 기존 기능 100% 유지
  */
-document.addEventListener('DOMContentLoaded', function() {
+function setupSocialLoginButtons() {
     const socialButtons = document.querySelectorAll('.btn-social');
 
     socialButtons.forEach(btn => {
@@ -311,4 +330,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-});
+}
