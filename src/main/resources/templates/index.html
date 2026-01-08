@@ -3,10 +3,35 @@
 	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
 	  layout:decorate="~{layout/layout}">
 
+
 <div layout:fragment="content" class="content_box">
-	<div class="wrap">
-		<div class="content_box">
-			<a href="/room/list">문제 리스트</a>
-		</div>
+	<link rel="stylesheet" href="/css/index.css">
+
+	<div class="question_tab">
+		<p>질문 총 <span>10,226,000</span>건</p>
+		<a th:href="@{/room/list}">오늘의 질문 <span>10,226,000</span>건</a>
 	</div>
+
+	<div class="search_question">
+		<form>
+			<div class="search_question_flex">
+				<div class="search_question_select">
+					<select class="form-select" name="type" aria-label="Default select example">
+						<option>전체</option>
+						<option>국어</option>
+						<option>영어</option>
+						<option>수학</option>
+						<option>과학</option>
+						<option>기타</option>
+					</select>
+					<input class="form-control" type="search" name="keyword"  placeholder="Search" aria-label="Search" />
+				</div>
+				<div>
+					<button type="submit" class="btn btn-success position-relative"> Search </button>
+				</div>
+			</div>
+		</form>
+	</div>
+
+
 </div>
