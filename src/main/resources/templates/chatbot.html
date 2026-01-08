@@ -126,30 +126,41 @@
 
         /* 2. 카드 UI (표 및 마크다운) 스타일링 */
         .message.bot table {
+            display: block; /* 스크롤 활성화를 위해 블록 요소로 변경 */
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin: 1rem 0;
+            overflow-x: auto; /* 가로 스크롤 허용 */
+            border-collapse: collapse;
+            margin: 1.5rem 0;
             background: white;
             border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            border: 1px solid #eee;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+            /* 부드러운 스크롤바 스타일링 */
+        }
+
+        .message.bot table::-webkit-scrollbar {
+            height: 6px;
+        }
+        .message.bot table::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 10px;
         }
 
         .message.bot th {
-            background-color: #f1f4ff;
-            color: #4a5568;
-            padding: 12px 15px;
+            background-color: #f8faff;
+            color: #2d3748;
+            padding: 14px 20px;
             text-align: left;
             font-weight: 700;
             border-bottom: 2px solid #667eea;
+            white-space: nowrap; /* 제목이 세로로 깨지는 것 방지 */
         }
 
         .message.bot td {
-            padding: 10px 15px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 12px 20px;
+            border-bottom: 1px solid #edf2f7;
             color: #4a5568;
+            white-space: nowrap; /* 내용이 세로로 깨지는 것 방지 (가로 스크롤 유도) */
         }
 
         .message.bot tr:last-child td {
