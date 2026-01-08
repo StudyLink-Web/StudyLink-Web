@@ -12,17 +12,23 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class File extends TimeBase{
+public class File extends TimeBase {
+
     @Id
     private String uuid;
+
     @Column(name = "save_dir", nullable = false)
     private String saveDir;
+
     @Column(name = "file_name", nullable = false)
     private String fileName;
+
     @Column(name = "file_type", nullable = false, columnDefinition = "int default 0")
     private int fileType;
-    private long bno;
+
+    @Column(name = "post_id")
+    private Long postId;
+
     @Column(name = "file_size")
     private long fileSize;
 }
-

@@ -1,4 +1,5 @@
 package com.StudyLink.www.dto;
+
 import lombok.*;
 
 import java.util.List;
@@ -8,7 +9,9 @@ import java.util.List;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class BoardFileDTO {
-    private BoardDTO boardDTO;
-    private List<FileDTO> fileList;
+
+    private BoardDTO boardDTO;          // 게시글 정보
+    private List<FileDTO> fileDTOList;  // 첨부파일 목록
 }

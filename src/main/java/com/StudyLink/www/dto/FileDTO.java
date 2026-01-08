@@ -1,9 +1,6 @@
 package com.StudyLink.www.dto;
 
-
-
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Getter
@@ -13,11 +10,16 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class FileDTO {
+
     private String uuid;
     private String saveDir;
     private String fileName;
     private int fileType;
-    private long bno;
     private long fileSize;
-    private LocalDateTime regDate, modDate;
+
+    // ✅ 게시글 FK
+    private Long postId;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

@@ -20,63 +20,39 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Service
-public class CommentServiceImpl implements CommentService{
+public class CommentServiceImpl implements CommentService {
+
     private final CommentRepository commentRepository;
     private final BoardRepository boardRepository;
 
-    @Transactional
     @Override
     public long post(CommentDTO commentDTO) {
-        // 저장 대상은 Entity CommentDTO => Entity로 변환
-        // save()
 
-        // 해당 comment에 board 객체를 가져와서 cmtQty + 1 업데이트
-        Board board = boardRepository.findById(commentDTO.getBno())
-                .orElseThrow(()-> new EntityNotFoundException());
-        board.setCmtQty(board.getCmtQty()+1);
+        Board board = boardRepository.findById(commentDTO.getPostId())
+                .orElseThrow();
 
-        return commentRepository.save(convertDtoToEntity(commentDTO)).getCno();
-    }
+        Comment comment = convertDtoToEntity(commentDTO);
+        commentRepository.save(comment);
 
-//    @Override
-//    public List<CommentDTO> getList(Long bno) {
-//        /* findBy**  => ** 테이블 안에 있는 모든 칼럼
-//        *   select * from comment where ** = ?   */
-//        List<Comment> list = commentRepository.findByBno(bno);
-//
-//        return list.stream()
-//                .map(comment -> convertEntityToDto(comment))
-//                .toList();
-//    }
-
-    @Transactional
-    @Override
-    public long modify(CommentDTO commentDTO) {
-        Comment comment = commentRepository.findById(commentDTO.getCno())
-                .orElseThrow(() -> new EntityNotFoundException("해당 댓글을 찾을 수 없습니다."));
-        comment.setContent(commentDTO.getContent());
         return comment.getCno();
     }
 
-    @Transactional
+    @Override
+    public long modify(CommentDTO commentDTO) {
+        Comment comment = convertDtoToEntity(commentDTO);
+        commentRepository.save(comment);
+        return comment.getCno();
+    }
+
     @Override
     public void remove(long cno) {
-        Comment comment = commentRepository.findById(cno)
-                .orElseThrow(()-> new EntityNotFoundException());
-        Board board = boardRepository.findById(comment.getBno())
-                .orElseThrow(()-> new EntityNotFoundException());
-        board.setCmtQty(board.getCmtQty()-1);
         commentRepository.deleteById(cno);
     }
 
     @Override
-    public Page<CommentDTO> getList(Long bno, int page) {
-        // select * from comment where bno = #{bno}
-        // order by bno desc limit page, 5;
-        Pageable pageable = PageRequest.of(page-1, 5,
-                Sort.by("cno").descending());
-
-        Page<Comment> list = commentRepository.findByBno(bno, pageable);
-        return list.map(this::convertEntityToDto);
+    public Page<CommentDTO> getList(Long postId, int page) {
+        Pageable pageable = PageRequest.of(page - 1, 10, Sort.by(Sort.Direction.DESC, "cno"));
+        Page<Comment> result = commentRepository.findByPostId(postId, pageable);
+        return result.map(this::convertEntityToDto);
     }
 }
