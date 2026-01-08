@@ -4,6 +4,8 @@
       layout:decorate="~{layout/layout}">
 
 <th:block layout:fragment="content">
+    <!-- 1. 마크다운 변환 라이브러리 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         .chat-container {
             max-width: 900px;
@@ -121,6 +123,69 @@
             margin-bottom: 1rem;
             width: fit-content;
         }
+
+        /* 2. 카드 UI (표 및 마크다운) 스타일링 */
+        .message.bot table {
+            display: block; /* 스크롤 활성화를 위해 블록 요소로 변경 */
+            width: 100%;
+            overflow-x: auto; /* 가로 스크롤 허용 */
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+            /* 부드러운 스크롤바 스타일링 */
+        }
+
+        .message.bot table::-webkit-scrollbar {
+            height: 6px;
+        }
+        .message.bot table::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 10px;
+        }
+
+        .message.bot th {
+            background-color: #f8faff;
+            color: #2d3748;
+            padding: 14px 20px;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 2px solid #667eea;
+            white-space: nowrap; /* 제목이 세로로 깨지는 것 방지 */
+        }
+
+        .message.bot td {
+            padding: 12px 20px;
+            border-bottom: 1px solid #edf2f7;
+            color: #4a5568;
+            white-space: nowrap; /* 내용이 세로로 깨지는 것 방지 (가로 스크롤 유도) */
+        }
+
+        .message.bot tr:last-child td {
+            border-bottom: none;
+        }
+
+        .message.bot h3, .message.bot h4 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #2d3748;
+            border-left: 4px solid #667eea;
+            padding-left: 10px;
+        }
+
+        .message.bot strong {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .message.bot ul, .message.bot ol {
+            padding-left: 1.5rem;
+            margin: 1rem 0;
+        }
     </style>
 
     <div class="chat-container">
@@ -149,6 +214,9 @@
         const chatMessages = document.getElementById('chatMessages');
         const userInput = document.getElementById('userInput');
         const typingIndicator = document.getElementById('typingIndicator');
+        
+        // 대화 내역 저장을 위한 배열
+        let chatHistory = [];
 
         function handleKeyPress(e) {
             if (e.key === 'Enter') {
@@ -159,16 +227,30 @@
         function addMessage(text, isUser = false) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${isUser ? 'user' : 'bot'}`;
-            msgDiv.innerText = text;
+            
+            if (isUser) {
+                msgDiv.innerText = text;
+            } else {
+                // AI 답변은 마크다운으로 파싱하여 HTML로 삽입
+                msgDiv.innerHTML = marked.parse(text);
+            }
+            
             chatMessages.appendChild(msgDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // 히스토리에 추가 (최대 10개까지만 유지하여 전송량 조절)
+            chatHistory.push({
+                role: isUser ? "user" : "assistant",
+                content: text
+            });
+            if (chatHistory.length > 10) chatHistory.shift();
         }
 
         function sendMessage() {
             const text = userInput.value.trim();
             if (!text) return;
 
-            addMessage(text, true);
+            addMessage(text, true); // 내 메시지 추가 및 히스토리 저장
             userInput.value = '';
             
             typingIndicator.style.display = 'block';
@@ -178,13 +260,16 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ query: text }),
+                body: JSON.stringify({ 
+                    query: text,
+                    history: chatHistory.slice(0, -1) // 현재 질문을 제외한 이전 대화만 history로 전달
+                }),
             })
             .then(response => response.json())
             .then(data => {
                 typingIndicator.style.display = 'none';
                 if (data.answer) {
-                    addMessage(data.answer);
+                    addMessage(data.answer); // AI 메시지 추가 및 히스토리 저장
                 } else {
                     addMessage("죄송합니다. 답변을 가져오지 못했습니다.");
                 }

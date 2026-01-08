@@ -15,6 +15,16 @@ public class ChatbotDTO {
     @AllArgsConstructor
     public static class Request {
         private String query;
+        private List<Message> history;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Message {
+        private String role;    // "user" or "assistant"
+        private String content;
     }
 
     @Data
