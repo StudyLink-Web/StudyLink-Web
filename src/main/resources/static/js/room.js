@@ -92,6 +92,7 @@ document.addEventListener('click', async (e)=>{
         for (let file of files){
             const formData = new FormData();
             formData.append("file", file);
+            formData.append("roomId", roomId); // roomId도 같이 전송
 
             const result = await sendFile(formData); // 순차 업로드
             if (result === "1") {
