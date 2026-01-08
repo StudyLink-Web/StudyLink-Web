@@ -1,5 +1,5 @@
 HELP.md
-application.properties
+src/main/resources/application.properties
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -36,3 +36,29 @@ out/
 
 ### VS Code ###
 .vscode/
+
+
+# 개인 설정 파일 (API 키 포함)
+src/main/resources/application-local.yml
+src/main/resources/application-dev.yml
+src/main/resources/application.yml
+src/main/resources/application-dev.properties
+
+# Build
+.gradle/
+target/
+*.class
+*.jar
+*.war
+
+# Spring Boot
+.m2/
+/bin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
