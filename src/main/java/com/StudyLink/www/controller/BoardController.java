@@ -26,11 +26,11 @@ public class BoardController {
     private final BoardService boardService;
     private final FileHandler fileHandler;
 
-    @GetMapping("/register")
-    public void register(){}
+    @GetMapping("/board_register")
+    public void board_register(){}
 
-    @PostMapping("/register")
-    public String register(BoardDTO boardDTO,
+    @PostMapping("/board_register")
+    public String board_register(BoardDTO boardDTO,
                            @RequestParam(name = "files", required = false)MultipartFile[] files){
         // 파일처리
         // 저장될 파일 데이터 + 직접 폴더에 파일을 저장
@@ -46,11 +46,11 @@ public class BoardController {
         // 등록 후 상세로 보내고 싶으면 아래로 바꾸면 됨:
         // return "redirect:/board/detail?postId=" + postId;
 
-        return "redirect:/board/list";
+        return "redirect:/board/board_list";
     }
 
-    @GetMapping("/list")
-    public void list(Model model,
+    @GetMapping("/board_list")
+    public void board_list(Model model,
                      @RequestParam(name="pageNo", defaultValue = "1", required = false) int pageNo,
                      @RequestParam(name="type", required = false) String type,
                      @RequestParam(name="keyword", required = false) String keyword){
@@ -88,7 +88,7 @@ public class BoardController {
     @GetMapping("/remove")
     public String remove(@RequestParam("postId") long postId) {
         boardService.remove(postId);
-        return "redirect:/board/list";
+        return "redirect:/board/board_list";
     }
 
     @DeleteMapping("/file/{uuid}")
