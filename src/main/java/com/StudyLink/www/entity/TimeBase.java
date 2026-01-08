@@ -18,11 +18,11 @@ public class TimeBase {
     /*등록일, 수정일만 따로 관리하는 슈퍼 클래스*/
 
     @CreatedDate
-    @Column(name = "reg_date", updatable = false)
-    private LocalDateTime regDate;
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(name = "mod_date")
-    private LocalDateTime modDate;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
 }

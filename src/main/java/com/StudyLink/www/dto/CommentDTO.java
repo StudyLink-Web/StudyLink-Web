@@ -1,18 +1,17 @@
 package com.StudyLink.www.dto;
-import lombok.*;
 
+import lombok.*;
 import java.time.LocalDateTime;
 
-@Setter
-@Getter
+@Getter @Setter
 @ToString
-@AllArgsConstructor
-@NoArgsConstructor
+@AllArgsConstructor @NoArgsConstructor
 @Builder
 public class CommentDTO {
     private Long cno;
-    private Long bno;
+    private Long postId;
     private String writer;
     private String content;
-    private LocalDateTime regDate, modDate;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

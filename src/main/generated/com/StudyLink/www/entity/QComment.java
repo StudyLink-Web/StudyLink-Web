@@ -21,17 +21,17 @@ public class QComment extends EntityPathBase<Comment> {
 
     public final QTimeBase _super = new QTimeBase(this);
 
-    public final NumberPath<Long> bno = createNumber("bno", Long.class);
-
     public final NumberPath<Long> cno = createNumber("cno", Long.class);
 
     public final StringPath content = createString("content");
 
     //inherited
-    public final DateTimePath<java.time.LocalDateTime> modDate = _super.modDate;
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
+
+    public final NumberPath<Long> postId = createNumber("postId", Long.class);
 
     //inherited
-    public final DateTimePath<java.time.LocalDateTime> regDate = _super.regDate;
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public final StringPath writer = createString("writer");
 

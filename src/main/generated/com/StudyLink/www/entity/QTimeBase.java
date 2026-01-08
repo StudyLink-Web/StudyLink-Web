@@ -19,9 +19,9 @@ public class QTimeBase extends EntityPathBase<TimeBase> {
 
     public static final QTimeBase timeBase = new QTimeBase("timeBase");
 
-    public final DateTimePath<java.time.LocalDateTime> modDate = createDateTime("modDate", java.time.LocalDateTime.class);
+    public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
-    public final DateTimePath<java.time.LocalDateTime> regDate = createDateTime("regDate", java.time.LocalDateTime.class);
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 
     public QTimeBase(String variable) {
         super(TimeBase.class, forVariable(variable));

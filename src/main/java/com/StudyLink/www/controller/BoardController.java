@@ -1,4 +1,5 @@
 package com.StudyLink.www.controller;
+
 import com.StudyLink.www.dto.BoardDTO;
 import com.StudyLink.www.dto.BoardFileDTO;
 import com.StudyLink.www.dto.FileDTO;
@@ -40,11 +41,11 @@ public class BoardController {
         }
         log.info(">>> fileList >> {}", fileList);
 
-        BoardFileDTO boardFileDTO = new BoardFileDTO(boardDTO, fileList);
-        Long bno = boardService.insert(boardFileDTO);
+        Long postId = boardService.insert(new BoardFileDTO(boardDTO, fileList));
 
-        //Long bno = boardService.insert(boardDTO);
-        //log.info(">>>> insert id >> {}", bno);
+        // 등록 후 상세로 보내고 싶으면 아래로 바꾸면 됨:
+        // return "redirect:/board/detail?postId=" + postId;
+
         return "redirect:/board/list";
     }
 
@@ -52,53 +53,57 @@ public class BoardController {
     public void list(Model model,
                      @RequestParam(name="pageNo", defaultValue = "1", required = false) int pageNo,
                      @RequestParam(name="type", required = false) String type,
-                     @RequestParam(name = "keyword", required = false) String keyword){
+                     @RequestParam(name="keyword", required = false) String keyword){
+
         Page<BoardDTO> list = boardService.getList(pageNo, type, keyword);
         PageHandler<BoardDTO> pageHandler = new PageHandler<>(list, pageNo, type, keyword);
         model.addAttribute("ph", pageHandler);
     }
 
     @GetMapping("/detail")
-    public void detail(@RequestParam("bno") long bno, Model model){
-        BoardFileDTO boardFileDTO = boardService.getDetail(bno);
+    public void detail(@RequestParam("postId") long postId, Model model) {
+        BoardFileDTO boardFileDTO = boardService.getDetail(postId);
         model.addAttribute("boardFileDTO", boardFileDTO);
     }
 
     @PostMapping("/modify")
     public String modify(BoardDTO boardDTO,
                          RedirectAttributes redirectAttributes,
-                         @RequestParam(name = "files", required = false) MultipartFile[] files){
-        List<FileDTO>fileDTOList = null;
+                         @RequestParam(name = "files", required = false) MultipartFile[] files) {
+
+        List<FileDTO> fileDTOList = null;
         log.info(">>> files >> {}", files);
-        if(files != null && files[0].getSize() > 0){
+
+        if (files != null && files.length > 0 && files[0].getSize() > 0) {
             fileDTOList = fileHandler.uploadFile(files);
             log.info(">>> fileDtoList >> {}", fileDTOList);
         }
 
-        Long bno = boardService.modify(new BoardFileDTO(boardDTO, fileDTOList));
-        redirectAttributes.addAttribute("bno", boardDTO.getBno());
+        Long postId = boardService.modify(new BoardFileDTO(boardDTO, fileDTOList));
+
+        redirectAttributes.addAttribute("postId", postId);
         return "redirect:/board/detail";
     }
 
     @GetMapping("/remove")
-    public String remove(@RequestParam("bno") long bno){
-        boardService.remove(bno);
+    public String remove(@RequestParam("postId") long postId) {
+        boardService.remove(postId);
         return "redirect:/board/list";
     }
 
     @DeleteMapping("/file/{uuid}")
-    public ResponseEntity<String> fileRemove(@PathVariable("uuid")String uuid){
-        // 파일을 먼저 삭제하고, DB의 데이터 삭제
+    public ResponseEntity<String> fileRemove(@PathVariable("uuid") String uuid) {
+
         FileDTO removeFile = boardService.getFile(uuid);
         FileRemoveHandler fileRemoveHandler = new FileRemoveHandler();
         boolean isDel = fileRemoveHandler.removeFile(removeFile);
 
-        // DB 데이터 삭제
-        long bno = 0;
-        if(isDel){
-            bno = boardService.fileRemove(uuid);
+        long postId = 0;
+        if (isDel) {
+            postId = boardService.fileRemove(uuid); // 여기 리턴이 postId인지 확인 필요(아래 참고)
         }
-        return bno > 0 ? ResponseEntity.ok("1") :
-                ResponseEntity.internalServerError().build();
+
+        return postId > 0 ? ResponseEntity.ok("1")
+                : ResponseEntity.internalServerError().build();
     }
 }

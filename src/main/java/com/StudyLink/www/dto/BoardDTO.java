@@ -1,7 +1,6 @@
 package com.StudyLink.www.dto;
 
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Getter
@@ -11,12 +10,23 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class BoardDTO {
-    private Long bno;
+
+    // 게시글 PK
+    private Long postId;
+
+    // 작성자 FK (Users PK)
+    private Long userId;
+
+    // 게시글 제목
     private String title;
-    private String writer;
+
+    // 게시글 본문
     private String content;
-    private int readCount;
-    private int cmtQty;
-    private int fileQty;
-    private LocalDateTime regDate, modDate;
+
+    // 조회수
+    private int viewCount;
+
+    // 작성 / 수정 시각 (TimeBase와 매칭)
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

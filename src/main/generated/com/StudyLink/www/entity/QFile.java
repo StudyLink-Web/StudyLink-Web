@@ -21,7 +21,8 @@ public class QFile extends EntityPathBase<File> {
 
     public final QTimeBase _super = new QTimeBase(this);
 
-    public final NumberPath<Long> bno = createNumber("bno", Long.class);
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
     public final StringPath fileName = createString("fileName");
 
@@ -29,13 +30,12 @@ public class QFile extends EntityPathBase<File> {
 
     public final NumberPath<Integer> fileType = createNumber("fileType", Integer.class);
 
-    //inherited
-    public final DateTimePath<java.time.LocalDateTime> modDate = _super.modDate;
-
-    //inherited
-    public final DateTimePath<java.time.LocalDateTime> regDate = _super.regDate;
+    public final NumberPath<Long> postId = createNumber("postId", Long.class);
 
     public final StringPath saveDir = createString("saveDir");
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public final StringPath uuid = createString("uuid");
 

@@ -21,25 +21,21 @@ public class QBoard extends EntityPathBase<Board> {
 
     public final QTimeBase _super = new QTimeBase(this);
 
-    public final NumberPath<Long> bno = createNumber("bno", Long.class);
-
-    public final NumberPath<Integer> cmtQty = createNumber("cmtQty", Integer.class);
-
     public final StringPath content = createString("content");
 
-    public final NumberPath<Integer> fileQty = createNumber("fileQty", Integer.class);
-
     //inherited
-    public final DateTimePath<java.time.LocalDateTime> modDate = _super.modDate;
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
-    public final NumberPath<Integer> readCount = createNumber("readCount", Integer.class);
-
-    //inherited
-    public final DateTimePath<java.time.LocalDateTime> regDate = _super.regDate;
+    public final NumberPath<Long> postId = createNumber("postId", Long.class);
 
     public final StringPath title = createString("title");
 
-    public final StringPath writer = createString("writer");
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
+
+    public final NumberPath<Long> userId = createNumber("userId", Long.class);
+
+    public final NumberPath<Integer> viewCount = createNumber("viewCount", Integer.class);
 
     public QBoard(String variable) {
         super(Board.class, forVariable(variable));

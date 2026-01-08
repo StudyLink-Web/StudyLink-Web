@@ -3,6 +3,8 @@ package com.StudyLink.www.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 /*@Table(name="board") : 테이블 이름 변경 가능.
  * 일반적으로는 클래스명이 테이블명
  * Entity : DB의 테이블 맵핑 클래스
@@ -23,23 +25,26 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name="board")
-public class Board extends TimeBase{
+@Table(name = "board")
+public class Board extends TimeBase {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long bno;
+    @Column(name = "post_id")
+    private Long postId;
+
+    // FK: Users PK(Long)와 타입 통일
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(length = 200, nullable = false)
     private String title;
-    @Column(length = 200, nullable = false)
-    private String writer;
-    @Column(length = 2000, nullable = false)
+
+    @Column(columnDefinition = "TEXT", nullable = false) // ✅ content는 TEXT 권장
     private String content;
-    @Column(name = "read_count", columnDefinition = "int default 0")
-    private int readCount;
-    @Column(name = "cmt_qty", columnDefinition = "int default 0")
-    private int cmtQty;
-    @Column(name = "file_qty", columnDefinition = "int default 0")
-    private int fileQty;
 
+    @Column(name = "view_count", columnDefinition = "int default 0")
+    private int viewCount;
+
+    // created_at, updated_at 은 TimeBase가 처리 (여기엔 선언 X)
 }
-

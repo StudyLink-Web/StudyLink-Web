@@ -10,88 +10,99 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 public interface BoardService {
-    // 추상메서드만 가능한 인터페이스
-    // default method : 인터페이스에서 규칙을 잡거나, 로직을 잡거나 할 때 사용
-    // 호환성 유지
 
-    /* BoardDTO => Board 객체로 변환
-     *  BoardDTO(class) : bno, title, writer, content, readCount, cmtQty, fileQty, regDate, modDate
-     *  Board(entity) : bno, title, writer, content, readCount, cmtQty, fileQty
-     *  화면 => DB
-     * */
-    default Board convertDtoToEntity(BoardDTO boardDTO){
+    /* =========================
+     *  Board 변환 메서드
+     * ========================= */
+
+    // BoardDTO -> Board(Entity)
+    // createdAt/updatedAt 은 TimeBase(Auditing)가 처리하므로 여기서는 세팅하지 않음
+    default Board convertDtoToEntity(BoardDTO boardDTO) {
         return Board.builder()
-                .bno(boardDTO.getBno())
+                .postId(boardDTO.getPostId())
+                .userId(boardDTO.getUserId())
                 .title(boardDTO.getTitle())
-                .writer(boardDTO.getWriter())
                 .content(boardDTO.getContent())
-                .readCount(boardDTO.getReadCount())
-                .cmtQty(boardDTO.getCmtQty())
-                .fileQty(boardDTO.getFileQty())
+                .viewCount(boardDTO.getViewCount())
                 .build();
     }
-    /* 반대 케이스
-     *  DB => 화면
-     *  Board => BoardDTO
-     * */
-    default BoardDTO convertEntityToDto(Board board){
+
+    // Board(Entity) -> BoardDTO
+    default BoardDTO convertEntityToDto(Board board) {
         return BoardDTO.builder()
-                .bno(board.getBno())
+                .postId(board.getPostId())
+                .userId(board.getUserId())
                 .title(board.getTitle())
-                .writer(board.getWriter())
                 .content(board.getContent())
-                .readCount(board.getReadCount())
-                .cmtQty(board.getCmtQty())
-                .fileQty(board.getFileQty())
-                .regDate(board.getRegDate())
-                .modDate(board.getModDate())
+                .viewCount(board.getViewCount())
+                .createdAt(board.getCreatedAt())   // TimeBase
+                .updatedAt(board.getUpdatedAt())   // TimeBase
                 .build();
     }
 
+    /* =========================
+     *  Board 기능 메서드
+     * ========================= */
 
+    // 게시글 등록 (BoardDTO만)
     Long insert(BoardDTO boardDTO);
 
+    // 게시글 목록 (페이징 + 검색)
     Page<BoardDTO> getList(int pageNo, String type, String keyword);
 
-    BoardFileDTO getDetail(long bno);
+    // 게시글 상세 (첨부파일 포함 DTO)
+    BoardFileDTO getDetail(long postId);
 
-    //Long modify(BoardDTO boardDTO);
+    // 게시글 수정 (첨부파일 포함)
     Long modify(BoardFileDTO boardFileDTO);
 
-    void remove(long bno);
+    // 게시글 삭제
+    void remove(long postId);
 
-    // FileDTO => FileEntity
-    default File convertDtoToEntity(FileDTO fileDTO){
+    /* =========================
+     *  File 변환 메서드
+     * ========================= */
+
+    // FileDTO -> File(Entity)
+    default File convertDtoToEntity(FileDTO fileDTO) {
         return File.builder()
                 .uuid(fileDTO.getUuid())
                 .saveDir(fileDTO.getSaveDir())
                 .fileName(fileDTO.getFileName())
                 .fileType(fileDTO.getFileType())
-                .bno(fileDTO.getBno())
+                .postId(fileDTO.getPostId())
                 .fileSize(fileDTO.getFileSize())
                 .build();
     }
 
-    // FileEntity => FileDTO
-    default FileDTO convertEntityToDto(File file){
+    // File(Entity) -> FileDTO
+    // File 엔티티가 TimeBase 상속(또는 createdAt/updatedAt 필드 보유)한다고 가정
+    default FileDTO convertEntityToDto(File file) {
         return FileDTO.builder()
                 .uuid(file.getUuid())
                 .saveDir(file.getSaveDir())
                 .fileName(file.getFileName())
                 .fileType(file.getFileType())
-                .bno(file.getBno())
+                .postId(file.getPostId())
                 .fileSize(file.getFileSize())
-                .regDate(file.getRegDate())
-                .modDate((file.getModDate()))
+                .createdAt(file.getCreatedAt())
+                .updatedAt(file.getUpdatedAt())
                 .build();
     }
 
+    /* =========================
+     *  파일 포함 등록 (Board + Files)
+     * ========================= */
+
+    // 게시글 등록(첨부파일 포함)
     Long insert(BoardFileDTO boardFileDTO);
 
+    // 파일 1개 삭제(물리 삭제는 핸들러/서비스 구현에서)
     long fileRemove(String uuid);
 
+    // 파일 1개 조회
     FileDTO getFile(String uuid);
 
+    // 오늘 날짜의 파일 목록 (배치/정리/썸네일 등)
     List<FileDTO> getTodayFileList(String today);
 }
-
