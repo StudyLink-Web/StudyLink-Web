@@ -8,9 +8,13 @@
 
 	<div class="d-flex">
 		<div>
-			<div class="border border-black">그림 도구</div>
-			<canvas id="canvas" width="1400" height="700" style="border:1px solid black;"></canvas>
+			<div class="border border-black" style="width: 1200px; height: 50px;">그림 도구</div>
+			<canvas id="canvas" width="1200" height="700" style="border:1px solid black;"></canvas>
 		</div>
-		<div class="border border-black px-5">채팅 창</div>
+		<div class="border border-black d-flex flex-column flex-shrink-0" style="width: 300px; height: 750px;">
+			<div class="w-100" style="height: 650px;" id="messageArea">메시지 출력 공간</div>
+			<textarea name="message" class="form-control w-100 mt-auto" style="height: 100px;"></textarea>
+		</div>
 	</div>
+	<script src="/js/room.js"></script>
 </div>

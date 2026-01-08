@@ -20,3 +20,6 @@ spring:
           naver:
             client-id: YOUR_NAVER_CLIENT_ID_HERE
             client-secret: YOUR_NAVER_CLIENT_SECRET_HERE
+
+file:
+  upload_dir: D:/web_0826_kkj/_myProject/_java/_fileUpload

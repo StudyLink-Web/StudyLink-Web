@@ -77,3 +77,12 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 }
+
+// QType 생성 위치 설정
+def querydslSrcDir='src/main/generated'
+clean {
+    delete file(querydslSrcDir)
+}
+tasks.withType(JavaCompile){
+    options.generatedSourceOutputDirectory = file(querydslSrcDir)
+}

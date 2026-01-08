@@ -18,13 +18,11 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
-
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/board")
+@RequestMapping("/board/*")
 @Controller
 public class BoardController {
-
     private final BoardService boardService;
     private final FileHandler fileHandler;
 
@@ -33,11 +31,12 @@ public class BoardController {
 
     @PostMapping("/register")
     public String register(BoardDTO boardDTO,
-                           @RequestParam(name = "files", required = false) MultipartFile[] files) {
-
+                           @RequestParam(name = "files", required = false)MultipartFile[] files){
+        // 파일처리
+        // 저장될 파일 데이터 + 직접 폴더에 파일을 저장
         List<FileDTO> fileList = null;
-
-        if (files != null && files.length > 0 && files[0].getSize() > 0) {
+        if(files != null && files[0].getSize() > 0){
+            // 핸들러 호출
             fileList = fileHandler.uploadFile(files);
         }
         log.info(">>> fileList >> {}", fileList);
@@ -96,7 +95,6 @@ public class BoardController {
     public ResponseEntity<String> fileRemove(@PathVariable("uuid") String uuid) {
 
         FileDTO removeFile = boardService.getFile(uuid);
-
         FileRemoveHandler fileRemoveHandler = new FileRemoveHandler();
         boolean isDel = fileRemoveHandler.removeFile(removeFile);
 
