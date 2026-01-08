@@ -9,50 +9,47 @@
 			<!-- 로고 -->
 			<a href="/" class="logo">🎓 StudyLink</a>
 
+			<!-- ⭐ 변경: sec:authorize → th:if + sec:authorize -->
 			<!-- 로그인 전 -->
-			<sec:authorize access="isAnonymous()">
-				<ul class="header-nav">
-					<li>
-						<a th:href="@{/login}" class="header-nav-link">로그인</a>
-					</li>
-					<li>
-						<a th:href="@{/signup}" class="header-nav-link">회원가입</a>
-					</li>
-				</ul>
-			</sec:authorize>
+			<ul class="header-nav" th:if="${#authorization.expression('isAnonymous()')}">
+				<li>
+					<a th:href="@{/login}" class="header-nav-link">로그인</a>
+				</li>
+				<li>
+					<a th:href="@{/signup}" class="header-nav-link">회원가입</a>
+				</li>
+			</ul>
 
 			<!-- 로그인 후 -->
-			<sec:authorize access="isAuthenticated()">
-				<ul class="header-nav">
-					<li><a th:href="@{/dashboard}" class="header-nav-link">대시보드</a></li>
-					<li><a th:href="@{/questions}" class="header-nav-link">질문목록</a></li>
-					<li><a th:href="@{/my-page}" class="header-nav-link">마이페이지</a></li>
+			<ul class="header-nav" th:if="${#authorization.expression('isAuthenticated()')}">
+				<li><a th:href="@{/dashboard}" class="header-nav-link">대시보드</a></li>
+				<li><a th:href="@{/questions}" class="header-nav-link">질문목록</a></li>
+				<li><a th:href="@{/my-page}" class="header-nav-link">마이페이지</a></li>
 
-					<li class="dropdown">
-						<a href="#"
-						   class="header-nav-link dropdown-toggle"
-						   id="userDropdown"
-						   role="button"
-						   data-bs-toggle="dropdown"
-						   aria-expanded="false">
-							👤 <span sec:authentication="name"></span>
-						</a>
+				<li class="dropdown">
+					<a href="#"
+					   class="header-nav-link dropdown-toggle"
+					   id="userDropdown"
+					   role="button"
+					   data-bs-toggle="dropdown"
+					   aria-expanded="false">
+						👤 <span sec:authentication="name"></span>
+					</a>
 
-						<ul class="dropdown-menu dropdown-menu-end">
-							<li><a class="dropdown-item" href="/profile">프로필</a></li>
-							<li><a class="dropdown-item" href="/settings">설정</a></li>
-							<li><hr class="dropdown-divider"></li>
-							<li>
-								<form method="post" action="/logout">
-									<button type="submit" class="dropdown-item">
-										로그아웃
-									</button>
-								</form>
-							</li>
-						</ul>
-					</li>
-				</ul>
-			</sec:authorize>
+					<ul class="dropdown-menu dropdown-menu-end">
+						<li><a class="dropdown-item" href="/profile">프로필</a></li>
+						<li><a class="dropdown-item" href="/settings">설정</a></li>
+						<li><hr class="dropdown-divider"></li>
+						<li>
+							<form method="post" th:action="@{/logout}" style="display: inline; width: 100%;">
+								<button type="submit" class="dropdown-item" style="background: none; border: none; cursor: pointer; text-align: left; width: 100%; padding: 10px 16px;">
+									로그아웃
+								</button>
+							</form>
+						</li>
+					</ul>
+				</li>
+			</ul>
 
 			<!-- D-Day -->
 			<!-- header.html 마지막 부분에 추가/수정 -->
@@ -60,7 +57,7 @@
 				<!-- 로그인 상태일 때 -->
 				<th:block th:if="${user != null}">
 					<div class="dday">
-						<p>D-DAY</p>
+						<p>수능까지</p>
 						<span th:attr="data-dday=${dday}" th:text="${dday}"></span>
 					</div>
 				</th:block>

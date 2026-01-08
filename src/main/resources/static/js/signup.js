@@ -29,6 +29,16 @@ document.addEventListener('DOMContentLoaded', function() {
     initPasswordToggle();
 
     console.log('✅ 회원가입 폼 초기화 완료');
+
+    // ⭐ 드롭다운 강제 닫기 (시간을 1000ms로 늘림)
+    setTimeout(() => {
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+        if (dropdownMenu) {
+            dropdownMenu.classList.remove('show');
+            dropdownMenu.classList.remove('active');  // ← active도 제거
+            console.log('✅ 로그인 페이지: 드롭다운 닫음');
+        }
+    }, 1000);  // ← 500ms → 1000ms로 변경
 });
 
 // ============================================

@@ -10,15 +10,68 @@ document.addEventListener('DOMContentLoaded', function () {
     setupMenuEvents();
     highlightActiveMenu();
     setupMobileMenuAutoClose();
+    setupLogoutForm();
+    setupProfileDropdown();
     updateDday();
-});
+}); // ← DOMContentLoaded 닫기
+
+/**
+ * 로그아웃 폼 설정
+ */
+function setupLogoutForm() {
+    const logoutForms = document.querySelectorAll('form[action*="logout"]');
+
+    logoutForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            console.log('🔓 로그아웃 폼 제출');
+        });
+    });
+}
+
+/**
+ * 프로필 드롭다운 메뉴 설정
+ */
+function setupProfileDropdown() {
+    const currentPath = window.location.pathname;
+    const dropdownMenu = document.querySelector('.dropdown-menu');
+
+    // ⭐ login/signup 페이지에서는 드롭다운 완전히 비활성화
+    if (currentPath.includes('/login') || currentPath.includes('/signup')) {
+        if (dropdownMenu) {
+            dropdownMenu.classList.remove('show');
+            dropdownMenu.classList.remove('active');
+            dropdownMenu.style.display = 'none';
+
+            const userDropdown = document.getElementById('userDropdown');
+            if (userDropdown && userDropdown._bsDropdown) {
+                userDropdown._bsDropdown.hide();
+            }
+
+            console.log('🔒 로그인/회원가입 페이지: 드롭다운 완전 비활성화');
+        }
+        return;
+    }
+
+    // 다른 페이지에서 외부 클릭 시 드롭다운 닫기
+    if (dropdownMenu) {
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                dropdownMenu.classList.remove('show');
+                if (e.target.closest('.dropdown-toggle')) {
+                    return;
+                }
+            }
+        });
+    }
+
+    console.log('✅ 프로필 드롭다운 설정 완료');
+}
 
 /**
  * D-day 업데이트 (Thymeleaf에서 받은 값 활용)
  */
 function updateDday() {
     try {
-        // .dday 섹션의 span 요소 찾기
         const ddaySpans = document.querySelectorAll('.dday span');
 
         console.log('🔍 찾은 D-day span 개수:', ddaySpans.length);
@@ -28,17 +81,13 @@ function updateDday() {
             return;
         }
 
-        // 모든 D-day 요소 업데이트 (로그인/비로그인 상태 모두 대응)
         ddaySpans.forEach((span, index) => {
-            // 원본 텍스트 출력
             const originalText = span.textContent.trim();
             console.log(`📌 Span ${index} 원본 텍스트:`, `"${originalText}"`);
 
-            // 빈 문자열이나 공백만 있는 경우 처리
             if (!originalText || originalText === '' || isNaN(originalText)) {
                 console.warn(`⚠️ Span ${index}에 유효한 값이 없습니다. 기본값 사용`);
 
-                // ✅ 새로운 방법: HTML 데이터 속성 확인
                 const ddayValue = span.getAttribute('data-dday') || span.parentElement.getAttribute('data-dday');
 
                 if (!ddayValue) {
@@ -52,7 +101,6 @@ function updateDday() {
             }
         });
 
-        // 매일 자정에 자동 갱신 (선택사항)
         scheduleNextDayUpdate();
 
     } catch (e) {
@@ -74,7 +122,6 @@ function processAndDisplayDday(span, ddayValue) {
             return;
         }
 
-        // D-day 표시 로직
         if (dayDiff > 0) {
             span.textContent = `D-${dayDiff}`;
             span.style.color = '#667eea';
@@ -97,7 +144,7 @@ function processAndDisplayDday(span, ddayValue) {
 }
 
 /**
- * 매일 자정에 D-day 자동 갱신 (선택사항)
+ * 매일 자정에 D-day 자동 갱신
  */
 function scheduleNextDayUpdate() {
     const now = new Date();
@@ -106,8 +153,7 @@ function scheduleNextDayUpdate() {
 
     setTimeout(() => {
         console.log('🔄 D-day 자동 갱신 시간입니다. 페이지를 새로고침하세요.');
-        // window.location.reload(); // 필요시 활성화
-        scheduleNextDayUpdate(); // 재귀적으로 매일 실행
+        scheduleNextDayUpdate();
     }, timeUntilMidnight);
 }
 
@@ -150,7 +196,7 @@ function highlightActiveMenu() {
 }
 
 /**
- * 모바일 메뉴 자동 닫기 (향후 확장 대비)
+ * 모바일 메뉴 자동 닫기
  */
 function setupMobileMenuAutoClose() {
     const navLinks = document.querySelectorAll('.header-nav-link, .dropdown-item');

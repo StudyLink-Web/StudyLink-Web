@@ -7,6 +7,7 @@ import com.querydsl.core.types.dsl.*;
 import com.querydsl.core.types.PathMetadata;
 import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.dsl.PathInits;
 
 
 /**
@@ -17,11 +18,21 @@ public class QUsers extends EntityPathBase<Users> {
 
     private static final long serialVersionUID = 1753229548L;
 
+    private static final PathInits INITS = PathInits.DIRECT2;
+
     public static final QUsers users = new QUsers("users");
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
     public final StringPath email = createString("email");
+
+    public final BooleanPath emailVerified = createBoolean("emailVerified");
+
+    public final ListPath<Favorite, QFavorite> favoritedMentors = this.<Favorite, QFavorite>createList("favoritedMentors", Favorite.class, QFavorite.class, PathInits.DIRECT2);
+
+    public final ListPath<MentorAvailability, QMentorAvailability> mentorAvailabilities = this.<MentorAvailability, QMentorAvailability>createList("mentorAvailabilities", MentorAvailability.class, QMentorAvailability.class, PathInits.DIRECT2);
+
+    public final QMentorProfile mentorProfile;
 
     public final StringPath name = createString("name");
 
@@ -31,20 +42,34 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final StringPath role = createString("role");
 
+    public final QStudentProfile studentProfile;
+
     public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 
     public final NumberPath<Long> userId = createNumber("userId", Long.class);
 
+    public final StringPath username = createString("username");
+
     public QUsers(String variable) {
-        super(Users.class, forVariable(variable));
+        this(Users.class, forVariable(variable), INITS);
     }
 
     public QUsers(Path<? extends Users> path) {
-        super(path.getType(), path.getMetadata());
+        this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
     }
 
     public QUsers(PathMetadata metadata) {
-        super(Users.class, metadata);
+        this(metadata, PathInits.getFor(metadata, INITS));
+    }
+
+    public QUsers(PathMetadata metadata, PathInits inits) {
+        this(Users.class, metadata, inits);
+    }
+
+    public QUsers(Class<? extends Users> type, PathMetadata metadata, PathInits inits) {
+        super(type, metadata, inits);
+        this.mentorProfile = inits.isInitialized("mentorProfile") ? new QMentorProfile(forProperty("mentorProfile"), inits.get("mentorProfile")) : null;
+        this.studentProfile = inits.isInitialized("studentProfile") ? new QStudentProfile(forProperty("studentProfile"), inits.get("studentProfile")) : null;
     }
 
 }

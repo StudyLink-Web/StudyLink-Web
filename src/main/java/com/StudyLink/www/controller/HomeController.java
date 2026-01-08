@@ -17,6 +17,11 @@ public class HomeController {
         // 현재 로그인한 사용자 정보를 모델에 추가
         if (authentication != null && authentication.isAuthenticated()) {
             model.addAttribute("user", authentication.getPrincipal());
+            model.addAttribute("isAuthenticated", true);
+            System.out.println("✅ 로그인 사용자: " + authentication.getName());
+        } else {
+            model.addAttribute("isAuthenticated", false);
+            System.out.println("❌ 비로그인 사용자");
         }
         return "index";
     }
@@ -28,6 +33,9 @@ public class HomeController {
     public String index(Authentication authentication, Model model) {
         if (authentication != null && authentication.isAuthenticated()) {
             model.addAttribute("user", authentication.getPrincipal());
+            model.addAttribute("isAuthenticated", true);
+        } else {
+            model.addAttribute("isAuthenticated", false);
         }
         return "index";
     }

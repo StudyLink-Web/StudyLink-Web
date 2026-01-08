@@ -220,6 +220,12 @@ body {
     background: #1a6671;
 }
 
+/* 로그인/회원가입 페이지에서 드롭다운 완전히 숨기기 */
+.dropdown-menu {
+    display: none !important;
+    visibility: hidden !important;
+}
+
 /* ===== 오른쪽 섹션 디자인 ===== */
 .login-side {
     flex: 1;

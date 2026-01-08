@@ -19,6 +19,16 @@
 document.addEventListener('DOMContentLoaded', function () {
     console.log('✅ 로그인 페이지 초기화 시작');
     initializeLoginPage();
+
+    // ⭐ 드롭다운 강제 닫기 (시간을 1000ms로 늘림)
+    setTimeout(() => {
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+        if (dropdownMenu) {
+            dropdownMenu.classList.remove('show');
+            dropdownMenu.classList.remove('active');  // ← active도 제거
+            console.log('✅ 로그인 페이지: 드롭다운 닫음');
+        }
+    }, 1000);  // ← 500ms → 1000ms로 변경
 });
 
 /**
@@ -303,6 +313,24 @@ function checkLoginError() {
         document.getElementById('email').focus();
     }
 }
+
+/**
+ * 로그인 성공 시 페이지 새로고침 (헤더 업데이트용)
+ * Spring Security의 formLogin 처리 후 리다이렉트되면 실행
+ */
+function checkLoginSuccess() {
+    const params = new URLSearchParams(window.location.search);
+
+    // 로그인 성공 후 dashboard로 리다이렉트되었는지 확인
+    // (현재 경로가 /login이 아니면 = 로그인 성공했다는 뜻)
+    const currentPath = window.location.pathname;
+
+    // login 페이지가 아니면 이 함수는 실행되지 않음 (정상)
+    if (currentPath !== '/login') {
+        console.log('✅ 로그인 페이지가 아님 (로그인 성공함)');
+    }
+}
+
 
 /**
  * 소셜 로그인 버튼 (추후 구현)
