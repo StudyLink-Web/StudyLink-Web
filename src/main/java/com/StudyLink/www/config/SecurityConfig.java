@@ -49,15 +49,36 @@ public class SecurityConfig {
                 // 권한 설정
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(
+                                // ✅ 홈페이지는 누구나 접근 가능
                                 "/",
                                 "/index",
+
+                                // ✅ 로그인 관련
                                 "/login",
                                 "/signup",
+                                "/error",
+
                                 "/loginProc",
                                 "/logout",
+
+                                // ✅ 정적 리소스 (CSS, JS, 이미지)
                                 "/css/**",
                                 "/js/**",
                                 "/img/**",
+                                "/images/**",
+                                "/static/**",
+                                "/static.dist/**",
+
+                                // ✅ API는 모두 공개 (테스트용)
+                                "/api/**",
+
+                                // ✅ quiz관련 모두 허용. 나중에 분리 - 김광주
+                                "/room/**",
+                                "/ws/**", // WebSocket 엔드포인트 허용
+
+                                // ✅ board관련 모두 허용. 나중에 분리 - 김광주
+                                "/board/**",
+
                                 "/api/auth/**",
                                 "/.well-known/**",      // ✅ Chrome DevTools 에러 무시
                                 "/oauth2/**"

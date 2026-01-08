@@ -1,0 +1,5 @@
+.life_campus {text-align: center; font-size:30px; font-weight: 700; margin-bottom:0; margin-top:30px;}
+.campus_tab_list {display: flex; align-items: center; justify-content: center; gap:20px; text-align:center; cursor:pointer; margin-top:20px;}
+.campus_tab_list li.active {color:var(--primary-color); font-weight: 700; cursor:pointer;}
+.campus_tab_list li {width:100px;}
+.search_campus {margin-top:30px;}

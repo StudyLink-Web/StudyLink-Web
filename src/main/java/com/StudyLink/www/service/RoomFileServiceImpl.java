@@ -1,0 +1,20 @@
+package com.StudyLink.www.service;
+
+import com.StudyLink.www.dto.RoomFileDTO;
+import com.StudyLink.www.entity.RoomFile;
+import com.StudyLink.www.repository.RoomFileRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class RoomFileServiceImpl implements RoomFileService{
+    private final RoomFileRepository roomFileRepository;
+
+    @Override
+    public void insert(RoomFileDTO roomFileDTO) {
+        roomFileRepository.save(new RoomFile(roomFileDTO));
+    }
+}
