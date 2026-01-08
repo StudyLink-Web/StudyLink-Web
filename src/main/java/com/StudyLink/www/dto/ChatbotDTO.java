@@ -16,6 +16,18 @@ public class ChatbotDTO {
     public static class Request {
         private String query;
         private List<Message> history;
+        private List<UserScore> userScores;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UserScore {
+        private String subjectName;
+        private Integer score;
+        private String scoreType;
+        private String category;
     }
 
     @Data
