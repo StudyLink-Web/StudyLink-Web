@@ -17,4 +17,7 @@ public class RoomController {
 
     @GetMapping("/list")
     public void list(){}
+
+    @GetMapping("/room")
+    public void room(){}
 }
