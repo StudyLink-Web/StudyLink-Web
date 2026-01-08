@@ -1,12 +1,16 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	  layout:decorate="~{layout/layout}">
-
-<div layout:fragment="content" class="content_box">
-	<div class="wrap">
-		<div class="content_box">
-			<a href="/room/list">문제 리스트</a>
-		</div>
-	</div>
-</div>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/layout}"
+>
+  <div layout:fragment="content" class="content_box">
+    <div class="wrap">
+      <div class="content_box">
+        <a href="/room/list" class="btn btn-primary">문제 리스트</a>
+        <a href="/chatbot" class="btn btn-success">🤖 AI 대입 상담 챗봇</a>
+      </div>
+    </div>
+  </div>
+</html>
