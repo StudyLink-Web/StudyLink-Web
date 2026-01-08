@@ -11,12 +11,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class BoardDTO {
-    private Long bno;
+    private Long postId;
+    private Long userId;
     private String title;
-    private String writer;
     private String content;
-    private int readCount;
-    private int cmtQty;
-    private int fileQty;
-    private LocalDateTime regDate, modDate;
+    private int viewCount;
+    private LocalDateTime createdAt, updatedAt;
 }

@@ -1,11 +1,8 @@
 package com.StudyLink.www.controller;
 
-
-
-
-import com.example.demo.dto.CommentDTO;
-import com.example.demo.handler.PageHandler;
-import com.example.demo.service.CommentService;
+import com.StudyLink.www.dto.CommentDTO;
+import com.StudyLink.www.handler.PageHandler;
+import com.StudyLink.www.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
