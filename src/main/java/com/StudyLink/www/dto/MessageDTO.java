@@ -20,7 +20,7 @@ public class MessageDTO {
     private LocalDateTime createdAt;
     private MessageType messageType;
     private String content;
-    private String fileUuid;
+    private String path;
     private Boolean isRead;
 
     public enum MessageType {
@@ -36,7 +36,7 @@ public class MessageDTO {
         this.createdAt = message.getCreatedAt();
         this.messageType = MessageType.valueOf(message.getMessageType().name()); // Enum 변환
         this.content = message.getContent();
-        this.fileUuid = message.getFileUuid();
+        this.path = message.getPath();
         this.isRead = message.getIsRead();
     }
 }
