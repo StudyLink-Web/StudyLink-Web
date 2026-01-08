@@ -43,9 +43,7 @@ public class FileHandler {
         }
     }
 
-    public List<FileDTO> uploadFile(MultipartFile[] files){
-        List<FileDTO> fileList = new ArrayList<>();
-
+    public FileDTO uploadFile(MultipartFile file){
         // 날짜 형태로 파일 구성
         LocalDate date = LocalDate.now(); // 2025-12-24 => 파일 경로로 변경
         String today = date.toString().replace("-", File.separator);
@@ -59,36 +57,33 @@ public class FileHandler {
         }
 
         // 파일 정보 생성 => FileDTO 생성
-        for (MultipartFile file : files){
-            log.info(">>> file contentType {}", file.getContentType());
-            log.info(">>> file originalFileName {}", file.getOriginalFilename());
-            // file : name, size, type
-            FileDTO fileDTO = new FileDTO();
-            String originalFileName = file.getOriginalFilename();
-            fileDTO.setFileName(originalFileName);
-            fileDTO.setFileSize(file.getSize());
-            fileDTO.setFileType(file.getContentType().startsWith("image") ? 1 : 0);
-            fileDTO.setSaveDir(today);
+        log.info(">>> file contentType {}", file.getContentType());
+        log.info(">>> file originalFileName {}", file.getOriginalFilename());
+        // file : name, size, type
+        FileDTO fileDTO = new FileDTO();
+        String originalFileName = file.getOriginalFilename();
+        fileDTO.setFileName(originalFileName);
+        fileDTO.setFileSize(file.getSize());
+        fileDTO.setFileType(file.getContentType().startsWith("image") ? 1 : 0);
+        fileDTO.setSaveDir(today);
 
-            // uuid
-            UUID uuid = UUID.randomUUID();
-            String uuidString = uuid.toString();
-            fileDTO.setUuid(uuidString);
+        // uuid
+        UUID uuid = UUID.randomUUID();
+        String uuidString = uuid.toString();
+        fileDTO.setUuid(uuidString);
 
-            // 저장
-            String fileName = uuidString + "_" + originalFileName;
+        // 저장
+        String fileName = uuidString + "_" + originalFileName;
 
-            // 실제 저장 객체
-            // D:~/2025/12/24/uuid_fileName
-            File StoreFile = new File(folders, fileName);
-            try {
-                file.transferTo(StoreFile);
-            } catch (Exception e) {
-                log.info(">>> file save Error");
-                e.printStackTrace();
-            }
-            fileList.add(fileDTO);
+        // 실제 저장 객체
+        // D:~/2025/12/24/uuid_fileName
+        File StoreFile = new File(folders, fileName);
+        try {
+            file.transferTo(StoreFile);
+        } catch (Exception e) {
+            log.info(">>> file save Error");
+            e.printStackTrace();
         }
-        return fileList;
+        return fileDTO;
     }
 }

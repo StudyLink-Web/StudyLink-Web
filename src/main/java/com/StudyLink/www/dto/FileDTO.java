@@ -15,7 +15,6 @@ public class FileDTO {
     private String saveDir;
     private String fileName;
     private int fileType;
-    private long bno;
+    private long roomId;
     private long fileSize;
-    private LocalDateTime regDate, modDate;
 }
