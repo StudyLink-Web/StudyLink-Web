@@ -65,13 +65,44 @@ function spreadTextMessage(message){
 }
 
 
+async function sendFile(formData){
+    const url = "/room/saveFile";
+    const config = {
+        method: 'post',
+        body: formData
+    };
+    const res = await fetch(url, config);
+    return res.text();
+}
 
 
 // 캔버스 관련 함수
 
 connect();
-document.addEventListener('click', (e)=>{
+document.addEventListener('click', async (e)=>{
+    if (e.target.id == 'sendFileBtn'){
+        const fileInput = document.getElementById('file');
+        const files = fileInput.files;
 
+        if (!files[0]) {
+            alert("파일을 선택해주세요!");
+            return;
+        }
+
+        for (let file of files){
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const result = await sendFile(formData); // 순차 업로드
+            if (result === "1") {
+                console.log(`파일 ${file.name} 업로드 성공`);
+                // 여기서 WebSocket 메시지 보내도 OK
+            } else {
+                console.log(`파일 ${file.name} 업로드 실패`);
+            }
+        }
+
+    }
 })
 
 document.addEventListener('keydown', (e)=> {

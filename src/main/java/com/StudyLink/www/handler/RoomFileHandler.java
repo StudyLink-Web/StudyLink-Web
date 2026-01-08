@@ -17,16 +17,16 @@ public class RoomFileHandler {
     @Value("${file.upload_dir}")
     private String UP_DIP;
 
-    public void removeFile(RoomFileDTO fileDTO) {
-        String today = fileDTO.getSaveDir();
+    public void removeFile(RoomFileDTO roomFileDTO) {
+        String today = roomFileDTO.getSaveDir();
 
         File folders = new File(UP_DIP, today);
 
         // file : name, size, type
-        String originalFileName = fileDTO.getFileName();
+        String originalFileName = roomFileDTO.getFileName();
 
         // uuid
-        String uuidString = fileDTO.getUuid();
+        String uuidString = roomFileDTO.getUuid();
 
         // 삭제
         String fileName = uuidString + "_" + originalFileName;
@@ -36,12 +36,12 @@ public class RoomFileHandler {
         try {
             removeFile.delete();
         } catch (Exception e) {
-            log.info(">>> file save Error");
+            log.info(">>> file delete Error");
             e.printStackTrace();
         }
     }
 
-    public RoomFileDTO uploadFile(MultipartFile file){
+    public RoomFileDTO uploadFile(MultipartFile roomFile){
         // 날짜 형태로 파일 구성
         LocalDate date = LocalDate.now(); // 2025-12-24 => 파일 경로로 변경
         String today = date.toString().replace("-", File.separator);
@@ -55,20 +55,20 @@ public class RoomFileHandler {
         }
 
         // 파일 정보 생성 => FileDTO 생성
-        log.info(">>> file contentType {}", file.getContentType());
-        log.info(">>> file originalFileName {}", file.getOriginalFilename());
+        log.info(">>> file contentType {}", roomFile.getContentType());
+        log.info(">>> file originalFileName {}", roomFile.getOriginalFilename());
         // file : name, size, type
-        RoomFileDTO fileDTO = new RoomFileDTO();
-        String originalFileName = file.getOriginalFilename();
-        fileDTO.setFileName(originalFileName);
-        fileDTO.setFileSize(file.getSize());
-        fileDTO.setFileType(file.getContentType().startsWith("image") ? 1 : 0);
-        fileDTO.setSaveDir(today);
+        RoomFileDTO roomFileDTO = new RoomFileDTO();
+        String originalFileName = roomFile.getOriginalFilename();
+        roomFileDTO.setFileName(originalFileName);
+        roomFileDTO.setFileSize(roomFile.getSize());
+        roomFileDTO.setFileType(roomFile.getContentType().startsWith("image") ? 1 : 0);
+        roomFileDTO.setSaveDir(today);
 
         // uuid
         UUID uuid = UUID.randomUUID();
         String uuidString = uuid.toString();
-        fileDTO.setUuid(uuidString);
+        roomFileDTO.setUuid(uuidString);
 
         // 저장
         String fileName = uuidString + "_" + originalFileName;
@@ -77,11 +77,11 @@ public class RoomFileHandler {
         // D:~/2025/12/24/uuid_fileName
         File StoreFile = new File(folders, fileName);
         try {
-            file.transferTo(StoreFile);
+            roomFile.transferTo(StoreFile);
         } catch (Exception e) {
             log.info(">>> file save Error");
             e.printStackTrace();
         }
-        return fileDTO;
+        return roomFileDTO;
     }
 }

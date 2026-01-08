@@ -24,3 +24,7 @@
     color: white;
     align-self: flex-end; /* 오른쪽 정렬 */
 }
+
+#messageArea::-webkit-scrollbar {
+    display: none;           /* Chrome, Safari */
+}
