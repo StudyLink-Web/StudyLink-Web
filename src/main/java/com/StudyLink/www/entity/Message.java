@@ -41,7 +41,7 @@ public class Message {
     private String content;
 
     @Column(length = 100)
-    private String fileUuid;
+    private String path;
 
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0")
     private Boolean isRead;
@@ -59,7 +59,7 @@ public class Message {
         this.createdAt = messageDTO.getCreatedAt();
         this.messageType = MessageType.valueOf(messageDTO.getMessageType().name());
         this.content = messageDTO.getContent();
-        this.fileUuid = messageDTO.getFileUuid();
+        this.path = messageDTO.getPath();
         this.isRead = messageDTO.getIsRead();
     }
 }
