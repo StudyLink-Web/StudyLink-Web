@@ -37,6 +37,7 @@ public class SecurityConfig {
 
                         // ✅ quiz관련 모두 허용. 나중에 분리 - 김광주
                         .requestMatchers("/room/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll() // WebSocket 엔드포인트 허용
 
                         // ✅ 나머지 페이지는 인증 필요
                         .anyRequest().authenticated()
