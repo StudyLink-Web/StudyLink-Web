@@ -336,6 +336,7 @@ function checkLoginSuccess() {
  * 소셜 로그인 버튼 (추후 구현)
  * 기존 기능 100% 유지
  */
+/*
 function setupSocialLoginButtons() {
     const socialButtons = document.querySelectorAll('.btn-social');
 
@@ -359,3 +360,4 @@ function setupSocialLoginButtons() {
         });
     });
 }
+*/

@@ -21,8 +21,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Controller
-@RequestMapping("/room/*")
+@RequestMapping("/room")  // ← /room/* 제거
 public class WebSocketController {
+
     private final MessageService messageService;
     private final RoomFileService roomFileService;
     private final RoomFileHandler roomFileHandler;
@@ -56,25 +57,35 @@ public class WebSocketController {
 
     @GetMapping("/loadMessage/{roomId}")
     @ResponseBody
-    public List<MessageDTO> loadMessage(@PathVariable long roomId){
+    public List<MessageDTO> loadMessage(@PathVariable long roomId) {
+        log.info("📥 Loading messages for roomId: {}", roomId);
         return messageService.loadMessage(roomId);
     }
 
-
-    @PostMapping(value = "/saveFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
+    @PostMapping(value = "/saveFile",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseBody
-    public ResponseEntity<String> saveFile(@RequestParam(name = "file") MultipartFile file, @RequestParam(name = "roomId") long roomId) {
-        RoomFileDTO roomFileDTO = roomFileHandler.uploadFile(file);
-        roomFileDTO.setRoomId(roomId);
-        roomFileService.insert(roomFileDTO);
-        return roomFileDTO != null ? new ResponseEntity<String>("1", HttpStatus.OK) : new ResponseEntity<String>("0", HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<String> saveFile(
+            @RequestParam(name = "file") MultipartFile file,
+            @RequestParam(name = "roomId") long roomId) {
+
+        log.info("📤 File upload request received");
+        log.info("   - File: {}", file.getOriginalFilename());
+        log.info("   - Size: {} bytes", file.getSize());
+        log.info("   - RoomId: {}", roomId);
+
+        try {
+            RoomFileDTO roomFileDTO = roomFileHandler.uploadFile(file);
+            roomFileDTO.setRoomId(roomId);
+            roomFileService.insert(roomFileDTO);
+
+            log.info("✅ File saved successfully: {}", file.getOriginalFilename());
+            return new ResponseEntity<>("1", HttpStatus.OK);
+
+        } catch (Exception e) {
+            log.error("❌ File upload failed", e);
+            return new ResponseEntity<>("0", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
-
-//    @GetMapping(value = "/loadFile", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    @ResponseBody
-//    public ResponseEntity<String> loadFile(@RequestParam(name = "file") MultipartFile file) {
-//        RoomFileDTO roomFileDTO = roomFileHandler.uploadFile(file);
-//        return cno > 0 ? new ResponseEntity<String>("1", HttpStatus.OK) : new ResponseEntity<String>("0", HttpStatus.INTERNAL_SERVER_ERROR);
-//    }
-
 }

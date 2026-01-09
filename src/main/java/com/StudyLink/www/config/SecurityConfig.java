@@ -1,6 +1,8 @@
 package com.StudyLink.www.config;
 
 import com.StudyLink.www.service.CustomUserDetailsService;
+import com.StudyLink.www.service.OAuth2UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,10 +16,14 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+// @RequiredArgsConstructor
 public class SecurityConfig {
 
     @Autowired
     private CustomUserDetailsService userDetailsService;
+
+    @Autowired
+    private OAuth2UserService oAuth2UserService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -43,8 +49,11 @@ public class SecurityConfig {
                                 "/api/auth/**",          // REST API는 CSRF 토큰 필요 없음
                                 "/loginProc",             // 폼 기반 로그인
                                 "/logout",
-                                "/room/**",
-                                "/ws/**"
+                                "/oauth2/**",             // ⭐ 추가: OAuth2 요청도 CSRF 제외
+                                "/logout",
+                                "/ws/**",
+                                "/chatbot/**",            // 챗봇 관련 요청 허용
+                                "/room/**"                // 방 관련 요청 허용
                         )
                 )
 
@@ -82,8 +91,11 @@ public class SecurityConfig {
                                 "/board/**",
 
                                 "/api/auth/**",
+                                "/.well-known/**",      // Chrome DevTools 에러 무시
+                                "/oauth2/**",           // OAuth2 요청
+                                "/login/oauth2/**",      // OAuth2 리다이렉트 URI
                                 "/.well-known/**",      // ✅ Chrome DevTools 에러 무시
-                                "/oauth2/**"
+                                "/chatbot/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -99,12 +111,16 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // OAuth2 설정
-//                .oauth2Login(oauth2 -> oauth2
-//                        .loginPage("/login")
-//                        .defaultSuccessUrl("/", true)
-//                        .failureUrl("/login?error=true")
-//                )
+                // ⭐ OAuth2 설정
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(oAuth2UserService)
+                        )
+                        .defaultSuccessUrl("/", true)
+                        .failureUrl("/login?error=true")
+                )
+
 
                 // Logout 설정
                 .logout(logout -> logout
