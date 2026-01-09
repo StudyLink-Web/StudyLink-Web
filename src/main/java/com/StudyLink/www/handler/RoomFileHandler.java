@@ -14,8 +14,9 @@ import java.util.UUID;
 @Component
 public class RoomFileHandler {
     // 저장될 파일 데이터 + 직접 폴더에 파일을 저장
+    // FIXME: application.properties에 file.upload_dir 설정이 누락되어 임시 주석 처리함.
     @Value("${file.upload_dir}")
-    private String UP_DIP;
+    private String UP_DIP = "D:/upload"; 
 
     public void removeFile(RoomFileDTO roomFileDTO) {
         String today = roomFileDTO.getSaveDir();

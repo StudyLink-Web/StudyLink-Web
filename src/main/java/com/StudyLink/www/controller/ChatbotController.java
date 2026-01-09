@@ -24,12 +24,12 @@ public class ChatbotController {
     private final UserRepository userRepository;
     private final StudentScoreRepository studentScoreRepository;
 
-    @GetMapping("/room/chatbot")
+    @GetMapping("/chatbot")
     public String chatbot() {
         return "chatbot"; // templates/chatbot.html 반환
     }
 
-    @PostMapping("/room/chatbot/send")
+    @PostMapping("/chatbot/send")
     @ResponseBody
     public ChatbotDTO.Response send(@RequestBody ChatbotDTO.Request request, Principal principal) {
         // 로그인한 사용자가 있는 경우 DB에서 성적을 조회하여 요청에 포함

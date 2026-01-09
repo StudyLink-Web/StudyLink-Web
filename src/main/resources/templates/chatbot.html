@@ -196,7 +196,7 @@
         
         <div class="chat-messages" id="chatMessages">
             <div class="message bot">
-                안녕하세요! 무엇이든 물어보세요. 궁금하신 대학이나 학과 이름(예: 가천대 의대)을 말씀해 주시면 정확한 데이터를 기반으로 상담해 드립니다. 🎓
+                안녕하세요! 무엇이든 물어보세요. 궁금하신 대학이나 학과 이름(예: 성균관대 의대)을 말씀해 주시면 정확한 데이터를 기반으로 상담해 드립니다. 🎓
             </div>
         </div>
 
@@ -255,7 +255,7 @@
             
             typingIndicator.style.display = 'block';
             
-            fetch('/room/chatbot/send', {
+            fetch('/chatbot/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

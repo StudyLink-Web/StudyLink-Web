@@ -42,7 +42,9 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 "/api/auth/**",          // REST API는 CSRF 토큰 필요 없음
                                 "/loginProc",             // 폼 기반 로그인
-                                "/logout"
+                                "/logout",
+                                "/chatbot/**",            // 챗봇 관련 요청 허용
+                                "/room/**"                // 방 관련 요청 허용
                         )
                 )
 
@@ -81,6 +83,7 @@ public class SecurityConfig {
 
                                 "/api/auth/**",
                                 "/.well-known/**",      // ✅ Chrome DevTools 에러 무시
+                                "/chatbot/**",
                                 "/oauth2/**"
                         ).permitAll()
                         .anyRequest().authenticated()
@@ -97,12 +100,15 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // OAuth2 설정
+                // FIXME: 설정 파일(application.properties 등)에 소셜 로그인 클라이언트 정보(ID/Secret)가 없어 임시 주석 처리함. 
+                // 소셜 로그인 기능을 구현하려면 설정 추가 후 아래 주석을 해제
+                /*
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .defaultSuccessUrl("/", true)
                         .failureUrl("/login?error=true")
                 )
+                */
 
                 // Logout 설정
                 .logout(logout -> logout
