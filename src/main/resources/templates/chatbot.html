@@ -38,7 +38,7 @@
             -webkit-backdrop-filter: blur(25px);
             position: relative;
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100;
+            z-index: 10; /* 헤더 메뉴보다 아래로 낮춤 (기존 100) */
         }
 
         /* 전체 화면 스타일 */
@@ -65,7 +65,7 @@
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            z-index: 1000;
+            z-index: 5; /* 컨테이너 내부에서도 낮게 유지 (기존 1000) */
             flex-shrink: 0; /* 헤더 찌그러짐 방지 */
         }
 
