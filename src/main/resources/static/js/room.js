@@ -74,14 +74,36 @@ async function loadMessage(roomId){
 }
 
 
+// ✅ 수정: sendFile 함수에 상세한 에러 로깅 추가
 async function sendFile(formData){
     const url = "/room/saveFile";
-    const config = {
-        method: 'post',
-        body: formData
-    };
-    const res = await fetch(url, config);
-    return res.text();
+
+    console.log("🚀 파일 업로드 시작");
+    console.log("📍 URL:", url);
+
+    try {
+        const res = await fetch(url, {
+            method: 'post',
+            body: formData
+        });
+
+        console.log("📊 응답 상태:", res.status, res.statusText);
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("❌ HTTP 에러:", res.status);
+            console.error("❌ 응답 내용:", errorText.substring(0, 200));
+            return "0";
+        }
+
+        const result = await res.text();
+        console.log("✅ 응답 데이터:", result);
+        return result;
+
+    } catch (error) {
+        console.error("❌ 네트워크 에러:", error.message);
+        return "0";
+    }
 }
 
 
@@ -89,17 +111,24 @@ async function sendFile(formData){
 
 connect(); // webSocket 연결
 loadMessage(roomId).then(result => { // 채팅기록 불러오기
+    console.log("💬 로드된 메시지 수:", result.length);
     for(let message of result){
         if (message.messageType == "TEXT") {
             spreadTextMessage(message)
         }
     }
+}).catch(error => {
+    console.error("❌ 메시지 로드 실패:", error);
 });
 
 document.addEventListener('click', async (e)=>{
     if (e.target.id == 'sendFileBtn'){
+        console.log("🖱️ 파일 전송 버튼 클릭됨");
+
         const fileInput = document.getElementById('file');
         const files = fileInput.files;
+
+        console.log("📁 선택된 파일 개수:", files.length);
 
         if (!files[0]) {
             alert("파일을 선택해주세요!");
@@ -107,16 +136,18 @@ document.addEventListener('click', async (e)=>{
         }
 
         for (let file of files){
+            console.log(`📄 파일 정보: ${file.name} (${file.size} bytes, ${file.type})`);
+
             const formData = new FormData();
             formData.append("file", file);
             formData.append("roomId", roomId); // roomId도 같이 전송
 
             const result = await sendFile(formData); // 순차 업로드
             if (result === "1") {
-                console.log(`파일 ${file.name} 업로드 성공`);
+                console.log(`✅ 파일 ${file.name} 업로드 성공`);
                 // 여기서 WebSocket 메시지 보내도 OK
             } else {
-                console.log(`파일 ${file.name} 업로드 실패`);
+                console.log(`❌ 파일 ${file.name} 업로드 실패`);
             }
         }
 
