@@ -38,31 +38,44 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
 
     /**
      * OAuth2 사용자 정보 로드
+     *
      * @param userRequest - OAuth2 사용자 요청
      * @return OAuth2User - 처리된 사용자 정보
      */
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        // 기본 사용자 정보 로드
-        OAuth2User oAuth2User = super.loadUser(userRequest);
+        try {
+            // 기본 사용자 정보 로드
+            OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        // 소셜 로그인 제공자 확인
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();
+            // 소셜 로그인 제공자 확인
+            String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
-        System.out.println("🔐 OAuth2 로그인: " + registrationId);
+            System.out.println("🔐 OAuth2 로그인: " + registrationId);
+            log.info("🔐 OAuth2 로그인 시작: {}", registrationId);
 
-        // 제공자별 사용자 정보 처리
-        switch (registrationId) {
-            case "kakao":
-                return processKakaoUser(oAuth2User);
-            case "naver":
-                return processNaverUser(oAuth2User);
-            case "google":
-                return processGoogleUser(oAuth2User);
-            default:
-                return oAuth2User;
+            // 제공자별 사용자 정보 처리
+            switch (registrationId) {
+                case "kakao":
+                    log.info("🔍 Kakao 로그인 처리 시작");
+                    return processKakaoUser(oAuth2User);
+                case "naver":
+                    log.info("🔍 Naver 로그인 처리 시작");
+                    return processNaverUser(oAuth2User);
+                case "google":
+                    log.info("🔍 Google 로그인 처리 시작");
+                    return processGoogleUser(oAuth2User);
+                default:
+                    log.warn("⚠️ 지원하지 않는 제공자: {}", registrationId);
+                    return oAuth2User;
+            }
+        } catch (Exception e) {
+            log.error("❌ loadUser() 중 오류 발생: {}", e.getMessage());
+            log.error("❌ 스택 트레이스: ", e);
+            throw new OAuth2AuthenticationException("OAuth2 로그인 처리 중 오류: " + e.getMessage());
         }
     }
+
 
     /**
      * 카카오 사용자 정보 처리
@@ -89,24 +102,28 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
             email = (String) kakaoAccount.getOrDefault("email", "");
         }
 
+        // ⭐ 이메일에서 사용자명 추출
+        String fixedUsername = email != null && !email.isEmpty() ? email.split("@")[0] : nickname;
+
         // 사용자 정보 통합
         attributes.put("username", "kakao_" + id);
-        attributes.put("name", nickname);
+        attributes.put("name", fixedUsername);  // ⭐ attributes의 "name"을 업데이트
         attributes.put("email", email);
         attributes.put("picture", profileImage);
         attributes.put("provider", "kakao");
 
         System.out.println("✅ 카카오 사용자: " + nickname + " (" + email + ")");
 
-        // ⭐ 추가: DB에 사용자 저장
+        // DB에 사용자 저장
         saveOAuth2User("kakao_" + id, email, profileImage, nickname, "kakao");
 
         return new DefaultOAuth2User(
                 oAuth2User.getAuthorities(),
                 attributes,
-                "id"
+                "nickname"
         );
     }
+
 
     /**
      * 네이버 사용자 정보 처리
@@ -128,16 +145,19 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
             profileImage = (String) response.getOrDefault("profile_image", "");
         }
 
+        // ⭐ 이메일에서 사용자명 추출
+        String fixedUsername = email != null && !email.isEmpty() ? email.split("@")[0] : name;
+
         // 사용자 정보 통합
         attributes.put("username", "naver_" + id);
-        attributes.put("name", name);
+        attributes.put("name", fixedUsername);  // ⭐ attributes의 "name"을 업데이트
         attributes.put("email", email);
         attributes.put("picture", profileImage);
         attributes.put("provider", "naver");
 
         System.out.println("✅ 네이버 사용자: " + name + " (" + email + ")");
 
-        // ⭐ 추가: DB에 사용자 저장
+        // DB에 사용자 저장
         saveOAuth2User("naver_" + id, email, profileImage, name, "naver");
 
         return new DefaultOAuth2User(
@@ -147,85 +167,130 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         );
     }
 
+
     /**
      * 구글 사용자 정보 처리
      * API 응답: {sub, name, email, picture, locale, ...}
      */
     private OAuth2User processGoogleUser(OAuth2User oAuth2User) {
-        Map<String, Object> attributes = new HashMap<>(oAuth2User.getAttributes());
+        try {
+            Map<String, Object> attributes = new HashMap<>(oAuth2User.getAttributes());
 
-        String sub = (String) attributes.getOrDefault("sub", "");
-        String name = (String) attributes.getOrDefault("name", "구글사용자");
-        String email = (String) attributes.getOrDefault("email", "");
-        String picture = (String) attributes.getOrDefault("picture", "");
+            log.info("🔍 [DEBUG] Google attributes 키 목록: {}", attributes.keySet());
 
-        // 사용자 정보 통합
-        attributes.put("username", "google_" + sub);
-        attributes.put("provider", "google");
-        attributes.put("picture", picture);
+            // ⭐ 수정: 'sub' 대신 'id' 사용 (Google OAuth2에서 'id' 사용)
+            String sub = (String) attributes.get("id");
+            if (sub == null) {
+                log.error("❌ Google OAuth 응답에서 'id' 값 없음!");
+                throw new OAuth2AuthenticationException("Google OAuth 응답에서 'id' 값을 찾을 수 없습니다.");
+            }
 
-        System.out.println("✅ 구글 사용자: " + name + " (" + email + ")");
+            String name = (String) attributes.getOrDefault("name", "구글사용자");
+            String email = (String) attributes.getOrDefault("email", "");
+            String picture = (String) attributes.getOrDefault("picture", "");
 
-        // ⭐ 추가: DB에 사용자 저장
-        saveOAuth2User("google_" + sub, email, picture, name, "google");
+            log.info("📋 전체 attributes: {}", attributes);
+            log.info("✅ 구글 사용자 정보: name={}, email={}, id={}", name, email, sub);
 
-        return new DefaultOAuth2User(
-                oAuth2User.getAuthorities(),
-                attributes,
-                "sub"
-        );
+            System.out.println("📋 전체 attributes: " + oAuth2User.getAttributes());
+            System.out.println("✅ 구글 사용자: " + name + " (" + email + ") [id: " + sub + "]");
+
+            // ⭐ 이메일에서 사용자명 추출
+            String fixedUsername = email.split("@")[0];
+
+            // ⭐ attributes 업데이트
+            attributes.put("username", "google_" + sub);
+            attributes.put("name", fixedUsername);  // ⭐ 추가: attributes의 "name"을 업데이트
+
+            attributes.put("provider", "google");
+            attributes.put("picture", picture);
+
+            log.info("🔍 [DEBUG] saveOAuth2User 호출 전");
+            saveOAuth2User("google_" + sub, email, picture, name, "google");
+            log.info("🔍 [DEBUG] saveOAuth2User 호출 후");
+
+
+            return new DefaultOAuth2User(
+                    oAuth2User.getAuthorities(),
+                    attributes,
+                    "id"  // ⭐ 수정: "sub" → "id"
+            );
+        } catch (Exception e) {
+            log.error("❌ processGoogleUser() 중 오류: {}", e.getMessage());
+            log.error("❌ 스택 트레이스: ", e);
+            throw new OAuth2AuthenticationException("Google 사용자 처리 중 오류: " + e.getMessage());
+        }
     }
+
 
     /**
      * 소셜 로그인 사용자 정보 저장 (데이터베이스)
-     * @param username - 소셜 로그인 ID
-     * @param email - 이메일
+     *
+     * @param username     - 소셜 로그인 ID
+     * @param email        - 이메일
      * @param profileImage - 프로필 이미지 URL
-     * @param name - 사용자 이름
-     * @param provider - 제공자 (kakao, naver, google)
+     * @param name         - 사용자 이름
+     * @param provider     - 제공자 (kakao, naver, google)
      */
     private void saveOAuth2User(String username, String email, String profileImage, String name, String provider) {
         try {
-            // ⭐ 추가: 이메일로 기존 사용자 확인
+            log.info("🔍 [DEBUG] saveOAuth2User 시작");
+            log.info("🔍 [DEBUG] username: {}", username);
+            log.info("🔍 [DEBUG] email: {}", email);
+            log.info("🔍 [DEBUG] name: {}", name);
+            log.info("🔍 [DEBUG] provider: {}", provider);
+
             Optional<Users> existingUser = userRepository.findByEmail(email);
+            log.info("🔍 [DEBUG] 기존 사용자 조회 결과: {}", existingUser.isPresent());
+
+            String fixedUsername = email.split("@")[0];
+            log.info("🔍 [DEBUG] fixedUsername 생성됨: {}", fixedUsername);
 
             Users user;
             if (existingUser.isPresent()) {
-                // 기존 사용자 업데이트
                 user = existingUser.get();
                 user.setName(name);
-                user.setProfileImageUrl(profileImage);  // ⭐ 변경
-                user.setOauthProvider(provider);         // ⭐ 변경
-                user.setOauthId(username);               // ⭐ 변경
+                user.setNickname(fixedUsername);  // ⭐ 추가
+                user.setProfileImageUrl(profileImage);
+                user.setOauthProvider(provider);
+                user.setOauthId(username);
                 log.info("🔄 기존 사용자 정보 업데이트: {} ({})", email, provider);
             } else {
-                // ⭐ ObjectProvider에서 PasswordEncoder 획득
                 PasswordEncoder encoder = passwordEncoderProvider.getIfAvailable();
+                log.info("🔍 [DEBUG] PasswordEncoder 조회: {}", encoder != null ? "OK" : "NULL");
+
                 String encodedPassword = (encoder != null)
                         ? encoder.encode("oauth_" + provider + "_" + System.currentTimeMillis())
                         : "oauth_" + provider + "_" + System.currentTimeMillis();
 
-                // 신규 사용자 생성
                 user = Users.builder()
                         .email(email)
                         .name(name)
-                        .profileImageUrl(profileImage)  // ⭐ 변경
-                        .oauthProvider(provider)         // ⭐ 변경
-                        .oauthId(username)               // ⭐ 변경
-                        // ⭐ OAuth 사용자는 임시 비밀번호 설정
+                        .username(fixedUsername)
+                        .nickname(fixedUsername)  // ⭐ 추가: nickname 설정
+                        .profileImageUrl(profileImage)
+                        .oauthProvider(provider)
+                        .oauthId(username)
                         .password(encodedPassword)
                         .role("ROLE_USER")
                         .isActive(true)
                         .build();
-                log.info("✅ 신규 OAuth2 사용자 생성: {} ({})", email, provider);
+
+                log.info("🔍 [DEBUG] Users 엔티티 빌드 완료");
+                log.info("✅ 신규 OAuth2 사용자 생성: {} (username={})", email, fixedUsername);
             }
 
-            userRepository.save(user);
+            log.info("🔍 [DEBUG] userRepository.save() 호출 전");
+            Users savedUser = userRepository.save(user);
+            log.info("🔍 [DEBUG] userRepository.save() 완료, saved user_id: {}", savedUser.getUserId());
             log.info("💾 사용자 정보 저장 완료: {}", email);
 
         } catch (Exception e) {
             log.error("❌ 사용자 정보 저장 실패: {} - {}", email, e.getMessage());
+            log.error("❌ 스택 트레이스: ", e);
             e.printStackTrace();
+            throw new OAuth2AuthenticationException("사용자 저장 중 오류 발생: " + e.getMessage());
         }
     }
+
 }
