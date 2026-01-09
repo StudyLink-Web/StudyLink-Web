@@ -2,156 +2,208 @@ package com.StudyLink.www.controller;
 
 import com.StudyLink.www.entity.MentorProfile;
 import com.StudyLink.www.service.MentorProfileService;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/mentor-profile")
+@RequestMapping("/api/mentor-profiles")
 @RequiredArgsConstructor
 @Slf4j
 public class MentorProfileController {
 
     private final MentorProfileService mentorProfileService;
 
+    /**
+     * 멘토 프로필 생성
+     */
     @PostMapping("/create")
-    public ResponseEntity<Map<String, Object>> createMentorProfile(@RequestBody CreateMentorProfileRequest request) {
+    public ResponseEntity<Map<String, Object>> createMentorProfile(
+            @RequestParam Long userId,
+            @RequestParam(required = false) Long univId,
+            @RequestParam(required = false) Long deptId,
+            @RequestParam(required = false) String introduction) {
         try {
             MentorProfile profile = mentorProfileService.createMentorProfile(
-                    request.getUserId(),
-                    request.getUnivId(),
-                    request.getDeptId(),
-                    request.getIntroduction()
-            );
+                    userId, univId, deptId, introduction);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                    "profileId", profile.getProfileId(),
+            // ✅ ResponseEntity<Map<String, Object>> 타입 명시
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "멘토 프로필이 생성되었습니다");
+            response.put("data", Map.of(
                     "userId", profile.getUser().getUserId(),
+                    "univId", profile.getUnivId(),
+                    "deptId", profile.getDeptId(),
                     "introduction", profile.getIntroduction(),
-                    "isVerified", profile.getIsVerified(),
-                    "point", profile.getPoint(),
-                    "message", "멘토 프로필이 생성되었습니다."
+                    "isVerified", profile.getIsVerified()
             ));
 
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "PROFILE_ERROR",
-                    "message", e.getMessage()
-            ));
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
         }
     }
 
+    /**
+     * 멘토 프로필 조회
+     */
     @GetMapping("/{userId}")
     public ResponseEntity<Map<String, Object>> getMentorProfile(@PathVariable Long userId) {
-        var optionalProfile = mentorProfileService.getMentorProfile(userId);
+        try {
+            Optional<MentorProfile> profileOpt = mentorProfileService.getMentorProfile(userId);
 
-        if (optionalProfile.isPresent()) {
-            MentorProfile profile = optionalProfile.get();
-            return ResponseEntity.ok(Map.of(
-                    "profileId", profile.getProfileId(),
+            if (profileOpt.isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "멘토 프로필을 찾을 수 없습니다");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            MentorProfile profile = profileOpt.get();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", Map.of(
                     "userId", profile.getUser().getUserId(),
+                    "univId", profile.getUnivId(),
+                    "deptId", profile.getDeptId(),
                     "introduction", profile.getIntroduction(),
                     "isVerified", profile.getIsVerified(),
                     "averageRating", profile.getAverageRating(),
+                    "point", profile.getPoint(),
+                    "exp", profile.getExp()
+            ));
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * 모든 인증된 멘토 목록 조회
+     */
+    @GetMapping("/verified/list")
+    public ResponseEntity<Map<String, Object>> getVerifiedMentors() {
+        try {
+            List<MentorProfile> mentors = mentorProfileService.getVerifiedMentors();
+
+            List<Map<String, Object>> mentorList = new ArrayList<>();
+            for (MentorProfile mentor : mentors) {
+                Map<String, Object> mentorMap = new HashMap<>();
+                mentorMap.put("userId", mentor.getUser().getUserId());
+                mentorMap.put("univId", mentor.getUnivId());
+                mentorMap.put("deptId", mentor.getDeptId());
+                mentorMap.put("introduction", mentor.getIntroduction());
+                mentorMap.put("averageRating", mentor.getAverageRating());
+                mentorMap.put("point", mentor.getPoint());
+                mentorMap.put("exp", mentor.getExp());
+                mentorList.add(mentorMap);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", mentorList);
+            response.put("count", mentorList.size());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * 멘토 인증
+     */
+    @PutMapping("/{userId}/verify")
+    public ResponseEntity<Map<String, Object>> verifyMentor(@PathVariable Long userId) {
+        try {
+            MentorProfile profile = mentorProfileService.verifyMentor(userId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "멘토가 인증되었습니다");
+            response.put("data", Map.of(
+                    "userId", profile.getUser().getUserId(),
+                    "isVerified", profile.getIsVerified()
+            ));
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * 멘토 경험치 추가
+     */
+    @PutMapping("/{userId}/exp/{amount}")
+    public ResponseEntity<Map<String, Object>> addExp(
+            @PathVariable Long userId,
+            @PathVariable Long amount) {
+        try {
+            MentorProfile profile = mentorProfileService.addExp(userId, amount);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "경험치가 추가되었습니다");
+            response.put("data", Map.of(
+                    "userId", profile.getUser().getUserId(),
+                    "exp", profile.getExp()
+            ));
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * 멘토 포인트 추가
+     */
+    @PutMapping("/{userId}/point/{amount}")
+    public ResponseEntity<Map<String, Object>> addPoint(
+            @PathVariable Long userId,
+            @PathVariable Long amount) {
+        try {
+            MentorProfile profile = mentorProfileService.addPoint(userId, amount);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "포인트가 추가되었습니다");
+            response.put("data", Map.of(
+                    "userId", profile.getUser().getUserId(),
                     "point", profile.getPoint()
             ));
-        } else {
-            return ResponseEntity.notFound().build();
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
         }
-    }
-
-    @PutMapping("/{userId}")
-    public ResponseEntity<Map<String, Object>> updateMentorProfile(
-            @PathVariable Long userId,
-            @RequestBody UpdateMentorProfileRequest request) {
-        try {
-            MentorProfile profile = mentorProfileService.updateMentorProfile(
-                    userId,
-                    request.getUnivId(),
-                    request.getDeptId(),
-                    request.getIntroduction()
-            );
-
-            return ResponseEntity.ok(Map.of(
-                    "profileId", profile.getProfileId(),
-                    "message", "멘토 프로필이 업데이트되었습니다."
-            ));
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "PROFILE_ERROR",
-                    "message", e.getMessage()
-            ));
-        }
-    }
-
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<Map<String, Object>> deleteMentorProfile(@PathVariable Long userId) {
-        try {
-            mentorProfileService.deleteMentorProfile(userId);
-
-            return ResponseEntity.ok(Map.of(
-                    "message", "멘토 프로필이 삭제되었습니다."
-            ));
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "PROFILE_ERROR",
-                    "message", e.getMessage()
-            ));
-        }
-    }
-
-    // ========== Request 클래스 ==========
-
-    public static class CreateMentorProfileRequest {
-
-        @JsonProperty("user_id")  // ✅ JSON에서 user_id로 받음 → Java에서 userId로 변환
-        private Long userId;
-
-        @JsonProperty("univ_id")  // ✅ JSON에서 univ_id로 받음 → Java에서 univId로 변환
-        private Long univId;
-
-        @JsonProperty("dept_id")  // ✅ JSON에서 dept_id로 받음 → Java에서 deptId로 변환
-        private Long deptId;
-
-        private String introduction;
-
-        public Long getUserId() { return userId; }
-        public void setUserId(Long userId) { this.userId = userId; }
-
-        public Long getUnivId() { return univId; }
-        public void setUnivId(Long univId) { this.univId = univId; }
-
-        public Long getDeptId() { return deptId; }
-        public void setDeptId(Long deptId) { this.deptId = deptId; }
-
-        public String getIntroduction() { return introduction; }
-        public void setIntroduction(String introduction) { this.introduction = introduction; }
-    }
-
-    public static class UpdateMentorProfileRequest {
-
-        @com.fasterxml.jackson.annotation.JsonProperty("univ_id")  // ✅ 이 줄 추가!
-        private Long univId;
-
-        @com.fasterxml.jackson.annotation.JsonProperty("dept_id")  // ✅ 이 줄 추가!
-        private Long deptId;
-
-        private String introduction;
-
-        public Long getUnivId() { return univId; }
-        public void setUnivId(Long univId) { this.univId = univId; }
-
-        public Long getDeptId() { return deptId; }
-        public void setDeptId(Long deptId) { this.deptId = deptId; }
-
-        public String getIntroduction() { return introduction; }
-        public void setIntroduction(String introduction) { this.introduction = introduction; }
     }
 }

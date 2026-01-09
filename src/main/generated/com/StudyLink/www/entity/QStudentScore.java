@@ -52,7 +52,7 @@ public class QStudentScore extends EntityPathBase<StudentScore> {
 
     public QStudentScore(Class<? extends StudentScore> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.user = inits.isInitialized("user") ? new QUsers(forProperty("user")) : null;
+        this.user = inits.isInitialized("user") ? new QUsers(forProperty("user"), inits.get("user")) : null;
     }
 
 }

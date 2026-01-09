@@ -5,9 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.math.BigDecimal;
+
 import java.time.LocalDateTime;
 
+/**
+ * Mentor_Profile (멘토 상세 - 대학생)
+ * Users와 1:1 관계
+ */
 @Entity
 @Table(name = "mentor_profile")
 @Data
@@ -17,43 +21,87 @@ import java.time.LocalDateTime;
 public class MentorProfile {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "profile_id")
-    private Long profileId;  // ✅ profile_id → profileId
+    @Column(name = "user_id", insertable = false, updatable = false)
+    private Long userId;
 
-    // ========== Users 테이블과 1:1 관계 ==========
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", unique = true, nullable = false)
+    @MapsId
+    @JoinColumn(name = "user_id")
     private Users user;
 
-    // ========== 대학 및 학과 정보 ==========
+
+    /**
+     * 재학 중인 대학 ID
+     * FK: Universities.univ_id
+     */
     @Column(name = "univ_id")
-    private Long univId;  // ✅ univ_id → univId
+    private Long univId;
 
+    /**
+     * 재학 중인 학과 ID
+     * FK: Departments.dept_id
+     */
     @Column(name = "dept_id")
-    private Long deptId;  // ✅ dept_id → deptId
+    private Long deptId;
 
-    // ========== 인증 정보 ==========
-    @Column(name = "student_card_img", length = 500)
-    private String studentCardImg;  // ✅ student_card_img → studentCardImg
+    /**
+     * 학생증 인증 이미지 경로
+     */
+    @Column(length = 255)
+    private String studentCardImg;
 
+    /**
+     * 인증 여부
+     * true: 인증 완료, false: 미인증
+     */
     @Column(name = "is_verified", nullable = false)
-    private Boolean isVerified = false;  // ✅ is_verified → isVerified
+    private Boolean isVerified = false;
 
-    // ========== 멘토 정보 ==========
-    @Column(name = "introduction", length = 255)
+    /**
+     * 멘토 한줄 소개
+     * 예: "서울대 합격 노하우 공유합니다"
+     */
+    @Column(length = 500)
     private String introduction;
 
-    @Column(name = "average_rating", precision = 3, scale = 2)
-    private BigDecimal averageRating;  // ✅ average_rating → averageRating
+    /**
+     * 평점 (선택사항)
+     * 범위: 1.0 ~ 5.0
+     */
+    @Column(name = "average_rating")
+    private Double averageRating = 0.0;
 
+    /**
+     * 포인트 (현금으로 출금 가능)
+     */
     @Column(name = "point", nullable = false)
-    private Integer point = 0;
+    private Long point = 0L;
 
-    // ========== 타임스탬프 ==========
+    /**
+     * 경험치
+     * 레벨 표시, 랭킹 구하기 등에 사용
+     */
+    @Column(name = "exp", nullable = false)
+    private Long exp = 0L;
+
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;  // ✅ created_at → createdAt
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;  // ✅ updated_at → updatedAt
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        if (this.point == null) this.point = 0L;
+        if (this.exp == null) this.exp = 0L;
+        if (this.averageRating == null) this.averageRating = 0.0;
+        if (this.isVerified == null) this.isVerified = false;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

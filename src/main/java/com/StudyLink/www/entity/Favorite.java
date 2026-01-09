@@ -5,11 +5,17 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
+/**
+ * Favorite (멘토 즐겨찾기, 찜)
+ * 학생이 멘토를 즐겨찾기하는 관계
+ */
 @Entity
-@Table(name = "favorite",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "mentor_id"}))
+@Table(name = "favorite", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"student_id", "mentor_id"})
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,15 +25,43 @@ public class Favorite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "favorite_id")
-    private Long favoriteId;        // ✅ favorite_id (DB) → favoriteId (Java)
+    private Long favoriteId;
 
-    @Column(name = "student_id", nullable = false)
-    private Long studentId;         // ✅ student_id (DB) → studentId (Java)
+    /**
+     * 학생 ID
+     * FK: Users.user_id
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "student_id", nullable = false)
+    private Users student;
 
-    @Column(name = "mentor_id", nullable = false)
-    private Long mentorId;          // ✅ mentor_id (DB) → mentorId (Java)
+    /**
+     * 멘토 ID
+     * FK: Users.user_id
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mentor_id", nullable = false)
+    private Users mentor;
 
-    @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();  // ✅ created_at (DB) → createdAt (Java)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    /**
+     * 편의 메서드: 학생 ID 조회
+     */
+    public Long getStudentId() {
+        return this.student != null ? this.student.getUserId() : null;
+    }
+
+    /**
+     * 편의 메서드: 멘토 ID 조회
+     */
+    public Long getMentorId() {
+        return this.mentor != null ? this.mentor.getUserId() : null;
+    }
 }

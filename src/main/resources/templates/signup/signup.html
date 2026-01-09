@@ -1,57 +1,164 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원가입 - StudyLink</title>
+
+    <!-- ⭐ CSRF 토큰 메타 태그 추가 -->
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
+    <link rel="stylesheet" href="/css/header-style.css">
     <link rel="stylesheet" href="/css/signup.css">
 </head>
 <body>
-<div class="signup-container">
-    <h1>StudyLink 가입</h1>
-    <div id="error" class="error"></div>
+<header th:insert="fragments/header.html :: header"></header>
 
-    <form id="signupForm">
-        <div class="form-group">
-            <label for="email">이메일</label>
-            <input type="email" id="email" name="email" required>
-            <small id="emailError" class="error-text"></small>
+<div class="signup-wrapper">
+
+    <div class="signup-card-single">
+        <div class="card-content">
+
+            <!-- 헤더 -->
+            <div class="signup-header">
+                <h1 class="title">회원가입</h1>
+                <p class="subtitle">StudyLink에 가입하고 학습을 시작하세요</p>
+            </div>
+
+            <!-- 에러 메시지 -->
+            <div id="error" class="form-global-error" style="display:none;"></div>
+
+            <form id="signupForm" class="signup-form" method="POST" action="/api/auth/signup">
+
+                <!-- 이메일 -->
+                <div class="form-group">
+                    <label class="form-label" for="email">이메일</label>
+                    <input type="email" class="form-control"
+                           id="email" name="email"
+                           placeholder="example@email.com" required>
+                    <div id="emailError" class="form-error"></div>
+                </div>
+
+                <!-- 비밀번호 -->
+                <div class="form-group">
+                    <label class="form-label" for="password">비밀번호</label>
+
+                    <div class="password-input-wrapper">
+                        <input type="password"
+                               class="form-control"
+                               id="password"
+                               name="password"
+                               placeholder="최소 8자 이상"
+                               required>
+
+                        <button type="button"
+                                class="password-toggle"
+                                id="passwordToggle"
+                                aria-label="비밀번호 표시">
+
+                            <!-- eye closed (기본) -->
+                            <svg id="eyeClosed"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 width="20" height="20"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="2"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round">
+                                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20
+                         c-5 0-9.27-3.11-11-7.5
+                         a11.05 11.05 0 0 1 5.17-5.81"/>
+                                <path d="M1 1l22 22"/>
+                                <path d="M9.53 9.53A3.5 3.5 0 0 0 12 15.5
+                         a3.5 3.5 0 0 0 2.47-5.97"/>
+                            </svg>
+
+                            <!-- eye open -->
+                            <svg id="eyeOpen"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 width="20" height="20"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="2"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                                 style="display: none;">
+                                <path d="M1 12s4-8 11-8
+                         11 8 11 8-4 8-11 8
+                         -11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+
+                        </button>
+                    </div>
+
+                    <div id="passwordError" class="form-error"></div>
+                </div>
+
+
+                <!-- 이름 -->
+                <div class="form-group">
+                    <label class="form-label" for="name">이름</label>
+                    <input type="text" class="form-control"
+                           id="name" name="name"
+                           placeholder="홍길동" required>
+                </div>
+
+                <!-- 닉네임 -->
+                <div class="form-group">
+                    <label class="form-label" for="nickname">닉네임</label>
+                    <input type="text" class="form-control"
+                           id="nickname" name="nickname"
+                           placeholder="2자 이상 20자 이하" required>
+                    <div id="nicknameError" class="form-error"></div>
+                </div>
+
+                <!-- 역할 -->
+                <div class="form-group">
+                    <label class="form-label" for="role">역할 선택</label>
+                    <select class="form-control" id="role" name="role" required>
+                        <option value="">역할을 선택하세요</option>
+                        <option value="STUDENT">학생</option>
+                        <option value="MENTOR">멘토</option>
+                    </select>
+                </div>
+
+                <!-- 약관 -->
+                <div class="terms-box">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <span>이용약관에 동의합니다</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="privacy" name="privacy" required>
+                        <span>개인정보 처리방침에 동의합니다</span>
+                    </label>
+                </div>
+
+                <!-- 버튼 -->
+                <button type="submit" class="btn-primary">
+                    회원가입
+                </button>
+            </form>
+
+            <!-- 푸터 -->
+            <div class="signup-footer">
+                이미 계정이 있으신가요?
+                <a href="/login">로그인</a>
+            </div>
+
         </div>
-
-        <div class="form-group">
-            <label for="password">비밀번호 (8자 이상)</label>
-            <input type="password" id="password" name="password" required minlength="8">
-        </div>
-
-        <div class="form-group">
-            <label for="name">이름</label>
-            <input type="text" id="name" name="name" required>
-        </div>
-
-        <div class="form-group">
-            <label for="nickname">닉네임</label>
-            <input type="text" id="nickname" name="nickname" required>
-            <small id="nicknameError" class="error-text"></small>
-        </div>
-
-        <div class="form-group">
-            <label for="role">역할</label>
-            <select id="role" name="role" required>
-                <option value="">선택하세요</option>
-                <option value="STUDENT">학생</option>
-                <option value="MENTOR">멘토</option>
-            </select>
-        </div>
-
-        <button type="submit" class="btn-primary">가입하기</button>
-    </form>
-
-    <div class="login-link">
-        이미 계정이 있으신가요? <a href="/login">로그인</a>
     </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script src="/js/signup.js"></script>
+
+<!-- JavaScript 파일 로드 -->
+<script th:src="@{/js/header.js}"></script>
+<script th:src="@{/js/signup.js}"></script>
+
 </body>
 </html>

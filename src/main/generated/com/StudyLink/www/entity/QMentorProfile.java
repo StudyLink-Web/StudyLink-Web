@@ -22,19 +22,19 @@ public class QMentorProfile extends EntityPathBase<MentorProfile> {
 
     public static final QMentorProfile mentorProfile = new QMentorProfile("mentorProfile");
 
-    public final NumberPath<java.math.BigDecimal> averageRating = createNumber("averageRating", java.math.BigDecimal.class);
+    public final NumberPath<Double> averageRating = createNumber("averageRating", Double.class);
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
     public final NumberPath<Long> deptId = createNumber("deptId", Long.class);
 
+    public final NumberPath<Long> exp = createNumber("exp", Long.class);
+
     public final StringPath introduction = createString("introduction");
 
     public final BooleanPath isVerified = createBoolean("isVerified");
 
-    public final NumberPath<Integer> point = createNumber("point", Integer.class);
-
-    public final NumberPath<Long> profileId = createNumber("profileId", Long.class);
+    public final NumberPath<Long> point = createNumber("point", Long.class);
 
     public final StringPath studentCardImg = createString("studentCardImg");
 
@@ -43,6 +43,8 @@ public class QMentorProfile extends EntityPathBase<MentorProfile> {
     public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 
     public final QUsers user;
+
+    public final NumberPath<Long> userId = createNumber("userId", Long.class);
 
     public QMentorProfile(String variable) {
         this(MentorProfile.class, forVariable(variable), INITS);
@@ -62,7 +64,7 @@ public class QMentorProfile extends EntityPathBase<MentorProfile> {
 
     public QMentorProfile(Class<? extends MentorProfile> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.user = inits.isInitialized("user") ? new QUsers(forProperty("user")) : null;
+        this.user = inits.isInitialized("user") ? new QUsers(forProperty("user"), inits.get("user")) : null;
     }
 
 }

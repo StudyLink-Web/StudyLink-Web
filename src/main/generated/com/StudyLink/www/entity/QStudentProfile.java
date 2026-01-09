@@ -24,8 +24,6 @@ public class QStudentProfile extends EntityPathBase<StudentProfile> {
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
-    public final NumberPath<Long> profileId = createNumber("profileId", Long.class);
-
     public final StringPath regionPreference = createString("regionPreference");
 
     public final StringPath targetMajor = createString("targetMajor");
@@ -35,6 +33,8 @@ public class QStudentProfile extends EntityPathBase<StudentProfile> {
     public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 
     public final QUsers user;
+
+    public final NumberPath<Long> userId = createNumber("userId", Long.class);
 
     public QStudentProfile(String variable) {
         this(StudentProfile.class, forVariable(variable), INITS);
@@ -54,7 +54,7 @@ public class QStudentProfile extends EntityPathBase<StudentProfile> {
 
     public QStudentProfile(Class<? extends StudentProfile> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.user = inits.isInitialized("user") ? new QUsers(forProperty("user")) : null;
+        this.user = inits.isInitialized("user") ? new QUsers(forProperty("user"), inits.get("user")) : null;
     }
 
 }
