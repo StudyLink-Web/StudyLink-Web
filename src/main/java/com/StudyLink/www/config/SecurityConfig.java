@@ -43,7 +43,6 @@ public class SecurityConfig {
                                 "/api/auth/**",          // REST API는 CSRF 토큰 필요 없음
                                 "/loginProc",             // 폼 기반 로그인
                                 "/logout",
-                                "/room/**",
                                 "/ws/**",
                                 "/chatbot/**",            // 챗봇 관련 요청 허용
                                 "/room/**"                // 방 관련 요청 허용
