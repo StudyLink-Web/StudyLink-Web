@@ -31,6 +31,7 @@
     padding: 8px 12px;
     border-radius: 12px;
     word-wrap: break-word;
+    white-space: pre-wrap; /* 공백과 줄바꿈 유지 */
 }
 
 .message-right {
@@ -40,6 +41,7 @@
     padding: 8px 12px;
     border-radius: 12px;
     word-wrap: break-word;
+    white-space: pre-wrap; /* 공백과 줄바꿈 유지 */
 }
 
 /* 읽음 표시 */
@@ -53,4 +55,14 @@
 /* 스크롤 숨기기 */
 #messageArea::-webkit-scrollbar {
     display: none;
+}
+
+/* 채팅창 이미지 크기 */
+.chat-image {
+    max-width: 100px;      /* 이미지 가로 최대 크기 */
+    max-height: 100px;     /* 이미지 세로 최대 크기 */
+    width: auto;           /* 비율 유지 */
+    height: auto;          /* 비율 유지 */
+    border-radius: 8px;    /* 모서리 살짝 둥글게 */
+    object-fit: cover;     /* 영역에 맞춰 이미지 자르기 가능 */
 }

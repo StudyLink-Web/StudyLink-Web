@@ -20,13 +20,19 @@ function connect() {
 
         // 구독
         // 채팅창
-        stompClient.subscribe('/topic/text', function(message){
+        stompClient.subscribe('/topic/sendMessage', function(message){
             const msg = JSON.parse(message.body);
             // 일반적으로 본인 메시지는 무시하지만 messageId를 받기위해 허용
             // if (msg.senderId == senderId){ // 본인 메시지는 무시
             //     return;
             // }
-            spreadTextMessage(msg);
+            if (msg.messageType === "TEXT") {
+                spreadTextMessage(msg);
+            } else {
+                loadRoomFileDTO(msg.fileUuid).then(result => {
+                    spreadFileMessage(msg, result);
+                });
+            }
 
             // 메시지 읽음 요청하기(상대 메시지인 경우)
             if (msg.senderId === senderId) return;
@@ -39,20 +45,17 @@ function connect() {
         // 이 요청 받으면 해당 메시지 읽음 처리하기(1 제거)
         stompClient.subscribe('/topic/readMessage', function(message){
             const msg = JSON.parse(message.body);
-            if (msg.senderId == senderId){
-                return;
-            }
+            if (msg.senderId === senderId) return;
             readMessage(msg.messageId);
         });
 
         // 이 요청 받으면 모든 메시지에서 1제거(상대방 입장)
         stompClient.subscribe('/topic/enterRoom', function(message){
             const msg = JSON.parse(message.body);
-            if (msg.senderId == senderId){
-                return;
-            }
+            if (msg.senderId === senderId) return;
             readAllMessage();
         });
+
 
 
         // 캔버스
@@ -63,8 +66,12 @@ function connect() {
         loadMessage(roomId).then(result => { // 채팅기록 불러오기
             console.log("💬 로드된 메시지 수:", result.length);
             for(let message of result){
-                if (message.messageType == "TEXT") {
-                    spreadTextMessage(message)
+                if (message.messageType === "TEXT") {
+                    spreadTextMessage(message);
+                } else {
+                    loadRoomFileDTO(message.fileUuid).then(result => {
+                        spreadFileMessage(message, result);
+                    });
                 }
             }
             safeSend("/app/enterRoom", {roomId: roomId, senderId: senderId})
@@ -88,7 +95,7 @@ function spreadTextMessage(message){
     const msgContainer = document.createElement('div');
     msgContainer.classList.add('message-container'); // 공통 클래스
 
-    const isMyMessage = message.senderId == senderId;
+    const isMyMessage = message.senderId === senderId;
 
     // senderId에 따라 클래스 추가
     if (isMyMessage) {
@@ -121,6 +128,56 @@ function spreadTextMessage(message){
     messageArea.scrollTop = messageArea.scrollHeight;
 }
 
+// 파일 화면에 출력
+function spreadFileMessage(msg, roomFileDTO) {
+    const isMyMessage = msg.senderId === senderId;
+    const messageArea = document.getElementById('messageArea');
+
+    const msgContainer = document.createElement('div');
+    msgContainer.classList.add('message-container');
+    msgContainer.classList.add(
+        isMyMessage ? 'message-container-right' : 'message-container-left'
+    );
+
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add(isMyMessage ? 'message-right' : 'message-left');
+
+    // ===== 읽음 표시 (내 메시지 + 안 읽었을 때만) =====
+    if (isMyMessage && msg.isRead === false) {
+        const readSpan = document.createElement('span');
+        readSpan.classList.add('read-indicator');
+        readSpan.textContent = '1';
+        readSpan.dataset.messageId = msg.messageId;
+        msgContainer.appendChild(readSpan);
+    }
+
+    // 이미지 파일
+    if (roomFileDTO.file_type === 1) {
+        const img = document.createElement('img');
+        img.src = `/room/loadFile/${roomFileDTO.uuid}`; // img 태그의 src경로를 브라우저가 자동으로 get요청
+        img.classList.add('chat-image');
+        msgDiv.appendChild(img);
+
+        // 이미지가 로드 완료되면 스크롤
+        img.onload = () => {
+            messageArea.scrollTop = messageArea.scrollHeight;
+        };
+    }
+
+    // 일반 파일
+    else {
+        const fileLink = document.createElement('a');
+        fileLink.href = `/room/loadFile/${roomFileDTO.uuid}`;
+        fileLink.textContent = `📎 ${roomFileDTO.file_name}`;
+        fileLink.download = roomFileDTO.file_name;
+        msgDiv.appendChild(fileLink);
+    }
+
+    msgContainer.appendChild(msgDiv);
+    messageArea.appendChild(msgContainer);
+    messageArea.scrollTop = messageArea.scrollHeight;
+}
+
 // 해당 메시지 1지우기(읽음 처리)
 function readMessage(messageId){
     // 1. 해당 메시지 요소 찾기
@@ -140,6 +197,11 @@ function readAllMessage(){
     readSpans.forEach(span => span.remove());
 }
 
+
+
+
+
+// 비동기
 // 서버로 db is_read 변경 요청
 async function readMessageToServer(messageId){
     const url = "/room/readMessage/"+messageId;
@@ -176,22 +238,51 @@ async function sendFile(formData){
         console.log("📊 응답 상태:", res.status, res.statusText);
 
         if (!res.ok) {
-            const errorText = await res.text();
+            const errorText = await res.json();
             console.error("❌ HTTP 에러:", res.status);
             console.error("❌ 응답 내용:", errorText.substring(0, 200));
-            return "0";
+            return null;
         }
 
-        const result = await res.text();
+        const result = await res.json();
         console.log("✅ 응답 데이터:", result);
         return result;
 
     } catch (error) {
         console.error("❌ 네트워크 에러:", error.message);
-        return "0";
+        return null;
     }
 }
 
+async function loadRoomFileDTO(uuid){
+    const url = "/room/loadRoomFileDTO/" + uuid;
+
+    console.log("🚀 파일 불러오기 시작");
+    console.log("📍 URL:", url);
+
+    try {
+        const res = await fetch(url, {
+            method: 'get'
+        });
+
+        console.log("📊 응답 상태:", res.status, res.statusText);
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("❌ HTTP 에러:", res.status);
+            console.error("❌ 응답 내용:", errorText.substring(0, 200));
+            return null;
+        }
+
+        const result = await res.json();
+        console.log("✅ 응답 데이터:", result);
+        return result;
+
+    } catch (error) {
+        console.error("❌ 네트워크 에러:", error.message);
+        return null;
+    }
+}
 
 // 캔버스 관련 함수
 
@@ -199,7 +290,7 @@ connect(); // webSocket 연결
 
 
 document.addEventListener('click', async (e)=>{
-    if (e.target.id == 'sendFileBtn'){
+    if (e.target.id === 'sendFileBtn'){
         console.log("🖱️ 파일 전송 버튼 클릭됨");
 
         const fileInput = document.getElementById('file');
@@ -220,9 +311,17 @@ document.addEventListener('click', async (e)=>{
             formData.append("roomId", roomId); // roomId도 같이 전송
 
             const result = await sendFile(formData); // 순차 업로드
-            if (result === "1") {
+            if (result != null) {
                 console.log(`✅ 파일 ${file.name} 업로드 성공`);
                 // 여기서 WebSocket 메시지 보내도 OK
+                const message = {
+                    roomId: roomId,
+                    senderId: senderId,
+                    fileUuid: result.uuid,
+                    messageType: result.file_type === 1 ? "IMAGE" : "FILE",
+                    isRead: false
+                }
+                safeSend("/app/sendMessage", message);
             } else {
                 console.log(`❌ 파일 ${file.name} 업로드 실패`);
             }
@@ -249,10 +348,7 @@ document.addEventListener('keydown', (e)=> {
         }
 
         // WebSocket 전송
-        safeSend("/app/text", message);
-
-        // 본인은 바로 반영
-        // spreadTextMessage(message); // 이러면 본인은 messageId가 null임 -> 본인도 브로드캐스트로 받기
+        safeSend("/app/sendMessage", message);
 
         textarea.value = ""; // 전송 후 초기화
         textarea.focus();

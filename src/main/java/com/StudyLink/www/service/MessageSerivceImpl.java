@@ -19,16 +19,7 @@ public class MessageSerivceImpl implements MessageService {
 
     @Override
     public MessageDTO insert(MessageDTO message) {
-        Message savedMessage = null;
-
-        if (message.getMessageType() == MessageDTO.MessageType.TEXT) {
-            savedMessage = messageRepository.save(new Message(message));
-        } else if (message.getMessageType() == MessageDTO.MessageType.IMAGE) {
-            // 이미지 처리 로직
-        }
-
-        // 저장된 엔티티를 DTO로 변환해서 반환
-        return savedMessage != null ? new MessageDTO(savedMessage) : null;
+        return new MessageDTO(messageRepository.save(new Message(message)));
     }
 
     @Override

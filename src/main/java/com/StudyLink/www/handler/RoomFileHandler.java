@@ -112,4 +112,18 @@ public class RoomFileHandler {
             throw new RuntimeException("파일 저장 실패: " + e.getMessage(), e);
         }
     }
+
+    public File loadFile(RoomFileDTO roomFileDTO) {
+        // uploadDirFile (루트 업로드 경로) + saveDir(날짜 폴더) + uuid_파일명
+        File file = new File(
+                new File(uploadDirFile, roomFileDTO.getSaveDir()),
+                roomFileDTO.getUuid() + "_" + roomFileDTO.getFileName()
+        );
+
+        if (!file.exists()) {
+            throw new RuntimeException("파일을 찾을 수 없습니다: " + file.getAbsolutePath());
+        }
+
+        return file;
+    }
 }
