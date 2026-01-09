@@ -33,7 +33,12 @@
 					   role="button"
 					   data-bs-toggle="dropdown"
 					   aria-expanded="false">
-<!--						👤 <span th:text="${#authentication.principal.attributes['name']}"></span>-->
+						👤 <span th:text="${
+                     #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
+                       ? #authentication.principal.attributes['name']
+                       : #authentication.name
+                  }">
+                  </span>
 
 
 					</a>
