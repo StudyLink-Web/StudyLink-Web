@@ -68,6 +68,30 @@ public class Users {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // ⭐ 추가: OAuth2 관련 필드
+    @Column(length = 50, nullable = true)
+    private String oauthProvider;  // oauth_provider로 매핑
+
+    @Column(length = 100, nullable = true)
+    private String oauthId;  // oauth_id로 매핑
+
+    @Column(length = 500, nullable = true)
+    private String profileImageUrl;  // profile_image_url로 매핑
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
+
+    @Column(nullable = true)
+    private String gradeYear;
+
+    @Column(nullable = true)
+    private String interests;
+
+    @Column(nullable = true)
+    private String phone;
+
+
     /**
      * 1:1 관계
      * 학생 상세 정보 (StudentProfile)
@@ -102,6 +126,10 @@ public class Users {
         this.updatedAt = LocalDateTime.now();
         if (this.emailVerified == null) {
             this.emailVerified = false;
+        }
+        // ⭐ 추가: OAuth 사용자는 isActive 기본값 true
+        if (this.isActive == null) {
+            this.isActive = true;
         }
     }
 

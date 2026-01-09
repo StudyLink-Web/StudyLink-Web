@@ -30,6 +30,12 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final ListPath<Favorite, QFavorite> favoritedMentors = this.<Favorite, QFavorite>createList("favoritedMentors", Favorite.class, QFavorite.class, PathInits.DIRECT2);
 
+    public final StringPath gradeYear = createString("gradeYear");
+
+    public final StringPath interests = createString("interests");
+
+    public final BooleanPath isActive = createBoolean("isActive");
+
     public final ListPath<MentorAvailability, QMentorAvailability> mentorAvailabilities = this.<MentorAvailability, QMentorAvailability>createList("mentorAvailabilities", MentorAvailability.class, QMentorAvailability.class, PathInits.DIRECT2);
 
     public final QMentorProfile mentorProfile;
@@ -38,7 +44,15 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final StringPath nickname = createString("nickname");
 
+    public final StringPath oauthId = createString("oauthId");
+
+    public final StringPath oauthProvider = createString("oauthProvider");
+
     public final StringPath password = createString("password");
+
+    public final StringPath phone = createString("phone");
+
+    public final StringPath profileImageUrl = createString("profileImageUrl");
 
     public final StringPath role = createString("role");
 
