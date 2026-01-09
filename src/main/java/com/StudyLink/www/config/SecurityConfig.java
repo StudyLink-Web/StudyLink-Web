@@ -49,10 +49,11 @@ public class SecurityConfig {
                                 "/api/auth/**",          // REST API는 CSRF 토큰 필요 없음
                                 "/loginProc",             // 폼 기반 로그인
                                 "/logout",
-                                "/oauth2/**",             // ⭐ 추가: OAuth2 요청도 CSRF 제외
+                                "/oauth2/**",             // 추가: OAuth2 요청도 CSRF 제외
                                 "/logout",
                                 "/ws/**",
                                 "/chatbot/**",            // 챗봇 관련 요청 허용
+                                "/api/chatbot/archive/**", // 추가: 챗봇 아카이브 API CSRF 제외
                                 "/room/**"                // 방 관련 요청 허용
                         )
                 )

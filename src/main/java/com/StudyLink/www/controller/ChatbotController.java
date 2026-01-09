@@ -4,6 +4,7 @@ import com.StudyLink.www.dto.ChatbotDTO;
 import com.StudyLink.www.entity.StudentScore;
 import com.StudyLink.www.repository.StudentScoreRepository;
 import com.StudyLink.www.repository.UserRepository;
+import com.StudyLink.www.service.ChatBotSessionService;
 import com.StudyLink.www.service.ChatbotService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class ChatbotController {
 
     private final ChatbotService chatbotService;
+    private final ChatBotSessionService sessionService; // 추가
     private final UserRepository userRepository;
     private final StudentScoreRepository studentScoreRepository;
 
@@ -32,10 +34,15 @@ public class ChatbotController {
     @PostMapping("/chatbot/send")
     @ResponseBody
     public ChatbotDTO.Response send(@RequestBody ChatbotDTO.Request request, Principal principal) {
-        // 로그인한 사용자가 있는 경우 DB에서 성적을 조회하여 요청에 포함
+        // 1. 대화 내역 저장 (사용자 질문)
+        if (request.getSessionId() != null) {
+            sessionService.saveMessage(request.getSessionId(), "USER", request.getQuery());
+        }
+
+        // 2. 기존 성적 정보 조회 및 포함 (로그인한 경우)
         if (principal != null) {
-            String email = principal.getName();
-            userRepository.findByEmail(email).ifPresent(user -> {
+            String username = principal.getName();
+            userRepository.findByUsername(username).ifPresent(user -> {
                 List<StudentScore> dbScores = studentScoreRepository.findByUser_UserId(user.getUserId());
                 if (!dbScores.isEmpty()) {
                     List<ChatbotDTO.UserScore> dtoScores = dbScores.stream()
@@ -50,6 +57,20 @@ public class ChatbotController {
                 }
             });
         }
-        return chatbotService.getChatResponse(request);
+
+        // 3. AI 서버에 질문 전달
+        ChatbotDTO.Response response = chatbotService.getChatResponse(request);
+
+        // 4. 대화 내역 저장 (AI 응답)
+        if (request.getSessionId() != null && response != null && response.getAnswer() != null) {
+            sessionService.saveMessage(request.getSessionId(), "BOT", response.getAnswer());
+            
+            // [추가] AI가 생성한 제목이 있다면 세션 제목 업데이트
+            if (response.getTitle() != null && !response.getTitle().isEmpty()) {
+                sessionService.updateSessionTitle(request.getSessionId(), response.getTitle());
+            }
+        }
+
+        return response;
     }
 }
