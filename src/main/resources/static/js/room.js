@@ -5,10 +5,10 @@ function randomNumberString(length) {
     for (let i = 0; i < length; i++) {
         result += Math.floor(Math.random() * 10); // 0~9
     }
-    return result;
+    return Number(result);
 }
 
-const senderId = randomNumberString(16);
+const senderId = randomNumberString(10);
 console.log("senderId =", senderId);
 
 
@@ -22,14 +22,53 @@ function connect() {
         // 채팅창
         stompClient.subscribe('/topic/text', function(message){
             const msg = JSON.parse(message.body);
-            if (msg.senderId == senderId){ // 본인 메시지는 무시
+            // 일반적으로 본인 메시지는 무시하지만 messageId를 받기위해 허용
+            // if (msg.senderId == senderId){ // 본인 메시지는 무시
+            //     return;
+            // }
+            spreadTextMessage(msg);
+
+            // 메시지 읽음 요청하기(상대 메시지인 경우)
+            if (msg.senderId === senderId) return;
+            // 실제 db에 is_read true로 바꾸기
+            readMessageToServer(msg.messageId);
+            // 상대 화면 갱신하도록 메시지 요청
+            safeSend("/app/readMessage", {messageId : msg.messageId});
+        });
+
+        // 이 요청 받으면 해당 메시지 읽음 처리하기(1 제거)
+        stompClient.subscribe('/topic/readMessage', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId == senderId){
                 return;
             }
-            spreadTextMessage(msg);
+            readMessage(msg.messageId);
+        });
+
+        // 이 요청 받으면 모든 메시지에서 1제거(상대방 입장)
+        stompClient.subscribe('/topic/enterRoom', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId == senderId){
+                return;
+            }
+            readAllMessage();
         });
 
 
         // 캔버스
+
+
+
+        // connect가 비동기함수이므로 연결이 완료된 후 실행되야하는 함수들은 여기 작성(밖에 작성시 연결되기 전에 실행 될 수 있음)
+        loadMessage(roomId).then(result => { // 채팅기록 불러오기
+            for(let message of result){
+                if (message.messageType == "TEXT") {
+                    spreadTextMessage(message)
+                }
+            }
+            console.log("메시지 로딩")
+            safeSend("/app/enterRoom", {roomId: roomId, senderId: senderId})
+        });
     });
 }
 
@@ -43,25 +82,70 @@ function safeSend(destination, message) {
 function spreadTextMessage(message){
     const messageArea = document.getElementById('messageArea');
 
-    // 메시지 div 생성
-    const msgDiv = document.createElement('div');
-    msgDiv.classList.add('message'); // 공통 스타일
+    // 메시지 컨테이너 생성
+    const msgContainer = document.createElement('div');
+    msgContainer.classList.add('message-container'); // 공통 클래스
 
-    // senderId에 따라 클래스 추가 (오른쪽/왼쪽)
-    if (message.senderId == senderId) {
-        msgDiv.classList.add('message-right'); // 내 메시지
+    const isMyMessage = message.senderId == senderId;
+
+    // senderId에 따라 클래스 추가
+    if (isMyMessage) {
+        msgContainer.classList.add('message-container-right');
     } else {
-        msgDiv.classList.add('message-left'); // 상대 메시지
+        msgContainer.classList.add('message-container-left');
+    }
+
+    // ===== 읽음 표시 (내 메시지 + 안 읽었을 때만) =====
+    if (isMyMessage && message.isRead === false) {
+        const readSpan = document.createElement('span');
+        readSpan.classList.add('read-indicator');
+        readSpan.textContent = '1';
+        readSpan.dataset.messageId = message.messageId;
+        msgContainer.appendChild(readSpan);
     }
 
     // 메시지 내용
-    msgDiv.textContent = message.content;
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add(isMyMessage ? 'message-right' : 'message-left');
 
-    // 메시지 영역에 추가
-    messageArea.appendChild(msgDiv);
+    const contentSpan = document.createElement('span');
+    contentSpan.textContent = message.content;
+    msgDiv.appendChild(contentSpan);
 
-    // 스크롤을 맨 아래로
+    msgContainer.appendChild(msgDiv);
+    messageArea.appendChild(msgContainer);
+
+    // 스크롤 맨 아래
     messageArea.scrollTop = messageArea.scrollHeight;
+}
+
+// 해당 메시지 1지우기(읽음 처리)
+function readMessage(messageId){
+    // 1. 해당 메시지 요소 찾기
+    console.log(messageId)
+    const readSpan = document.querySelector(`.read-indicator[data-message-id='${messageId}']`);
+    if (readSpan) {
+        readSpan.remove(); // 화면에서 '1' 제거
+    }
+}
+
+// 모든 메시지 1지우기(읽음 처리)
+function readAllMessage(){
+    // 1. 화면에 있는 모든 read-indicator 요소 선택
+    const readSpans = document.querySelectorAll('.read-indicator');
+
+    // 2. 하나씩 제거
+    readSpans.forEach(span => span.remove());
+}
+
+// 서버로 db is_read 변경 요청
+async function readMessageToServer(messageId){
+    const url = "/room/readMessage/"+messageId;
+    const config = {
+        method: 'get'
+    };
+    const res = await fetch(url, config);
+    return res.text();
 }
 
 async function loadMessage(roomId){
@@ -87,14 +171,11 @@ async function sendFile(formData){
 
 // 캔버스 관련 함수
 
+
+
+
 connect(); // webSocket 연결
-loadMessage(roomId).then(result => { // 채팅기록 불러오기
-    for(let message of result){
-        if (message.messageType == "TEXT") {
-            spreadTextMessage(message)
-        }
-    }
-});
+
 
 document.addEventListener('click', async (e)=>{
     if (e.target.id == 'sendFileBtn'){
@@ -144,7 +225,7 @@ document.addEventListener('keydown', (e)=> {
         safeSend("/app/text", message);
 
         // 본인은 바로 반영
-        spreadTextMessage(message);
+        // spreadTextMessage(message); // 이러면 본인은 messageId가 null임 -> 본인도 브로드캐스트로 받기
 
         textarea.value = ""; // 전송 후 초기화
         textarea.focus();
