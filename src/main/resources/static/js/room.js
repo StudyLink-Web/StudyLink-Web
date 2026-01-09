@@ -64,6 +64,15 @@ function spreadTextMessage(message){
     messageArea.scrollTop = messageArea.scrollHeight;
 }
 
+async function loadMessage(roomId){
+    const url = "/room/loadMessage/"+roomId;
+    const config = {
+        method: 'get'
+    };
+    const res = await fetch(url, config);
+    return res.json();
+}
+
 
 async function sendFile(formData){
     const url = "/room/saveFile";
@@ -78,7 +87,15 @@ async function sendFile(formData){
 
 // 캔버스 관련 함수
 
-connect();
+connect(); // webSocket 연결
+loadMessage(roomId).then(result => { // 채팅기록 불러오기
+    for(let message of result){
+        if (message.messageType == "TEXT") {
+            spreadTextMessage(message)
+        }
+    }
+});
+
 document.addEventListener('click', async (e)=>{
     if (e.target.id == 'sendFileBtn'){
         const fileInput = document.getElementById('file');
