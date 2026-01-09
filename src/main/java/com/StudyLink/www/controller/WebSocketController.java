@@ -1,6 +1,7 @@
 package com.StudyLink.www.controller;
 
 import com.StudyLink.www.canvas.DrawMessage;
+import com.StudyLink.www.canvas.EraseMessage;
 import com.StudyLink.www.dto.MessageDTO;
 import com.StudyLink.www.dto.RoomFileDTO;
 import com.StudyLink.www.handler.RoomFileHandler;
@@ -67,7 +68,11 @@ public class WebSocketController {
         return message;
     }
 
-
+    @MessageMapping("/erase")
+    @SendTo("/topic/erase")
+    public EraseMessage eraseMessage (EraseMessage message) {
+        return message;
+    }
 
 
 

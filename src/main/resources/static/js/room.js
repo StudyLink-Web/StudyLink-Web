@@ -65,6 +65,12 @@ function connect() {
             drawLine(msg.x1, msg.y1, msg.x2, msg.y2);
         });
 
+        stompClient.subscribe('/topic/erase', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            eraseLine(msg.x, msg.y);
+        });
+
 
 
         // connect가 비동기함수이므로 연결이 완료된 후 실행되야하는 함수들은 여기 작성(밖에 작성시 연결되기 전에 실행 될 수 있음)
@@ -379,6 +385,7 @@ function selectTool(tool) {
     selectedTool = tool;
 }
 
+// 그리기
 function drawLine(x1, y1, x2, y2){ // 색상, 두께 등 나중에 추가하기
     // 길이가 0이면 skip
     if (x1 === x2 && y1 === y2) return;
@@ -396,28 +403,93 @@ function drawLine(x1, y1, x2, y2){ // 색상, 두께 등 나중에 추가하기
     canvas.renderAll();
 }
 
+// 지우기
+function eraseLine(x, y, threshold = 5) {
+    // threshold: 지울 기준 거리(px)
 
+    const objects = canvas.getObjects('line'); // 모든 Line 객체 가져오기
+    const toRemove = [];
+
+    objects.forEach(line => {
+        const [x1, y1, x2, y2] = line.get('points') || [line.x1, line.y1, line.x2, line.y2];
+
+        // 점과 선 사이 최소 거리 계산
+        const dist = distancePointToLine(x, y, x1, y1, x2, y2);
+
+        if (dist <= threshold) {
+            toRemove.push(line);
+        }
+    });
+
+    toRemove.forEach(line => canvas.remove(line));
+    canvas.renderAll();
+}
+
+// 점(x0,y0)과 선(x1,y1)-(x2,y2) 사이 최소 거리 계산 함수
+function distancePointToLine(x0, y0, x1, y1, x2, y2) {
+    const A = x0 - x1; // 점 -> 선분 시작점 벡터
+    const B = y0 - y1;
+
+    const C = x2 - x1; // 선분 벡터
+    const D = y2 - y1;
+
+    const dot = A * C + B * D; // 점 벡터 · 선분 벡터 (dot product)
+    const len_sq = C * C + D * D; // 선분 길이^2
+    let param = -1;
+
+    if (len_sq !== 0) param = dot / len_sq; // 점을 선분에 투영한 비율 (t)
+
+    let xx, yy;
+
+    if (param < 0) {
+        xx = x1;
+        yy = y1;
+    } else if (param > 1) {
+        xx = x2;
+        yy = y2;
+    } else {
+        xx = x1 + param * C;
+        yy = y1 + param * D;
+    }
+
+    const dx = x0 - xx;
+    const dy = y0 - yy;
+    return Math.sqrt(dx * dx + dy * dy);
+}
 
 canvas.on('mouse:down', (opt) => {
-    isDrawing = selectedTool === 'draw';
+    isDrawing = selectedTool === 'draw' || selectedTool === 'erase';
     lastPoint = canvas.getPointer(opt.e);
 });
 
 canvas.on('mouse:move', (opt) => {
     if (!isDrawing) return;
-
     const pointer = canvas.getPointer(opt.e);
-    drawLine(lastPoint.x, lastPoint.y, pointer.x, pointer.y);
 
-    // 필요하면 여기서 소켓으로 좌표 전송
-    message = {
-        senderId: senderId,
-        x1: lastPoint.x,
-        y1: lastPoint.y,
-        x2: pointer.x,
-        y2: pointer.y
+    if (selectedTool === 'draw'){
+        drawLine(lastPoint.x, lastPoint.y, pointer.x, pointer.y);
+
+        message = {
+            senderId: senderId,
+            x1: lastPoint.x,
+            y1: lastPoint.y,
+            x2: pointer.x,
+            y2: pointer.y
+        }
+        safeSend("/app/draw", message);
     }
-    safeSend("/app/draw", message);
+
+    if (selectedTool === 'erase'){
+        eraseLine(pointer.x, pointer.y);
+
+        message = {
+            senderId: senderId,
+            x: pointer.x,
+            y: pointer.y
+        }
+        safeSend("/app/erase", message);
+    }
+
 
     canvas.renderAll();
     lastPoint = pointer;
