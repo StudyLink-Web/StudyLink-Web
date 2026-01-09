@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class ChatbotController {
 
     private final ChatbotService chatbotService;
@@ -34,6 +35,8 @@ public class ChatbotController {
     @PostMapping("/chatbot/send")
     @ResponseBody
     public ChatbotDTO.Response send(@RequestBody ChatbotDTO.Request request, Principal principal) {
+        log.info("[CHAT] 요청 수신 - Session ID: {}, Query: {}", request.getSessionId(), request.getQuery());
+        
         // 1. 대화 내역 저장 (사용자 질문)
         if (request.getSessionId() != null) {
             sessionService.saveMessage(request.getSessionId(), "USER", request.getQuery());

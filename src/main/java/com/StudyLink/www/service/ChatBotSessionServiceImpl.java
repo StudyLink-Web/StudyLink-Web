@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@lombok.extern.slf4j.Slf4j
 public class ChatBotSessionServiceImpl implements ChatBotSessionService {
 
     private final ChatBotSessionRepository sessionRepository;
@@ -62,6 +63,7 @@ public class ChatBotSessionServiceImpl implements ChatBotSessionService {
 
     @Override
     public void saveMessage(Long sessionId, String role, String content) {
+        log.info("[ARCHIVE] 메시지 저장 시도 - Session ID: {}, Role: {}", sessionId, role);
         ChatBotSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("세션을 찾을 수 없습니다."));
         
@@ -74,13 +76,17 @@ public class ChatBotSessionServiceImpl implements ChatBotSessionService {
         messageRepository.save(message);
 
         // 첫 질문일 경우 제목 자동 생성 (단순 요약)
-        if ("USER".equalsIgnoreCase(role) && "새로운 대화".equals(session.getTitle())) {
-            String newTitle = content.length() > 20 ? content.substring(0, 17) + "..." : content;
+        String currentTitle = session.getTitle();
+        if ("USER".equalsIgnoreCase(role) && (currentTitle == null || currentTitle.trim().equals("새로운 대화"))) {
+            String newTitle = content.trim();
+            if (newTitle.length() > 20) {
+                newTitle = newTitle.substring(0, 17) + "...";
+            }
             session.setTitle(newTitle);
-            sessionRepository.saveAndFlush(session); // 즉시반영
+            sessionRepository.saveAndFlush(session); // 즉시 갱신
         } else {
             // 세션의 업데이트 시간을 갱신 (@LastModifiedDate 반영)
-            sessionRepository.save(session);
+            sessionRepository.saveAndFlush(session);
         }
     }
 
@@ -89,7 +95,7 @@ public class ChatBotSessionServiceImpl implements ChatBotSessionService {
         ChatBotSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("세션을 찾을 수 없습니다."));
         session.setTitle(title);
-        sessionRepository.save(session);
+        sessionRepository.saveAndFlush(session); // 즉시 갱신
     }
 
     @Override

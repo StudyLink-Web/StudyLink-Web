@@ -514,23 +514,28 @@
                 .then(sessions => {
                     sessionList.innerHTML = '';
                     sessions.forEach(session => {
+                        const sId = session.sessionId || session.session_id;
+                        const sTitle = session.title || '새로운 대화';
+                        const sDate = session.updatedAt || session.updated_at;
+                        
                         const item = document.createElement('div');
-                        item.className = `session-item ${currentSessionId === session.sessionId ? 'active' : ''}`;
+                        item.className = `session-item ${currentSessionId == sId ? 'active' : ''}`;
                         item.innerHTML = `
                             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                <div class="session-title">${session.title || '새로운 대화'}</div>
+                                <div class="session-title">${sTitle}</div>
                                 <button class="delete-session-btn" 
-                                        onclick="confirmDelete(event, ${session.sessionId || session.session_id})">
+                                        onclick="confirmDelete(event, ${sId})">
                                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
                                         <polyline points="3 6 5 6 21 6"></polyline>
                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                     </svg>
                                 </button>
                             </div>
-                            <div class="session-date">${session.updatedAt || session.updated_at}</div>
+                            <div class="session-date">${sDate}</div>
                         `;
                         item.onclick = () => {
-                            loadMessages(session.sessionId);
+                            console.log('세션 클릭:', sId);
+                            loadMessages(sId);
                         };
                         sessionList.appendChild(item);
                     });
@@ -579,15 +584,20 @@
         }
 
         function loadMessages(sessionId, force = false) {
-            if (!force && currentSessionId === sessionId && chatMessages.children.length > 1) return;
+            if (!sessionId) return;
+            
+            console.log('[DEBUG] 메시지 로드 시작. Session ID:', sessionId);
             currentSessionId = sessionId;
             
             fetch(`/api/chatbot/archive/sessions/${sessionId}/messages`)
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) throw new Error('메시지 로드 실패');
+                    return res.json();
+                })
                 .then(messages => {
                     chatMessages.innerHTML = '';
                     chatHistory = [];
-                    if (messages.length === 0) {
+                    if (!messages || messages.length === 0) {
                         chatMessages.innerHTML = `
                             <div class="message-wrapper bot">
                                 <div class="message bot">대화 내역이 없습니다. 상담을 시작해보세요!</div>
@@ -596,7 +606,6 @@
                         `;
                     } else {
                         messages.forEach(msg => {
-                            // 서버에서 이미 String으로 옴
                             addMessageToUI(msg.content, msg.role === 'USER', msg.createdAt || msg.created_at);
                             chatHistory.push({
                                 role: msg.role === 'USER' ? 'user' : 'assistant',
@@ -604,7 +613,11 @@
                             });
                         });
                     }
-                    loadSessions(); // 활성 세션 표시용
+                    loadSessions(); // 활성화 표시 및 순서 갱신
+                })
+                .catch(err => {
+                    console.error('메시지 로드 에러:', err);
+                    addMessageToUI("이전 대화 내용을 불러오는 중 오류가 발생했습니다.", false);
                 });
         }
 
@@ -664,6 +677,7 @@
                     })
                     .then(sessionId => {
                         currentSessionId = sessionId;
+                        loadSessions(); // 사이드바에 즉시 세션 표시
                         submitMessage(text);
                     })
                     .catch(err => {
@@ -686,13 +700,16 @@
             typingIndicator.style.display = 'block';
             chatMessages.scrollTop = chatMessages.scrollHeight;
             
+            loadSessions(); // 첫 질문인 경우 사이드바에 즉시 활성 세션 표시
+
             fetch('/chatbot/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     query: text,
                     history: chatHistory,
-                    sessionId: currentSessionId
+                    sessionId: currentSessionId,
+                    session_id: currentSessionId
                 }),
             })
             .then(response => response.json())
@@ -703,7 +720,9 @@
                     chatHistory.push({ role: 'user', content: text });
                     chatHistory.push({ role: 'assistant', content: data.answer });
                     if (chatHistory.length > 10) chatHistory.splice(0, 2);
-                    loadSessions(); // 제목이 업데이트되었을 수 있으므로 갱신
+                    
+                    // 답변 완료 후 제목이 업데이트되었을 가능성이 크므로 사이드바 갱신
+                    loadSessions(); 
                 } else {
                     addMessageToUI("죄송합니다. 답변을 가져오지 못했습니다.", false);
                 }

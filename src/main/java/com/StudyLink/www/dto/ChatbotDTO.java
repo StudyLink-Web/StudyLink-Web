@@ -1,5 +1,6 @@
 package com.StudyLink.www.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +18,7 @@ public class ChatbotDTO {
         private String query;
         private List<Message> history;
         private List<UserScore> userScores;
+        @JsonAlias({"sessionId", "session_id"})
         private Long sessionId; // 추가: 대화 세션 ID (아카이브용)
     }
 
