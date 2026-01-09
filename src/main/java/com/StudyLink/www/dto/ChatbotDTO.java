@@ -1,5 +1,6 @@
 package com.StudyLink.www.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +18,8 @@ public class ChatbotDTO {
         private String query;
         private List<Message> history;
         private List<UserScore> userScores;
+        @JsonAlias({"sessionId", "session_id"})
+        private Long sessionId; // 추가: 대화 세션 ID (아카이브용)
     }
 
     @Data
@@ -47,5 +50,6 @@ public class ChatbotDTO {
         private String answer;
         private String detected_univ;
         private List<String> found_majors;
+        private String title; // 추가: AI가 생성한 대화 제목
     }
 }

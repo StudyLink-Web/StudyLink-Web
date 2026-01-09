@@ -33,7 +33,28 @@
 					   role="button"
 					   data-bs-toggle="dropdown"
 					   aria-expanded="false">
-						👤 <span sec:authentication="name"></span>
+
+						<!-- 👤 <span th:text="${#authentication.principal.attributes['name']}"></span> --->
+						<!-- 👤 <span th:text="${#authentication.name}"></span> -->
+
+						<!-- OAuth2 로그인(Google/Kakao/Naver)에서는 name, 로컬 폼 로그인에서는 username 사용 -->
+						<!--
+						<span th:with="userName=${
+							#authentication.principal.attributes != null && #authentication.principal.attributes['name'] != null
+								? #authentication.principal.attributes['name']
+								: #authentication.name
+						}" th:text="${userName}">
+						</span>
+						-->
+
+						👤 <span th:text="${
+						   #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
+							  ? #authentication.principal.attributes['name']
+							  : #authentication.name
+						}">
+						</span>
+
+
 					</a>
 
 					<ul class="dropdown-menu dropdown-menu-end">

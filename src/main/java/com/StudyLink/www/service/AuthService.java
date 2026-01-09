@@ -2,8 +2,9 @@ package com.StudyLink.www.service;
 
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,18 +13,33 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserRepository userRepository;
+
+    // ⭐ 수정: 필드 주입에서 ObjectProvider로 변경 (순환 참조 방지)
+    @Autowired
+    private ObjectProvider<PasswordEncoder> passwordEncoderProvider;
+
+    // ⭐ 생성자 제거 - 필드 주입 사용으로 변경됨
+    //public AuthService(PasswordEncoder passwordEncoder) {
+    //    this.passwordEncoder = passwordEncoder;
+
 
     /**
      * 회원가입
      */
     @Transactional
     public Users signup(String email, String password, String name, String nickname, String role) {
+        // ⭐ 추가: ObjectProvider에서 PasswordEncoder 가져오기
+        PasswordEncoder passwordEncoder = passwordEncoderProvider.getIfAvailable();
+        if (passwordEncoder == null) {
+            log.error("❌ PasswordEncoder를 찾을 수 없습니다");
+            throw new RuntimeException("PasswordEncoder 설정 오류");
+        }
+
         // 1. 이메일 중복 확인
         if (userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
@@ -69,6 +85,13 @@ public class AuthService {
      */
     @Transactional(readOnly = true)
     public Users login(String email, String password) {
+        // ⭐ 추가: ObjectProvider에서 PasswordEncoder 가져오기
+        PasswordEncoder passwordEncoder = passwordEncoderProvider.getIfAvailable();
+        if (passwordEncoder == null) {
+            log.error("❌ PasswordEncoder를 찾을 수 없습니다");
+            throw new RuntimeException("PasswordEncoder 설정 오류");
+        }
+
         // 1. 이메일로 사용자 조회
         Optional<Users> optionalUser = userRepository.findByEmail(email);
 
@@ -164,6 +187,13 @@ public class AuthService {
      */
     @Transactional
     public void changePassword(Long userId, String currentPassword, String newPassword) {
+        // ⭐ 추가: ObjectProvider에서 PasswordEncoder 가져오기
+        PasswordEncoder passwordEncoder = passwordEncoderProvider.getIfAvailable();
+        if (passwordEncoder == null) {
+            log.error("❌ PasswordEncoder를 찾을 수 없습니다");
+            throw new RuntimeException("PasswordEncoder 설정 오류");
+        }
+
         Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
@@ -192,6 +222,13 @@ public class AuthService {
      */
     @Transactional
     public void deleteUser(Long userId, String password) {
+        // ⭐ 추가: ObjectProvider에서 PasswordEncoder 가져오기
+        PasswordEncoder passwordEncoder = passwordEncoderProvider.getIfAvailable();
+        if (passwordEncoder == null) {
+            log.error("❌ PasswordEncoder를 찾을 수 없습니다");
+            throw new RuntimeException("PasswordEncoder 설정 오류");
+        }
+
         Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 

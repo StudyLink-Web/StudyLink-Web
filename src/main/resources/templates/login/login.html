@@ -21,7 +21,7 @@
                 <div class="logo-subtitle">StudyLink에 로그인하여 학습을 시작하세요</div>
 
                 <!-- ✅ CSRF 토큰 포함 -->
-                <form id="loginForm" method="POST" action="/loginProc" class="login-form">
+                <form id="loginForm" method="POST" action="/api/auth/login" class="login-form">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
                     <!-- ✅ name="email" (SecurityConfig의 usernameParameter와 일치) -->
@@ -103,9 +103,9 @@
                 <div class="social-login-section">
                     <div class="social-login-title">소셜 로그인으로 더 빠르게!</div>
                     <div class="social-buttons">
-                        <a href="/oauth2/authorization/kakao" class="btn-social btn-kakao"> 🟡 카카오로 계속하기</a>
-                        <a href="/oauth2/authorization/naver" class="btn-social btn-naver"> 🟢 네이버로 계속하기</a>
-                        <a href="/oauth2/authorization/google"  class="btn-social btn-google"> 🔵 구글로 계속하기</a>
+                        <a href="/oauth2/authorization/kakao" class="btn-social btn-kakao"> 🟡 카카오로 계속하기 </a>
+                        <a href="/oauth2/authorization/naver" class="btn-social btn-naver"> 🟢 네이버로 계속하기 </a>
+                        <a href="/oauth2/authorization/google"  class="btn-social btn-google"> 🔵 구글로 계속하기 </a>
                     </div>
                 </div>
 

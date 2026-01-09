@@ -15,9 +15,9 @@ import java.util.List;
  * role로 구분: STUDENT, MENTOR, ADMIN
  */
 @Entity
-@Table(name = "users", indexes = {
-        @Index(name = "idx_email", columnList = "email"),
-        @Index(name = "idx_nickname", columnList = "nickname")
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "email"),
+        @UniqueConstraint(columnNames = "username")
 })
 @Data
 @NoArgsConstructor
