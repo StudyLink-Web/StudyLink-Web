@@ -70,5 +70,5 @@ logging:
     com.studylink: DEBUG
     jdbc.sqlonly: DEBUG
 
-file:
-  upload_dir: D:/web_0826_kkj/_myProject/_java/_fileUpload
+#file:
+#  uploadDir: D:/web_0826_kkj/_myProject/_java/_fileUpload

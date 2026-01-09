@@ -42,7 +42,9 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 "/api/auth/**",          // REST API는 CSRF 토큰 필요 없음
                                 "/loginProc",             // 폼 기반 로그인
-                                "/logout"
+                                "/logout",
+                                "/room/**",
+                                "/ws/**"
                         )
                 )
 
@@ -98,11 +100,11 @@ public class SecurityConfig {
                 )
 
                 // OAuth2 설정
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/login?error=true")
-                )
+//                .oauth2Login(oauth2 -> oauth2
+//                        .loginPage("/login")
+//                        .defaultSuccessUrl("/", true)
+//                        .failureUrl("/login?error=true")
+//                )
 
                 // Logout 설정
                 .logout(logout -> logout

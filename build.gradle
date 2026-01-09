@@ -45,6 +45,7 @@ dependencies {
 
     // websocket
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
 	// https://mvnrepository.com/artifact/net.coobird/thumbnailator
 	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
 	implementation 'com.querydsl:querydsl-core:5.0.0'
