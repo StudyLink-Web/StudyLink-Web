@@ -21,7 +21,7 @@
                 <div class="logo-subtitle">StudyLink에 로그인하여 학습을 시작하세요</div>
 
                 <!-- ✅ CSRF 토큰 포함 -->
-                <form id="loginForm" method="POST" action="/loginProc" class="login-form">
+                <form id="loginForm" method="POST" action="/api/auth/login" class="login-form">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
                     <!-- ✅ name="email" (SecurityConfig의 usernameParameter와 일치) -->

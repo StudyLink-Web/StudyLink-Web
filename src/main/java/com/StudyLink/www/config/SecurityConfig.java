@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.core.context.SecurityContextHolder;  // ⭐ 추가: SecurityContext 관리
 
 @Configuration
 @EnableWebSecurity
@@ -83,6 +84,7 @@ public class SecurityConfig {
 
                                 // ✅ API는 모두 공개 (테스트용)
                                 "/api/**",
+                                "/api/auth/**",
 
                                 // ✅ quiz관련 모두 허용. 나중에 분리 - 김광주
                                 "/room/**",
@@ -91,7 +93,6 @@ public class SecurityConfig {
                                 // ✅ board관련 모두 허용. 나중에 분리 - 김광주
                                 "/board/**",
 
-                                "/api/auth/**",
                                 "/.well-known/**",      // Chrome DevTools 에러 무시
                                 "/oauth2/**",           // OAuth2 요청
                                 "/login/oauth2/**",      // OAuth2 리다이렉트 URI
@@ -104,7 +105,8 @@ public class SecurityConfig {
                 // ✅ Form Login (폼 기반 로그인)
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .loginProcessingUrl("/loginProc")
+                        //.loginProcessingUrl("/loginProc")
+                        .loginProcessingUrl("/api/auth/login")
                         .usernameParameter("email")
                         .passwordParameter("password")
                         .defaultSuccessUrl("/", false)
@@ -112,13 +114,19 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // ⭐ OAuth2 설정
+                // ⭐ OAuth2 설정 (수정됨)
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(oAuth2UserService)
                         )
-                        .defaultSuccessUrl("/", true)  // ← "/" 또는 다른 유효한 경로
+                        // ⭐ 추가: successHandler - 명시적으로 Authentication을 SecurityContext에 저장
+                        .successHandler((request, response, authentication) -> {
+                            // SecurityContext에 인증 정보 저장
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                            // 메인 페이지로 리다이렉트
+                            response.sendRedirect("/");
+                        })
                         .failureUrl("/login?error=true")  // ← "/login?error=true"
                 )
 

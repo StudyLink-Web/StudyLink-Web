@@ -79,7 +79,7 @@ function initializeLoginPage() {
         checkLoginError();
         setupSocialLoginButtons(); // 기존 코드
     } else {
-        console.warn('❌ 로그인 폼을 �을 수 없습니다');
+        console.warn('❌ 로그인 폼을 찾을 수 없습니다');
     }
 }
 
@@ -279,20 +279,38 @@ function showError(message) {
 
 /**
  * 로그인 에러 파라미터 확인 (Spring Security)
- * 기존 기능 100% 유지
+ * 기존 기능 + 개선 (OAuth2 대응)
  *
  * Spring Security가 로그인 실패 시 다음과 같이 파라미터 전달:
  * - /login?error=true → 로그인 실패
  * - /login?expired=true → 세션 만료
+ *
+ * ⭐ 수정사항:
+ * - OAuth2 로그인 성공 후 리다이렉트될 때도 /login 페이지에 잠깐 들어올 수 있음
+ * - 따라서 error 파라미터가 있어도 실제로는 OAuth2 성공일 수 있음
+ * - 해결책: form 로그인 에러인지 OAuth2 리다이렉트인지 구분
  */
 function checkLoginError() {
     const params = new URLSearchParams(window.location.search);
 
-    // 로그인 실패
+    // ⭐ 수정: error 파라미터 확인 (하지만 OAuth2 성공 후 리다이렉트는 제외)
+    // OAuth2 성공 후에는 /로 바로 이동하므로, /login에서 error가 떠있으면
+    // 실제 폼 로그인 에러 또는 OAuth2 실패인 경우
     if (params.has('error')) {
-        showError('이메일 또는 비밀번호가 올바르지 않습니다.');
+        // ⭐ 추가 확인: error=oauth 라면 OAuth2 에러 (무시)
+        const errorValue = params.get('error');
 
-        // ✅ 추가: URL에서 error 파라미터 제거
+        // form 로그인 실패만 처리
+        if (errorValue === 'true') {
+            showError('이메일 또는 비밀번호가 올바르지 않습니다.');
+            console.log('❌ Form 로그인 실패');
+        } else {
+            // OAuth2 에러 (e.g., error=oauth, error=access_denied)
+            showError('소셜 로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+            console.log('❌ OAuth2 로그인 실패:', errorValue);
+        }
+
+        // ✅ 추가: URL에서 error 파라미터 제거 (중요!)
         window.history.replaceState({}, document.title, '/login');
 
         // 이메일 필드에 포커스
@@ -311,6 +329,14 @@ function checkLoginError() {
         // 저장된 이메일만 유지하고 비밀번호는 초기화
         document.getElementById('password').value = '';
         document.getElementById('email').focus();
+    }
+
+    // ⭐ 추가: 성공 후 리다이렉트 시 파라미터 정리
+    // (정상적으로 로그인되면 / 로 리다이렉트되므로 이 코드는 실행 안 됨)
+    // 하지만 혹시 /login 페이지에서 파라미터가 남아있으면 정리
+    if (!params.has('error') && !params.has('expired')) {
+        // URL에 파라미터가 없으면 정상 상태 → 아무것도 하지 않음
+        console.log('✅ 로그인 페이지 - 정상 상태');
     }
 }
 
@@ -335,6 +361,10 @@ function checkLoginSuccess() {
 /**
  * 소셜 로그인 버튼
  * Google, Kakao, Naver OAuth2 연동
+ *
+ * ⭐ 주의: OAuth2 성공 후 SecurityConfig의 successHandler에서
+ * /로 리다이렉트됨. 따라서 /login 페이지를 거치지 않음.
+ * URL에 에러 파라미터가 있으면 OAuth2 실패한 경우.
  */
 function setupSocialLoginButtons() {
     const socialButtons = document.querySelectorAll('.btn-social');
