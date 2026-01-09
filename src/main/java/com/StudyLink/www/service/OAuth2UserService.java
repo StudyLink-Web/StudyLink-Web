@@ -117,19 +117,29 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         }
 
         // ⭐ 수정: 이메일에서 사용자명 추출 (@ 앞부분)
-        String fixedUsername = email != null && !email.isEmpty() ? email.split("@")[0] : nickname;
+        //String fixedUsername = email != null && !email.isEmpty() ? email.split("@")[0] : nickname;
+
+        // ⭐ 수정: 카카오는 이메일을 안 주는 경우가 많으므로 닉네임 사용
+        String fixedUsername = nickname;
+        if (fixedUsername == null || fixedUsername.isEmpty()) {
+            fixedUsername = "카카오사용자_" + id;
+        }
+
+        // ⭐ 이메일이 없으면 가상 이메일 생성
+        String finalEmail = (email != null && !email.isEmpty()) ? email : "kakao_" + id + "@kakao.com";
 
         // 사용자 정보 통합
         attributes.put("username", "kakao_" + id);
-        attributes.put("name", fixedUsername);  // ⭐ attributes의 "name"을 업데이트
-        attributes.put("email", email);
+        attributes.put("nickname", fixedUsername);
+        attributes.put("name", fixedUsername);  // ⭐ nickname 대신 fixedUsername 사용
+        attributes.put("email", finalEmail);    // ⭐ email 대신 finalEmail 사용
         attributes.put("picture", profileImage);
         attributes.put("provider", "kakao");
 
-        System.out.println("✅ 카카오 사용자: " + nickname + " (" + email + ")");
+        System.out.println("✅ 카카오 사용자: " + nickname + " (" + finalEmail + ")");
 
         // DB에 사용자 저장
-        saveOAuth2User("kakao_" + id, email, profileImage, nickname, "kakao");
+        saveOAuth2User("kakao_" + id, finalEmail, profileImage, nickname, "kakao");
 
         return new DefaultOAuth2User(
                 oAuth2User.getAuthorities(),
