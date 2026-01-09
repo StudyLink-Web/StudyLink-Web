@@ -333,31 +333,21 @@ function checkLoginSuccess() {
 
 
 /**
- * 소셜 로그인 버튼 (추후 구현)
- * 기존 기능 100% 유지
+ * 소셜 로그인 버튼
+ * Google, Kakao, Naver OAuth2 연동
  */
-/*
 function setupSocialLoginButtons() {
     const socialButtons = document.querySelectorAll('.btn-social');
 
     socialButtons.forEach(btn => {
         btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('🔗 소셜 로그인 클릭:', this.className);
+            // href 속성이 있으면 자동으로 이동 (이미 href="/oauth2/authorization/google" 등으로 설정됨)
+            console.log('🔗 소셜 로그인 클릭:', this.getAttribute('href'));
 
-            let message = '';
-            if (this.classList.contains('btn-kakao')) {
-                message = '🟡 카카오 로그인은 준비 중입니다.';
-            } else if (this.classList.contains('btn-naver')) {
-                message = '🟢 네이버 로그인은 준비 중입니다.';
-            } else if (this.classList.contains('btn-google')) {
-                message = '🔵 구글 로그인은 준비 중입니다.';
-            }
-
-            if (message) {
-                alert(message);
-            }
+            // 링크 기본 동작 허용 (a 태그이므로 자동으로 이동)
+            // preventDefault() 하지 않음!
         });
     });
+
+    console.log('✅ 소셜 로그인 버튼 설정 완료');
 }
-*/

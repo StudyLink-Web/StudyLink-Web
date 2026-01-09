@@ -1,3 +1,4 @@
+/* 메시지 영역 */
 #messageArea {
     height: 500px;
     overflow-y: auto;
@@ -6,25 +7,50 @@
     padding: 10px;
 }
 
-.message {
-    max-width: 70%;
-    padding: 8px 12px;
+/* 메시지 컨테이너 - 공통 */
+.message-container {
+    display: flex;
+    align-items: end;
     margin: 4px 0;
-    border-radius: 12px;
-    word-wrap: break-word;
 }
 
+/* 내 메시지 컨테이너 */
+.message-container-right {
+    justify-content: flex-end;
+}
+
+/* 상대 메시지 컨테이너 */
+.message-container-left {
+    justify-content: flex-start;
+}
+
+/* 메시지 박스 */
 .message-left {
     background-color: #e0e0e0;
-    align-self: flex-start; /* 왼쪽 정렬 */
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    word-wrap: break-word;
 }
 
 .message-right {
     background-color: #0084ff;
     color: white;
-    align-self: flex-end; /* 오른쪽 정렬 */
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    word-wrap: break-word;
 }
 
+/* 읽음 표시 */
+.read-indicator {
+    font-size: 12px;
+    color: red;
+    background: transparent; /* 배경 없음 */
+    margin-right: 6px;       /* 메시지와 간격 */
+}
+
+/* 스크롤 숨기기 */
 #messageArea::-webkit-scrollbar {
-    display: none;           /* Chrome, Safari */
+    display: none;
 }

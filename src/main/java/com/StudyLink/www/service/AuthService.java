@@ -2,8 +2,8 @@ package com.StudyLink.www.service;
 
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,12 +12,20 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserRepository userRepository;
+
+    // ⭐ 필드 주입으로 변경
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    // ⭐ 생성자 제거 - 필드 주입 사용으로 변경됨
+    //public AuthService(PasswordEncoder passwordEncoder) {
+    //    this.passwordEncoder = passwordEncoder;
+
 
     /**
      * 회원가입

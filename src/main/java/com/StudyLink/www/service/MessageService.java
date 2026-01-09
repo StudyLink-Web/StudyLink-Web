@@ -7,7 +7,9 @@ import java.util.List;
 
 public interface MessageService {
 
-    void insert(MessageDTO message);
+    MessageDTO insert(MessageDTO message);
 
     List<MessageDTO> loadMessage(long roomId);
+
+    MessageDTO readMessage(long messageId);
 }

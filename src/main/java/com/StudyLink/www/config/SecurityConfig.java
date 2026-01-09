@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 "/api/auth/**",          // REST API는 CSRF 토큰 필요 없음
                                 "/loginProc",             // 폼 기반 로그인
                                 "/logout",
-                                "/oauth2/**",             // 추가: OAuth2 요청도 CSRF 제외
+                                "/oauth2/**",             // OAuth2 요청도 CSRF 제외
                                 "/logout",
                                 "/ws/**",
                                 "/chatbot/**",            // 챗봇 관련 요청 허용
@@ -118,10 +118,9 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(oAuth2UserService)
                         )
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/login?error=true")
+                        .defaultSuccessUrl("/", true)  // ← "/" 또는 다른 유효한 경로
+                        .failureUrl("/login?error=true")  // ← "/login?error=true"
                 )
-
 
                 // Logout 설정
                 .logout(logout -> logout

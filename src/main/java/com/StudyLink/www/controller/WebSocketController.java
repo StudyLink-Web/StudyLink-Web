@@ -31,9 +31,28 @@ public class WebSocketController {
     @MessageMapping("/text")
     @SendTo("/topic/text")
     public MessageDTO sendTextMessage(MessageDTO message) {
-        messageService.insert(message);
-        log.info(">>> message {}", message);
+        MessageDTO messageDTO = messageService.insert(message);
+        log.info(">>> messageDTO {}", messageDTO);
+        return messageDTO;
+    }
+
+    @MessageMapping("/readMessage")
+    @SendTo("/topic/readMessage")
+    public MessageDTO readMessage(MessageDTO message) {
         return message;
+    }
+
+    @MessageMapping("/enterRoom")
+    @SendTo("/topic/enterRoom")
+    public MessageDTO enterRoom(MessageDTO message) {
+        log.info(">>> enterRoom");
+        return message;
+    }
+
+    @GetMapping("/readMessage/{messageId}")
+    @ResponseBody
+    public MessageDTO readMessage(@PathVariable long messageId){
+        return messageService.readMessage(messageId);
     }
 
     @GetMapping("/loadMessage/{roomId}")

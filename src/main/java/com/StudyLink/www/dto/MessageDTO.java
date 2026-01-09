@@ -1,6 +1,7 @@
 package com.StudyLink.www.dto;
 
 import com.StudyLink.www.entity.Message;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -14,13 +15,21 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class MessageDTO {
+    @JsonProperty("messageId")
     private Long messageId;
+    @JsonProperty("roomId")
     private Long roomId;
+    @JsonProperty("senderId")
     private Long senderId;
+    @JsonProperty("createdAt")
     private LocalDateTime createdAt;
+    @JsonProperty("messageType")
     private MessageType messageType;
+    @JsonProperty("content")
     private String content;
+    @JsonProperty("fileUuid")
     private String fileUuid;
+    @JsonProperty("isRead")
     private Boolean isRead;
 
     public enum MessageType {
