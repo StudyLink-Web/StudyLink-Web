@@ -21,11 +21,12 @@ public class ChatBotArchiveController {
 
     // 1. 사용자별 대화 세션 목록 조회
     @GetMapping("/sessions")
-    public ResponseEntity<List<ChatBotArchiveDTO.SessionResponse>> getSessions(Principal principal) {
+    public ResponseEntity<List<ChatBotArchiveDTO.SessionResponse>> getSessions(java.security.Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
         
-        Users user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        String email = getEmailFromPrincipal(principal);
+        Users user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
         
         return ResponseEntity.ok(sessionService.getSessionsByUser(user.getUserId()));
     }
@@ -38,13 +39,22 @@ public class ChatBotArchiveController {
 
     // 3. 새 대화 세션 생성
     @PostMapping("/sessions")
-    public ResponseEntity<Long> createSession(Principal principal) {
+    public ResponseEntity<Long> createSession(java.security.Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
         
-        Users user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        String email = getEmailFromPrincipal(principal);
+        Users user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
         
         return ResponseEntity.ok(sessionService.createSession(user.getUserId()));
+    }
+
+    // [유틸리티] Principal에서 이메일 추출
+    private String getEmailFromPrincipal(java.security.Principal principal) {
+        if (principal instanceof org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken token) {
+            return token.getPrincipal().getAttribute("email");
+        }
+        return principal.getName(); // 일반 로그인은 username이 곧 이메일이거나 고유식별자
     }
 
     // 4. 대화 세션 삭제

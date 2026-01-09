@@ -26,7 +26,7 @@ public class ChatBotSession extends TimeBase {
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 
-    @Column(length = 255)
+    @Column(length = 500)
     private String title;
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)

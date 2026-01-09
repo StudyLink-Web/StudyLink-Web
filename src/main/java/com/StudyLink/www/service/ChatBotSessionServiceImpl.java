@@ -79,8 +79,8 @@ public class ChatBotSessionServiceImpl implements ChatBotSessionService {
         String currentTitle = session.getTitle();
         if ("USER".equalsIgnoreCase(role) && (currentTitle == null || currentTitle.trim().equals("새로운 대화"))) {
             String newTitle = content.trim();
-            if (newTitle.length() > 20) {
-                newTitle = newTitle.substring(0, 17) + "...";
+            if (newTitle.length() > 50) { // 제목은 50자 내외로 조절
+                newTitle = newTitle.substring(0, 47) + "...";
             }
             session.setTitle(newTitle);
             sessionRepository.saveAndFlush(session); // 즉시 갱신
@@ -94,7 +94,14 @@ public class ChatBotSessionServiceImpl implements ChatBotSessionService {
     public void updateSessionTitle(Long sessionId, String title) {
         ChatBotSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("세션을 찾을 수 없습니다."));
-        session.setTitle(title);
+        
+        // [방어 코드] AI가 너무 긴 제목을 보낼 경우 대비 (DB 컬럼 500자 기준)
+        String safeTitle = title;
+        if (safeTitle != null && safeTitle.length() > 400) {
+            safeTitle = safeTitle.substring(0, 397) + "...";
+        }
+        
+        session.setTitle(safeTitle);
         sessionRepository.saveAndFlush(session); // 즉시 갱신
     }
 

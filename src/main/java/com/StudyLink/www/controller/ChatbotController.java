@@ -44,8 +44,15 @@ public class ChatbotController {
 
         // 2. 기존 성적 정보 조회 및 포함 (로그인한 경우)
         if (principal != null) {
-            String username = principal.getName();
-            userRepository.findByUsername(username).ifPresent(user -> {
+            String email = "";
+            if (principal instanceof org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken token) {
+                email = token.getPrincipal().getAttribute("email");
+            } else {
+                email = principal.getName();
+            }
+
+            final String finalEmail = email;
+            userRepository.findByEmail(finalEmail).ifPresent(user -> {
                 List<StudentScore> dbScores = studentScoreRepository.findByUser_UserId(user.getUserId());
                 if (!dbScores.isEmpty()) {
                     List<ChatbotDTO.UserScore> dtoScores = dbScores.stream()
