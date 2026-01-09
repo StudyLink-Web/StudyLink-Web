@@ -61,13 +61,15 @@ function connect() {
 
         // connect가 비동기함수이므로 연결이 완료된 후 실행되야하는 함수들은 여기 작성(밖에 작성시 연결되기 전에 실행 될 수 있음)
         loadMessage(roomId).then(result => { // 채팅기록 불러오기
+            console.log("💬 로드된 메시지 수:", result.length);
             for(let message of result){
                 if (message.messageType == "TEXT") {
                     spreadTextMessage(message)
                 }
             }
-            console.log("메시지 로딩")
             safeSend("/app/enterRoom", {roomId: roomId, senderId: senderId})
+        }).catch(error => {
+            console.error("❌ 메시지 로드 실패:", error);
         });
     });
 }
@@ -194,16 +196,7 @@ async function sendFile(formData){
 // 캔버스 관련 함수
 
 connect(); // webSocket 연결
-loadMessage(roomId).then(result => { // 채팅기록 불러오기
-    console.log("💬 로드된 메시지 수:", result.length);
-    for(let message of result){
-        if (message.messageType == "TEXT") {
-            spreadTextMessage(message)
-        }
-    }
-}).catch(error => {
-    console.error("❌ 메시지 로드 실패:", error);
-});
+
 
 document.addEventListener('click', async (e)=>{
     if (e.target.id == 'sendFileBtn'){

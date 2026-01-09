@@ -112,14 +112,14 @@ public class SecurityConfig {
                 )
 
                 // ⭐ OAuth2 설정
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(oAuth2UserService)
-                        )
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/login?error=true")
-                )
+//                .oauth2Login(oauth2 -> oauth2
+//                        .loginPage("/login")
+//                        .userInfoEndpoint(userInfo -> userInfo
+//                                .userService(oAuth2UserService)
+//                        )
+//                        .defaultSuccessUrl("/", true)
+//                        .failureUrl("/login?error=true")
+//                )
 
 
                 // Logout 설정
