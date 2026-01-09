@@ -8,11 +8,26 @@
 
 	<div class="d-flex">
 		<div>
-			<div class="border border-black" style="width: 1200px; height: 50px;">그림 도구</div>
+			<div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+				<input type="radio" onclick="selectTool('draw')" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+				<label class="btn btn-outline-primary" for="btnradio1">펜</label>
+
+				<input type="radio" onclick="selectTool('erase')" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+				<label class="btn btn-outline-primary" for="btnradio2">지우개</label>
+
+				<input type="radio" onclick="selectTool('select')" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off">
+				<label class="btn btn-outline-primary" for="btnradio3">선택</label>
+
+				<input type="radio" onclick="selectTool('undo')" class="btn-check" name="btnradio" id="btnradio4" autocomplete="off">
+				<label class="btn btn-outline-primary" for="btnradio4">undo</label>
+
+				<input type="radio" onclick="selectTool('redo')" class="btn-check" name="btnradio" id="btnradio5" autocomplete="off">
+				<label class="btn btn-outline-primary" for="btnradio5">redo</label>
+			</div>
 			<canvas id="canvas" width="1200" height="700" style="border:1px solid black;"></canvas>
 		</div>
 		<div class="border border-black d-flex flex-column flex-shrink-0" style="width: 300px; height: 750px;">
-			<div class="w-100" style="height: 650px;" id="messageArea">메시지 출력 공간</div>
+			<div class="w-100" style="height: 650px;" id="messageArea"></div>
 			<div class="mb-3">
 				<input type="file" class="form-control" name="files" id="file" multiple />
 			</div>

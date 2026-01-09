@@ -59,6 +59,11 @@ function connect() {
 
 
         // 캔버스
+        stompClient.subscribe('/topic/draw', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            drawLine(msg.x1, msg.y1, msg.x2, msg.y2);
+        });
 
 
 
@@ -168,8 +173,8 @@ function spreadFileMessage(msg, roomFileDTO) {
     else {
         const fileLink = document.createElement('a');
         fileLink.href = `/room/loadFile/${roomFileDTO.uuid}`;
-        fileLink.textContent = `📎 ${roomFileDTO.file_name}`;
-        fileLink.download = roomFileDTO.file_name;
+        fileLink.textContent = `📎 ${roomFileDTO.fileName}`;
+        fileLink.download = roomFileDTO.fileName;
         msgDiv.appendChild(fileLink);
     }
 
@@ -284,11 +289,9 @@ async function loadRoomFileDTO(uuid){
     }
 }
 
-// 캔버스 관련 함수
-
-connect(); // webSocket 연결
 
 
+// 이벤트 리스너
 document.addEventListener('click', async (e)=>{
     if (e.target.id === 'sendFileBtn'){
         console.log("🖱️ 파일 전송 버튼 클릭됨");
@@ -318,7 +321,7 @@ document.addEventListener('click', async (e)=>{
                     roomId: roomId,
                     senderId: senderId,
                     fileUuid: result.uuid,
-                    messageType: result.file_type === 1 ? "IMAGE" : "FILE",
+                    messageType: result.fileType === 1 ? "IMAGE" : "FILE",
                     isRead: false
                 }
                 safeSend("/app/sendMessage", message);
@@ -354,3 +357,81 @@ document.addEventListener('keydown', (e)=> {
         textarea.focus();
     }
 })
+
+
+
+// ============================================================ 캔버스 ==================================================================
+// ============================================================ 캔버스 ==================================================================
+// ============================================================ 캔버스 ==================================================================
+// 캔버스 관련 전역 변수
+const canvas = new fabric.Canvas('canvas');
+
+// 도구 선택
+let selectedTool = 'draw';
+
+// 그리기 관련
+let isDrawing = false;
+let lastPoint = null;
+
+
+
+function selectTool(tool) {
+    selectedTool = tool;
+}
+
+function drawLine(x1, y1, x2, y2){ // 색상, 두께 등 나중에 추가하기
+    // 길이가 0이면 skip
+    if (x1 === x2 && y1 === y2) return;
+
+    const line = new fabric.Line([x1, y1, x2, y2], {
+        stroke: '#000',
+        strokeWidth: 2,
+        selectable: false,
+        evented: false,
+        strokeLineCap: 'round',  // 끝점 둥글게
+        strokeLineJoin: 'round'  // 연결점 부드럽게
+    });
+
+    canvas.add(line);
+    canvas.renderAll();
+}
+
+
+
+canvas.on('mouse:down', (opt) => {
+    isDrawing = selectedTool === 'draw';
+    lastPoint = canvas.getPointer(opt.e);
+});
+
+canvas.on('mouse:move', (opt) => {
+    if (!isDrawing) return;
+
+    const pointer = canvas.getPointer(opt.e);
+    drawLine(lastPoint.x, lastPoint.y, pointer.x, pointer.y);
+
+    // 필요하면 여기서 소켓으로 좌표 전송
+    message = {
+        senderId: senderId,
+        x1: lastPoint.x,
+        y1: lastPoint.y,
+        x2: pointer.x,
+        y2: pointer.y
+    }
+    safeSend("/app/draw", message);
+
+    canvas.renderAll();
+    lastPoint = pointer;
+});
+
+canvas.on('mouse:up', () => {
+    isDrawing = false;
+    currentLine = null;
+});
+
+
+
+
+
+
+// webSocket 연결
+connect();

@@ -1,5 +1,6 @@
 package com.StudyLink.www.controller;
 
+import com.StudyLink.www.canvas.DrawMessage;
 import com.StudyLink.www.dto.MessageDTO;
 import com.StudyLink.www.dto.RoomFileDTO;
 import com.StudyLink.www.handler.RoomFileHandler;
@@ -35,6 +36,7 @@ public class WebSocketController {
 
 
     // webSocket요청
+    // ================== 채팅창 ==================
     @MessageMapping("/sendMessage")
     @SendTo("/topic/sendMessage")
     public MessageDTO sendMessage(MessageDTO message) {
@@ -55,6 +57,16 @@ public class WebSocketController {
     public MessageDTO enterRoom(MessageDTO message) {
         return message;
     }
+
+
+
+    // ================== 캔버스 ==================
+    @MessageMapping("/draw")
+    @SendTo("/topic/draw")
+    public DrawMessage drawMessage (DrawMessage message) {
+        return message;
+    }
+
 
 
 
