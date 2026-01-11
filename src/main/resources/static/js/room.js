@@ -75,6 +75,39 @@ function connect() {
             scheduleRender();
         });
 
+        // currentAction 초기화
+        stompClient.subscribe('/topic/initializeCurrentAction', function(message){
+            const msg = JSON.parse(message.body);
+            console.log("currentAction 초기화")
+            if (msg.senderId === senderId) return;
+            initializeCurrentAction(msg.type);
+        });
+
+        // currentAction 리셋
+        stompClient.subscribe('/topic/resetCurrentAction', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            resetCurrentAction();
+        });
+
+        // undoStack에 currentAction push
+        stompClient.subscribe('/topic/pushToUndoStack', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            pushToUndoStack();
+        });
+
+        // undo, redo
+        stompClient.subscribe('/topic/undoRedo', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            if (msg.type === 'undo') {
+                undo();
+            } else {
+                redo();
+            }
+            scheduleRender();
+        });
 
 
 
@@ -395,6 +428,11 @@ let currentPointer = null;
 const ERASE_STEP = 3; // 지우기 점 간격
 const ERASE_RADIUS = 10; // 지우개 반경
 
+// redo, undo
+const undoStack = [];
+const redoStack = [];
+let currentAction = null; // 현재 드래그 중인 액션
+
 
 function selectTool(tool) {
     selectedTool = tool;
@@ -411,9 +449,31 @@ function scheduleRender() {
     });
 }
 
+// currentAction 초기화 함수
+function initializeCurrentAction(type){
+    currentAction = {
+        type: type, // 'draw' | 'erase' | 'move' | 'rotate' | 'scale' ...
+        targets: [],   // 영향을 받은 객체들
+        before: null,  // 작업 전 상태
+        after: null    // 작업 후 상태
+    };
+}
+
+// currentAction 리셋
+function resetCurrentAction(){
+    currentAction = null;
+}
+
+// updoStack에 currentAction push
+function pushToUndoStack(){
+    undoStack.push(currentAction);
+    redoStack.length = 0; // 새 작업 → redo 초기화
+}
+
 // rAF 루프 → 실제 그리기
 // 기존에는 mouse:move이벤트가 그리기를 담당했는데 f12(개발자모드)를 키는 등의 이유로 이벤트 빈도가 줄어들면 선이 끊김
 // 따라서 이벤트는 좌표만 수집하고 이 함수가 그리기를 담당
+// 그리기, 지우기처럼 연속 동작, 프레임마다 실행하는 함수를 포함, undo redo x
 function loop() {
     if (isDrawing && currentPointer && lastPoint) {
         if (selectedTool === 'draw') {
@@ -465,6 +525,10 @@ function drawLine(x1, y1, x2, y2){ // 색상, 두께 등 나중에 추가하기
     });
 
     canvas.add(line);
+
+    if (currentAction && currentAction.type === 'draw') {
+        currentAction.targets.push(line);
+    }
 }
 
 // 선 보간 함수
@@ -481,7 +545,7 @@ function drawInterpolatedLine(p1, p2) {
     const stepX = dx / steps;
     const stepY = dy / steps;
 
-    // 위에 2개 로직에서 최소 1로 설정하지 않으면 마우스가 느리면 점이 안찍힘
+    // 위에 2개 로직에서 최소 1로 설정하지 않으면 마우스가 느릴때 점이 안찍힘
 
     let prevX = p1.x;
     let prevY = p1.y;
@@ -496,7 +560,7 @@ function drawInterpolatedLine(p1, p2) {
 }
 
 // 지우기
-function eraseLine(x, y, threshold = 5) {
+function eraseLine(x, y, threshold = 10) {
     // threshold: 지울 기준 거리(px)
 
     const objects = canvas.getObjects('line'); // 모든 Line 객체 가져오기
@@ -510,10 +574,35 @@ function eraseLine(x, y, threshold = 5) {
 
         if (dist <= threshold) {
             toRemove.push(line);
+
+            if (
+                currentAction &&
+                currentAction.type === 'erase' &&
+                !currentAction.targets.includes(line)
+            ) {
+                currentAction.targets.push(line);
+            }
         }
     });
 
     toRemove.forEach(line => canvas.remove(line));
+}
+
+// 지우개 보간 함수
+function eraseInterpolated(p1, p2) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance === 0) return;
+
+    const steps = Math.ceil(distance / ERASE_STEP);
+
+    for (let i = 0; i <= steps; i++) {
+        const x = p1.x + (dx / steps) * i;
+        const y = p1.y + (dy / steps) * i;
+        eraseLine(x, y, ERASE_RADIUS);
+    }
 }
 
 // 점(x0,y0)과 선(x1,y1)-(x2,y2) 사이 최소 거리 계산 함수
@@ -548,21 +637,49 @@ function distancePointToLine(x0, y0, x1, y1, x2, y2) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
-// 지우개 보간 함수
-function eraseInterpolated(p1, p2) {
-    const dx = p2.x - p1.x;
-    const dy = p2.y - p1.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+// undo
+function undo() {
+    if (undoStack.length === 0) return;
 
-    if (distance === 0) return;
+    const action = undoStack.pop();
 
-    const steps = Math.ceil(distance / ERASE_STEP);
-
-    for (let i = 0; i <= steps; i++) {
-        const x = p1.x + (dx / steps) * i;
-        const y = p1.y + (dy / steps) * i;
-        eraseLine(x, y, ERASE_RADIUS);
+    if (action.type === 'draw') {
+        action.targets.forEach(obj => canvas.remove(obj));
     }
+
+    if (action.type === 'erase') {
+        action.targets.forEach(obj => canvas.add(obj));
+    }
+
+    redoStack.push(action);
+    scheduleRender();
+}
+
+// redo
+function redo() {
+    if (redoStack.length === 0) return;
+
+    const action = redoStack.pop();
+
+    if (action.type === 'draw') {
+        action.targets.forEach(obj => canvas.add(obj));
+    }
+
+    if (action.type === 'erase') {
+        action.targets.forEach(obj => canvas.remove(obj));
+    }
+
+    undoStack.push(action);
+    scheduleRender();
+}
+
+// undo, redo 메시지 전송
+function sendUndoRedoMessage(type){
+    const message = {
+        senderId: senderId,
+        type: type // undo, redo
+    }
+    safeSend('/app/undoRedo', message)
 }
 
 
@@ -570,6 +687,16 @@ canvas.on('mouse:down', (opt) => {
     isDrawing = selectedTool === 'draw' || selectedTool === 'erase';
     lastPoint = canvas.getPointer(opt.e);
     currentPointer = lastPoint;
+
+    if (isDrawing) {
+        initializeCurrentAction(selectedTool);
+
+        const message = {
+            senderId: senderId,
+            type: selectedTool
+        }
+        safeSend('/app/initializeCurrentAction', message);
+    }
 });
 
 canvas.on('mouse:move', (opt) => {
@@ -580,6 +707,22 @@ canvas.on('mouse:move', (opt) => {
 canvas.on('mouse:up', () => {
     isDrawing = false;
     currentPointer = null;
+
+    if (currentAction && currentAction.targets.length > 0) {
+        pushToUndoStack();
+
+        const message = {
+            senderId: senderId
+        }
+        safeSend('/app/pushToUndoStack', message)
+    }
+
+    resetCurrentAction();
+
+    const message = {
+        senderId: senderId
+    }
+    safeSend('/app/resetCurrentAction', {})
 });
 
 

@@ -18,10 +18,10 @@
 				<input type="radio" onclick="selectTool('select')" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off">
 				<label class="btn btn-outline-primary" for="btnradio3">선택</label>
 
-				<input type="radio" onclick="selectTool('undo')" class="btn-check" name="btnradio" id="btnradio4" autocomplete="off">
+				<input type="radio" onclick="undo(); sendUndoRedoMessage('undo')" class="btn-check" name="btnradio" id="btnradio4" autocomplete="off">
 				<label class="btn btn-outline-primary" for="btnradio4">undo</label>
 
-				<input type="radio" onclick="selectTool('redo')" class="btn-check" name="btnradio" id="btnradio5" autocomplete="off">
+				<input type="radio" onclick="redo(); sendUndoRedoMessage('redo')" class="btn-check" name="btnradio" id="btnradio5" autocomplete="off">
 				<label class="btn btn-outline-primary" for="btnradio5">redo</label>
 			</div>
 			<canvas id="canvas" width="1200" height="700" style="border:1px solid black;"></canvas>
