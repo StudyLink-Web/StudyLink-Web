@@ -9,6 +9,8 @@ import lombok.*;
 @Setter
 public class EraseMessage {
     private long senderId;
-    private double x;
-    private double y;
+    private double x1;
+    private double y1;
+    private double x2;
+    private double y2;
 }

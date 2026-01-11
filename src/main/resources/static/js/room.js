@@ -59,17 +59,24 @@ function connect() {
 
 
         // 캔버스
+        // 그리기
         stompClient.subscribe('/topic/draw', function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
-            drawLine(msg.x1, msg.y1, msg.x2, msg.y2);
+            drawInterpolatedLine({x : msg.x1, y : msg.y1}, {x : msg.x2, y : msg.y2});
+            scheduleRender();
         });
 
+        // 지우기
         stompClient.subscribe('/topic/erase', function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
-            eraseLine(msg.x, msg.y);
+            eraseInterpolated({x : msg.x1, y : msg.y1}, {x : msg.x2, y : msg.y2});
+            scheduleRender();
         });
+
+
+
 
 
 
@@ -375,15 +382,73 @@ const canvas = new fabric.Canvas('canvas');
 // 도구 선택
 let selectedTool = 'draw';
 
+// 랜더링 관련
+let renderScheduled = false;
+
 // 그리기 관련
 let isDrawing = false;
 let lastPoint = null;
+const DRAW_STEP = 3; // px (작을수록 촘촘), 선 길이 조절
+let currentPointer = null;
 
+// 지우기 관련
+const ERASE_STEP = 3; // 지우기 점 간격
+const ERASE_RADIUS = 10; // 지우개 반경
 
 
 function selectTool(tool) {
     selectedTool = tool;
 }
+
+// 렌더링 요청이 많아도 화면 렌더링은 한 프레임에 1회로 제한
+function scheduleRender() {
+    if (renderScheduled) return;
+    renderScheduled = true;
+
+    requestAnimationFrame(() => {
+        canvas.requestRenderAll();
+        renderScheduled = false;
+    });
+}
+
+// rAF 루프 → 실제 그리기
+// 기존에는 mouse:move이벤트가 그리기를 담당했는데 f12(개발자모드)를 키는 등의 이유로 이벤트 빈도가 줄어들면 선이 끊김
+// 따라서 이벤트는 좌표만 수집하고 이 함수가 그리기를 담당
+function loop() {
+    if (isDrawing && currentPointer && lastPoint) {
+        if (selectedTool === 'draw') {
+            drawInterpolatedLine(lastPoint, currentPointer);
+
+            message = {
+                senderId: senderId,
+                x1: lastPoint.x,
+                y1: lastPoint.y,
+                x2: currentPointer.x,
+                y2: currentPointer.y
+            }
+            safeSend("/app/draw", message);
+        }
+        if (selectedTool === 'erase') {
+            eraseInterpolated(lastPoint, currentPointer);
+
+            message = {
+                senderId: senderId,
+                x1: lastPoint.x,
+                y1: lastPoint.y,
+                x2: currentPointer.x,
+                y2: currentPointer.y
+            }
+            safeSend("/app/erase", message);
+        }
+
+        lastPoint = { ...currentPointer };
+        scheduleRender();
+    }
+    // requestAnimationFrame : rAF
+    // 브라우저에서 화면을 다시 그릴 타이밍에 맞춰 함수를 호출하도록 예약하는 JavaScript 함수
+    requestAnimationFrame(loop);
+}
+loop();
 
 // 그리기
 function drawLine(x1, y1, x2, y2){ // 색상, 두께 등 나중에 추가하기
@@ -400,7 +465,34 @@ function drawLine(x1, y1, x2, y2){ // 색상, 두께 등 나중에 추가하기
     });
 
     canvas.add(line);
-    canvas.renderAll();
+}
+
+// 선 보간 함수
+function drawInterpolatedLine(p1, p2) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+
+    // distance가 0이면 한 점 찍기 위해 1로 처리
+    if (distance === 0) distance = 1;
+
+    // 최소 1 step 보장
+    const steps = Math.max(Math.floor(distance / DRAW_STEP), 1);
+    const stepX = dx / steps;
+    const stepY = dy / steps;
+
+    // 위에 2개 로직에서 최소 1로 설정하지 않으면 마우스가 느리면 점이 안찍힘
+
+    let prevX = p1.x;
+    let prevY = p1.y;
+
+    for (let i = 1; i <= steps; i++) {
+        const x = p1.x + stepX * i;
+        const y = p1.y + stepY * i;
+        drawLine(prevX, prevY, x, y);
+        prevX = x;
+        prevY = y;
+    }
 }
 
 // 지우기
@@ -422,7 +514,6 @@ function eraseLine(x, y, threshold = 5) {
     });
 
     toRemove.forEach(line => canvas.remove(line));
-    canvas.renderAll();
 }
 
 // 점(x0,y0)과 선(x1,y1)-(x2,y2) 사이 최소 거리 계산 함수
@@ -457,51 +548,39 @@ function distancePointToLine(x0, y0, x1, y1, x2, y2) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
+// 지우개 보간 함수
+function eraseInterpolated(p1, p2) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance === 0) return;
+
+    const steps = Math.ceil(distance / ERASE_STEP);
+
+    for (let i = 0; i <= steps; i++) {
+        const x = p1.x + (dx / steps) * i;
+        const y = p1.y + (dy / steps) * i;
+        eraseLine(x, y, ERASE_RADIUS);
+    }
+}
+
+
 canvas.on('mouse:down', (opt) => {
     isDrawing = selectedTool === 'draw' || selectedTool === 'erase';
     lastPoint = canvas.getPointer(opt.e);
+    currentPointer = lastPoint;
 });
 
 canvas.on('mouse:move', (opt) => {
     if (!isDrawing) return;
-    const pointer = canvas.getPointer(opt.e);
-
-    if (selectedTool === 'draw'){
-        drawLine(lastPoint.x, lastPoint.y, pointer.x, pointer.y);
-
-        message = {
-            senderId: senderId,
-            x1: lastPoint.x,
-            y1: lastPoint.y,
-            x2: pointer.x,
-            y2: pointer.y
-        }
-        safeSend("/app/draw", message);
-    }
-
-    if (selectedTool === 'erase'){
-        eraseLine(pointer.x, pointer.y);
-
-        message = {
-            senderId: senderId,
-            x: pointer.x,
-            y: pointer.y
-        }
-        safeSend("/app/erase", message);
-    }
-
-
-    canvas.renderAll();
-    lastPoint = pointer;
+    currentPointer = canvas.getPointer(opt.e);
 });
 
 canvas.on('mouse:up', () => {
     isDrawing = false;
-    currentLine = null;
+    currentPointer = null;
 });
-
-
-
 
 
 
