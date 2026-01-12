@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+        layout:decorate="~{layout/layout}"
+>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>인증 결과 - StudyLink</title>
+    <style>
+        .verification-result {
+            max-width: 500px;
+            margin: 80px auto;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .result-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .result-success .result-title {
+            color: #28a745;
+        }
+
+        .result-failure .result-title {
+            color: #dc3545;
+        }
+
+        .result-message {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .next-steps {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .next-steps h3 {
+            color: #667eea;
+            margin-top: 0;
+        }
+
+        .next-steps ol {
+            margin: 0;
+            padding-left: 20px;
+            color: #666;
+        }
+
+        .next-steps li {
+            margin-bottom: 8px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .details {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            text-align: left;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            color: #666;
+        }
+
+        .detail-item strong {
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .next-steps {
+                text-align: center;
+            }
+
+            .details {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content" class="verification-result">
+
+    <!-- 성공 결과 -->
+    <th:block th:if="${success}">
+        <div class="result-card result-success">
+            <div class="result-icon">🎉</div>
+            <h1 class="result-title">인증 완료!</h1>
+            <p class="result-message">
+                대학생 인증이 성공적으로 완료되었습니다.<br/>
+                이제 StudyLink의 모든 기능을 이용할 수 있습니다.
+            </p>
+
+            <div class="next-steps">
+                <h3>🚀 다음 단계</h3>
+                <ol>
+                    <li>게시판에 대학 정보를 나누세요</li>
+                    <li>멘토링을 신청하거나 멘토가 되세요</li>
+                    <li>커뮤니티와 소통하세요</li>
+                </ol>
+            </div>
+
+            <div class="button-group">
+                <a href="/board/board_list" class="btn btn-primary">📚 게시판 바로가기</a>
+                <a href="/mypage" class="btn btn-secondary">← 마이페이지</a>
+            </div>
+
+            <div class="details">
+                <div class="detail-item">
+                    <span>인증 상태:</span>
+                    <strong style="color: #28a745;">✅ 활성</strong>
+                </div>
+                <div class="detail-item">
+                    <span>인증 시간:</span>
+                    <strong th:text="${#dates.format(#dates.createNow(), 'yyyy-MM-dd HH:mm')}">2024년 1월 12일 00:18</strong>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- 실패 결과 -->
+    <th:block th:if="${!success}">
+        <div class="result-card result-failure">
+            <div class="result-icon">⚠️</div>
+            <h1 class="result-title">인증 실패</h1>
+            <p class="result-message" th:text="${message}">
+                인증이 실패했습니다. 다시 시도해주세요.
+            </p>
+
+            <div class="next-steps">
+                <h3>다시 시도하기</h3>
+                <ol>
+                    <li>마이페이지로 돌아가세요</li>
+                    <li>대학생 인증 메뉴를 선택하세요</li>
+                    <li>새로운 인증 이메일을 신청하세요</li>
+                </ol>
+            </div>
+
+            <div class="button-group">
+                <a href="/mypage/verification" class="btn btn-primary">🔄 다시 시도</a>
+                <a href="/mypage" class="btn btn-secondary">← 마이페이지</a>
+            </div>
+
+            <div class="details">
+                <p style="color: #dc3545;">
+                    💡 <strong>팁:</strong> 인증 링크는 24시간 동안 유효합니다.<br/>
+                    시간이 지났다면 새로운 인증 이메일을 신청해주세요.
+                </p>
+            </div>
+        </div>
+    </th:block>
+</div>
+</body>
+</html>

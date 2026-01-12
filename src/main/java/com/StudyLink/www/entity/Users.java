@@ -13,11 +13,13 @@ import java.util.List;
  * Users (사용자 통합)
  * 학생과 멘토를 하나의 테이블로 관리
  * role로 구분: STUDENT, MENTOR, ADMIN
+ * 추가: 대학생 인증 관련 필드 (마이페이지)
  */
 @Entity
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = "email"),
-        @UniqueConstraint(columnNames = "username")
+        @UniqueConstraint(columnNames = "username"),
+        @UniqueConstraint(columnNames = "student_email")  // 학교 이메일은 유니크
 })
 @Data
 @NoArgsConstructor
@@ -68,7 +70,7 @@ public class Users {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ⭐ 추가: OAuth2 관련 필드
+    // OAuth2 관련 필드
     @Column(length = 50, nullable = true)
     private String oauthProvider;  // oauth_provider로 매핑
 
@@ -91,7 +93,66 @@ public class Users {
     @Column(nullable = true)
     private String phone;
 
+    // ========== 대학생 인증 필드 (마이페이지) ==========
 
+    /**
+     * 학생 이메일 (학교 이메일)
+     * 예: 22101@ewhain.ewha.ac.kr
+     */
+    @Column(name = "student_email", length = 100, unique = true, nullable = true)
+    private String studentEmail;
+
+    /**
+     * 대학생 인증 여부
+     * true: 인증 완료 (게시판 글쓰기 가능)
+     * false: 미인증 (기본값)
+     */
+    @Builder.Default
+    @Column(name = "is_student_verified", nullable = false)
+    private Boolean isStudentVerified = false;
+
+    /**
+     * 이메일 인증 토큰
+     * 이메일 인증 시 사용하는 일회용 토큰
+     */
+    @Column(name = "verification_token", length = 500, nullable = true)
+    private String verificationToken;
+
+    /**
+     * 이메일 토큰 만료 시간
+     * 24시간 후 자동 만료
+     */
+    @Column(name = "verification_token_expiry", nullable = true)
+    private LocalDateTime verificationTokenExpiry;
+
+    /**
+     * 대학생 인증 완료 시간
+     */
+    @Column(name = "verified_at", nullable = true)
+    private LocalDateTime verifiedAt;
+
+    /**
+     * 소속 대학
+     * 예: "이화여자대학교"
+     */
+    @Column(name = "university", length = 100, nullable = true)
+    private String university;
+
+    /**
+     * 전공/학과
+     * 예: "신학과", "영문과"
+     */
+    @Column(name = "department", length = 100, nullable = true)
+    private String department;
+
+    /**
+     * 학년
+     * 예: "1학년", "2학년", "3학년", "4학년"
+     */
+    @Column(name = "student_year", length = 50, nullable = true)
+    private String studentYear;
+
+    // ========== 기존 관계 필드 ==========
     /**
      * 1:1 관계
      * 학생 상세 정보 (StudentProfile)
@@ -127,9 +188,13 @@ public class Users {
         if (this.emailVerified == null) {
             this.emailVerified = false;
         }
-        // ⭐ 추가: OAuth 사용자는 isActive 기본값 true
+        // OAuth 사용자는 isActive 기본값 true
         if (this.isActive == null) {
             this.isActive = true;
+        }
+        // 대학생 인증 기본값
+        if (this.isStudentVerified == null) {
+            this.isStudentVerified = false;
         }
     }
 

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+        layout:decorate="~{layout/layout}"
+>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>대학생 인증 - StudyLink</title>
+    <style>
+        .verification-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 40px;
+        }
+
+        .verification-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .verification-header h1 {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .verification-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .help-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .verification-status {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .step-guide {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .step-guide ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .step-guide li {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .verification-container {
+                margin: 20px auto;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content" class="verification-container">
+
+    <!-- 헤더 -->
+    <div class="verification-header">
+        <h1>🎓 대학생 인증</h1>
+        <p>StudyLink의 모든 기능을 이용하려면 대학생 인증이 필요합니다</p>
+    </div>
+
+    <!-- 메시지 표시 -->
+    <th:block th:if="${success}">
+        <div class="alert alert-info">
+            ✅ <span th:text="${success}"></span>
+        </div>
+    </th:block>
+    <th:block th:if="${warning}">
+        <div class="alert alert-warning">
+            ⚠️ <span th:text="${warning}"></span>
+        </div>
+    </th:block>
+    <th:block th:if="${error}">
+        <div class="alert alert-danger">
+            ❌ <span th:text="${error}"></span>
+        </div>
+    </th:block>
+
+    <!-- 인증 카드 -->
+    <div class="verification-card">
+
+        <!-- 인증 상태 -->
+        <div class="verification-status">
+            <p style="margin: 0;">현재 인증 상태</p>
+            <div class="status-badge">⏳ 미인증</div>
+        </div>
+
+        <!-- 단계별 안내 -->
+        <div class="step-guide">
+            <h3>🔧 인증 방법</h3>
+            <ol>
+                <li>아래에 <strong>학교 이메일</strong>을 입력하세요</li>
+                <li>인증 이메일이 발송됩니다</li>
+                <li>이메일 내의 <strong>인증 링크</strong>를 클릭하세요</li>
+                <li>인증 완료! 모든 기능을 이용할 수 있습니다 ✅</li>
+            </ol>
+        </div>
+
+        <!-- 인증 폼 -->
+        <form method="post" th:action="@{/mypage/verification/send-email}">
+            <div class="form-group">
+                <label for="studentEmail">학교 이메일 주소</label>
+                <input
+                        type="email"
+                        id="studentEmail"
+                        name="studentEmail"
+                        placeholder="예: 22101@ewhain.ewha.ac.kr"
+                        required
+                />
+                <p class="help-text">
+                    🎓 학교에서 발급한 정식 이메일 주소를 입력하세요<br/>
+                    예: 학번@학교도메인.ac.kr
+                </p>
+            </div>
+
+            <button type="submit" class="btn-submit">📧 인증 이메일 발송</button>
+        </form>
+
+        <!-- 추가 정보 -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <h3>ℹ️ 자주 묻는 질문</h3>
+
+            <details style="margin-bottom: 15px;">
+                <summary style="cursor: pointer; font-weight: 600; color: #667eea;">인증은 언제 완료되나요?</summary>
+                <p style="color: #666; margin-top: 10px;">이메일을 확인하고 인증 링크를 클릭하면 즉시 완료됩니다.</p>
+            </details>
+
+            <details style="margin-bottom: 15px;">
+                <summary style="cursor: pointer; font-weight: 600; color: #667eea;">인증 이메일을 받지 못했어요</summary>
+                <p style="color: #666; margin-top: 10px;">
+                    1. 스팸 폴더를 확인하세요<br/>
+                    2. 정확한 학교 이메일을 입력했는지 확인하세요<br/>
+                    3. 다시 시도해보세요
+                </p>
+            </details>
+
+            <details>
+                <summary style="cursor: pointer; font-weight: 600; color: #667eea;">인증 링크가 만료되었어요</summary>
+                <p style="color: #666; margin-top: 10px;">인증 링크는 24시간 동안 유효합니다. 시간이 지났다면 다시 신청해주세요.</p>
+            </details>
+        </div>
+    </div>
+
+    <!-- 돌아가기 -->
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="/mypage" class="btn btn-outline-secondary">← 마이페이지로 돌아가기</a>
+    </div>
+</div>
+</body>
+</html>

@@ -4,73 +4,173 @@
 		xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 	<div class="header">
-		<div class="header-inner">
+		<nav class="header-inner">
 
-			<!-- 로고 -->
-			<a href="/" class="logo">🎓 StudyLink</a>
+			<!-- 왼쪽: 로고 -->
+			<div class="header-left">
+				<a class="navbar-brand" href="/">
+					<img src="/img/logo_img.png" alt="StudyLink" style="height: 40px;">
+					<span class="brand-name">StudyLink</span>
+				</a>
+			</div>
 
-			<!-- ⭐ 변경: sec:authorize → th:if + sec:authorize -->
+			<!-- 네비게이션 메뉴 -->
+			<!-- 가운데: 메인 메뉴 -->
+			<nav class="header-center">
+				<ul class="main-nav">
+
+					<li>
+						<a href="/">홈</a>
+					</li>
+
+					<li>
+						<a href="/board/board_list">대학생활 정보</a>
+					</li>
+
+					<li>
+						<a href="/room/list">멘토링</a>
+					</li>
+
+					<li>
+						<a href="/chatbot">AI 상담봇</a>
+					</li>
+
+					<!-- 로그인 전 -->
+					<li th:if="${#authorization.expression('isAnonymous()')}">
+						<a href="/login">로그인</a>
+					</li>
+
+					<li th:if="${#authorization.expression('isAnonymous()')}">
+						<a href="/signup">회원가입</a>
+					</li>
+
+					<!-- ========== 로그인 후: 마이페이지 / 로그아웃 ========== -->
+					<li class="nav-item dropdown" th:if="${#authorization.expression('isAuthenticated()')}">
+						<a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+						   data-bs-toggle="dropdown" aria-expanded="false">
+							<!-- OAuth2 로그인과 폼 로그인 모두 지원 -->
+							<i class="bi bi-person-circle"></i>
+							<span th:text="${
+                                #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
+                                  ? #authentication.principal.attributes['name']
+                                  : #authentication.name
+                            }">
+                                사용자명
+                            </span> ▼
+						</a>
+
+						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+							<!-- ⭐ 마이페이지 -->
+							<li>
+								<a class="dropdown-item" href="/mypage">
+									<i class="bi bi-person-circle"></i> 마이페이지
+								</a>
+							</li>
+
+							<!-- 프로필 수정 -->
+							<li>
+								<a class="dropdown-item" href="/mypage/profile">
+									<i class="bi bi-pencil"></i> 프로필 수정
+								</a>
+							</li>
+
+							<!-- ⭐ 대학생 인증 -->
+							<li>
+								<a class="dropdown-item" href="/mypage/verification">
+									<i class="bi bi-check-circle"></i> 대학생 인증
+								</a>
+							</li>
+
+							<!-- 구분선 -->
+							<li><hr class="dropdown-divider"></li>
+
+							<!-- 계정 설정 -->
+							<li>
+								<a class="dropdown-item" href="/mypage/settings">
+									<i class="bi bi-gear"></i> 계정 설정
+								</a>
+							</li>
+
+							<!-- 로그아웃 -->
+							<li>
+								<form method="post" th:action="@{/logout}" style="display: inline; margin: 0;">
+									<button type="submit" class="dropdown-item"
+											style="background: none; border: none; cursor: pointer; text-align: left; width: 100%; padding: 10px 16px; margin: 0;">
+										<i class="bi bi-box-arrow-right"></i> 로그아웃
+									</button>
+								</form>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</nav>
+
+			<!-- 변경: sec:authorize → th:if + sec:authorize -->
 			<!-- 로그인 전 -->
-			<ul class="header-nav" th:if="${#authorization.expression('isAnonymous()')}">
-				<li>
-					<a th:href="@{/login}" class="header-nav-link">로그인</a>
-				</li>
-				<li>
-					<a th:href="@{/signup}" class="header-nav-link">회원가입</a>
-				</li>
-			</ul>
+			<!--
+            <ul class="header-nav" th:if="${#authorization.expression('isAnonymous()')}">
+               <li>
+                  <a th:href="@{/login}" class="header-nav-link">로그인</a>
+               </li>
+               <li>
+                  <a th:href="@{/signup}" class="header-nav-link">회원가입</a>
+               </li>
+            </ul>
+            -->
 
 			<!-- 로그인 후 -->
-			<ul class="header-nav" th:if="${#authorization.expression('isAuthenticated()')}">
-				<li><a th:href="@{/dashboard}" class="header-nav-link">대시보드</a></li>
-				<li><a th:href="@{/questions}" class="header-nav-link">질문목록</a></li>
-				<li><a th:href="@{/my-page}" class="header-nav-link">마이페이지</a></li>
+			<!--
+            <ul class="header-nav" th:if="${#authorization.expression('isAuthenticated()')}">
+               <li><a th:href="@{/dashboard}" class="header-nav-link">대시보드</a></li>
+               <li><a th:href="@{/questions}" class="header-nav-link">질문목록</a></li>
+               <li><a th:href="@{/my-page}" class="header-nav-link">마이페이지</a></li>
 
-				<li class="dropdown">
-					<a href="#"
-					   class="header-nav-link dropdown-toggle"
-					   id="userDropdown"
-					   role="button"
-					   data-bs-toggle="dropdown"
-					   aria-expanded="false">
+               <li class="dropdown">
+                  <a href="#"
+                     class="header-nav-link dropdown-toggle"
+                     id="userDropdown"
+                     role="button"
+                     data-bs-toggle="dropdown"
+                     aria-expanded="false">
+            -->
+			<!-- 👤 <span th:text="${#authentication.principal.attributes['name']}"></span> --->
+			<!-- 👤 <span th:text="${#authentication.name}"></span> -->
 
-						<!-- 👤 <span th:text="${#authentication.principal.attributes['name']}"></span> --->
-						<!-- 👤 <span th:text="${#authentication.name}"></span> -->
-
-						<!-- OAuth2 로그인(Google/Kakao/Naver)에서는 name, 로컬 폼 로그인에서는 username 사용 -->
-						<!--
-						<span th:with="userName=${
-							#authentication.principal.attributes != null && #authentication.principal.attributes['name'] != null
-								? #authentication.principal.attributes['name']
-								: #authentication.name
-						}" th:text="${userName}">
-						</span>
-						-->
-
-						👤 <span th:text="${
-						   #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
-							  ? #authentication.principal.attributes['name']
-							  : #authentication.name
-						}">
-						</span>
+			<!-- OAuth2 로그인(Google/Kakao/Naver)에서는 name, 로컬 폼 로그인에서는 username 사용 -->
+			<!--
+            <span th:with="userName=${
+               #authentication.principal.attributes != null && #authentication.principal.attributes['name'] != null
+                  ? #authentication.principal.attributes['name']
+                  : #authentication.name
+            }" th:text="${userName}">
+            </span>
+            -->
+			<!--
+                     👤 <span th:text="${
+                        #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
+                          ? #authentication.principal.attributes['name']
+                          : #authentication.name
+                     }">
+                     </span>
 
 
-					</a>
+                  </a>
 
-					<ul class="dropdown-menu dropdown-menu-end">
-						<li><a class="dropdown-item" href="/profile">프로필</a></li>
-						<li><a class="dropdown-item" href="/settings">설정</a></li>
-						<li><hr class="dropdown-divider"></li>
-						<li>
-							<form method="post" th:action="@{/logout}" style="display: inline; width: 100%;">
-								<button type="submit" class="dropdown-item" style="background: none; border: none; cursor: pointer; text-align: left; width: 100%; padding: 10px 16px;">
-									로그아웃
-								</button>
-							</form>
-						</li>
-					</ul>
-				</li>
-			</ul>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                     <li><a class="dropdown-item" href="/profile">프로필</a></li>
+                     <li><a class="dropdown-item" href="/settings">설정</a></li>
+                     <li><hr class="dropdown-divider"></li>
+                     <li>
+                        <form method="post" th:action="@{/logout}" style="display: inline; width: 100%;">
+                           <button type="submit" class="dropdown-item" style="background: none; border: none; cursor: pointer; text-align: left; width: 100%; padding: 10px 16px;">
+                              로그아웃
+                           </button>
+                        </form>
+                     </li>
+                  </ul>
+               </li>
+            </ul>
+            -->
 
 			<!-- D-Day -->
 			<!-- header.html 마지막 부분에 추가/수정 -->
@@ -91,6 +191,6 @@
 				</th:block>
 			</div>
 
-		</div>
+		</nav>
 	</div>
 </header>

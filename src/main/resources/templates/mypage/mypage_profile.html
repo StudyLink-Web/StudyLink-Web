@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+        layout:decorate="~{layout/layout}"
+>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>프로필 수정 - StudyLink</title>
+    <style>
+        .profile-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 40px;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .profile-header h1 {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .help-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn-submit {
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            padding: 12px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-cancel:hover {
+            background: #d0d0d0;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .university-select {
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content" class="profile-container">
+
+    <!-- 헤더 -->
+    <div class="profile-header">
+        <h1>✏️ 프로필 수정</h1>
+        <p>당신의 기본 정보를 업데이트하세요</p>
+    </div>
+
+    <!-- 메시지 표시 -->
+    <th:block th:if="${success}">
+        <div class="alert alert-success">
+            ✅ <span th:text="${success}"></span>
+        </div>
+    </th:block>
+    <th:block th:if="${error}">
+        <div class="alert alert-danger">
+            ❌ <span th:text="${error}"></span>
+        </div>
+    </th:block>
+
+    <!-- 프로필 카드 -->
+    <div class="profile-card">
+        <form method="post" th:action="@{/mypage/profile}">
+
+            <!-- 대학 선택 -->
+            <div class="form-group">
+                <label for="university">소속 대학</label>
+                <select id="university" name="university" required>
+                    <option value="">대학을 선택하세요</option>
+                    <option value="이화여자대학교">이화여자대학교</option>
+                    <option value="서울대학교">서울대학교</option>
+                    <option value="고려대학교">고려대학교</option>
+                    <option value="연세대학교">연세대학교</option>
+                    <option value="카이스트">카이스트</option>
+                    <option value="기타">기타</option>
+                </select>
+                <p class="help-text">🎓 현재 재학 중인 대학을 선택하세요</p>
+            </div>
+
+            <!-- 학과 선택 -->
+            <div class="form-group">
+                <label for="department">전공/학과</label>
+                <input
+                        type="text"
+                        id="department"
+                        name="department"
+                        placeholder="예: 신학과, 영문과"
+                        required
+                />
+                <p class="help-text">📚 현재 재학 중인 학과를 입력하세요</p>
+            </div>
+
+            <!-- 학년 선택 -->
+            <div class="form-group">
+                <label for="studentYear">학년</label>
+                <select id="studentYear" name="studentYear" required>
+                    <option value="">학년을 선택하세요</option>
+                    <option value="1학년">1학년</option>
+                    <option value="2학년">2학년</option>
+                    <option value="3학년">3학년</option>
+                    <option value="4학년">4학년</option>
+                </select>
+                <p class="help-text">📅 현재 학년을 선택하세요</p>
+            </div>
+
+            <!-- 버튼 -->
+            <div class="button-group">
+                <button type="submit" class="btn-submit">💾 저장</button>
+                <a href="/mypage" class="btn-cancel">취소</a>
+            </div>
+        </form>
+
+        <!-- 추가 정보 -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <p style="color: #666; font-size: 0.9rem;">
+                💡 <strong>팁:</strong> 정확한 정보를 입력하면 더 나은 멘토링과 게시판 경험을 얻을 수 있습니다.
+            </p>
+        </div>
+    </div>
+
+    <!-- 돌아가기 -->
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="/mypage" class="btn btn-outline-secondary">← 마이페이지로 돌아가기</a>
+    </div>
+</div>
+</body>
+</html>

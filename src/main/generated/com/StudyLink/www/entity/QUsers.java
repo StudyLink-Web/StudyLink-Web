@@ -24,6 +24,8 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
+    public final StringPath department = createString("department");
+
     public final StringPath email = createString("email");
 
     public final BooleanPath emailVerified = createBoolean("emailVerified");
@@ -35,6 +37,8 @@ public class QUsers extends EntityPathBase<Users> {
     public final StringPath interests = createString("interests");
 
     public final BooleanPath isActive = createBoolean("isActive");
+
+    public final BooleanPath isStudentVerified = createBoolean("isStudentVerified");
 
     public final ListPath<MentorAvailability, QMentorAvailability> mentorAvailabilities = this.<MentorAvailability, QMentorAvailability>createList("mentorAvailabilities", MentorAvailability.class, QMentorAvailability.class, PathInits.DIRECT2);
 
@@ -56,13 +60,25 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final StringPath role = createString("role");
 
+    public final StringPath studentEmail = createString("studentEmail");
+
     public final QStudentProfile studentProfile;
+
+    public final StringPath studentYear = createString("studentYear");
+
+    public final StringPath university = createString("university");
 
     public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 
     public final NumberPath<Long> userId = createNumber("userId", Long.class);
 
     public final StringPath username = createString("username");
+
+    public final StringPath verificationToken = createString("verificationToken");
+
+    public final DateTimePath<java.time.LocalDateTime> verificationTokenExpiry = createDateTime("verificationTokenExpiry", java.time.LocalDateTime.class);
+
+    public final DateTimePath<java.time.LocalDateTime> verifiedAt = createDateTime("verifiedAt", java.time.LocalDateTime.class);
 
     public QUsers(String variable) {
         this(Users.class, forVariable(variable), INITS);

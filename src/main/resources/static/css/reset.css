@@ -1,0 +1,85 @@
+/* =========================================================
+   Global Reset CSS
+   - 프로젝트 전역에서 단 1번만 로드
+   - 레이아웃/컴포넌트 CSS에서 reset 금지
+   ========================================================= */
+
+/* 1. Box sizing 통일 */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* 2. 기본 margin / padding 제거 */
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+/* 3. 기본 폰트 / 텍스트 렌더링 안정화 */
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 4. 리스트 스타일 제거 (네비게이션 안정화) */
+ul,
+ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* 5. 링크 기본 스타일 정리 */
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* 6. 버튼 / 인풋 기본 스타일 통일 */
+button,
+input,
+select,
+textarea {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    outline: none;
+}
+
+/* 클릭 가능한 요소 커서 */
+button,
+a {
+    cursor: pointer;
+}
+
+/* 7. 이미지 기본 처리 */
+img {
+    display: block;
+    max-width: 100%;
+}
+
+/* 8. 테이블 초기화 */
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+/* 9. 폼 요소 기본 appearance 제거 (모바일 포함) */
+input,
+button,
+textarea,
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 0;
+}

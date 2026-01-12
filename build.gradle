@@ -59,6 +59,10 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// Spring Boot Mail (이메일 발송 필수!)
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
 }
 
 tasks.named('test') {

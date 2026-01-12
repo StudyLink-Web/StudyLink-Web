@@ -47,14 +47,14 @@ public class SecurityConfig {
                 // ✅ CSRF 설정: REST API와 폼 로그인 모두 지원
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
-                                "/api/auth/**",          // REST API는 CSRF 토큰 필요 없음
+                                "/api/auth/**",  // REST API는 CSRF 토큰 필요 없음
                                 "/loginProc",             // 폼 기반 로그인
                                 "/logout",
                                 "/oauth2/**",             // OAuth2 요청도 CSRF 제외
                                 "/logout",
                                 "/ws/**",
                                 "/chatbot/**",            // 챗봇 관련 요청 허용
-                                "/api/chatbot/archive/**", // 추가: 챗봇 아카이브 API CSRF 제외
+                                "/api/chatbot/archive/**", // 챗봇 아카이브 API CSRF 제외
                                 "/room/**"                // 방 관련 요청 허용
                         )
                 )
@@ -98,7 +98,10 @@ public class SecurityConfig {
                                 "/oauth2/**",           // OAuth2 요청
                                 "/login/oauth2/**",      // OAuth2 리다이렉트 URI
                                 "/.well-known/**",      // ✅ Chrome DevTools 에러 무시
-                                "/chatbot/**"
+                                "/chatbot/**",
+
+                                // 마이페이지 (로그인한 사용자만)
+                                "/mypage/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -115,13 +118,13 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // ⭐ OAuth2 설정 (수정됨)
+                // OAuth2 설정
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(oAuth2UserService)
                         )
-                        // ⭐ 추가: successHandler - 명시적으로 Authentication을 SecurityContext에 저장
+                        // successHandler - 명시적으로 Authentication을 SecurityContext에 저장
                         .successHandler((request, response, authentication) -> {
                             // SecurityContext에 인증 정보 저장
                             SecurityContextHolder.getContext().setAuthentication(authentication);

@@ -10,10 +10,11 @@
 	<title>StudyLink</title>
 
 	<!-- CSS -->
-	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
-	<link rel="stylesheet" th:href="@{/css/header-style.css}">
-	<link rel="stylesheet" th:href="@{/css/contents.css}">
-	<link rel="stylesheet" th:href="@{/css/room.css}">
+	<!-- <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}"> -->
+
+	<link rel="stylesheet" href="/css/reset.css">
+	<link rel="stylesheet" href="/css/header-style.css">
+	<th:block layout:fragment="extra-css"></th:block>
 
 	<!-- WebSocket -->
 	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>

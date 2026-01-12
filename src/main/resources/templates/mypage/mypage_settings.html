@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+        layout:decorate="~{layout/layout}"
+>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>계정 설정 - StudyLink</title>
+    <style>
+        .settings-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 40px;
+        }
+
+        .settings-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .settings-header h1 {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .help-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn-submit {
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            padding: 12px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-cancel:hover {
+            background: #d0d0d0;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .setting-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .setting-section:last-child {
+            border-bottom: none;
+        }
+
+        .setting-section h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content" class="settings-container">
+
+    <!-- 헤더 -->
+    <div class="settings-header">
+        <h1>⚙️ 계정 설정</h1>
+        <p>StudyLink 계정의 보안 설정을 관리하세요</p>
+    </div>
+
+    <!-- 메시지 표시 -->
+    <th:block th:if="${success}">
+        <div class="alert alert-success">
+            ✅ <span th:text="${success}"></span>
+        </div>
+    </th:block>
+    <th:block th:if="${error}">
+        <div class="alert alert-danger">
+            ❌ <span th:text="${error}"></span>
+        </div>
+    </th:block>
+
+    <!-- 설정 카드 -->
+    <div class="settings-card">
+
+        <!-- 비밀번호 변경 섹션 -->
+        <div class="setting-section">
+            <h3>🔐 비밀번호 변경</h3>
+
+            <form method="post" th:action="@{/mypage/settings}">
+                <div class="form-group">
+                    <label for="password">새 비밀번호</label>
+                    <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="새 비밀번호 입력"
+                    />
+                    <p class="help-text">최소 8자 이상, 숫자와 특수문자를 포함하세요</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="passwordConfirm">비밀번호 확인</label>
+                    <input
+                            type="password"
+                            id="passwordConfirm"
+                            name="passwordConfirm"
+                            placeholder="비밀번호 재입력"
+                    />
+                    <p class="help-text">비밀번호를 다시 입력하세요</p>
+                </div>
+
+                <button type="submit" class="btn-submit">🔐 비밀번호 변경</button>
+            </form>
+        </div>
+
+        <!-- 닉네임 변경 섹션 -->
+        <div class="setting-section">
+            <h3>👤 닉네임 변경</h3>
+
+            <form method="post" th:action="@{/mypage/settings}">
+                <div class="form-group">
+                    <label for="nickname">새 닉네임</label>
+                    <input
+                            type="text"
+                            id="nickname"
+                            name="nickname"
+                            placeholder="새 닉네임 입력"
+                            maxlength="20"
+                    />
+                    <p class="help-text">2자 이상 20자 이하로 입력하세요</p>
+                </div>
+
+                <button type="submit" class="btn-submit">✏️ 닉네임 변경</button>
+            </form>
+        </div>
+
+        <!-- 계정 정보 섹션 -->
+        <div class="setting-section">
+            <h3>ℹ️ 계정 정보</h3>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e0e0e0;">
+                    <span style="font-weight: 600;">가입 날짜</span>
+                    <span>2024년 1월 15일</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e0e0e0;">
+                    <span style="font-weight: 600;">최종 로그인</span>
+                    <span>2024년 1월 12일 00:18</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px 0;">
+                    <span style="font-weight: 600;">계정 상태</span>
+                    <span style="color: #28a745; font-weight: 600;">🟢 활성</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 위험 존역 -->
+        <div class="setting-section" style="border-color: #f8d7da;">
+            <h3 style="color: #dc3545;">⚠️ 위험 영역</h3>
+
+            <p style="color: #666;">계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.</p>
+
+            <button
+                    type="button"
+                    class="btn-submit"
+                    style="background: #dc3545; margin-top: 15px;"
+                    onclick="if(confirm('정말 계정을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.')) { window.location.href='/mypage/delete'; }"
+            >
+                🗑️ 계정 삭제
+            </button>
+        </div>
+    </div>
+
+    <!-- 돌아가기 -->
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="/mypage" class="btn btn-outline-secondary">← 마이페이지로 돌아가기</a>
+    </div>
+</div>
+</body>
+</html>

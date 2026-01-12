@@ -1,68 +1,137 @@
-/* 메시지 영역 */
+/* =========================================================
+   전체 채팅 영역
+   ========================================================= */
+
+/* Bootstrap의 기본 스타일을 오버라이드 */
+.border.border-black {
+    border-color: #d1d5db !important;  /* room에만 적용 */
+}
+
+.btn {
+    /* Bootstrap 버튼 스타일을 room에서만 수정 */
+}
+
+
+
 #messageArea {
-    height: 500px;
+    height: 650px;
     overflow-y: auto;
+    padding: 16px;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+
     display: flex;
     flex-direction: column;
-    padding: 10px;
+    gap: 10px;
 }
 
-/* 메시지 컨테이너 - 공통 */
+/* 스크롤바 숨김 (웹킷) */
+#messageArea::-webkit-scrollbar {
+    width: 0;
+}
+
+/* =========================================================
+   메시지 컨테이너 (정렬만 담당)
+   ========================================================= */
+
 .message-container {
     display: flex;
-    align-items: end;
-    margin: 4px 0;
+    align-items: flex-end;
 }
 
-/* 내 메시지 컨테이너 */
-.message-container-right {
-    justify-content: flex-end;
-}
-
-/* 상대 메시지 컨테이너 */
 .message-container-left {
     justify-content: flex-start;
 }
 
-/* 메시지 박스 */
-.message-left {
-    background-color: #e0e0e0;
-    max-width: 70%;
-    padding: 8px 12px;
-    border-radius: 12px;
-    word-wrap: break-word;
-    white-space: pre-wrap; /* 공백과 줄바꿈 유지 */
+.message-container-right {
+    justify-content: flex-end;
 }
 
+/* =========================================================
+   메시지 카드 (게시판 댓글 느낌)
+   ========================================================= */
+
+.message-left,
 .message-right {
-    background-color: #0084ff;
-    color: white;
-    max-width: 70%;
-    padding: 8px 12px;
+    max-width: 75%;
+    padding: 10px 14px;
     border-radius: 12px;
-    word-wrap: break-word;
-    white-space: pre-wrap; /* 공백과 줄바꿈 유지 */
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-wrap;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
 }
 
-/* 읽음 표시 */
+/* 상대 메시지 */
+.message-left {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    color: #111827;
+}
+
+/* 내 메시지 */
+.message-right {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+/* =========================================================
+   읽음 표시 (작게, 게시판 스타일)
+   ========================================================= */
+
 .read-indicator {
-    font-size: 12px;
-    color: red;
-    background: transparent; /* 배경 없음 */
-    margin-right: 6px;       /* 메시지와 간격 */
+    font-size: 11px;
+    color: #ef4444;
+    margin-right: 6px;
+    white-space: nowrap;
 }
 
-/* 스크롤 숨기기 */
-#messageArea::-webkit-scrollbar {
-    display: none;
-}
+/* =========================================================
+   이미지 메시지
+   ========================================================= */
 
-/* 채팅창 이미지 크기 */
 .chat-image {
-    max-width: 100px;      /* 이미지 가로 최대 크기 */
-    max-height: 100px;     /* 이미지 세로 최대 크기 */
-    width: auto;           /* 비율 유지 */
-    height: auto;          /* 비율 유지 */
-    border-radius: 8px;    /* 모서리 살짝 둥글게 */
-    object-fit: cover;     /* 영역에 맞춰 이미지 자르기 가능 */
+    max-width: 160px;
+    max-height: 160px;
+    border-radius: 8px;
+    object-fit: cover;
+    display: block;
+}
+
+/* =========================================================
+   입력 영역
+   ========================================================= */
+
+textarea[name="message"] {
+    resize: none;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* 파일 업로드 */
+input[type="file"] {
+    font-size: 13px;
+}
+
+/* 파일 전송 버튼 */
+#sendFileBtn {
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background-color: #ffffff;
+}
+
+#sendFileBtn:hover {
+    background-color: #f3f4f6;
+}
+
+/* =========================================================
+   채팅창 전체 박스 보정
+   ========================================================= */
+
+.border.border-black {
+    border-color: #d1d5db !important;
 }

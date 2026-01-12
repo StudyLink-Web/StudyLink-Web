@@ -104,6 +104,8 @@ button, input, select, textarea { outline: none; }
     flex: 1;
     height: 100%;
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    margin-top: 0;         /* ← 추가 */
+    padding-top: 30px;     /* ← 수정 (80px → 30px) */
 }
 
 .main-container {

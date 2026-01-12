@@ -1,110 +1,44 @@
-/* ✅ 수정: body 리셋 */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* =========================================================
+   Login Page Only
+   ========================================================= */
 
+/* body 기본 배경만 설정 (reset은 reset.css에서 처리) */
 body {
-    margin: 0;  /* ✅ 추가 */
-    padding: 0; /* ✅ 추가 */
     background-color: #f8fafc;
     color: #1e293b;
 }
 
-/* ===== 헤더: 가로 정렬 강화 ===== */
-/*.header {*/
-/*    background: #ffffff;*/
-/*    border-bottom: 1px solid #e2e8f0;*/
-/*    padding: 0 40px;*/
-/*    height: 72px;*/
-/*    display: flex;*/
-/*    align-items: center;*/
-/*    justify-content: space-between;*/
-/*    position: sticky;*/
-/*    top: 0;*/
-/*    z-index: 100;*/
-/*}*/
+/* =========================================================
+   Login Wrapper
+   ========================================================= */
 
-/*.header-left {*/
-/*    display: flex;*/
-/*    align-items: center;*/
-/*    gap: 48px; !* 로고와 메뉴 사이의 간격 *!*/
-/*}*/
-
-/*.header-logo {*/
-/*    font-size: 22px;*/
-/*    font-weight: 800;*/
-/*    color: #21808d;*/
-/*    text-decoration: none;*/
-/*    display: flex;*/
-/*    align-items: center;*/
-/*    gap: 8px;*/
-/*}*/
-
-/*.header-nav {*/
-/*    display: flex;*/
-/*    gap: 24px;*/
-/*    list-style: none;*/
-/*}*/
-
-/*.header-nav a {*/
-/*    text-decoration: none;*/
-/*    color: #64748b;*/
-/*    font-size: 14px;*/
-/*    font-weight: 500;*/
-/*    transition: color 0.2s;*/
-/*}*/
-
-/*.header-nav a:hover {*/
-/*    color: #21808d;*/
-/*}*/
-
-/*.header-right {*/
-/*    display: flex;*/
-/*    gap: 12px;*/
-/*}*/
-
-/*.btn-header {*/
-/*    padding: 8px 20px;*/
-/*    border-radius: 8px;*/
-/*    font-size: 14px;*/
-/*    font-weight: 600;*/
-/*    cursor: pointer;*/
-/*    text-decoration: none;*/
-/*    transition: all 0.2s;*/
-/*}*/
-
-/*.btn-header-login {*/
-/*    background: white;*/
-/*    color: #21808d;*/
-/*    border: 1px solid #21808d;*/
-/*}*/
-
-/*.btn-header-signup {*/
-/*    background: #21808d;*/
-/*    color: white;*/
-/*    border: none;*/
-/*}*/
-
-/* ===== 로그인 컨테이너 ===== */
 .login-wrapper {
+    min-height: calc(100vh - 70px); /* 헤더 높이 */
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: calc(100vh - 70px);
     padding: 40px 20px;
 }
+
+/* =========================================================
+   Login Container
+   ========================================================= */
 
 .login-container {
     width: 100%;
     max-width: 1040px;
-    background: white;
+    background: #ffffff;
     display: flex;
     border-radius: 24px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+    box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.05),
+            0 10px 10px -5px rgba(0, 0, 0, 0.02);
     overflow: hidden;
 }
+
+/* =========================================================
+   Left Card (Form)
+   ========================================================= */
 
 .login-card {
     flex: 1;
@@ -119,7 +53,6 @@ body {
     max-width: 420px;
 }
 
-
 .logo-title {
     font-size: 32px;
     font-weight: 800;
@@ -128,18 +61,20 @@ body {
 }
 
 .logo-subtitle {
-    color: #64748b;
     font-size: 15px;
+    color: #64748b;
     margin-bottom: 40px;
 }
 
-/* 폼 스타일 */
+/* =========================================================
+   Form
+   ========================================================= */
+
 .login-form {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
-
 
 .form-label {
     display: block;
@@ -155,7 +90,7 @@ body {
     border: 1.5px solid #e2e8f0;
     border-radius: 12px;
     font-size: 15px;
-    transition: all 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-control:focus {
@@ -164,26 +99,27 @@ body {
     box-shadow: 0 0 0 4px rgba(33, 128, 141, 0.1);
 }
 
+/* =========================================================
+   Password Input
+   ========================================================= */
+
 .password-input-wrapper {
     position: relative;
 }
 
-/* 1. Input에 오른쪽 공간 추가 */
 .password-input-wrapper .form-control {
     padding-right: 48px;
 }
 
 .toggle-password {
     position: absolute;
-    right: 12px; /* 2. 기본 위치 조정 */
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
-    cursor: pointer;
-    color: #94a3b8;
     padding: 4px;
-    /* 3. Flexbox 정렬 추가 */
+    color: #94a3b8;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -197,22 +133,45 @@ body {
     display: block;
 }
 
+/* =========================================================
+   Options
+   ========================================================= */
+
 .form-options {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     font-size: 14px;
 }
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.form-link {
+    color: #21808d;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.form-link:hover {
+    text-decoration: underline;
+}
+
+/* =========================================================
+   Login Button
+   ========================================================= */
 
 .btn-login {
     width: 100%;
     height: 56px;
     background: #21808d;
-    color: white;
-    border: none;
+    color: #ffffff;
     border-radius: 12px;
     font-size: 16px;
     font-weight: 700;
-    cursor: pointer;
     transition: background 0.2s;
 }
 
@@ -220,28 +179,32 @@ body {
     background: #1a6671;
 }
 
-/* 로그인/회원가입 페이지에서 드롭다운 완전히 숨기기 */
-.dropdown-menu {
-    display: none !important;
-    visibility: hidden !important;
-}
+/* =========================================================
+   Right Side (Intro / Social)
+   ========================================================= */
 
-/* ===== 오른쪽 섹션 디자인 ===== */
 .login-side {
     flex: 1;
     background: linear-gradient(135deg, #21808d 0%, #145e67 100%);
-    color: white;
+    color: #ffffff;
     padding: 64px;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-.login-side h2 { font-size: 32px; margin-bottom: 20px; }
-.login-side p { font-size: 16px; opacity: 0.9; line-height: 1.6; }
+.login-side h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+.login-side p {
+    font-size: 16px;
+    line-height: 1.6;
+    opacity: 0.9;
+}
 
 .feature-list {
-    list-style: none;
     margin: 32px 0;
     font-size: 15px;
     display: flex;
@@ -269,30 +232,61 @@ body {
 .btn-social {
     height: 52px;
     border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 600;
     transition: transform 0.2s;
 }
 
-.btn-social:hover { transform: translateY(-2px); }
+.btn-social:hover {
+    transform: translateY(-2px);
+}
 
-.btn-kakao { background: #fee500; color: #3c1e1e; }
-.btn-naver { background: #03c75a; color: #ffffff; }
-.btn-google { background: #ffffff; color: #1e293b; }
+.btn-kakao {
+    background: #fee500;
+    color: #3c1e1e;
+}
 
-.signup-prompt { margin-top: 40px; font-size: 14px; }
-.signup-link { color: white; font-weight: 700; text-decoration: underline; }
+.btn-naver {
+    background: #03c75a;
+    color: #ffffff;
+}
 
-.mobile-signup-prompt { display: none; margin-top: 24px; text-align: center; font-size: 14px; color: #64748b; }
-.mobile-signup-prompt a { color: #21808d; font-weight: 600; text-decoration: none; }
+.btn-google {
+    background: #ffffff;
+    color: #1e293b;
+}
 
-/* 반응형 */
+/* =========================================================
+   Mobile
+   ========================================================= */
+
+.mobile-signup-prompt {
+    display: none;
+    margin-top: 24px;
+    text-align: center;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.mobile-signup-prompt a {
+    color: #21808d;
+    font-weight: 600;
+    text-decoration: none;
+}
+
 @media (max-width: 960px) {
-    .login-container { flex-direction: column; }
-    .login-side { display: none; }
-    .mobile-signup-prompt { display: block; }
+    .login-container {
+        flex-direction: column;
+    }
+
+    .login-side {
+        display: none;
+    }
+
+    .mobile-signup-prompt {
+        display: block;
+    }
 }
