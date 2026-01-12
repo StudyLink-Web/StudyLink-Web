@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/layout}"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title>입시 지도 - StudyLink</title>
+    <style>
+      .map-container-wrapper {
+        display: flex;
+        height: calc(100vh - 100px);
+        margin-top: 10px;
+        gap: 15px;
+      }
+
+      .map-sidebar {
+        width: 300px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        overflow-y: auto;
+      }
+
+      .map-content {
+        flex: 1;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        position: relative;
+        overflow: hidden;
+      }
+
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+
+      .sim-section {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 15px;
+      }
+
+      .sim-section:last-child {
+        border-bottom: none;
+      }
+
+      .sim-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .input-group-text {
+        width: 80px;
+        justify-content: center;
+      }
+
+      .mode-toggle-btn {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      /* 반응형 */
+      @media (max-width: 991px) {
+        .map-container-wrapper {
+          flex-direction: column;
+          height: auto;
+        }
+        .map-sidebar {
+          width: 100%;
+          height: auto;
+        }
+        #map {
+          height: 500px;
+        }
+      }
+    </style>
+  </head>
+
+  <div layout:fragment="content" class="container-fluid">
+    <div class="map-container-wrapper">
+      <!-- 좌측 사이드바: 성적 시뮬레이터 -->
+      <aside class="map-sidebar">
+        <div class="sim-section">
+          <div class="sim-title">📊 가상 성적 설정</div>
+          <p class="text-muted small">
+            등급을 조절하여 지원 가능한 대학을 확인해보세요.
+          </p>
+
+          <!-- 수능 백분위 -->
+          <div class="mb-4">
+            <label
+              for="csatRange"
+              class="form-label d-flex justify-content-between"
+            >
+              <span>수능 백분위</span>
+              <span id="csatVal" class="badge bg-primary">90</span>
+            </label>
+            <input
+              type="range"
+              class="form-range"
+              id="csatRange"
+              min="0"
+              max="100"
+              step="1"
+              value="90"
+            />
+          </div>
+
+          <!-- 내신 등급 -->
+          <div class="mb-4">
+            <label
+              for="gpaRange"
+              class="form-label d-flex justify-content-between"
+            >
+              <span>내신 등급</span>
+              <span id="gpaVal" class="badge bg-success">2.0</span>
+            </label>
+            <input
+              type="range"
+              class="form-range"
+              id="gpaRange"
+              min="1.0"
+              max="9.0"
+              step="0.1"
+              value="2.0"
+            />
+          </div>
+        </div>
+
+        <div class="sim-section">
+          <div class="sim-title">🛠 시각화 모드</div>
+          <button id="viewToggle" class="btn btn-outline-info mode-toggle-btn">
+            🔄 입시 지형도로 전환
+          </button>
+        </div>
+
+        <div class="sim-section mt-auto">
+          <div class="alert alert-info py-2 small mb-0">
+            💡 <strong>Tip!</strong> 대시보드가 완성되면 실제 내 성적을 불러올
+            수 있습니다.
+          </div>
+        </div>
+      </aside>
+
+      <!-- 우측 지도 영역 -->
+      <main class="map-content">
+        <div id="map"></div>
+        <!-- 지도 안내 오버레이 (임시) -->
+        <div
+          style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            pointer-events: none;
+          "
+        >
+          <h5 class="mb-0">지도 엔진 로드 준비 중...</h5>
+        </div>
+      </main>
+    </div>
+
+    <!-- 간단한 슬라이더 동작용 스크립트 -->
+    <script>
+      document
+        .getElementById("csatRange")
+        .addEventListener("input", function (e) {
+          document.getElementById("csatVal").innerText = e.target.value;
+        });
+      document
+        .getElementById("gpaRange")
+        .addEventListener("input", function (e) {
+          document.getElementById("gpaVal").innerText = parseFloat(
+            e.target.value
+          ).toFixed(1);
+        });
+    </script>
+  </div>
+</html>

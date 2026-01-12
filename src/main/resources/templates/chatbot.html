@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<th:block layout:fragment="content">
+    <!-- 1. 마크다운 변환 라이브러리 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --mesh-gradient: linear-gradient(45deg, #667eea, #764ba2, #ff7e5f, #feb47b);
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --bot-bubble: #ffffff;
+            --user-bubble: #667eea;
+        }
+
+        body {
+            background: #f0f2f5;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+
+        .chat-container {
+            width: 100%; /* 너비 고정 */
+            max-width: 1100px; /* 사이드바를 위해 조금 더 넓힘 */
+            margin: 1rem auto; /* 상하 마진 축소 */
+            background: var(--glass-bg);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 120px); /* 화면 크기에 맞게 자동 계산 */
+            max-height: 900px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            position: relative;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10; /* 헤더 메뉴보다 아래로 낮춤 (기존 100) */
+        }
+
+        /* 전체 화면 스타일 */
+        .chat-container.full-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            max-height: none;
+            margin: 0;
+            border-radius: 0;
+            z-index: 9999;
+        }
+
+        .chat-header {
+            padding: 1rem 2rem;
+            background: var(--mesh-gradient);
+            background-size: 300% 300%;
+            animation: meshAnimation 15s ease infinite;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 5; /* 컨테이너 내부에서도 낮게 유지 (기존 1000) */
+            flex-shrink: 0; /* 헤더 찌그러짐 방지 */
+        }
+
+        /* 채팅 바디 레이아웃 */
+        .chat-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.2);
+            /* min-height 제거: 부모 height가 잡혀있으므로 flex: 1만 있어도 됨 */
+        }
+
+        /* 사이드바 스타일 */
+        .chat-sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.3);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: #4a5568;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .session-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .session-item {
+            padding: 12px 15px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .session-item:hover {
+            background: rgba(255, 255, 255, 0.5);
+            border-color: var(--glass-border);
+        }
+
+        .session-item.active {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
+
+        .delete-session-btn {
+            background: transparent;
+            border: none;
+            color: #cbd5e0;
+            padding: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 6px;
+            z-index: 10;
+        }
+
+        .session-item:hover .delete-session-btn {
+            color: #a0aec0;
+        }
+
+        .delete-session-btn:hover {
+            color: #e53e3e;
+            background: rgba(229, 62, 62, 0.1);
+        }
+
+        .session-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #2d3748;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .session-date {
+            font-size: 0.7rem;
+            color: #a0aec0;
+        }
+
+        /* 메인 채팅 영역 */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @keyframes meshAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .chat-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .fullscreen-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fullscreen-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 2.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            background: rgba(248, 249, 250, 0.4);
+            scroll-behavior: smooth;
+        }
+
+        /* 스크롤바 커스텀 */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+            animation: messageSpring 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes messageSpring {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .message-wrapper.bot { align-self: flex-start; }
+        .message-wrapper.user { align-self: flex-end; align-items: flex-end; }
+
+        .message {
+            padding: 1rem 1.4rem;
+            border-radius: 18px;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+
+        .message.bot {
+            background: var(--bot-bubble);
+            color: #2d3436;
+            border-bottom-left-radius: 4px;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .message.user {
+            background: var(--user-bubble);
+            color: white;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: #a0aec0;
+            margin: 4px 6px;
+            font-weight: 500;
+        }
+
+        .chat-input-area {
+            padding: 1.5rem 2rem;
+            background: white;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: 2px solid #f1f3f5;
+            border-radius: 30px;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1rem;
+            background: #f8f9fa;
+        }
+
+        #userInput:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .send-btn {
+            background: var(--user-bubble);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1) rotate(-5deg);
+            background: #764ba2;
+        }
+
+        /* Typing Indicator dots */
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            padding: 12px 18px;
+            background: white;
+            border-radius: 20px;
+            width: fit-content;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #cbd5e0;
+            border-radius: 50%;
+            animation: dotWave 1.4s infinite linear;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotWave {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-7px); background: #667eea; }
+        }
+
+        /* Markdown Styling - Cards & Tables */
+        .message.bot table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 1.5rem 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #edf2f7;
+            background: white;
+        }
+
+        .message.bot th {
+            background: #f7fafc;
+            padding: 12px 15px;
+            font-weight: 700;
+            color: #4a5568;
+            border-bottom: 2px solid #667eea;
+            text-align: left;
+        }
+
+        .message.bot td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #edf2f7;
+            color: #2d3748;
+        }
+
+        .message.bot h3 {
+            color: #2d3748;
+            border-left: 4px solid #667eea;
+            padding-left: 12px;
+            margin: 1.5rem 0 1rem;
+            font-size: 1.2rem;
+        }
+
+        .message.bot strong {
+            color: #5a67d8;
+            background: #ebf4ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        #typingIndicator { display: none; margin-left: 2rem; }
+    </style>
+
+    <div class="chat-container" id="chatbotContainer">
+        <div class="chat-header">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button id="sidebarToggle" class="fullscreen-btn" title="대화 목록 토글">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <h2><span style="font-size: 2rem;">✨</span> AI 상담 컨설턴트</h2>
+            </div>
+            <div class="header-actions">
+                <div class="header-status" style="font-size: 0.8rem; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px;">Online</div>
+                <button class="fullscreen-btn" onclick="toggleFullScreen()" title="전체화면 토글">
+                    <svg id="fullscreenIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="chat-body">
+            <!-- 사이드바 -->
+            <div class="chat-sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <button class="new-chat-btn" onclick="createNewChat()">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        새로운 채팅
+                    </button>
+                </div>
+                <div class="session-list" id="sessionList">
+                    <!-- 세션 목록이 여기에 동적으로 추가됨 -->
+                </div>
+            </div>
+
+            <!-- 메인 채팅 -->
+            <div class="chat-main">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message-wrapper bot">
+                        <div class="message bot">
+                            안녕하세요! 무엇이든 물어보세요. 궁금하신 대학이나 학과 이름을 말씀해 주시면 정확한 데이터를 기반으로 상담해 드립니다. 🎓
+                        </div>
+                        <div class="timestamp">방금 전</div>
+                    </div>
+                </div>
+
+                <div id="typingIndicator">
+                    <div class="typing-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <input type="text" id="userInput" placeholder="궁금한 내용을 입력해보세요..." onkeypress="handleKeyPress(event)">
+                    <button class="send-btn" onclick="sendMessage()">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const chatbotContainer = document.getElementById('chatbotContainer');
+        const fullscreenIcon = document.getElementById('fullscreenIcon');
+        const sidebar = document.getElementById('sidebar');
+        const sessionList = document.getElementById('sessionList');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        
+        let chatHistory = [];
+        let currentSessionId = null;
+
+        // 사이드바 토글
+        sidebarToggle.addEventListener('click', () => {
+            if (sidebar.style.display === 'none') {
+                sidebar.style.display = 'flex';
+            } else {
+                sidebar.style.display = 'none';
+            }
+        });
+
+        // 초기 로드: 세션 목록 가져오기
+        window.onload = loadSessions;
+
+        function loadSessions() {
+            fetch('/api/chatbot/archive/sessions')
+                .then(res => res.json())
+                .then(sessions => {
+                    sessionList.innerHTML = '';
+                    sessions.forEach(session => {
+                        const sId = session.sessionId || session.session_id;
+                        const sTitle = session.title || '새로운 대화';
+                        const sDate = session.updatedAt || session.updated_at;
+                        
+                        const item = document.createElement('div');
+                        item.className = `session-item ${currentSessionId == sId ? 'active' : ''}`;
+                        item.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div class="session-title">${sTitle}</div>
+                                <button class="delete-session-btn" 
+                                        onclick="confirmDelete(event, ${sId})">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="session-date">${sDate}</div>
+                        `;
+                        item.onclick = () => {
+                            console.log('세션 클릭:', sId);
+                            loadMessages(sId);
+                        };
+                        sessionList.appendChild(item);
+                    });
+                })
+                .catch(err => console.error('세션 목록 로드 실패:', err));
+        }
+
+        function confirmDelete(e, sessionId) {
+            e.stopPropagation();
+            if (confirm('이 대화 내역을 삭제하시겠습니까?')) {
+                console.log('세션 삭제 시도:', sessionId);
+                fetch(`/api/chatbot/archive/sessions/${sessionId}`, { method: 'DELETE' })
+                    .then(res => {
+                        if (!res.ok) throw new Error('삭제 실패');
+                        console.log('세션 삭제 성공');
+                        if (currentSessionId === sessionId) {
+                            currentSessionId = null;
+                            chatMessages.innerHTML = `
+                                <div class="message-wrapper bot">
+                                    <div class="message bot">안녕하세요! 무엇이든 물어보세요. 궁금하신 대학이나 학과 이름을 말씀해 주시면 정확한 데이터를 기반으로 상담해 드립니다. 🎓</div>
+                                    <div class="timestamp">방금 전</div>
+                                </div>
+                            `;
+                            chatHistory = [];
+                        }
+                        loadSessions();
+                    })
+                    .catch(err => alert('삭제 중 오류가 발생했습니다: ' + err.message));
+            }
+        }
+
+        function createNewChat() {
+            fetch('/api/chatbot/archive/sessions', { method: 'POST' })
+                .then(res => res.json())
+                .then(sessionId => {
+                    currentSessionId = sessionId;
+                    chatMessages.innerHTML = `
+                        <div class="message-wrapper bot">
+                            <div class="message bot">상담을 시작합니다. 궁금한 내용을 입력해주세요.</div>
+                            <div class="timestamp">방금 전</div>
+                        </div>
+                    `;
+                    chatHistory = [];
+                    loadSessions();
+                });
+        }
+
+        function loadMessages(sessionId, force = false) {
+            if (!sessionId) return;
+            
+            console.log('[DEBUG] 메시지 로드 시작. Session ID:', sessionId);
+            currentSessionId = sessionId;
+            
+            fetch(`/api/chatbot/archive/sessions/${sessionId}/messages`)
+                .then(res => {
+                    if (!res.ok) throw new Error('메시지 로드 실패');
+                    return res.json();
+                })
+                .then(messages => {
+                    chatMessages.innerHTML = '';
+                    chatHistory = [];
+                    if (!messages || messages.length === 0) {
+                        chatMessages.innerHTML = `
+                            <div class="message-wrapper bot">
+                                <div class="message bot">대화 내역이 없습니다. 상담을 시작해보세요!</div>
+                                <div class="timestamp">방금 전</div>
+                            </div>
+                        `;
+                    } else {
+                        messages.forEach(msg => {
+                            addMessageToUI(msg.content, msg.role === 'USER', msg.createdAt || msg.created_at);
+                            chatHistory.push({
+                                role: msg.role === 'USER' ? 'user' : 'assistant',
+                                content: msg.content
+                            });
+                        });
+                    }
+                    loadSessions(); // 활성화 표시 및 순서 갱신
+                })
+                .catch(err => {
+                    console.error('메시지 로드 에러:', err);
+                    addMessageToUI("이전 대화 내용을 불러오는 중 오류가 발생했습니다.", false);
+                });
+        }
+
+        function toggleFullScreen() {
+            chatbotContainer.classList.toggle('full-screen');
+            if (chatbotContainer.classList.contains('full-screen')) {
+                fullscreenIcon.innerHTML = `<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>`;
+            } else {
+                fullscreenIcon.innerHTML = `<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>`;
+            }
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function addMessageToUI(text, isUser, time) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${isUser ? 'user' : 'bot'}`;
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            if (isUser) {
+                msgDiv.innerText = text;
+            } else {
+                msgDiv.innerHTML = marked.parse(text);
+            }
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'timestamp';
+            timeDiv.innerText = time || getCurrentTime();
+            
+            wrapper.appendChild(msgDiv);
+            wrapper.appendChild(timeDiv);
+            
+            chatMessages.appendChild(wrapper);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // 세션이 없으면 새로 생성 후 전송
+            if (!currentSessionId) {
+                fetch('/api/chatbot/archive/sessions', { method: 'POST' })
+                    .then(res => {
+                        if (res.status === 401) throw new Error('UNAUTHORIZED');
+                        if (!res.ok) throw new Error('SERVER_ERROR');
+                        return res.json();
+                    })
+                    .then(sessionId => {
+                        currentSessionId = sessionId;
+                        loadSessions(); // 사이드바에 즉시 세션 표시
+                        submitMessage(text);
+                    })
+                    .catch(err => {
+                        console.error('세션 생성 실패:', err);
+                        if (err.message === 'UNAUTHORIZED') {
+                            addMessageToUI("로그인이 필요한 기능입니다. 로그인 후 이용해주세요.", false);
+                        } else {
+                            addMessageToUI("세션을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.", false);
+                        }
+                    });
+            } else {
+                submitMessage(text);
+            }
+        }
+
+        function submitMessage(text) {
+            addMessageToUI(text, true);
+            userInput.value = '';
+            
+            typingIndicator.style.display = 'block';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            loadSessions(); // 첫 질문인 경우 사이드바에 즉시 활성 세션 표시
+
+            fetch('/chatbot/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    query: text,
+                    history: chatHistory,
+                    sessionId: currentSessionId,
+                    session_id: currentSessionId
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                typingIndicator.style.display = 'none';
+                if (data.answer) {
+                    addMessageToUI(data.answer, false);
+                    chatHistory.push({ role: 'user', content: text });
+                    chatHistory.push({ role: 'assistant', content: data.answer });
+                    if (chatHistory.length > 10) chatHistory.splice(0, 2);
+                    
+                    // 답변 완료 후 제목이 업데이트되었을 가능성이 크므로 사이드바 갱신
+                    loadSessions(); 
+                } else {
+                    addMessageToUI("죄송합니다. 답변을 가져오지 못했습니다.", false);
+                }
+            })
+            .catch(error => {
+                typingIndicator.style.display = 'none';
+                console.error('Error:', error);
+                addMessageToUI("서버와의 통신 중 오류가 발생했습니다.", false);
+            });
+        }
+    </script>
+</th:block>
+</html>

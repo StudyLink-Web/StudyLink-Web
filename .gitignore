@@ -1,7 +1,13 @@
 HELP.md
-application.properties
+src/main/resources/application.properties
+src/main/resources/application-local.yml
+src/main/resources/log4jdbc.log4j2.properties
+
+uploads
+
 .gradle
 build/
+target/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
@@ -23,6 +29,7 @@ bin/
 *.iws
 *.iml
 *.ipr
+.vscode/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
@@ -36,3 +43,28 @@ out/
 
 ### VS Code ###
 .vscode/
+
+
+# 개인 설정 파일 (API 키 포함)
+src/main/resources/application-dev.yml
+src/main/resources/application.yml
+src/main/resources/application-dev.properties
+
+# Build
+.gradle/
+target/
+*.class
+*.jar
+*.war
+
+# Spring Boot
+.m2/
+/bin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
