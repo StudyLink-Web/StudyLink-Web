@@ -23,6 +23,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,7 +41,6 @@ public class BoardController {
     private final FileHandler fileHandler;
     private final UserService userService;
 
-    // ✅ 실제 업로드 루트(디스크)
     private static final String UPLOAD_ROOT = "D:/web_0826_shinjw/_myProject/_java/_fileUpload";
 
     @GetMapping("/register")
@@ -75,8 +77,28 @@ public class BoardController {
         model.addAttribute("ph", pageHandler);
     }
 
+    /**
+     * ✅ 조회수 정책
+     * - "새로고침(F5)" : Referer가 detail이거나 null → 증가 X
+     * - "리스트에서 들어옴" : Referer에 /board/list 포함 → 증가 O
+     * - "리스트 갔다가 다시 들어옴" : 또 /board/list에서 오므로 증가 O
+     */
     @GetMapping("/detail")
-    public void detail(@RequestParam("postId") long postId, Model model) {
+    public void detail(@RequestParam("postId") long postId,
+                       Model model,
+                       HttpServletRequest request) {
+
+        String referer = request.getHeader("Referer");
+        boolean fromList = (referer != null && referer.contains("/board/list"));
+
+        if (fromList) {
+            try {
+                boardService.increaseViewCount(postId);
+            } catch (Exception e) {
+                log.error("increaseViewCount failed. postId={}", postId, e);
+            }
+        }
+
         BoardFileDTO boardFileDTO = boardService.getDetail(postId);
         model.addAttribute("boardFileDTO", boardFileDTO);
     }
@@ -85,7 +107,8 @@ public class BoardController {
     public String modify(BoardDTO boardDTO,
                          RedirectAttributes redirectAttributes,
                          @RequestParam(name = "files", required = false) MultipartFile[] files,
-                         Authentication authentication) {
+                         Authentication authentication,
+                         HttpSession session) {
 
         String username = authentication.getName();
         Long userId = userService.findUserIdByUsername(username);
@@ -132,10 +155,7 @@ public class BoardController {
                 : ResponseEntity.internalServerError().build();
     }
 
-    /* =========================================================
-     * ✅ 파일/이미지 보기 (정적 매핑 없이도 브라우저에 바로 표시)
-     * URL: /board/file/{uuid}
-     * ========================================================= */
+    // ✅ 파일/이미지 보기: /board/file/{uuid}
     @GetMapping("/file/{uuid}")
     @ResponseBody
     public ResponseEntity<Resource> viewFile(@PathVariable String uuid) throws MalformedURLException {
@@ -145,10 +165,7 @@ public class BoardController {
             return ResponseEntity.notFound().build();
         }
 
-        // 실제 저장 파일명: uuid_filename
         String savedName = fileDTO.getUuid() + "_" + fileDTO.getFileName();
-
-        // saveDir: "2026\01\12" 같은 형태 그대로 사용 가능
         Path filePath = Paths.get(UPLOAD_ROOT, fileDTO.getSaveDir(), savedName);
 
         Resource resource = new UrlResource(filePath.toUri());
@@ -156,13 +173,12 @@ public class BoardController {
             return ResponseEntity.notFound().build();
         }
 
-        // 확장자로 content-type 결정(간단 처리)
         String lower = fileDTO.getFileName().toLowerCase();
         MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
-        if (fileDTO.getFileType() == 1) { // 이미지
+        if (fileDTO.getFileType() == 1) {
             if (lower.endsWith(".png")) mediaType = MediaType.IMAGE_PNG;
             else if (lower.endsWith(".gif")) mediaType = MediaType.IMAGE_GIF;
-            else mediaType = MediaType.IMAGE_JPEG; // jpg/jpeg 기본
+            else mediaType = MediaType.IMAGE_JPEG;
         }
 
         return ResponseEntity.ok()

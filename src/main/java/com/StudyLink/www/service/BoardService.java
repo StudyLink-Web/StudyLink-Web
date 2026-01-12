@@ -12,7 +12,7 @@ import java.util.List;
 public interface BoardService {
 
     /* =========================
-     *  Board 변환 메서드
+     *  변환 메서드
      * ========================= */
 
     default Board convertDtoToEntity(BoardDTO boardDTO) {
@@ -42,28 +42,8 @@ public interface BoardService {
                 .viewCount(board.getViewCount())
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())
-                // thumbPath는 목록에서 서비스가 세팅하므로 여기서 안 넣어도 됨
                 .build();
     }
-
-    /* =========================
-     *  Board 기능 메서드
-     * ========================= */
-
-    Long insert(BoardDTO boardDTO);
-    Long insert(BoardFileDTO boardFileDTO);
-
-    Page<BoardDTO> getList(int pageNo, String type, String keyword);
-
-    BoardFileDTO getDetail(long postId);
-
-    Long modify(BoardFileDTO boardFileDTO);
-
-    void remove(long postId);
-
-    /* =========================
-     *  File 변환 메서드
-     * ========================= */
 
     default File convertDtoToEntity(FileDTO fileDTO) {
         if (fileDTO == null) return null;
@@ -94,7 +74,25 @@ public interface BoardService {
     }
 
     /* =========================
-     *  파일 기능
+     *  Board 기능
+     * ========================= */
+
+    Long insert(BoardDTO boardDTO);
+    Long insert(BoardFileDTO boardFileDTO);
+
+    Page<BoardDTO> getList(int pageNo, String type, String keyword);
+
+    BoardFileDTO getDetail(long postId);
+
+    Long modify(BoardFileDTO boardFileDTO);
+
+    void remove(long postId);
+
+    // ✅ 추가: 조회수 증가
+    void increaseViewCount(long postId);
+
+    /* =========================
+     *  File 기능
      * ========================= */
 
     Long fileRemove(String uuid);
