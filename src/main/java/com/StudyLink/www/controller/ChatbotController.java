@@ -2,6 +2,7 @@ package com.StudyLink.www.controller;
 
 import com.StudyLink.www.dto.ChatbotDTO;
 import com.StudyLink.www.entity.StudentScore;
+import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.StudentScoreRepository;
 import com.StudyLink.www.repository.UserRepository;
 import com.StudyLink.www.service.ChatBotSessionService;
@@ -51,9 +52,12 @@ public class ChatbotController {
                 email = principal.getName();
             }
 
-            final String finalEmail = email;
-            userRepository.findByEmail(finalEmail).ifPresent(user -> {
-                List<StudentScore> dbScores = studentScoreRepository.findByUser_UserId(user.getUserId());
+            final String identifier = email;
+            Users foundUser = userRepository.findByEmail(identifier)
+                    .orElseGet(() -> userRepository.findByUsername(identifier).orElse(null));
+
+            if (foundUser != null) {
+                List<StudentScore> dbScores = studentScoreRepository.findByUser_UserId(foundUser.getUserId());
                 if (!dbScores.isEmpty()) {
                     List<ChatbotDTO.UserScore> dtoScores = dbScores.stream()
                             .map(score -> ChatbotDTO.UserScore.builder()
@@ -65,7 +69,7 @@ public class ChatbotController {
                             .collect(Collectors.toList());
                     request.setUserScores(dtoScores);
                 }
-            });
+            }
         }
 
         // 3. AI 서버에 질문 전달

@@ -24,9 +24,10 @@ public class ChatBotArchiveController {
     public ResponseEntity<List<ChatBotArchiveDTO.SessionResponse>> getSessions(java.security.Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
         
-        String email = getEmailFromPrincipal(principal);
-        Users user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+        String identifier = getEmailFromPrincipal(principal);
+        Users user = userRepository.findByEmail(identifier)
+                .orElseGet(() -> userRepository.findByUsername(identifier)
+                        .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + identifier)));
         
         return ResponseEntity.ok(sessionService.getSessionsByUser(user.getUserId()));
     }
@@ -42,9 +43,10 @@ public class ChatBotArchiveController {
     public ResponseEntity<Long> createSession(java.security.Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
         
-        String email = getEmailFromPrincipal(principal);
-        Users user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+        String identifier = getEmailFromPrincipal(principal);
+        Users user = userRepository.findByEmail(identifier)
+                .orElseGet(() -> userRepository.findByUsername(identifier)
+                        .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + identifier)));
         
         return ResponseEntity.ok(sessionService.createSession(user.getUserId()));
     }
