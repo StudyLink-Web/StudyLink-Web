@@ -1,5 +1,6 @@
 package com.StudyLink.www.controller;
 
+import com.StudyLink.www.canvas.*;
 import com.StudyLink.www.dto.MessageDTO;
 import com.StudyLink.www.dto.RoomFileDTO;
 import com.StudyLink.www.handler.RoomFileHandler;
@@ -35,6 +36,7 @@ public class WebSocketController {
 
 
     // webSocket요청
+    // ================== 채팅창 ==================
     @MessageMapping("/sendMessage")
     @SendTo("/topic/sendMessage")
     public MessageDTO sendMessage(MessageDTO message) {
@@ -56,6 +58,44 @@ public class WebSocketController {
         return message;
     }
 
+
+
+    // ================== 캔버스 ==================
+    @MessageMapping("/draw")
+    @SendTo("/topic/draw")
+    public DrawMessage drawMessage (DrawMessage message) {
+        return message;
+    }
+
+    @MessageMapping("/erase")
+    @SendTo("/topic/erase")
+    public EraseMessage eraseMessage (EraseMessage message) {
+        return message;
+    }
+
+    @MessageMapping("/initializeCurrentAction")
+    @SendTo("/topic/initializeCurrentAction")
+    public InitailizeCurrentActionMessage initializeCurrentAction (InitailizeCurrentActionMessage message) {
+        return message;
+    }
+
+    @MessageMapping("/resetCurrentAction")
+    @SendTo("/topic/resetCurrentAction")
+    public SenderMessage resetCurrentAction (SenderMessage message) {
+        return message;
+    }
+
+    @MessageMapping("/pushToUndoStack")
+    @SendTo("/topic/pushToUndoStack")
+    public SenderMessage pushToUndoStack (SenderMessage message) {
+        return message;
+    }
+
+    @MessageMapping("/undoRedo")
+    @SendTo("/topic/undoRedo")
+    public UndoRedoMessage undoRedoMessage (UndoRedoMessage message) {
+        return message;
+    }
 
 
 

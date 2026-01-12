@@ -59,6 +59,57 @@ function connect() {
 
 
         // 캔버스
+        // 그리기
+        stompClient.subscribe('/topic/draw', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            drawInterpolatedLine({x : msg.x1, y : msg.y1}, {x : msg.x2, y : msg.y2});
+            scheduleRender();
+        });
+
+        // 지우기
+        stompClient.subscribe('/topic/erase', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            eraseInterpolated({x : msg.x1, y : msg.y1}, {x : msg.x2, y : msg.y2});
+            scheduleRender();
+        });
+
+        // currentAction 초기화
+        stompClient.subscribe('/topic/initializeCurrentAction', function(message){
+            const msg = JSON.parse(message.body);
+            console.log("currentAction 초기화")
+            if (msg.senderId === senderId) return;
+            initializeCurrentAction(msg.type);
+        });
+
+        // currentAction 리셋
+        stompClient.subscribe('/topic/resetCurrentAction', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            resetCurrentAction();
+        });
+
+        // undoStack에 currentAction push
+        stompClient.subscribe('/topic/pushToUndoStack', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            pushToUndoStack();
+        });
+
+        // undo, redo
+        stompClient.subscribe('/topic/undoRedo', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            if (msg.type === 'undo') {
+                undo();
+            } else {
+                redo();
+            }
+            scheduleRender();
+        });
+
+
 
 
 
@@ -168,8 +219,8 @@ function spreadFileMessage(msg, roomFileDTO) {
     else {
         const fileLink = document.createElement('a');
         fileLink.href = `/room/loadFile/${roomFileDTO.uuid}`;
-        fileLink.textContent = `📎 ${roomFileDTO.file_name}`;
-        fileLink.download = roomFileDTO.file_name;
+        fileLink.textContent = `📎 ${roomFileDTO.fileName}`;
+        fileLink.download = roomFileDTO.fileName;
         msgDiv.appendChild(fileLink);
     }
 
@@ -284,11 +335,9 @@ async function loadRoomFileDTO(uuid){
     }
 }
 
-// 캔버스 관련 함수
-
-connect(); // webSocket 연결
 
 
+// 이벤트 리스너
 document.addEventListener('click', async (e)=>{
     if (e.target.id === 'sendFileBtn'){
         console.log("🖱️ 파일 전송 버튼 클릭됨");
@@ -318,7 +367,7 @@ document.addEventListener('click', async (e)=>{
                     roomId: roomId,
                     senderId: senderId,
                     fileUuid: result.uuid,
-                    messageType: result.file_type === 1 ? "IMAGE" : "FILE",
+                    messageType: result.fileType === 1 ? "IMAGE" : "FILE",
                     isRead: false
                 }
                 safeSend("/app/sendMessage", message);
@@ -354,3 +403,329 @@ document.addEventListener('keydown', (e)=> {
         textarea.focus();
     }
 })
+
+
+
+// ============================================================ 캔버스 ==================================================================
+// ============================================================ 캔버스 ==================================================================
+// ============================================================ 캔버스 ==================================================================
+// 캔버스 관련 전역 변수
+const canvas = new fabric.Canvas('canvas');
+
+// 도구 선택
+let selectedTool = 'draw';
+
+// 랜더링 관련
+let renderScheduled = false;
+
+// 그리기 관련
+let isDrawing = false;
+let lastPoint = null;
+const DRAW_STEP = 3; // px (작을수록 촘촘), 선 길이 조절
+let currentPointer = null;
+
+// 지우기 관련
+const ERASE_STEP = 3; // 지우기 점 간격
+const ERASE_RADIUS = 10; // 지우개 반경
+
+// redo, undo
+const undoStack = [];
+const redoStack = [];
+let currentAction = null; // 현재 드래그 중인 액션
+
+
+function selectTool(tool) {
+    selectedTool = tool;
+}
+
+// 렌더링 요청이 많아도 화면 렌더링은 한 프레임에 1회로 제한
+function scheduleRender() {
+    if (renderScheduled) return;
+    renderScheduled = true;
+
+    requestAnimationFrame(() => {
+        canvas.requestRenderAll();
+        renderScheduled = false;
+    });
+}
+
+// currentAction 초기화 함수
+function initializeCurrentAction(type){
+    currentAction = {
+        type: type, // 'draw' | 'erase' | 'move' | 'rotate' | 'scale' ...
+        targets: [],   // 영향을 받은 객체들
+        before: null,  // 작업 전 상태
+        after: null    // 작업 후 상태
+    };
+}
+
+// currentAction 리셋
+function resetCurrentAction(){
+    currentAction = null;
+}
+
+// updoStack에 currentAction push
+function pushToUndoStack(){
+    undoStack.push(currentAction);
+    redoStack.length = 0; // 새 작업 → redo 초기화
+}
+
+// rAF 루프 → 실제 그리기
+// 기존에는 mouse:move이벤트가 그리기를 담당했는데 f12(개발자모드)를 키는 등의 이유로 이벤트 빈도가 줄어들면 선이 끊김
+// 따라서 이벤트는 좌표만 수집하고 이 함수가 그리기를 담당
+// 그리기, 지우기처럼 연속 동작, 프레임마다 실행하는 함수를 포함, undo redo x
+function loop() {
+    if (isDrawing && currentPointer && lastPoint) {
+        if (selectedTool === 'draw') {
+            drawInterpolatedLine(lastPoint, currentPointer);
+
+            message = {
+                senderId: senderId,
+                x1: lastPoint.x,
+                y1: lastPoint.y,
+                x2: currentPointer.x,
+                y2: currentPointer.y
+            }
+            safeSend("/app/draw", message);
+        }
+        if (selectedTool === 'erase') {
+            eraseInterpolated(lastPoint, currentPointer);
+
+            message = {
+                senderId: senderId,
+                x1: lastPoint.x,
+                y1: lastPoint.y,
+                x2: currentPointer.x,
+                y2: currentPointer.y
+            }
+            safeSend("/app/erase", message);
+        }
+
+        lastPoint = { ...currentPointer };
+        scheduleRender();
+    }
+    // requestAnimationFrame : rAF
+    // 브라우저에서 화면을 다시 그릴 타이밍에 맞춰 함수를 호출하도록 예약하는 JavaScript 함수
+    requestAnimationFrame(loop);
+}
+loop();
+
+// 그리기
+function drawLine(x1, y1, x2, y2){ // 색상, 두께 등 나중에 추가하기
+    // 길이가 0이면 skip
+    if (x1 === x2 && y1 === y2) return;
+
+    const line = new fabric.Line([x1, y1, x2, y2], {
+        stroke: '#000',
+        strokeWidth: 2,
+        selectable: false,
+        evented: false,
+        strokeLineCap: 'round',  // 끝점 둥글게
+        strokeLineJoin: 'round'  // 연결점 부드럽게
+    });
+
+    canvas.add(line);
+
+    if (currentAction && currentAction.type === 'draw') {
+        currentAction.targets.push(line);
+    }
+}
+
+// 선 보간 함수
+function drawInterpolatedLine(p1, p2) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+
+    // distance가 0이면 한 점 찍기 위해 1로 처리
+    if (distance === 0) distance = 1;
+
+    // 최소 1 step 보장
+    const steps = Math.max(Math.floor(distance / DRAW_STEP), 1);
+    const stepX = dx / steps;
+    const stepY = dy / steps;
+
+    // 위에 2개 로직에서 최소 1로 설정하지 않으면 마우스가 느릴때 점이 안찍힘
+
+    let prevX = p1.x;
+    let prevY = p1.y;
+
+    for (let i = 1; i <= steps; i++) {
+        const x = p1.x + stepX * i;
+        const y = p1.y + stepY * i;
+        drawLine(prevX, prevY, x, y);
+        prevX = x;
+        prevY = y;
+    }
+}
+
+// 지우기
+function eraseLine(x, y, threshold = 10) {
+    // threshold: 지울 기준 거리(px)
+
+    const objects = canvas.getObjects('line'); // 모든 Line 객체 가져오기
+    const toRemove = [];
+
+    objects.forEach(line => {
+        const [x1, y1, x2, y2] = line.get('points') || [line.x1, line.y1, line.x2, line.y2];
+
+        // 점과 선 사이 최소 거리 계산
+        const dist = distancePointToLine(x, y, x1, y1, x2, y2);
+
+        if (dist <= threshold) {
+            toRemove.push(line);
+
+            if (
+                currentAction &&
+                currentAction.type === 'erase' &&
+                !currentAction.targets.includes(line)
+            ) {
+                currentAction.targets.push(line);
+            }
+        }
+    });
+
+    toRemove.forEach(line => canvas.remove(line));
+}
+
+// 지우개 보간 함수
+function eraseInterpolated(p1, p2) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance === 0) return;
+
+    const steps = Math.ceil(distance / ERASE_STEP);
+
+    for (let i = 0; i <= steps; i++) {
+        const x = p1.x + (dx / steps) * i;
+        const y = p1.y + (dy / steps) * i;
+        eraseLine(x, y, ERASE_RADIUS);
+    }
+}
+
+// 점(x0,y0)과 선(x1,y1)-(x2,y2) 사이 최소 거리 계산 함수
+function distancePointToLine(x0, y0, x1, y1, x2, y2) {
+    const A = x0 - x1; // 점 -> 선분 시작점 벡터
+    const B = y0 - y1;
+
+    const C = x2 - x1; // 선분 벡터
+    const D = y2 - y1;
+
+    const dot = A * C + B * D; // 점 벡터 · 선분 벡터 (dot product)
+    const len_sq = C * C + D * D; // 선분 길이^2
+    let param = -1;
+
+    if (len_sq !== 0) param = dot / len_sq; // 점을 선분에 투영한 비율 (t)
+
+    let xx, yy;
+
+    if (param < 0) {
+        xx = x1;
+        yy = y1;
+    } else if (param > 1) {
+        xx = x2;
+        yy = y2;
+    } else {
+        xx = x1 + param * C;
+        yy = y1 + param * D;
+    }
+
+    const dx = x0 - xx;
+    const dy = y0 - yy;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+// undo
+function undo() {
+    if (undoStack.length === 0) return;
+
+    const action = undoStack.pop();
+
+    if (action.type === 'draw') {
+        action.targets.forEach(obj => canvas.remove(obj));
+    }
+
+    if (action.type === 'erase') {
+        action.targets.forEach(obj => canvas.add(obj));
+    }
+
+    redoStack.push(action);
+    scheduleRender();
+}
+
+// redo
+function redo() {
+    if (redoStack.length === 0) return;
+
+    const action = redoStack.pop();
+
+    if (action.type === 'draw') {
+        action.targets.forEach(obj => canvas.add(obj));
+    }
+
+    if (action.type === 'erase') {
+        action.targets.forEach(obj => canvas.remove(obj));
+    }
+
+    undoStack.push(action);
+    scheduleRender();
+}
+
+// undo, redo 메시지 전송
+function sendUndoRedoMessage(type){
+    const message = {
+        senderId: senderId,
+        type: type // undo, redo
+    }
+    safeSend('/app/undoRedo', message)
+}
+
+
+canvas.on('mouse:down', (opt) => {
+    isDrawing = selectedTool === 'draw' || selectedTool === 'erase';
+    lastPoint = canvas.getPointer(opt.e);
+    currentPointer = lastPoint;
+
+    if (isDrawing) {
+        initializeCurrentAction(selectedTool);
+
+        const message = {
+            senderId: senderId,
+            type: selectedTool
+        }
+        safeSend('/app/initializeCurrentAction', message);
+    }
+});
+
+canvas.on('mouse:move', (opt) => {
+    if (!isDrawing) return;
+    currentPointer = canvas.getPointer(opt.e);
+});
+
+canvas.on('mouse:up', () => {
+    isDrawing = false;
+    currentPointer = null;
+
+    if (currentAction && currentAction.targets.length > 0) {
+        pushToUndoStack();
+
+        const message = {
+            senderId: senderId
+        }
+        safeSend('/app/pushToUndoStack', message)
+    }
+
+    resetCurrentAction();
+
+    const message = {
+        senderId: senderId
+    }
+    safeSend('/app/resetCurrentAction', {})
+});
+
+
+
+// webSocket 연결
+connect();
