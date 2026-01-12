@@ -9,4 +9,5 @@ import lombok.*;
 @Setter
 public class SenderMessage {
     private long senderId;
+    private int seq;
 }

@@ -9,6 +9,7 @@ import lombok.*;
 @Setter
 public class DrawMessage {
     private long senderId;
+    private int seq;
     private double x1;
     private double y1;
     private double x2;

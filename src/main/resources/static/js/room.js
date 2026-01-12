@@ -63,7 +63,7 @@ function connect() {
         stompClient.subscribe('/topic/draw', function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
-            drawInterpolatedLine({x : msg.x1, y : msg.y1}, {x : msg.x2, y : msg.y2});
+            handleMessage(msg, drawInterpolatedLine);
             scheduleRender();
         });
 
@@ -71,30 +71,29 @@ function connect() {
         stompClient.subscribe('/topic/erase', function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
-            eraseInterpolated({x : msg.x1, y : msg.y1}, {x : msg.x2, y : msg.y2});
+            handleMessage(msg, eraseInterpolated);
             scheduleRender();
         });
 
         // currentAction 초기화
         stompClient.subscribe('/topic/initializeCurrentAction', function(message){
             const msg = JSON.parse(message.body);
-            console.log("currentAction 초기화")
             if (msg.senderId === senderId) return;
-            initializeCurrentAction(msg.type);
+            handleMessage(msg, initializeCurrentAction);
         });
 
         // currentAction 리셋
         stompClient.subscribe('/topic/resetCurrentAction', function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
-            resetCurrentAction();
+            handleMessage(msg, resetCurrentAction);
         });
 
         // undoStack에 currentAction push
         stompClient.subscribe('/topic/pushToUndoStack', function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
-            pushToUndoStack();
+            handleMessage(msg, pushToUndoStack);
         });
 
         // undo, redo
@@ -102,9 +101,9 @@ function connect() {
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             if (msg.type === 'undo') {
-                undo();
+                handleMessage(msg, undo);
             } else {
-                redo();
+                handleMessage(msg, redo);
             }
             scheduleRender();
         });
@@ -428,12 +427,21 @@ let currentPointer = null;
 const ERASE_STEP = 3; // 지우기 점 간격
 const ERASE_RADIUS = 10; // 지우개 반경
 
-// redo, undo
+// 메시지 번호
+// undo, redo와 관련된 메시지는 처리 순서가 중요
+// 항상 번호 순서대로 처리하기 위한 변수
+let lastSeq = 0;         // 마지막 처리된 메시지 seq
+const pendingQueue = {};     // seq -> message
+let mySeq = 1;           // 내가 보낸 메시지 번호
+
+// undo, redo
 const undoStack = [];
 const redoStack = [];
 let currentAction = null; // 현재 드래그 중인 액션
 
 
+
+// 도구 선택
 function selectTool(tool) {
     selectedTool = tool;
 }
@@ -449,8 +457,39 @@ function scheduleRender() {
     });
 }
 
+// 메시지가 번호순서대로 처리되도록하는 함수
+function handleMessage(msg, callback) {
+    const seq = msg.seq;
+    // seq가 없으면 바로 처리 (순서가 중요하지 않은 메시지)
+    if (seq === undefined || seq === null) {
+        callback(msg);
+        return;
+    }
+
+    if (seq === lastSeq + 1) {
+        // 바로 처리
+        callback(msg);
+        lastSeq++;
+
+        // 대기 중인 다음 메시지 처리
+        while (pendingQueue[lastSeq + 1]) {
+            const next = pendingQueue[lastSeq + 1];
+            delete pendingQueue[lastSeq + 1];
+            next.callback(next.msg);
+            lastSeq++;
+        }
+    } else if (seq > lastSeq + 1) {
+        // 순서 안 맞으면 큐에 대기
+        pendingQueue[seq] = { msg, callback };
+    } else {
+        // 이미 처리된 메시지
+        console.log("⚠️ 중복 메시지", seq);
+    }
+}
+
 // currentAction 초기화 함수
-function initializeCurrentAction(type){
+function initializeCurrentAction(msg){
+    const type = msg.type
     currentAction = {
         type: type, // 'draw' | 'erase' | 'move' | 'rotate' | 'scale' ...
         targets: [],   // 영향을 받은 객체들
@@ -477,10 +516,11 @@ function pushToUndoStack(){
 function loop() {
     if (isDrawing && currentPointer && lastPoint) {
         if (selectedTool === 'draw') {
-            drawInterpolatedLine(lastPoint, currentPointer);
+            drawInterpolatedLine({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
 
             message = {
                 senderId: senderId,
+                seq: mySeq++,
                 x1: lastPoint.x,
                 y1: lastPoint.y,
                 x2: currentPointer.x,
@@ -489,10 +529,11 @@ function loop() {
             safeSend("/app/draw", message);
         }
         if (selectedTool === 'erase') {
-            eraseInterpolated(lastPoint, currentPointer);
+            eraseInterpolated({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
 
             message = {
                 senderId: senderId,
+                seq: mySeq++,
                 x1: lastPoint.x,
                 y1: lastPoint.y,
                 x2: currentPointer.x,
@@ -532,7 +573,9 @@ function drawLine(x1, y1, x2, y2){ // 색상, 두께 등 나중에 추가하기
 }
 
 // 선 보간 함수
-function drawInterpolatedLine(p1, p2) {
+function drawInterpolatedLine(msg) {
+    const p1 = {x: msg.x1, y:msg.y1}
+    const p2 = {x: msg.x2, y:msg.y2}
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
     let distance = Math.sqrt(dx * dx + dy * dy);
@@ -589,7 +632,9 @@ function eraseLine(x, y, threshold = 10) {
 }
 
 // 지우개 보간 함수
-function eraseInterpolated(p1, p2) {
+function eraseInterpolated(msg) {
+    const p1 = {x: msg.x1, y:msg.y1}
+    const p2 = {x: msg.x2, y:msg.y2}
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -677,6 +722,7 @@ function redo() {
 function sendUndoRedoMessage(type){
     const message = {
         senderId: senderId,
+        seq: mySeq++,
         type: type // undo, redo
     }
     safeSend('/app/undoRedo', message)
@@ -689,10 +735,11 @@ canvas.on('mouse:down', (opt) => {
     currentPointer = lastPoint;
 
     if (isDrawing) {
-        initializeCurrentAction(selectedTool);
+        initializeCurrentAction({type: selectedTool});
 
         const message = {
             senderId: senderId,
+            seq: mySeq++,
             type: selectedTool
         }
         safeSend('/app/initializeCurrentAction', message);
@@ -712,7 +759,8 @@ canvas.on('mouse:up', () => {
         pushToUndoStack();
 
         const message = {
-            senderId: senderId
+            senderId: senderId,
+            seq: mySeq++
         }
         safeSend('/app/pushToUndoStack', message)
     }
@@ -720,9 +768,10 @@ canvas.on('mouse:up', () => {
     resetCurrentAction();
 
     const message = {
-        senderId: senderId
+        senderId: senderId,
+        seq: mySeq++
     }
-    safeSend('/app/resetCurrentAction', {})
+    safeSend('/app/resetCurrentAction', message)
 });
 
 

@@ -9,5 +9,6 @@ import lombok.*;
 @Setter
 public class UndoRedoMessage {
     private long senderId;
+    private int seq;
     private String type;
 }
