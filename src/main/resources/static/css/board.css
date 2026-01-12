@@ -6,12 +6,13 @@
 
 .board_list_box {margin-top:20px; border:1px solid var(--border-color); border-radius: 10px;}
 .register_campus_link {text-align: right; padding-right:20px; font-weight: 700; font-size:20px; color:var(--primary-color); margin-bottom:20px;}
-.board_img img {height:150px; display: block; margin:0 auto;}
-.board_img {border-bottom:1px solid var(--border-color); padding:20px 0;}
+.board_img img {width:400px; height:150px; display: block; margin:0 auto; object-fit: cover}
+.board_img { border-bottom:1px solid var(--border-color); padding:20px 0;}
 .board_title_class {font-size:20px; font-weight: 700; margin-top:10px;}
 .date_flex {display: flex; align-items: center; justify-content: space-between}
-.board_list_view {display: grid; grid-template-columns:repeat(4, 1fr);}
-.board_infobox {padding:0 20px;}
+.board_list_view {display: grid; grid-template-columns:repeat(4, 1fr); gap:20px; padding:0 20px;}
+.board_infobox {padding:0 20px; border:1px solid var(--border-color); border-radius: 10px; margin-top:30px;}
+.board_title_not {text-align: center;}
 .search_button {background: var(--primary-color); flex:none; color:#fff;}
 .search_button:hover {background: var(--primary-color); color:#fff;}
 .form_board {display: flex; justify-content: flex-end; align-items: center; gap:20px; padding:0 20px;}
