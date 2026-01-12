@@ -1,237 +1,294 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+/* =========================================================
+   Header Reset & Isolation (Bootstrap 방어용)
+   ========================================================= */
+
+.site-header,
+.site-header * {
+  box-sizing: border-box;
+}
+
+.site-header ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-header a {
+  text-decoration: none;
+  color: inherit;
+}
 
 /* =========================================================
    Header Base
    ========================================================= */
 
 .site-header {
-    width: 100%;
-    position: relative;
-    z-index: 100;
+  width: 100%;
+  position: relative;
+  z-index: 1000; /* Bootstrap 드롭다운 등보다 위에 오도록 높임 */
 }
 
 /* Header Container */
-.header {
-    background: #fff;
-    border-bottom: 2px solid #1162f8;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    min-height: 70px;
+.site-header .header {
+  background: #fff;
+  border-bottom: 2px solid #1162f8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  min-height: 70px;
 }
 
 /* Header Inner Layout */
-.header-inner {
-    max-width: 1200px;
-    height: 70px;
-    margin: 0 auto;
-    padding: 0 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;  /* 유지 */
-    /*noinspection CssInvalidPropertyValue*/
-    gap: 150px;  /* 추가: 좌우 요소 간 간격 */
+.site-header .header-inner {
+  max-width: 1200px;
+  height: 70px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px; /* 유동적으로 조정 가능하도록 줄임 */
 }
 
 /* =========================================================
    Layout Areas
    ========================================================= */
 
-/* 각 섹션에 동등한 가중치 부여 */
-.header-left {
-    flex: 0 0 auto;
-    /* 로고 영역 - 최소 필요 크기만 */
+.site-header .header-left {
+  flex: 0 0 auto;
 }
 
-/* Center: Main Navigation */
-.header-center {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    /* 중앙에 메뉴를 정렬 */
+.site-header .header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
 }
 
-/* Right: Buttons / D-Day */
-.header-buttons {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    /* 우측에 디데이 표시 */
+.site-header .header-buttons {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 /* =========================================================
    Logo
    ========================================================= */
 
-.navbar-brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: #333;
-    text-decoration: none;
-    white-space: nowrap;
+.site-header .navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #333;
+  white-space: nowrap;
 }
 
-.navbar-brand:hover {
-    color: #1162f8;
+.site-header .navbar-brand:hover {
+  color: #1162f8;
 }
 
 /* =========================================================
    Navigation
    ========================================================= */
 
-.main-nav {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
+.site-header .main-nav {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
 }
 
-.main-nav a {
-    position: relative;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: #333;
-    text-decoration: none;
+.site-header .main-nav li {
+  display: block;
+}
+
+.site-header .main-nav a {
+  position: relative;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
 }
 
 /* Hover underline animation */
-.main-nav a::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -6px;
-    width: 0;
-    height: 2px;
-    background: #1162f8;
-    transition: width 0.2s ease;
+.site-header .main-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 0;
+  height: 2px;
+  background: #1162f8;
+  transition: width 0.2s ease;
 }
 
-.main-nav a:hover::after,
-.main-nav a.active::after {
-    width: 100%;
+.site-header .main-nav a:hover::after,
+.site-header .main-nav a.active::after {
+  width: 100%;
 }
 
-.main-nav a:hover {
-    color: #1162f8;
+.site-header .main-nav a:hover {
+  color: #1162f8;
 }
 
 /* =========================================================
    D-Day
    ========================================================= */
 
-.dday {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
+.site-header .dday {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
-.dday p {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #666;
+.site-header .dday p {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #666;
 }
 
-.dday span {
-    font-size: 1rem;
-    font-weight: 700;
-    color: crimson;
+.site-header .dday span {
+  font-size: 1rem;
+  font-weight: 700;
+  color: crimson;
 }
 
 /* =========================================================
-   Dropdown
+   Dropdown (Bootstrap과 분리된 sl- 시리즈)
    ========================================================= */
 
-.nav-item.dropdown {
-    position: relative;
+.site-header .sl-nav-item.sl-dropdown {
+  position: relative;
+  display: inline-block;
 }
 
-.dropdown-menu {
-    border-radius: 8px;
-    min-width: 200px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
+.site-header .sl-dropdown-toggle {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
 }
 
-.dropdown-item {
-    font-size: 0.9rem;
+.site-header .sl-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  min-width: 180px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-top: 10px;
+  display: none; /* 기본 숨김 */
+  z-index: 1100;
 }
 
-.dropdown-item:hover {
-    background: #f5f5f5;
-    color: #1162f8;
+/* 열린 상태 */
+.site-header .sl-dropdown-menu.show,
+.site-header .sl-dropdown-menu.active {
+  display: block;
+}
+
+.site-header .sl-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  color: #333;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.site-header .sl-dropdown-item:hover {
+  background: #f8f9fa;
+  color: #1162f8;
+}
+
+.site-header .sl-dropdown-divider {
+  height: 1px;
+  margin: 8px 0;
+  overflow: hidden;
+  background-color: #eee;
+  border: none;
 }
 
 /* =========================================================
    Responsive
    ========================================================= */
 
+@media (max-width: 992px) {
+  .site-header .header-inner {
+    gap: 30px;
+  }
+}
+
 @media (max-width: 768px) {
-    .header-inner {
-        flex-wrap: wrap;
-        gap: 0.8rem;
-    }
+  .site-header .header-inner {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 1rem;
+    gap: 0.8rem;
+  }
 
-    .header-center {
-        width: 100%;
-        justify-content: center;
-    }
+  .site-header .header-center {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
 
-    .main-nav {
-        gap: 1rem;
-    }
+  .site-header .main-nav {
+    gap: 1.2rem;
+  }
 }
 
 @media (max-width: 480px) {
-    .navbar-brand {
-        font-size: 1.1rem;
-    }
+  .site-header .navbar-brand {
+    font-size: 1.1rem;
+  }
 
-    .main-nav a {
-        font-size: 0.8rem;
-    }
-
-    .dday p {
-        font-size: 0.65rem;
-    }
-
-    .dday span {
-        font-size: 0.8rem;
-    }
+  .site-header .main-nav a {
+    font-size: 0.85rem;
+  }
 }
 
 /* =========================================================
-   Dark Mode (Original Tone 유지)
+   Dark Mode Support
    ========================================================= */
 
 @media (prefers-color-scheme: dark) {
-    .header {
-        background: #1a1a1a;
-        border-bottom-color: #667eea;
-    }
+  .site-header .header {
+    background: #1a1a1a;
+    border-bottom-color: #333;
+  }
 
-    .navbar-brand,
-    .main-nav a {
-        color: #e0e0e0;
-    }
+  .site-header .navbar-brand,
+  .site-header .main-nav a,
+  .site-header .dday p {
+    color: #e0e0e0;
+  }
 
-    .main-nav a:hover {
-        color: #667eea;
-    }
+  .site-header .main-nav a:hover {
+    color: #667eea;
+  }
 
-    .dropdown-menu {
-        background: #2a2a2a;
-        border-color: #444;
-    }
+  .site-header .sl-dropdown-menu {
+    background: #2a2a2a;
+    border-color: #444;
+  }
 
-    .dropdown-item {
-        color: #e0e0e0;
-    }
+  .site-header .sl-dropdown-item {
+    color: #e0e0e0;
+  }
 
-    .dropdown-item:hover {
-        background: #333;
-        color: #667eea;
-    }
+  .site-header .sl-dropdown-item:hover {
+    background: #333;
+    color: #667eea;
+  }
+
+  .site-header .sl-dropdown-divider {
+    background-color: #444;
+  }
 }
