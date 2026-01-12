@@ -153,40 +153,176 @@
 
       <!-- 우측 지도 영역 -->
       <main class="map-content">
+        <!-- 지도가 그려질 영역 -->
         <div id="map"></div>
-        <!-- 지도 안내 오버레이 (임시) -->
+
+        <!-- 지도 안내 오버레이 (초기 로딩 시만 표시) -->
         <div
+          id="map-overlay"
           style="
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 10;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.9);
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             pointer-events: none;
+            text-align: center;
           "
         >
-          <h5 class="mb-0">지도 엔진 로드 준비 중...</h5>
+          <h5 class="mb-0">📍 입시 지도 엔진 로딩 중...</h5>
+          <small class="text-muted">잠시만 기다려주세요.</small>
         </div>
       </main>
     </div>
 
-    <!-- 간단한 슬라이더 동작용 스크립트 -->
-    <script>
+    <!-- 카카오 맵 SDK 로드 (autoload=false 사용하여 안정적인 초기화) -->
+    <script
+      type="text/javascript"
+      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=96d7cc705078c2f63da6039b9f9879ce&autoload=false"
+    ></script>
+
+    <script th:inline="javascript">
+      let kakaoMap = null;
+      let markers = [];
+      let infoWindow = null;
+
+      // 1. 카카오 맵 로드 후 초기화
+      kakao.maps.load(function () {
+        const container = document.getElementById("map");
+        const options = {
+          center: new kakao.maps.LatLng(36.5, 127.5),
+          level: 12,
+        };
+        kakaoMap = new kakao.maps.Map(container, options);
+        infoWindow = new kakao.maps.InfoWindow({ zIndex: 1 });
+
+        // 지도 로드 완료 후 오버레이 숨기기 및 데이터 로드
+        document.getElementById("map-overlay").style.display = "none";
+        loadMapData();
+      });
+
+      // 2. 데이터 호출 및 렌더링 함수
+      async function loadMapData() {
+        if (!kakaoMap) return;
+
+        const csat = document.getElementById("csatRange").value;
+        const gpa = document.getElementById("gpaRange").value;
+
+        const requestData = {
+          userScores: [
+            {
+              subjectName: "국어",
+              score: parseInt(csat),
+              scoreType: "백분위",
+              category: "공통",
+            },
+            {
+              subjectName: "수학",
+              score: parseInt(csat),
+              scoreType: "백분위",
+              category: "공통",
+            },
+            {
+              subjectName: "탐구",
+              score: parseInt(csat),
+              scoreType: "백분위",
+              category: "사탐",
+            },
+          ],
+        };
+
+        try {
+          const response = await fetch("/map/api/data", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestData),
+          });
+          const data = await response.json();
+          renderMarkers(data.items);
+        } catch (error) {
+          console.error("데이터 로드 실패:", error);
+        }
+      }
+
+      // 3. 마커 렌더링 로직
+      function renderMarkers(items) {
+        markers.forEach((m) => m.setMap(null));
+        markers = [];
+
+        items.forEach((item) => {
+          const position = new kakao.maps.LatLng(item.lat, item.lng);
+
+          const marker = new kakao.maps.Marker({
+            position: position,
+            title: item.univ,
+            map: kakaoMap,
+          });
+
+          kakao.maps.event.addListener(marker, "click", function () {
+            const content = `
+              <div style="padding:15px; min-width:180px; font-family: 'Noto Sans KR', sans-serif;">
+                <h6 class="mb-1" style="color:#2c3e50; font-weight:700;">${
+                  item.univ
+                }</h6>
+                <div class="mb-2" style="font-size:0.85rem; color:#7f8c8d;">${
+                  item.major
+                }</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="badge ${getStatusBadgeClass(item.status)}">${
+              item.status
+            }</span>
+                  <span class="text-primary" style="font-size:0.8rem; font-weight:600;">입결: ${
+                    item.target_per
+                  }%</span>
+                </div>
+              </div>
+            `;
+            infoWindow.setContent(content);
+            infoWindow.open(kakaoMap, marker);
+          });
+
+          markers.push(marker);
+        });
+      }
+
+      function getStatusBadgeClass(status) {
+        switch (status) {
+          case "안정":
+            return "bg-success";
+          case "적정":
+            return "bg-primary";
+          case "소신":
+            return "bg-warning text-dark";
+          case "불가":
+            return "bg-danger";
+          default:
+            return "bg-secondary";
+        }
+      }
+
+      // 4. 슬라이더 이벤트 바인딩
+      let timer;
+      function handleSliderChange(e, valId) {
+        document.getElementById(valId).innerText = e.target.value;
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          loadMapData();
+        }, 400); // 넉넉하게 400ms 대기
+      }
+
       document
         .getElementById("csatRange")
-        .addEventListener("input", function (e) {
-          document.getElementById("csatVal").innerText = e.target.value;
-        });
-      document
-        .getElementById("gpaRange")
-        .addEventListener("input", function (e) {
-          document.getElementById("gpaVal").innerText = parseFloat(
-            e.target.value
-          ).toFixed(1);
-        });
+        .addEventListener("input", (e) => handleSliderChange(e, "csatVal"));
+      document.getElementById("gpaRange").addEventListener("input", (e) => {
+        document.getElementById("gpaVal").innerText = parseFloat(
+          e.target.value
+        ).toFixed(1);
+        handleSliderChange(e, "gpaVal");
+      });
     </script>
   </div>
 </html>
