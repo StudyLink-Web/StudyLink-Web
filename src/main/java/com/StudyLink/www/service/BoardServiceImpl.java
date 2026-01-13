@@ -49,8 +49,7 @@ public class BoardServiceImpl implements BoardService {
     }
 
     /* =========================
-     * 목록 (✅ 대표이미지 thumbPath 세팅)
-     * - BoardController의 /board/file/{uuid} 서빙을 사용
+     * 목록 (대표이미지 thumbPath)
      * ========================= */
     @Override
     @Transactional(readOnly = true)
@@ -61,13 +60,21 @@ public class BoardServiceImpl implements BoardService {
         return page.map(board -> {
             BoardDTO dto = convertEntityToDto(board);
 
-            // ✅ 이미지(fileType=1) 1개만 조회해서 thumbPath 생성
-            //    정적 /upload/** 대신 컨트롤러(/board/file/{uuid})로 접근
+            // 대표 이미지 1개 → /board/file/{uuid}
             fileRepository.findFirstByPostIdAndFileTypeOrderByCreatedAtAsc(board.getPostId(), 1)
                     .ifPresent(img -> dto.setThumbPath("/board/file/" + img.getUuid()));
 
             return dto;
         });
+    }
+
+    /* =========================
+     * ✅ 조회수 증가
+     * ========================= */
+    @Override
+    @Transactional
+    public void increaseViewCount(long postId) {
+        boardRepository.increaseViewCount(postId);
     }
 
     @Override
