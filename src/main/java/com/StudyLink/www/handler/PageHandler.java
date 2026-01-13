@@ -11,6 +11,7 @@ import java.util.List;
 @Setter
 @ToString
 public class PageHandler<T> {
+
     private int startPage;
     private int endPage;
     private int totalPage;
@@ -20,36 +21,47 @@ public class PageHandler<T> {
 
     private List<T> list;
 
-    //검색 추가
+    // ✅ 검색
     private String type;
-    private String Keyword;
+    private String keyword;   // ✅ Keyword -> keyword (소문자 통일)
 
-
-    // 생성자
-    public PageHandler(Page<T>list, int pageNo){
-        this.list = list.getContent();
+    // 기본 생성자 (페이징)
+    public PageHandler(Page<T> page, int pageNo) {
+        this.list = page.getContent();
         this.pageNo = pageNo;
-        this.totalPage = list.getTotalPages();
-        this.totalElement = list.getTotalElements();
 
-        this.endPage = (int)Math.ceil(this.pageNo / 10.0)*10;
-        this.startPage = endPage - 9;
+        this.totalPage = page.getTotalPages();
+        this.totalElement = page.getTotalElements();
 
-        endPage = (endPage > totalPage) ? totalPage : endPage;
+        // ✅ 데이터가 0개면 totalPage = 0 (페이징 계산 의미 없음)
+        if (this.totalPage <= 0) {
+            this.startPage = 0;
+            this.endPage = 0;
+            this.prev = false;
+            this.next = false;
+            return;
+        }
+
+        // 페이지 블록(10개 단위)
+        this.endPage = (int) Math.ceil(this.pageNo / 10.0) * 10;
+        this.startPage = this.endPage - 9;
+
+        // 마지막 블록 보정
+        if (this.endPage > this.totalPage) {
+            this.endPage = this.totalPage;
+        }
+        if (this.startPage < 1) {
+            this.startPage = 1;
+        }
 
         this.prev = this.startPage > 1;
         this.next = this.endPage < this.totalPage;
-
     }
 
-
-    //검색이 추가되는 생성자
-    public PageHandler(Page<T>list, int pageNo, String type, String keyword) {
-        this(list, pageNo);
+    // 검색 포함 생성자
+    public PageHandler(Page<T> page, int pageNo, String type, String keyword) {
+        this(page, pageNo);
         this.type = type;
-        this.Keyword = keyword;
+        this.keyword = keyword; // ✅ 통일
     }
 }
-
-
-

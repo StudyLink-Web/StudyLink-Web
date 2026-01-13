@@ -8,6 +8,7 @@ import com.StudyLink.www.handler.FileRemoveHandler;
 import com.StudyLink.www.handler.PageHandler;
 import com.StudyLink.www.service.BoardService;
 import com.StudyLink.www.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
@@ -22,8 +23,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -65,25 +64,26 @@ public class BoardController {
         return "redirect:/board/list";
     }
 
+    // ✅ 목록 + 검색 + 정렬
     @GetMapping("/list")
-    public void list(Model model,
-                     @RequestParam(name = "pageNo", defaultValue = "1") int pageNo,
-                     @RequestParam(name = "type", required = false) String type,
-                     @RequestParam(name = "keyword", required = false) String keyword) {
+    public String list(Model model,
+                       @RequestParam(name = "pageNo", defaultValue = "1") int pageNo,
+                       @RequestParam(name = "type", required = false) String type,
+                       @RequestParam(name = "keyword", required = false) String keyword) {
 
-        Page<BoardDTO> list = boardService.getList(pageNo, type, keyword);
-        PageHandler<BoardDTO> pageHandler = new PageHandler<>(list, pageNo, type, keyword);
-        model.addAttribute("ph", pageHandler);
+        // ✅ 서비스에서 type/keyword 처리(정렬/검색)
+        Page<BoardDTO> page = boardService.getList(pageNo, type, keyword);
+
+        // ✅ PageHandler에 type/keyword도 보관(뷰에서 상태 유지)
+        PageHandler<BoardDTO> ph = new PageHandler<>(page, pageNo, type, keyword);
+        model.addAttribute("ph", ph);
+
+        // ✅ void 메서드 대신 템플릿 명시 (추천)
+        return "board/list";
     }
 
     /**
      * ✅ detail 화면 하나로 read/modify 같이 사용
-     * - /board/detail?postId=1                 -> read 모드
-     * - /board/detail?postId=1&mode=modify     -> modify 모드
-     *
-     * ✅ 조회수 정책
-     * - 리스트에서 들어왔고(mode=read일 때만) 증가
-     * - mode=modify면 조회수 증가 X
      */
     @GetMapping("/detail")
     public String detail(@RequestParam("postId") long postId,
@@ -106,14 +106,13 @@ public class BoardController {
 
         BoardFileDTO boardFileDTO = boardService.getDetail(postId);
         model.addAttribute("boardFileDTO", boardFileDTO);
-        model.addAttribute("mode", mode); // ✅ detail.html에서 read/modify 분기용
+        model.addAttribute("mode", mode);
 
-        return "board/detail"; // ✅ void -> String으로 변경 (템플릿 명시)
+        return "board/detail";
     }
 
     /**
      * ✅ 수정 저장(POST)
-     * detail.html에서 mode=modify일 때 form submit -> /board/modify
      */
     @PostMapping("/modify")
     public String modify(BoardDTO boardDTO,
@@ -134,11 +133,11 @@ public class BoardController {
 
         Long postId = boardService.modify(new BoardFileDTO(boardDTO, fileDTOList));
 
-        // 수정 완료 후 read 모드 detail로
         redirectAttributes.addAttribute("postId", postId);
         return "redirect:/board/detail";
     }
 
+    // ⚠️ 가능하면 POST/DELETE 권장(지금은 유지)
     @GetMapping("/remove")
     public String remove(@RequestParam("postId") long postId) {
         boardService.remove(postId);
