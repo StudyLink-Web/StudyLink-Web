@@ -11,24 +11,28 @@ public interface CommentService {
      * ========================= */
 
     // DTO -> Entity
-    default Comment convertDtoToEntity(CommentDTO commentDTO) {
+    default Comment convertDtoToEntity(CommentDTO dto) {
+        if (dto == null) return null;
+
         return Comment.builder()
-                .cno(commentDTO.getCno())
-                .postId(commentDTO.getPostId())   // ✅ bno -> postId
-                .writer(commentDTO.getWriter())
-                .content(commentDTO.getContent())
+                .cno(dto.getCno())
+                .postId(dto.getPostId())
+                .writer(dto.getWriter())
+                .content(dto.getContent())
                 .build();
     }
 
     // Entity -> DTO
-    default CommentDTO convertEntityToDto(Comment comment) {
+    default CommentDTO convertEntityToDto(Comment c) {
+        if (c == null) return null;
+
         return CommentDTO.builder()
-                .cno(comment.getCno())
-                .postId(comment.getPostId())      // ✅ bno -> postId
-                .writer(comment.getWriter())
-                .content(comment.getContent())
-                .createdAt(comment.getCreatedAt()) // ✅ TimeBase 쓰면 createdAt/updatedAt
-                .updatedAt(comment.getUpdatedAt())
+                .cno(c.getCno())
+                .postId(c.getPostId())
+                .writer(c.getWriter())
+                .content(c.getContent())
+                .createdAt(c.getCreatedAt())
+                .updatedAt(c.getUpdatedAt())
                 .build();
     }
 
@@ -40,7 +44,7 @@ public interface CommentService {
 
     long modify(CommentDTO commentDTO);
 
-    void remove(long cno);
+    long remove(long cno); // ✅ void -> long (삭제 성공 판단용)
 
-    Page<CommentDTO> getList(Long postId, int page); // ✅ bno -> postId
+    Page<CommentDTO> getList(Long postId, int page);
 }

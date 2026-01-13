@@ -24,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -78,20 +77,26 @@ public class BoardController {
     }
 
     /**
+     * ✅ detail 화면 하나로 read/modify 같이 사용
+     * - /board/detail?postId=1                 -> read 모드
+     * - /board/detail?postId=1&mode=modify     -> modify 모드
+     *
      * ✅ 조회수 정책
-     * - "새로고침(F5)" : Referer가 detail이거나 null → 증가 X
-     * - "리스트에서 들어옴" : Referer에 /board/list 포함 → 증가 O
-     * - "리스트 갔다가 다시 들어옴" : 또 /board/list에서 오므로 증가 O
+     * - 리스트에서 들어왔고(mode=read일 때만) 증가
+     * - mode=modify면 조회수 증가 X
      */
     @GetMapping("/detail")
-    public void detail(@RequestParam("postId") long postId,
-                       Model model,
-                       HttpServletRequest request) {
+    public String detail(@RequestParam("postId") long postId,
+                         @RequestParam(name = "mode", defaultValue = "read") String mode,
+                         Model model,
+                         HttpServletRequest request) {
 
         String referer = request.getHeader("Referer");
         boolean fromList = (referer != null && referer.contains("/board/list"));
+        boolean isModifyMode = "modify".equalsIgnoreCase(mode);
 
-        if (fromList) {
+        // ✅ read 모드 + list에서 들어온 경우만 조회수 증가
+        if (fromList && !isModifyMode) {
             try {
                 boardService.increaseViewCount(postId);
             } catch (Exception e) {
@@ -101,14 +106,20 @@ public class BoardController {
 
         BoardFileDTO boardFileDTO = boardService.getDetail(postId);
         model.addAttribute("boardFileDTO", boardFileDTO);
+        model.addAttribute("mode", mode); // ✅ detail.html에서 read/modify 분기용
+
+        return "board/detail"; // ✅ void -> String으로 변경 (템플릿 명시)
     }
 
+    /**
+     * ✅ 수정 저장(POST)
+     * detail.html에서 mode=modify일 때 form submit -> /board/modify
+     */
     @PostMapping("/modify")
     public String modify(BoardDTO boardDTO,
                          RedirectAttributes redirectAttributes,
                          @RequestParam(name = "files", required = false) MultipartFile[] files,
-                         Authentication authentication,
-                         HttpSession session) {
+                         Authentication authentication) {
 
         String username = authentication.getName();
         Long userId = userService.findUserIdByUsername(username);
@@ -123,6 +134,7 @@ public class BoardController {
 
         Long postId = boardService.modify(new BoardFileDTO(boardDTO, fileDTOList));
 
+        // 수정 완료 후 read 모드 detail로
         redirectAttributes.addAttribute("postId", postId);
         return "redirect:/board/detail";
     }
