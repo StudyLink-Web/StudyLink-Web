@@ -4,7 +4,8 @@
 
 // API 기본 URL
 //const API_BASE_URL = 'http://localhost:8088';
-const API_BASE_URL = ''; 
+//const API_BASE_URL = '';
+const API_BASE_URL = window.location.origin;  // 현재 도메인 자동 사용
 
 // ============================================
 // DOM 초기화
@@ -58,15 +59,15 @@ function initPasswordToggle() {
         const isPassword = passwordInput.type === 'password';
         passwordInput.type = isPassword ? 'text' : 'password';
 
-        // SVG 아이콘 토글
+        // SVG 아이콘 토글 (수정됨!)
         const svgs = toggleBtn.querySelectorAll('svg');
         if (svgs.length >= 2) {
             if (isPassword) {
-                svgs.style.display = 'none';  // eye closed 숨김
-                svgs.style.display = 'block'; // eye open 표시
+                svgs[0].style.display = 'none';    // ✅ eye closed 숨김
+                svgs[1].style.display = 'block';   // ✅ eye open 표시
             } else {
-                svgs.style.display = 'block';  // eye closed 표시
-                svgs.style.display = 'none';   // eye open 숨김
+                svgs[0].style.display = 'block';   // ✅ eye closed 표시
+                svgs[1].style.display = 'none';    // ✅ eye open 숨김
             }
         }
     });

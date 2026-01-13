@@ -36,6 +36,8 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final BooleanPath isActive = createBoolean("isActive");
 
+    public final BooleanPath isStudentVerified = createBoolean("isStudentVerified");
+
     public final ListPath<MentorAvailability, QMentorAvailability> mentorAvailabilities = this.<MentorAvailability, QMentorAvailability>createList("mentorAvailabilities", MentorAvailability.class, QMentorAvailability.class, PathInits.DIRECT2);
 
     public final QMentorProfile mentorProfile;
