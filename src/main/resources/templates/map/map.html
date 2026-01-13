@@ -457,7 +457,21 @@
             const infoContent = `
               <div style="padding:15px; min-width:280px; font-family: 'Noto Sans KR', sans-serif; border-radius:10px;">
                 <h6 class="mb-1 d-flex justify-content-between align-items-center" style="color:#2c3e50; font-weight:700; font-size:1rem;">
-                    <span>${representative.univ}</span>
+                    <a href="${
+                      representative.univ_url ||
+                      "https://search.naver.com/search.naver?query=" +
+                        representative.univ +
+                        " 공식홈페이지"
+                    }" 
+                       target="_blank" 
+                       title="공식 홈페이지 바로가기"
+                       style="text-decoration:none; color:inherit; cursor:pointer;"
+                       onmouseover="this.style.color='#007bff'" 
+                       onmouseout="this.style.color='inherit'">
+                        ${
+                          representative.univ
+                        } <i class="fas fa-external-link-alt" style="font-size:0.75rem; color:#007bff; margin-left:3px;"></i>
+                    </a>
                     <span class="badge ${getStatusBadgeClass(
                       representative.status
                     )}">${representative.status}</span>
