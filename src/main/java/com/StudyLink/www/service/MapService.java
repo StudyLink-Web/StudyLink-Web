@@ -15,9 +15,17 @@ public class MapService {
 
     public MapDataDTO.Response getMapData(MapDataDTO.Request request) {
         try {
-            return restTemplate.postForObject(AI_MAP_SERVER_URL, request, MapDataDTO.Response.class);
+            System.out.println("Calling Python Map API with request: " + request);
+            MapDataDTO.Response response = restTemplate.postForObject(AI_MAP_SERVER_URL, request, MapDataDTO.Response.class);
+            if (response != null && response.getItems() != null) {
+                System.out.println("Received " + response.getItems().size() + " items from Python Map API.");
+            } else {
+                System.out.println("Received empty or null response from Python Map API.");
+            }
+            return response;
         } catch (Exception e) {
             System.err.println("Error calling Python Map API: " + e.getMessage());
+            e.printStackTrace(); // 상세 스택트레이스 출력
             return MapDataDTO.Response.builder()
                     .items(java.util.Collections.emptyList())
                     .build();

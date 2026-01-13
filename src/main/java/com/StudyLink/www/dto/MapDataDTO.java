@@ -14,7 +14,30 @@ public class MapDataDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Request {
+        @com.fasterxml.jackson.annotation.JsonProperty("user_scores")
+        @com.fasterxml.jackson.annotation.JsonAlias("userScores")
         private List<ChatbotDTO.UserScore> userScores;
+        
+        private Bounds bounds;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Bounds {
+        @com.fasterxml.jackson.annotation.JsonProperty("minLat")
+        @com.fasterxml.jackson.annotation.JsonAlias("min_lat")
+        private Double minLat;
+        @com.fasterxml.jackson.annotation.JsonProperty("maxLat")
+        @com.fasterxml.jackson.annotation.JsonAlias("max_lat")
+        private Double maxLat;
+        @com.fasterxml.jackson.annotation.JsonProperty("minLng")
+        @com.fasterxml.jackson.annotation.JsonAlias("min_lng")
+        private Double minLng;
+        @com.fasterxml.jackson.annotation.JsonProperty("maxLng")
+        @com.fasterxml.jackson.annotation.JsonAlias("max_lng")
+        private Double maxLng;
     }
 
     @Data
