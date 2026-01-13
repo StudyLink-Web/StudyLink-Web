@@ -3,7 +3,8 @@
 // ============================================
 
 // API 기본 URL
-const API_BASE_URL = 'http://localhost:8088';
+//const API_BASE_URL = 'http://localhost:8088';
+const API_BASE_URL = ''; 
 
 // ============================================
 // DOM 초기화
