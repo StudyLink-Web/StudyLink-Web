@@ -55,7 +55,7 @@ public class BoardServiceImpl implements BoardService {
     @Transactional(readOnly = true)
     public Page<BoardDTO> getList(int pageNo, String type, String keyword) {
 
-        int size = 10;
+        int size = 12;
         int pageIndex = Math.max(pageNo - 1, 0);
 
         // ✅ 정렬 규칙
