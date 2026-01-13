@@ -11,10 +11,6 @@ import java.util.List;
 
 public interface BoardService {
 
-    /* =========================
-     *  변환 메서드
-     * ========================= */
-
     default Board convertDtoToEntity(BoardDTO boardDTO) {
         if (boardDTO == null) return null;
 
@@ -66,28 +62,17 @@ public interface BoardService {
                 .saveDir(file.getSaveDir())
                 .fileName(file.getFileName())
                 .fileType(file.getFileType())
-                .postId(file.getPostId())
-                .fileType(file.getFileType())
                 .fileSize(file.getFileSize())
+                .postId(file.getPostId())
                 .createdAt(file.getCreatedAt())
                 .updatedAt(file.getUpdatedAt())
                 .build();
     }
 
-    /* =========================
-     *  Board 기능
-     * ========================= */
-
     Long insert(BoardDTO boardDTO);
 
     Long insert(BoardFileDTO boardFileDTO);
 
-    /**
-     * ✅ 목록 조회 (검색 + 정렬 + 페이징)
-     * @param pageNo 1부터 시작
-     * @param type 정렬 기준 ("" or null: 전체/기본, "new": 최신순, "view": 조회수순)
-     * @param keyword 검색어 (null/blank면 전체목록)
-     */
     Page<BoardDTO> getList(int pageNo, String type, String keyword);
 
     BoardFileDTO getDetail(long postId);
@@ -96,14 +81,7 @@ public interface BoardService {
 
     void remove(long postId);
 
-    /**
-     * ✅ 조회수 증가 (Repository의 increaseViewCount 사용)
-     */
     void increaseViewCount(long postId);
-
-    /* =========================
-     *  File 기능
-     * ========================= */
 
     Long fileRemove(String uuid);
 
