@@ -55,7 +55,8 @@ public class SecurityConfig {
                                 "/ws/**",
                                 "/chatbot/**",            // 챗봇 관련 요청 허용
                                 "/api/chatbot/archive/**", // 추가: 챗봇 아카이브 API CSRF 제외
-                                "/room/**"                // 방 관련 요청 허용
+                                "/room/**",               // 방 관련 요청 허용
+                                "/map/**"                 // 추가: 지도 관련 요청 CSRF 제외
                         )
                 )
 
@@ -98,7 +99,8 @@ public class SecurityConfig {
                                 "/oauth2/**",           // OAuth2 요청
                                 "/login/oauth2/**",      // OAuth2 리다이렉트 URI
                                 "/.well-known/**",      // ✅ Chrome DevTools 에러 무시
-                                "/chatbot/**"
+                                "/chatbot/**",
+                                "/map/**"               // 추가: 지도 관련 요청 허용
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
