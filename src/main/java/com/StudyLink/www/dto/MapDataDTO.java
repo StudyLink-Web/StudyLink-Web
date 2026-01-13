@@ -61,5 +61,7 @@ public class MapDataDTO {
         private String status;
         private String region;
         private String category;
+        @com.fasterxml.jackson.annotation.JsonProperty("univ_url")
+        private String univUrl;
     }
 }
