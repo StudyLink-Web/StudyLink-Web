@@ -15,62 +15,61 @@ import java.util.UUID;
 @Slf4j
 @Component
 public class FileHandler {
-    // 저장될 파일 데이터 + 직접 폴더에 파일을 저장
 
     private final String UP_DIR = "D:\\web_0826_shinjw\\_myProject\\_java\\_fileUpload";
 
-    public List<FileDTO> uploadFile(MultipartFile[] files){
+    public List<FileDTO> uploadFile(MultipartFile[] files) {
+
         List<FileDTO> fileList = new ArrayList<>();
 
-        // 날짜 형태로 파일 구성
-        LocalDate date = LocalDate.now(); // 2025-12-24  - => 파일 경로로 변경
+        LocalDate date = LocalDate.now();
         String today = date.toString().replace("-", File.separator);
 
         File folders = new File(UP_DIR, today);
-
-        // 해당 폴더가 없으면 생성 / 있으면 생성 안함.
-        // mkdir(1개의 폴더 생성) / mkdirs(하위 폴더 동시 생성)
-        if(!folders.exists()){
+        if (!folders.exists()) {
             folders.mkdirs();
         }
 
-        // 파일 정보 생성 => FileDTO 생성
-        for(MultipartFile file : files){
-            log.info(">>> file contentType >> {}", file.getContentType());
-            // file : name, size, type, saveDir
-            FileDTO fileDTO = new FileDTO();
-            String originalFileName = file.getOriginalFilename();
-            fileDTO.setFileName(originalFileName);
-            fileDTO.setFileSize(file.getSize());
-            fileDTO.setFileType(file.getContentType().startsWith("image")? 1 : 0);
-            fileDTO.setSaveDir(today);
+        for (MultipartFile file : files) {
 
-            // uuid
+            if (file == null || file.isEmpty()) continue;
+
+            String originalFileName = file.getOriginalFilename();
+            String contentType = file.getContentType();
+
             UUID uuid = UUID.randomUUID();
             String uuidString = uuid.toString();
-            fileDTO.setUuid(uuidString);
 
-            //--- file save
-            String fileName = uuidString+"_"+originalFileName;
-            String fileThName = uuidString+"_th_"+originalFileName;
+            FileDTO fileDTO = FileDTO.builder()
+                    .uuid(uuidString)
+                    .fileName(originalFileName)
+                    .fileSize(file.getSize())
+                    .fileType(contentType != null && contentType.startsWith("image") ? 1 : 0)
+                    .saveDir(today)
+                    .build();
 
-            // 실 저장 객체
-            //D: ~/2025/12/24/uuid_name
-            File storeFile = new File(folders, fileName);
+            String savedFileName = uuidString + "_" + originalFileName;
+            File storeFile = new File(folders, savedFileName);
 
-            // 저장
             try {
+                // 원본 파일 저장
                 file.transferTo(storeFile);
-                // 그림 파일만 썸네일 저장
-                if(fileDTO.getFileType()==1){
-                    File thumbnail = new File(folders, fileThName);
-                    Thumbnails.of(storeFile).size(100,100).toFile(thumbnail);
+
+                // 이미지인 경우에만 썸네일 생성 (❗ DB/DTO에는 저장하지 않음)
+                if (fileDTO.getFileType() == 1) {
+                    String thumbName = uuidString + "_th_" + originalFileName;
+                    File thumbnailFile = new File(folders, thumbName);
+                    Thumbnails.of(storeFile)
+                            .size(100, 100)
+                            .toFile(thumbnailFile);
                 }
+
+                // ✅ DB에 저장할 DTO는 "원본 파일"만
+                fileList.add(fileDTO);
+
             } catch (Exception e) {
-                log.info("file save Error");
-                e.printStackTrace();
+                log.error("file save error", e);
             }
-            fileList.add(fileDTO);
         }
 
         return fileList;

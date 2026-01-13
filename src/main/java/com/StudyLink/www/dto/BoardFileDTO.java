@@ -12,6 +12,7 @@ import java.util.List;
 @Builder
 public class BoardFileDTO {
 
-    private BoardDTO boardDTO;          // 게시글 정보
-    private List<FileDTO> fileDTOList;  // 첨부파일 목록
+    private BoardDTO boardDTO;
+    private List<FileDTO> fileDTOList;
+
 }
