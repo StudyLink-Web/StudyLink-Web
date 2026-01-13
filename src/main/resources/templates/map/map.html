@@ -356,8 +356,15 @@
         return "#6c757d"; // Grey
       }
 
-      function createMarkerContent(item) {
+      function createMarkerContent(item, count) {
         const color = getStatusColor(item.status);
+
+        // 학과 개수가 1개 이상이면 뱃지 표시
+        const badgeHtml =
+          count > 1
+            ? `<div style="position:absolute; top:-5px; right:-5px; background:#ffc107; color:#000; font-size:10px; font-weight:bold; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; border:1px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);">${count}</div>`
+            : "";
+
         const div = document.createElement("div");
         div.className = "premium-marker";
         div.innerHTML = `
@@ -365,6 +372,7 @@
             <path d="M16 40C16 40 32 24.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.5 16 40 16 40Z" fill="${color}"/>
             <circle cx="16" cy="16" r="6" fill="white"/>
           </svg>
+          ${badgeHtml}
         `;
         return div;
       }
@@ -376,56 +384,109 @@
         markers.forEach((m) => m.setMap(null));
         markers = [];
 
-        // 최상위 50개만 추출 (성능 최적화)
-        const displayItems = items.slice(0, 50);
-        console.log(`지도에 ${displayItems.length}개의 마커를 렌더링합니다.`);
+        // 1. 대학별로 데이터 그룹핑 (Clustering)
+        const univGroups = {};
+        items.forEach((item) => {
+          if (!univGroups[item.univ]) {
+            univGroups[item.univ] = [];
+          }
+          univGroups[item.univ].push(item);
+        });
+
+        const univKeys = Object.keys(univGroups);
+        console.log(
+          `클러스터링 결과: 총 ${univKeys.length}개의 대학 그룹 생성`
+        );
+
+        // 최상위 50개 대학만 추출 (성능 최적화)
+        const displayUnivs = univKeys.slice(0, 50);
 
         // 안내 메시지 제어
         const notice = document.getElementById("performanceNotice");
         if (notice) {
-          if (items.length > 50) {
+          if (univKeys.length > 50) {
             notice.classList.remove("d-none");
+            notice.innerHTML = `<i class="fas fa-info-circle me-1"></i> 상위 50개 대학만 표시 중입니다. (전체: ${univKeys.length}개)`;
           } else {
             notice.classList.add("d-none");
           }
         }
 
-        displayItems.forEach((item) => {
-          const position = new kakao.maps.LatLng(item.lat, item.lng);
+        displayUnivs.forEach((univName) => {
+          const groupItems = univGroups[univName];
+          const representative = groupItems[0]; // 대표 아이템 (좌표용)
+          const count = groupItems.length; // 학과 개수
 
-          // 커스텀 오버레이 생성 (마커 이미지 대신 CSS 사용)
-          const content = createMarkerContent(item);
+          const position = new kakao.maps.LatLng(
+            representative.lat,
+            representative.lng
+          );
+
+          // 커스텀 오버레이 생성 (마커 이미지 대신 CSS 사용 + 개수 뱃지)
+          const content = createMarkerContent(representative, count);
 
           const overlay = new kakao.maps.CustomOverlay({
             position: position,
             content: content,
-            yAnchor: 1.0, // 하단 끝점을 위치에 맞춤
+            yAnchor: 1.0,
           });
 
           overlay.setMap(kakaoMap);
 
           // 클릭 이벤트 (CustomOverlay는 DOM 엘리먼트에 직접 이벤트 등록 가능)
           content.onclick = function () {
-            // 정보창 내용 (target_per가 1 미만인 경우 100 곱해서 표시 등 자동 보정 로직 추가 검토)
-            let perDisplay = item.target_per;
-            if (perDisplay < 1 && perDisplay > 0)
-              perDisplay = (perDisplay * 100).toFixed(1);
+            // [Fix] 정보창 내용 단순화 (UI 개선)
+            // 1. 대표 합격선 계산 (가장 첫 번째 학과 혹은 평균)
+            let rep_per = representative.target_per;
+            if (rep_per < 1 && rep_per > 0)
+              rep_per = (rep_per * 100).toFixed(1);
+
+            // 2. 리스트 생성 (점수 제거, 학과명만 깔끔하게)
+            let listHtml =
+              '<ul style="padding-left:0; list-style:none; max-height:200px; overflow-y:auto; margin-bottom:0;">';
+
+            groupItems.forEach((gItem) => {
+              listHtml += `
+                    <li style="padding:6px 0; border-bottom:1px solid #eee; display:flex; align-items:center;">
+                        <span style="font-size:0.9rem; color:#333;">• ${gItem.major}</span>
+                    </li>
+                `;
+            });
+            listHtml += "</ul>";
 
             const infoContent = `
-              <div style="padding:15px; min-width:200px; font-family: 'Noto Sans KR', sans-serif; border-radius:10px;">
-                <h6 class="mb-1" style="color:#2c3e50; font-weight:700; font-size:1rem;">${
-                  item.univ
-                }</h6>
-                <div class="mb-2" style="font-size:0.85rem; color:#7f8c8d;">${
-                  item.major
-                }</div>
-                <hr class="my-2">
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="badge ${getStatusBadgeClass(
-                    item.status
-                  )}" style="padding:5px 10px;">${item.status}</span>
-                  <span class="text-primary" style="font-size:0.9rem; font-weight:700;">합격선: ${perDisplay}%</span>
+              <div style="padding:15px; min-width:280px; font-family: 'Noto Sans KR', sans-serif; border-radius:10px;">
+                <h6 class="mb-1 d-flex justify-content-between align-items-center" style="color:#2c3e50; font-weight:700; font-size:1rem;">
+                    <a href="${
+                      representative.univ_url ||
+                      "https://search.naver.com/search.naver?query=" +
+                        representative.univ +
+                        " 공식홈페이지"
+                    }" 
+                       target="_blank" 
+                       title="공식 홈페이지 바로가기"
+                       style="text-decoration:none; color:inherit; cursor:pointer;"
+                       onmouseover="this.style.color='#007bff'" 
+                       onmouseout="this.style.color='inherit'">
+                        ${
+                          representative.univ
+                        } <i class="fas fa-external-link-alt" style="font-size:0.75rem; color:#007bff; margin-left:3px;"></i>
+                    </a>
+                    <span class="badge ${getStatusBadgeClass(
+                      representative.status
+                    )}">${representative.status}</span>
+                </h6>
+                <div class="mb-2 d-flex justify-content-between" style="font-size:0.8rem; color:#7f8c8d;">
+                    <span>${representative.region} / ${
+              representative.category
+            }</span>
+                    <span class="text-primary fw-bold">평균 합격선: ${rep_per}%</span>
                 </div>
+                <div class="alert alert-light border small py-1 px-2 mb-2 text-center" style="font-size:0.75rem; color:#666;">
+                    총 <strong>${count}개</strong> 학과 지원 가능
+                </div>
+                <hr class="my-2">
+                ${listHtml}
               </div>
             `;
             infoWindow.setContent(infoContent);

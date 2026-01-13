@@ -49,18 +49,38 @@ public class BoardServiceImpl implements BoardService {
     }
 
     /* =========================
-     * 목록 (대표이미지 thumbPath)
+     * 목록 (검색 + 정렬 + 대표이미지 thumbPath)
      * ========================= */
     @Override
     @Transactional(readOnly = true)
     public Page<BoardDTO> getList(int pageNo, String type, String keyword) {
-        Pageable pageable = PageRequest.of(pageNo - 1, 10, Sort.by(Sort.Direction.DESC, "postId"));
-        Page<Board> page = boardRepository.searchBoard(type, keyword, pageable);
 
+        int size = 12;
+        int pageIndex = Math.max(pageNo - 1, 0);
+
+        // ✅ 정렬 규칙
+        // - null/blank/new : 최신순(postId desc)
+        // - view : 조회수순(viewCount desc, postId desc)
+        Sort sort = Sort.by(Sort.Direction.DESC, "postId");
+        if ("view".equalsIgnoreCase(type)) {
+            sort = Sort.by(Sort.Direction.DESC, "viewCount")
+                    .and(Sort.by(Sort.Direction.DESC, "postId"));
+        } else if ("new".equalsIgnoreCase(type) || type == null || type.isBlank()) {
+            sort = Sort.by(Sort.Direction.DESC, "postId");
+        }
+
+        Pageable pageable = PageRequest.of(pageIndex, size, sort);
+
+        // ✅ 검색어 공백 제거
+        String kw = (keyword == null) ? "" : keyword.trim();
+
+        // ✅ 여기 핵심: repository에 있는 메서드는 search(keyword,pageable)
+        Page<Board> page = boardRepository.search(kw, pageable);
+
+        // ✅ 대표 이미지(첫 번째 이미지) thumbPath 세팅
         return page.map(board -> {
             BoardDTO dto = convertEntityToDto(board);
 
-            // 대표 이미지 1개 → /board/file/{uuid}
             fileRepository.findFirstByPostIdAndFileTypeOrderByCreatedAtAsc(board.getPostId(), 1)
                     .ifPresent(img -> dto.setThumbPath("/board/file/" + img.getUuid()));
 
@@ -69,7 +89,7 @@ public class BoardServiceImpl implements BoardService {
     }
 
     /* =========================
-     * ✅ 조회수 증가
+     * 조회수 증가
      * ========================= */
     @Override
     @Transactional

@@ -57,6 +57,10 @@ public class Users {
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
+    // ✅ 추가: 학생 인증 여부 (학생 신분증 또는 재학증명서 확인)
+    @Column(name = "is_student_verified", nullable = false)
+    private Boolean isStudentVerified = false;
+
     /**
      * 가입일 (코호트 분석용)
      * 가입 시점을 기준으로 공통 특성 분석
@@ -127,7 +131,11 @@ public class Users {
         if (this.emailVerified == null) {
             this.emailVerified = false;
         }
-        // ⭐ 추가: OAuth 사용자는 isActive 기본값 true
+        // ✅ 추가: 학생 인증 여부 기본값
+        if (this.isStudentVerified == null) {
+            this.isStudentVerified = false;
+        }
+        // OAuth 사용자는 isActive 기본값 true
         if (this.isActive == null) {
             this.isActive = true;
         }
