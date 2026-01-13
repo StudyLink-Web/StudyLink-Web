@@ -23,10 +23,15 @@ public class CommentController {
             produces = MediaType.TEXT_PLAIN_VALUE
     )
     public ResponseEntity<String> post(@RequestBody CommentDTO commentDTO) {
+        log.info(">>> /comment/post dto = {}", commentDTO);
+
         long cno = commentService.post(commentDTO);
+
+        log.info(">>> /comment/post result cno = {}", cno);
+
         return cno > 0
-                ? new ResponseEntity<>("1", HttpStatus.OK)
-                : new ResponseEntity<>("0", HttpStatus.INTERNAL_SERVER_ERROR);
+                ? ResponseEntity.ok("1")
+                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");
     }
 
     @GetMapping(
@@ -39,7 +44,7 @@ public class CommentController {
         Page<CommentDTO> list = commentService.getList(postId, page);
         PageHandler<CommentDTO> pageHandler = new PageHandler<>(list, page);
 
-        return new ResponseEntity<>(pageHandler, HttpStatus.OK);
+        return ResponseEntity.ok(pageHandler);
     }
 
     @PutMapping(
@@ -48,10 +53,15 @@ public class CommentController {
             produces = MediaType.TEXT_PLAIN_VALUE
     )
     public ResponseEntity<String> modify(@RequestBody CommentDTO commentDTO) {
+        log.info(">>> /comment/modify dto = {}", commentDTO);
+
         long result = commentService.modify(commentDTO);
+
+        log.info(">>> /comment/modify result = {}", result);
+
         return result > 0
-                ? new ResponseEntity<>("1", HttpStatus.OK)
-                : new ResponseEntity<>("0", HttpStatus.INTERNAL_SERVER_ERROR);
+                ? ResponseEntity.ok("1")
+                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");
     }
 
     @DeleteMapping(
@@ -59,9 +69,14 @@ public class CommentController {
             produces = MediaType.TEXT_PLAIN_VALUE
     )
     public ResponseEntity<String> remove(@PathVariable("cno") long cno) {
+        log.info(">>> /comment/remove cno = {}", cno);
+
         long result = commentService.remove(cno);
+
+        log.info(">>> /comment/remove result = {}", result);
+
         return result > 0
-                ? new ResponseEntity<>("1", HttpStatus.OK)
-                : new ResponseEntity<>("0", HttpStatus.INTERNAL_SERVER_ERROR);
+                ? ResponseEntity.ok("1")
+                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");
     }
 }

@@ -9,8 +9,9 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@EqualsAndHashCode(callSuper = false)
 @Entity
-@Table(name = "comments") // ✅ comment 예약어 이슈 방지. 이미 comment면 "comment"로 유지 가능
+@Table(name = "comments")
 public class Comment extends TimeBase {
 
     @Id

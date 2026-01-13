@@ -10,7 +10,6 @@ public interface CommentService {
      *  convert
      * ========================= */
 
-    // DTO -> Entity
     default Comment convertDtoToEntity(CommentDTO dto) {
         if (dto == null) return null;
 
@@ -22,7 +21,6 @@ public interface CommentService {
                 .build();
     }
 
-    // Entity -> DTO
     default CommentDTO convertEntityToDto(Comment c) {
         if (c == null) return null;
 
@@ -40,11 +38,11 @@ public interface CommentService {
      *  service methods
      * ========================= */
 
-    long post(CommentDTO commentDTO);
+    int post(CommentDTO commentDTO);
 
-    long modify(CommentDTO commentDTO);
+    int modify(CommentDTO commentDTO);
 
-    long remove(long cno); // ✅ void -> long (삭제 성공 판단용)
+    int remove(long cno);
 
     Page<CommentDTO> getList(Long postId, int page);
 }

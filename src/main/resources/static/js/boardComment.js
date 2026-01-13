@@ -1,10 +1,9 @@
 console.log("boardComment.js in");
 console.log("bnoValue =", typeof bnoValue !== "undefined" ? bnoValue : "UNDEFINED");
 
-// layout/detail에서 주입된 csrfToken/csrfHeader를 사용 (없으면 빈값)
-// (detail.html에서 const csrfToken/csrfHeader 를 만들어둔 상태여야 함)
-const _csrfToken = (typeof csrfToken !== "undefined") ? csrfToken : "";
-const _csrfHeader = (typeof csrfHeader !== "undefined") ? csrfHeader : "";
+// ✅ CSRF: meta에서 직접 읽기 (전역 csrfToken/csrfHeader 의존 제거)
+const _csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute("content") || "";
+const _csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute("content") || "";
 
 // ✅ 공통: 헤더 만들기
 function buildHeaders(extra = {}) {
@@ -49,7 +48,7 @@ if (addBtn) {
         }
 
         const cmtData = {
-            postId: bnoValue,   // ✅ bno -> postId 로 변경
+            postId: bnoValue,
             writer: cmtWriter ? cmtWriter.innerText : (typeof loginUser !== "undefined" ? loginUser : ""),
             content: cmtText.value.trim()
         };
@@ -180,7 +179,7 @@ async function updateCommentToServer(modData) {
         const url = "/comment/modify";
         const resp = await fetch(url, {
             method: "PUT",
-            headers: buildHeaders({ "content-type": "application/json; charset=utf-8" }),
+            headers: buildHeaders({ "Content-Type": "application/json; charset=utf-8" }),
             body: JSON.stringify(modData)
         });
         if (!resp.ok) return await debugResponse(resp);
@@ -203,43 +202,20 @@ async function commentListFromServer(bno, page) {
     }
 }
 
-// post (✅ CSRF 강력 대응: JSON 기본 + fallback form 전송)
+// post (JSON only)
 async function postCommentToServer(cmtData) {
     try {
         const url = "/comment/post";
-
-        // 1) JSON 요청
-        let resp = await fetch(url, {
+        const resp = await fetch(url, {
             method: "POST",
-            headers: buildHeaders({ "content-type": "application/json; charset=utf-8" }),
+            headers: buildHeaders({
+                "Content-Type": "application/json; charset=utf-8",
+                "Accept": "text/plain"
+            }),
             body: JSON.stringify(cmtData)
         });
 
-        // 만약 403/415 같은 걸로 막히면 2) form-urlencoded로 재시도
-        if (!resp.ok) {
-            const first = await debugResponse(resp);
-
-            // 415 Unsupported Media Type 대응(서버가 JSON을 안 받는 경우)
-            if (resp.status === 415 || resp.status === 403) {
-                resp = await fetch(url, {
-                    method: "POST",
-                    headers: buildHeaders({ "content-type": "application/x-www-form-urlencoded; charset=UTF-8" }),
-                    body: new URLSearchParams({
-                        bno: String(cmtData.bno),
-                        writer: cmtData.writer,
-                        content: cmtData.content,
-                        // ✅ 서버가 파라미터로 CSRF 토큰을 받는 설정일 수도 있어서 같이 보내기(보험)
-                        _csrf: _csrfToken
-                    })
-                });
-
-                if (!resp.ok) return await debugResponse(resp);
-                return await resp.text();
-            }
-
-            return first;
-        }
-
+        if (!resp.ok) return await debugResponse(resp);
         return await resp.text();
     } catch (error) {
         console.log(error);
