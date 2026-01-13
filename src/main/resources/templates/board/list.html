@@ -20,17 +20,10 @@
         <!-- 검색/정렬 -->
         <form class="form_board" role="search" th:action="@{/board/list}" method="get">
             <div class="form_board_box">
-                <!--
-                  type을 "정렬 기준"으로 사용한다고 가정:
-                  - new : 최신순(postId desc)
-                  - view : 조회수순(viewCount desc)
-                  (좋아요/댓글순은 나중에 컬럼/조인 생기면 추가)
-                -->
                 <select class="form-select" name="type" aria-label="정렬 기준">
                     <option value="" th:selected="${ph.type == null or ph.type == ''}">전체</option>
                     <option value="new" th:selected="${ph.type == 'new'}">최신 순</option>
                     <option value="view" th:selected="${ph.type == 'view'}">조회수 순</option>
-                    <!-- 좋아요/댓글순은 현재 BoardDTO/테이블 기준에선 비활성 권장 -->
                     <option value="like" th:selected="${ph.type == 'like'}" disabled>좋아요 순(준비중)</option>
                     <option value="cmt" th:selected="${ph.type == 'cmt'}" disabled>댓글 순(준비중)</option>
                 </select>
@@ -47,15 +40,13 @@
             </button>
         </form>
 
-
         <!-- 데이터 없을 때 -->
-        <div th:if="${ph.list == null or #lists.isEmpty(ph.list)}" >
+        <div th:if="${ph.list == null or #lists.isEmpty(ph.list)}">
             <div class="board_title_not">등록된 게시글이 없습니다.</div>
         </div>
 
         <!-- 목록 -->
         <div class="board_list_view">
-            <!-- 데이터 있을 때 -->
             <div th:if="${ph.list != null and !#lists.isEmpty(ph.list)}"
                  th:each="b : ${ph.list}"
                  class="board_infobox">
@@ -71,7 +62,6 @@
                 </div>
 
                 <div class="board_info">
-                    <!-- 제목 클릭 -> 상세 이동 -->
                     <div class="board_title_class">
                         <a th:href="@{/board/detail(postId=${b.postId})}"
                            th:text="${b.title}"></a>
@@ -80,22 +70,21 @@
                     <div class="board_writer">
                         <span>작성자 : </span><span th:text="${b.writer}"></span>
                         <p th:if="${b.department != null}">
-                        <span th:text="${b.department}"></span>
+                            <span th:text="${b.department}"></span>
                         </p>
                     </div>
+
                     <div class="date_flex">
-                        <!-- createdAt 표시 -->
                         <p th:text="${b.createdAt != null ? #temporals.format(b.createdAt, 'yyyy-MM-dd') : '-'}"></p>
-                        <!-- 조회수 -->
                         <p th:text="${b.viewCount}"></p>
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <!-- 페이징 -->
-        <nav aria-label="Page navigation" th:if="${ph != null}">
+        <!-- ✅ 페이징: 게시글 있을 때만 + (선택) 2페이지 이상일 때만 -->
+        <nav aria-label="Page navigation"
+             th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list) and ph.totalPage > 1}">
             <ul class="pagination justify-content-center">
 
                 <!-- 이전 -->
@@ -113,7 +102,7 @@
                     th:classappend="${i == ph.pageNo} ? 'active'">
                     <a class="page-link"
                        th:href="@{/board/list(pageNo=${i}, type=${ph.type}, keyword=${ph.keyword})}"
-                       th:text="${i}">1</a>
+                       th:text="${i}"></a>
                 </li>
 
                 <!-- 다음 -->
@@ -127,6 +116,7 @@
 
             </ul>
         </nav>
+
     </div>
 </div>
 </html>
