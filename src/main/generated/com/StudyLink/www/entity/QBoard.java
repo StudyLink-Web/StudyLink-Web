@@ -26,6 +26,8 @@ public class QBoard extends EntityPathBase<Board> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
+    public final StringPath department = createString("department");
+
     public final NumberPath<Long> postId = createNumber("postId", Long.class);
 
     public final StringPath title = createString("title");
@@ -36,6 +38,8 @@ public class QBoard extends EntityPathBase<Board> {
     public final NumberPath<Long> userId = createNumber("userId", Long.class);
 
     public final NumberPath<Integer> viewCount = createNumber("viewCount", Integer.class);
+
+    public final StringPath writer = createString("writer");
 
     public QBoard(String variable) {
         super(Board.class, forVariable(variable));
