@@ -17,6 +17,8 @@ public class ChatbotDTO {
     public static class Request {
         private String query;
         private List<Message> history;
+        @com.fasterxml.jackson.annotation.JsonProperty("user_scores")
+        @com.fasterxml.jackson.annotation.JsonAlias("userScores")
         private List<UserScore> userScores;
         @JsonAlias({"sessionId", "session_id"})
         private Long sessionId; // 추가: 대화 세션 ID (아카이브용)
@@ -27,8 +29,12 @@ public class ChatbotDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class UserScore {
+        @com.fasterxml.jackson.annotation.JsonProperty("subject_name")
+        @com.fasterxml.jackson.annotation.JsonAlias("subjectName")
         private String subjectName;
         private Integer score;
+        @com.fasterxml.jackson.annotation.JsonProperty("score_type")
+        @com.fasterxml.jackson.annotation.JsonAlias("scoreType")
         private String scoreType;
         private String category;
     }

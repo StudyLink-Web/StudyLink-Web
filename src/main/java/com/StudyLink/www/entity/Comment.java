@@ -10,20 +10,20 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "comment") // 테이블명이 reserved면 comments로 바꾸는 것도 추천
+@Table(name = "comments") // ✅ comment 예약어 이슈 방지. 이미 comment면 "comment"로 유지 가능
 public class Comment extends TimeBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cno;
 
-    // ✅ bno -> postId (Board.post_id FK)
     @Column(name = "post_id", nullable = false)
     private Long postId;
 
     @Column(length = 200, nullable = false)
     private String writer;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Lob
+    @Column(nullable = false)
     private String content;
 }
