@@ -496,6 +496,28 @@
       document.getElementById("refreshBtn").onclick = function () {
         loadMapData();
       };
+
+      // 6. [New] 입시 지형도(위성 모드) 토글 구현
+      const viewToggleBtn = document.getElementById("viewToggle");
+      let isSatellite = false;
+
+      viewToggleBtn.onclick = function () {
+        isSatellite = !isSatellite;
+
+        if (isSatellite) {
+          // 위성 모드 (SKYVIEW) + 라벨 (HYBRID 효과)
+          kakaoMap.setMapTypeId(kakao.maps.MapTypeId.HYBRID);
+          viewToggleBtn.innerHTML = "🗺️ 일반 지도로 전환";
+          viewToggleBtn.classList.remove("btn-outline-info");
+          viewToggleBtn.classList.add("btn-info", "text-white");
+        } else {
+          // 일반 모드 (ROADMAP)
+          kakaoMap.setMapTypeId(kakao.maps.MapTypeId.ROADMAP);
+          viewToggleBtn.innerHTML = "🔄 입시 지형도로 전환";
+          viewToggleBtn.classList.remove("btn-info", "text-white");
+          viewToggleBtn.classList.add("btn-outline-info");
+        }
+      };
     </script>
   </div>
 </html>
