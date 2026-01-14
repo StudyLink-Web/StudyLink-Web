@@ -1,5 +1,7 @@
 package com.StudyLink.www.entity;
 
+import com.StudyLink.www.dto.MentorProfileDTO;
+import com.StudyLink.www.dto.UsersDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -103,5 +105,21 @@ public class MentorProfile {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    // 🔹 DTO -> 엔티티 생성자
+    public MentorProfile(MentorProfileDTO dto, Users user) {
+        this.user = user;
+        this.userId = user.getUserId(); // @MapsId 필요
+        this.univId = dto.getUnivId();
+        this.deptId = dto.getDeptId();
+        this.studentCardImg = dto.getStudentCardImg();
+        this.isVerified = dto.getIsVerified() != null ? dto.getIsVerified() : false;
+        this.introduction = dto.getIntroduction();
+        this.averageRating = dto.getAverageRating() != null ? dto.getAverageRating() : 0.0;
+        this.point = dto.getPoint() != null ? dto.getPoint() : 0L;
+        this.exp = dto.getExp() != null ? dto.getExp() : 0L;
+        this.createdAt = dto.getCreatedAt();
+        this.updatedAt = dto.getUpdatedAt();
     }
 }

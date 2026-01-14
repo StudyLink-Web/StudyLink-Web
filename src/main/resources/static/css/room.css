@@ -1,3 +1,4 @@
+/* room css */
 /* 메시지 영역 */
 #messageArea {
     height: 500px;
@@ -65,4 +66,89 @@
     height: auto;          /* 비율 유지 */
     border-radius: 8px;    /* 모서리 살짝 둥글게 */
     object-fit: cover;     /* 영역에 맞춰 이미지 자르기 가능 */
+}
+
+/* input이 disabled일 때 label 스타일 */
+input:disabled + label {
+    background-color: #bbb;  /* 조금 더 어두운 배경 색 */
+    cursor: not-allowed; /* 클릭 방지 커서 */
+    opacity: 0.6;  /* 반투명 효과 */
+}
+
+
+
+
+/*-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------*/
+/* roomRegister css */
+.modal {
+    display: none; /* 처음에는 숨김 */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    width: 50%;
+    border-radius: 8px;
+}
+
+.close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+
+/*과목선택 select*/
+.custom-select {
+    width: 220px;
+    position: relative;
+}
+
+.selected {
+    border: 1px solid #ccc;
+    padding: 8px;
+    cursor: pointer;
+    background: #fff;
+    user-select: none;
+}
+
+.options {
+    position: absolute;
+    width: 100%;
+    border: 1px solid #ccc;
+    background: #fff;
+    max-height: 180px;        /* 스크롤 영역 */
+    overflow-y: auto;
+    display: none;
+    z-index: 1000;
+
+    /* 🔥 스크롤바 숨기기 */
+    scrollbar-width: none;   /* Firefox */
+    -ms-overflow-style: none;/* IE */
+}
+
+.options::-webkit-scrollbar {
+    display: none;           /* Chrome, Safari */
+}
+
+.option {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.option:hover {
+    background: #eee;
 }
