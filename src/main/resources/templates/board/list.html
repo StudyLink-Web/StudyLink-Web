@@ -12,9 +12,11 @@
 
     <div class="search_campus">
 
-        <div class="register_campus_link">
-            <a th:href="@{/board/register}">대학생활 등록하기</a>
+        <div class="register_campus_link"
+             onclick="goRegister();">
+            대학생활 등록하기
         </div>
+
 
         <!-- 검색/정렬 -->
         <form class="form_board" role="search" th:action="@{/board/list}" method="get">
@@ -119,6 +121,11 @@
             </ul>
         </nav>
     </div>
+
+    <script th:inline="javascript">
+        window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+    </script>
+    <script src="/js/board_list.js"></script>
 </div>
 
 </html>
