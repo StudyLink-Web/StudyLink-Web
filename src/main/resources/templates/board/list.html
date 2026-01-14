@@ -7,7 +7,6 @@
 <div layout:fragment="content" class="content_box">
 
     <link rel="stylesheet" th:href="@{/css/board.css}">
-    <script th:src="@{/js/board.js}"></script>
 
     <p class="life_campus">즐거운 대학캠퍼스 생활</p>
 
@@ -36,9 +35,10 @@
 
             <button type="submit" class="btn search_button">
                 검색
-                <span class="g">[[${ph.totalElement}]]</span>
             </button>
         </form>
+            <div class="total_gun"><p>총 <span class="g">[[${ph.totalElement}]]</span>건이 검색 되었습니다.</p></div>
+
 
         <!-- 데이터 없을 때 -->
         <div th:if="${ph.list == null or #lists.isEmpty(ph.list)}">
@@ -51,33 +51,35 @@
                  th:each="b : ${ph.list}"
                  class="board_infobox">
 
-                <div class="board_img">
-                    <img th:if="${b.thumbPath != null}"
-                         th:src="${b.thumbPath}"
-                         alt="게시글 이미지">
+                <div class="link_board_details" th:onclick="|location.href='@{/board/detail(postId=${b.postId})}'|">
+                    <div class="board_img" >
+                        <img th:if="${b.thumbPath != null}"
+                             th:src="${b.thumbPath}"
+                             alt="게시글 이미지">
 
-                    <img th:unless="${b.thumbPath != null}"
-                         th:src="@{/img/files.svg}"
-                         alt="기본 이미지">
-                </div>
-
-                <div class="board_info">
-                    <div class="board_title_class">
-                        <a th:href="@{/board/detail(postId=${b.postId})}"
-                           th:text="${b.title}"></a>
+                        <img th:unless="${b.thumbPath != null}"
+                             th:src="@{/img/files.svg}"
+                             alt="기본 이미지">
                     </div>
 
-                    <div class="board_writer">
-                        <span>작성자 : </span><span th:text="${b.writer}"></span>
-                        <p th:if="${b.department != null}">
-                            <span th:text="${b.department}"></span>
-                        </p>
+                    <div class="board_info">
+                        <div class="board_title_class">
+                            <span th:text="${b.title}"></span>
+                        </div>
+
+                        <div class="board_writer">
+                            <span>작성자 : </span><span th:text="${b.writer}"></span>
+                            <p th:if="${b.department != null}">
+                                <span th:text="${b.department}"></span>
+                            </p>
+                        </div>
+
+                        <div class="date_flex">
+                            <p th:text="${b.createdAt != null ? #temporals.format(b.createdAt, 'yyyy-MM-dd') : '-'}"></p>
+                            <p th:text="${b.viewCount}"></p>
+                        </div>
                     </div>
 
-                    <div class="date_flex">
-                        <p th:text="${b.createdAt != null ? #temporals.format(b.createdAt, 'yyyy-MM-dd') : '-'}"></p>
-                        <p th:text="${b.viewCount}"></p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -116,7 +118,6 @@
 
             </ul>
         </nav>
-
     </div>
 </div>
 
