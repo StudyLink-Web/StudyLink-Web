@@ -18,25 +18,21 @@ public class CustomErrorController implements ErrorController {
     public String handleError(HttpServletRequest request) {
 
         Object status = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
+        int statusCode = (status != null) ? Integer.parseInt(status.toString()) : 500;
 
-        if (status != null) {
-            int statusCode = Integer.parseInt(status.toString());
-            log.error("❌ Error 발생: statusCode={}", statusCode);
+        log.error("❌ Error 발생: statusCode={}", statusCode);
 
-            if (statusCode == HttpStatus.FORBIDDEN.value()) {
-                // ✅ 403 → 403.html (alert 뜸)
-                return VIEW_PATH + "403";
-            }
-
-            if (statusCode == HttpStatus.NOT_FOUND.value()) {
-                return VIEW_PATH + "404";
-            }
-
-            if (statusCode == HttpStatus.INTERNAL_SERVER_ERROR.value()) {
-                return VIEW_PATH + "500";
-            }
+        if (statusCode == HttpStatus.FORBIDDEN.value()) {
+            return VIEW_PATH + "403";
+        }
+        if (statusCode == HttpStatus.NOT_FOUND.value()) {
+            return VIEW_PATH + "404";
+        }
+        if (statusCode == HttpStatus.INTERNAL_SERVER_ERROR.value()) {
+            return VIEW_PATH + "500";
         }
 
+        // ✅ 나머지 에러도 statusCode별 페이지가 없으면 500으로 통일
         return VIEW_PATH + "500";
     }
 }

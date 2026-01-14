@@ -132,7 +132,7 @@ async function spreadCommentList(bno, page = 1) {
             }
         }
     } else {
-        ul.innerHTML = `<li class="list-group-item">Comment List Empty</li>`;
+        ul.innerHTML = `<li class="list-group-item">등록된 댓글이 없습니다.</li>`;
         const moreBtn = document.getElementById("moreBtn");
         if (moreBtn) moreBtn.style.visibility = "hidden";
     }

@@ -1,17 +1,35 @@
-function goRegister() {
-    // 비로그인
+document.addEventListener('DOMContentLoaded', () => {
+    const registerBtn = document.querySelector('.register_campus_link');
+    if (!registerBtn) return;
+
+    // 비로그인 or MENTOR 아님 → 숨김
     if (!window.IS_LOGIN) {
-        alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
-        location.href = '/user/login';
+        registerBtn.style.display = 'none';
         return;
     }
 
-    // STUDENT 또는 ROLE_USER → 차단
-    if (window.USER_ROLE === 'STUDENT' || window.USER_ROLE === 'ROLE_USER') {
+    const role = (window.USER_ROLE || '').toUpperCase();
+    const isMentor = (role === 'MENTOR' || role === 'ROLE_MENTOR');
+
+    if (!isMentor) {
+        registerBtn.style.display = 'none';
+    }
+});
+
+function goRegister() {
+    if (!window.IS_LOGIN) {
+        alert('로그인이 필요합니다.');
+        location.href = '/login';
+        return;
+    }
+
+    const role = (window.USER_ROLE || '').toUpperCase();
+    const isMentor = (role === 'MENTOR' || role === 'ROLE_MENTOR');
+
+    if (!isMentor) {
         alert('해당 기능은 권한이 없습니다.');
         return;
     }
 
-    // 허용
     location.href = '/board/register';
 }

@@ -5,7 +5,8 @@
 .search_campus {margin-top:30px;}
 
 .board_list_box {margin-top:20px; border:1px solid var(--border-color); border-radius: 10px;}
-.register_campus_link {text-align: right; padding-right:20px; font-weight: 700; font-size:20px; color:var(--primary-color); margin-bottom:20px; cursor:pointer;}
+.register_campus_link {text-align: right; padding-right:20px; font-weight: 700; font-size:20px; color:var(--primary-color); margin-bottom:20px;}
+.register_campus_link span {cursor:pointer;}
 .board_img img {max-width:400px; height:150px; display: block; margin:0 auto;}
 .board_img { border-bottom:1px solid var(--border-color); padding:20px 0;}
 .board_title_class {font-size:20px; font-weight: 700; margin-top:10px;}
