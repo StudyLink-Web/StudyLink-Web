@@ -9,11 +9,11 @@ import com.StudyLink.www.service.StudentProfileService;
 import com.StudyLink.www.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,18 +28,20 @@ public class RoomController {
     private final UserService userService;
     private final StudentProfileService studentProfileService;
 
-    @PostMapping("/list")
-    public void list(@RequestParam(required = false) String username, Model model){
+    @GetMapping("/list")
+    public void list(Authentication authentication, Model model){
         List<RoomDTO> privateRoomList = new ArrayList<>();
-        if (username != null){
-            long mentorId = userService.findUserIdByUsername(username);
-            log.info(">>> mentorId {}", mentorId);
 
-            // 멘토 개인 방
+        if (authentication != null && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken)) {
+            String username = authentication.getName();
+            long mentorId = userService.findUserIdByUsername(username);
             privateRoomList = roomService.getPrivateRoomList(mentorId);
         }
+        // 멘토 개인 방
         log.info(">>> privateRoomList {}", privateRoomList);
         model.addAttribute("privateRoomList", privateRoomList);
+
 
         // 공개 방
         List<RoomDTO> roomList = roomService.getRoomList();

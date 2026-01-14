@@ -18,15 +18,9 @@
   </head>
 
   <div layout:fragment="content" class="content_box">
-	  <!-- 기존 코드 (그대로 유지!) -->
-	  <form action="/room/list" method="post">
-		  <button type="submit" class="btn btn-primary">문제 리스트</button>
-
-		  <!-- 로그인 유저일 때만 input 생성 -->
-		  <input type="hidden" name="username" th:value="${#authentication.name}"
-				 th:if="${#authorization.expression('isAuthenticated()')}" />
-	  </form>
-	<!-- ✅ 챗봇 페이지 및 API 공개 (실험용) -->
+    <!-- 기존 코드 (그대로 유지!) -->
+    <a href="/room/list" class="btn btn-primary">문제 리스트</a>
+    <!-- ✅ 챗봇 페이지 및 API 공개 (실험용) -->
     <a href="/chatbot" class="btn btn-success">🤖 AI 대입 상담 챗봇</a>
     <a href="/board/list" class="btn btn-success">대학생활 게시판</a>
     <!-- 📍 입시 지도 서비스 추가 -->
