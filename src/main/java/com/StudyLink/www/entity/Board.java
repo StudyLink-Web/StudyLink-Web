@@ -18,15 +18,12 @@ public class Board extends TimeBase {
     @Column(name = "post_id")
     private Long postId;
 
-    // FK: Users PK(Long)
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    // 로그인 ID (문자열)
     @Column(name = "writer", nullable = false, length = 200)
     private String writer;
 
-    // 학과
     @Column(name = "department", length = 100)
     private String department;
 

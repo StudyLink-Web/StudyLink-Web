@@ -17,9 +17,15 @@ public class FileDTO {
     private int fileType;
     private long fileSize;
 
-    // ✅ 게시글 FK
+    // 게시글 FK
     private Long postId;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // 썸네일 여부 판별 헬퍼
+    public boolean isThumbnail() {
+        return (uuid != null && uuid.startsWith("_th_"))
+                || (fileName != null && fileName.contains("_th_"));
+    }
 }

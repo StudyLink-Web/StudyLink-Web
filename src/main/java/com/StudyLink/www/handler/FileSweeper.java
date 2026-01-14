@@ -1,7 +1,7 @@
 package com.StudyLink.www.handler;
 
 import com.StudyLink.www.dto.FileDTO;
-import com.StudyLink.www.service.BoardService;   // ✅ BoardService import 추가
+import com.StudyLink.www.service.BoardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

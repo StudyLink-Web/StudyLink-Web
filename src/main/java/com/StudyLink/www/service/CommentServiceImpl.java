@@ -18,53 +18,56 @@ public class CommentServiceImpl implements CommentService {
 
     @Transactional
     @Override
-    public long post(CommentDTO dto) {
+    public int post(CommentDTO dto) {
         if (dto == null || dto.getPostId() == null) {
             log.error("post failed: postId is null. dto={}", dto);
-            return 0L;
+            return 0;
         }
         if (dto.getWriter() == null || dto.getWriter().trim().isEmpty()) {
             log.error("post failed: writer is null/blank. dto={}", dto);
-            return 0L;
+            return 0;
         }
         if (dto.getContent() == null || dto.getContent().trim().isEmpty()) {
             log.error("post failed: content is null/blank. dto={}", dto);
-            return 0L;
+            return 0;
         }
 
         Comment comment = convertDtoToEntity(dto);
         Comment saved = commentRepository.save(comment);
-        return saved.getCno() != null ? saved.getCno() : 0L;
+        return (saved.getCno() != null && saved.getCno() > 0) ? 1 : 0;
     }
 
     @Transactional
     @Override
-    public long modify(CommentDTO dto) {
-        if (dto == null || dto.getCno() == null) {
-            log.error("modify failed: cno is null. dto={}", dto);
-            return 0L;
+    public int modify(CommentDTO dto) {
+        if (dto == null || dto.getCno() == null || dto.getCno() <= 0) {
+            log.error("modify failed: cno is null/invalid. dto={}", dto);
+            return 0;
+        }
+        if (dto.getContent() == null || dto.getContent().trim().isEmpty()) {
+            log.error("modify failed: content is null/blank. dto={}", dto);
+            return 0;
         }
 
         Comment origin = commentRepository.findById(dto.getCno())
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다. cno=" + dto.getCno()));
 
-        // ✅ 내용만 수정(보통 writer/postId는 유지)
         origin.setContent(dto.getContent());
 
-        Comment saved = commentRepository.save(origin);
-        return saved.getCno() != null ? saved.getCno() : 0L;
+        commentRepository.save(origin);
+        return 1;
     }
 
     @Transactional
     @Override
-    public long remove(long cno) {
-        if (cno <= 0) return 0L;
+    public int remove(long cno) {
+        if (cno <= 0) return 0;
 
         if (!commentRepository.existsById(cno)) {
-            return 0L;
+            return 0;
         }
         commentRepository.deleteById(cno);
-        return 1L;
+        return 1;
     }
 
     @Transactional(readOnly = true)

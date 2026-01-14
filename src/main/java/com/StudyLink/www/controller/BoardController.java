@@ -58,33 +58,39 @@ public class BoardController {
         List<FileDTO> fileList = null;
         if (files != null && files.length > 0 && !files[0].isEmpty()) {
             fileList = fileHandler.uploadFile(files);
+            if (fileList != null) {
+                fileList = fileList.stream()
+                        .filter(f -> f != null)
+                        .filter(f -> {
+                            String u = f.getUuid();
+                            String n = f.getFileName();
+                            boolean isThumb =
+                                    (u != null && u.startsWith("_th_")) ||
+                                            (n != null && n.contains("_th_"));
+                            return !isThumb;
+                        })
+                        .toList();
+            }
         }
 
         boardService.insert(new BoardFileDTO(boardDTO, fileList));
         return "redirect:/board/list";
     }
 
-    // ✅ 목록 + 검색 + 정렬
     @GetMapping("/list")
     public String list(Model model,
                        @RequestParam(name = "pageNo", defaultValue = "1") int pageNo,
                        @RequestParam(name = "type", required = false) String type,
                        @RequestParam(name = "keyword", required = false) String keyword) {
 
-        // ✅ 서비스에서 type/keyword 처리(정렬/검색)
         Page<BoardDTO> page = boardService.getList(pageNo, type, keyword);
 
-        // ✅ PageHandler에 type/keyword도 보관(뷰에서 상태 유지)
         PageHandler<BoardDTO> ph = new PageHandler<>(page, pageNo, type, keyword);
         model.addAttribute("ph", ph);
 
-        // ✅ void 메서드 대신 템플릿 명시 (추천)
         return "board/list";
     }
 
-    /**
-     * ✅ detail 화면 하나로 read/modify 같이 사용
-     */
     @GetMapping("/detail")
     public String detail(@RequestParam("postId") long postId,
                          @RequestParam(name = "mode", defaultValue = "read") String mode,
@@ -95,7 +101,6 @@ public class BoardController {
         boolean fromList = (referer != null && referer.contains("/board/list"));
         boolean isModifyMode = "modify".equalsIgnoreCase(mode);
 
-        // ✅ read 모드 + list에서 들어온 경우만 조회수 증가
         if (fromList && !isModifyMode) {
             try {
                 boardService.increaseViewCount(postId);
@@ -111,9 +116,6 @@ public class BoardController {
         return "board/detail";
     }
 
-    /**
-     * ✅ 수정 저장(POST)
-     */
     @PostMapping("/modify")
     public String modify(BoardDTO boardDTO,
                          RedirectAttributes redirectAttributes,
@@ -129,6 +131,19 @@ public class BoardController {
         List<FileDTO> fileDTOList = null;
         if (files != null && files.length > 0 && !files[0].isEmpty()) {
             fileDTOList = fileHandler.uploadFile(files);
+            if (fileDTOList != null) {
+                fileDTOList = fileDTOList.stream()
+                        .filter(f -> f != null)
+                        .filter(f -> {
+                            String u = f.getUuid();
+                            String n = f.getFileName();
+                            boolean isThumb =
+                                    (u != null && u.startsWith("_th_")) ||
+                                            (n != null && n.contains("_th_"));
+                            return !isThumb;
+                        })
+                        .toList();
+            }
         }
 
         Long postId = boardService.modify(new BoardFileDTO(boardDTO, fileDTOList));
@@ -137,7 +152,6 @@ public class BoardController {
         return "redirect:/board/detail";
     }
 
-    // ⚠️ 가능하면 POST/DELETE 권장(지금은 유지)
     @GetMapping("/remove")
     public String remove(@RequestParam("postId") long postId) {
         boardService.remove(postId);
@@ -166,7 +180,6 @@ public class BoardController {
                 : ResponseEntity.internalServerError().build();
     }
 
-    // ✅ 파일/이미지 보기: /board/file/{uuid}
     @GetMapping("/file/{uuid}")
     @ResponseBody
     public ResponseEntity<Resource> viewFile(@PathVariable String uuid) throws MalformedURLException {
