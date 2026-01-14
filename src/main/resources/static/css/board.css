@@ -11,8 +11,8 @@
 .board_img { border-bottom:1px solid var(--border-color); padding:20px 0;}
 .board_title_class {font-size:20px; font-weight: 700; margin-top:10px;}
 .date_flex {display: flex; align-items: center; justify-content: space-between}
-.board_list_view {display: grid; grid-template-columns:repeat(4, 1fr); gap:20px; padding:0 20px;}
-.board_infobox {padding:0 20px; border:1px solid var(--border-color); border-radius: 10px; margin-top:30px;}
+.board_list_view {display: grid; grid-template-columns:repeat(4, 1fr); gap:20px; padding:0 20px 30px;}
+.board_infobox {padding:0 20px; border:1px solid var(--border-color); border-radius: 10px;}
 .board_title_not {text-align: center;}
 .search_button {background: var(--primary-color); flex:none; color:#fff;}
 .search_button:hover {background: var(--primary-color); color:#fff;}
@@ -21,6 +21,6 @@
 .form_board_box select, .form_board_box input {width:100%; display: block;}
 .form_board_box input {min-width:250px;}
 .pagination {padding:30px 0;}
-.total_gun {text-align: right; font-size:20px; font-weight: 700; margin-top:10px; padding:0 20px;}
+.total_gun {text-align: right; font-size:20px; font-weight: 700; margin:10px 0 30px; padding:0 20px;}
 .total_gun span {color:crimson; }
 .link_board_details {cursor:pointer;}
