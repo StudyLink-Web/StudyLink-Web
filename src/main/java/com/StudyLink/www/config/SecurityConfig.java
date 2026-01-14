@@ -64,6 +64,10 @@ public class SecurityConfig {
                         // ✅ 댓글 작성/수정/삭제는 로그인 필요
                         .requestMatchers("/comment/post", "/comment/modify", "/comment/remove/**").authenticated()
 
+                        // ✅ ✅ ✅ 등록(폼/처리) 접근은 ROLE_ADMIN만 허용 (원하면 ROLE_TEACHER 등 추가 가능)
+                        // ⚠️ 중요: /board/** permitAll 보다 "위"에 있어야 우선 적용됨
+                        .requestMatchers("/board/register", "/board/register/**").hasRole("MENTOR")
+
                         .requestMatchers(
                                 "/",
                                 "/index",
@@ -86,6 +90,7 @@ public class SecurityConfig {
                                 "/room/**",
                                 "/ws/**",
 
+                                // ✅ board 전체는 공개 유지 (단, 위에서 register는 예외로 막음)
                                 "/board/**",
 
                                 "/.well-known/**",

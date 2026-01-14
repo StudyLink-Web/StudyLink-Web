@@ -124,6 +124,7 @@
 
     <script th:inline="javascript">
         window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+        window.USER_ROLE = /*[[${#authentication?.authorities[0]?.authority}]]*/ null;
     </script>
     <script src="/js/board_list.js"></script>
 </div>
