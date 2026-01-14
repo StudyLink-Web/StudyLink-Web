@@ -21,7 +21,8 @@ public class RoomFileServiceImpl implements RoomFileService{
 
     @Override
     public RoomFileDTO loadFile(String uuid) {
-        return new RoomFileDTO(roomFileRepository.findById(uuid).orElseThrow(() -> new EntityNotFoundException()));
+        return new RoomFileDTO(roomFileRepository
+                .findById(uuid).orElseThrow(() -> new EntityNotFoundException("해당 파일이 없습니다.")));
     }
 
 }

@@ -10,4 +10,10 @@ public interface RoomService {
     List<SubjectDTO> getSubjectDTOList();
 
     RoomDTO createRoom(long studentId);
+
+    List<RoomDTO> getRoomList();
+
+    void update(long roomId, int subjectId, Long mentorId, int point);
+
+    List<RoomDTO> getPrivateRoomList(long mentorId);
 }

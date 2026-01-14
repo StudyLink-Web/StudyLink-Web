@@ -29,6 +29,7 @@ public class RoomDTO {
         TEMP,
         PENDING,
         IN_PROGRESS,
+        ANSWERED,
         COMPLETED
     }
 

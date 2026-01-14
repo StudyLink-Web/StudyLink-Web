@@ -3,7 +3,6 @@ package com.StudyLink.www.controller;
 import com.StudyLink.www.dto.FavoriteDTO;
 import com.StudyLink.www.dto.RoomDTO;
 import com.StudyLink.www.dto.SubjectDTO;
-import com.StudyLink.www.entity.StudentProfile;
 import com.StudyLink.www.service.FavoriteService;
 import com.StudyLink.www.service.RoomService;
 import com.StudyLink.www.service.StudentProfileService;
@@ -12,11 +11,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RequestMapping("/room/*")
@@ -29,21 +28,39 @@ public class RoomController {
     private final UserService userService;
     private final StudentProfileService studentProfileService;
 
-    @GetMapping("/list")
-    public void list(){}
+    @PostMapping("/list")
+    public void list(@RequestParam(required = false) String username, Model model){
+        List<RoomDTO> privateRoomList = new ArrayList<>();
+        if (username != null){
+            long mentorId = userService.findUserIdByUsername(username);
+            log.info(">>> mentorId {}", mentorId);
+
+            // 멘토 개인 방
+            privateRoomList = roomService.getPrivateRoomList(mentorId);
+        }
+        log.info(">>> privateRoomList {}", privateRoomList);
+        model.addAttribute("privateRoomList", privateRoomList);
+
+        // 공개 방
+        List<RoomDTO> roomList = roomService.getRoomList();
+        log.info(">>> roomList {}", roomList);
+        model.addAttribute("roomList", roomList);
+    }
 
     // list에서 room으로 입장하는 경우(학생이 첫 생성시)
     @PostMapping("/enterRoom")
     public String room(@RequestParam String username, Model model){
         log.info(">>> username {}", username);
+
         // username -> studentId
         long studentId = userService.findUserIdByUsername(username);
         log.info(">>> studentId {}", studentId);
+        model.addAttribute("senderId", studentId);
 
         // 방 생성
         RoomDTO roomDTO = roomService.createRoom(studentId);
         log.info(">>> roomDTO {}", roomDTO);
-
+        model.addAttribute("roomId", roomDTO.getRoomId());
 
 
 
@@ -72,18 +89,16 @@ public class RoomController {
 
     // room에서 등록후 list로 돌아가는 경우
     @PostMapping("/register")
-    public String room(int subjectId, int point, @RequestParam(required = false) Long mentorId){
+    public String room(long roomId, int subjectId, int point, @RequestParam(required = false) Long mentorId){
         log.info(">>> subjectId {}", subjectId);
         log.info(">>> mentorId {}", mentorId);
         log.info(">>> point {}", point);
 
         // room 정보 갱신하기
         // subjectId 넣기
-
         // mentorId 넣기 null이면 공개
-
         // point 넣기 + 학생 계좌에서 point 빼기
-
+        roomService.update(roomId, subjectId, mentorId, point);
         return "redirect:/room/list";
     }
 }

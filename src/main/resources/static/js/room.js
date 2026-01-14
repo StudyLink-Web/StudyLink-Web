@@ -1,4 +1,4 @@
-const roomId = 1;
+//const roomId = 1;
 
 function randomNumberString(length) {
     let result = '';
@@ -8,8 +8,8 @@ function randomNumberString(length) {
     return Number(result);
 }
 
-const senderId = randomNumberString(10);
-console.log("senderId =", senderId);
+// const senderId = randomNumberString(10);
+// console.log("senderId =", senderId);
 
 
 function connect() {
@@ -226,7 +226,7 @@ function spreadFileMessage(msg, roomFileDTO) {
     }
 
     // 이미지 파일
-    if (roomFileDTO.file_type === 1) {
+    if (roomFileDTO.fileType === 1) {
         const img = document.createElement('img');
         img.src = `/room/loadFile/${roomFileDTO.uuid}`; // img 태그의 src경로를 브라우저가 자동으로 get요청
         img.classList.add('chat-image');
@@ -398,7 +398,7 @@ document.addEventListener('click', async (e)=>{
                 console.log(`❌ 파일 ${file.name} 업로드 실패`);
             }
         }
-
+        fileInput.value = ''; // 선택 파일 초기화
     }
 })
 

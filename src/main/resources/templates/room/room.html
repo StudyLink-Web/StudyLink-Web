@@ -29,6 +29,7 @@
 				<div>보유 포인트 : [[${point}]]</div>
 				<div id="pointDiv"></div>
 				<div id="btnDiv"></div>
+				<input type="hidden" name="roomId" th:value="${roomId}">
 			</form>
 		</div>
 	</div>
@@ -67,7 +68,10 @@
         let subjectList = [[${subjectList}]];
         let favoriteList = [[${favoriteList}]];
         let point = [[${point}]];
+        let roomId = [[${roomId}]]
+        let senderId = [[${senderId}]]
 	</script>
 	<script src="/js/room.js"></script>
 	<script src="/js/roomRegister.js"></script>
 </div>
+

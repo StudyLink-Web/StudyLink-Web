@@ -53,6 +53,7 @@ public class Room {
         TEMP,
         PENDING,
         IN_PROGRESS,
+        ANSWERED,
         COMPLETED
     }
 
