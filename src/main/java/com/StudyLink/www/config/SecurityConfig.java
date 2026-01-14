@@ -58,14 +58,16 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(authz -> authz
-                        // ✅ 댓글 "목록 조회"는 비로그인도 허용
+                        // ✅ 댓글 목록: 비로그인 허용
                         .requestMatchers(HttpMethod.GET, "/comment/list/**").permitAll()
 
-                        // ✅ 댓글 작성/수정/삭제는 로그인 필요
+                        // ✅ 댓글 작성/수정/삭제: 로그인 필요
                         .requestMatchers("/comment/post", "/comment/modify", "/comment/remove/**").authenticated()
 
-                        // ✅ ✅ ✅ 등록(폼/처리) 접근은 ROLE_ADMIN만 허용 (원하면 ROLE_TEACHER 등 추가 가능)
-                        // ⚠️ 중요: /board/** permitAll 보다 "위"에 있어야 우선 적용됨
+                        // ✅ 에러 페이지는 누구나 접근 가능 (CustomErrorController가 /error 에서 분기함)
+                        .requestMatchers("/error", "/error/**").permitAll()
+
+                        // ✅ 등록(폼/처리): MENTOR만 허용 ( /board/** permitAll 보다 위에 있어야 함 )
                         .requestMatchers("/board/register", "/board/register/**").hasRole("MENTOR")
 
                         .requestMatchers(
@@ -90,7 +92,7 @@ public class SecurityConfig {
                                 "/room/**",
                                 "/ws/**",
 
-                                // ✅ board 전체는 공개 유지 (단, 위에서 register는 예외로 막음)
+                                // ✅ board 전체 공개(단, register는 위에서 예외로 막음)
                                 "/board/**",
 
                                 "/.well-known/**",
@@ -100,6 +102,11 @@ public class SecurityConfig {
                                 "/map/**"
                         ).permitAll()
                         .anyRequest().authenticated()
+                )
+
+                // ✅ 권한(403) 처리: /error 로 보내서 CustomErrorController가 403.html로 분기
+                .exceptionHandling(e -> e
+                        .accessDeniedPage("/error")
                 )
 
                 .formLogin(form -> form

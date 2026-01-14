@@ -41,13 +41,24 @@ public class BoardController {
 
     private static final String UPLOAD_ROOT = "D:/web_0826_shinjw/_myProject/_java/_fileUpload";
 
+    // ✅ 등록 폼: 인증/권한은 SecurityConfig에서 막지만, 컨트롤러에서도 방어적으로 체크
     @GetMapping("/register")
-    public void register() {}
+    public String register(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+        return "board/register";
+    }
 
+    // ✅ 등록 처리: 인증 필수 + NPE 방지
     @PostMapping("/register")
     public String register(BoardDTO boardDTO,
                            @RequestParam(name = "files", required = false) MultipartFile[] files,
                            Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
 
         String username = authentication.getName();
         Long userId = userService.findUserIdByUsername(username);
@@ -56,7 +67,7 @@ public class BoardController {
         boardDTO.setWriter(username);
 
         List<FileDTO> fileList = null;
-        if (files != null && files.length > 0 && !files[0].isEmpty()) {
+        if (files != null && files.length > 0 && files[0] != null && !files[0].isEmpty()) {
             fileList = fileHandler.uploadFile(files);
             if (fileList != null) {
                 fileList = fileList.stream()
@@ -84,7 +95,6 @@ public class BoardController {
                        @RequestParam(name = "keyword", required = false) String keyword) {
 
         Page<BoardDTO> page = boardService.getList(pageNo, type, keyword);
-
         PageHandler<BoardDTO> ph = new PageHandler<>(page, pageNo, type, keyword);
         model.addAttribute("ph", ph);
 
@@ -116,20 +126,33 @@ public class BoardController {
         return "board/detail";
     }
 
+    // ✅ 수정 처리: 인증 필수 + 작성자 검증(최소 방어)
     @PostMapping("/modify")
     public String modify(BoardDTO boardDTO,
                          RedirectAttributes redirectAttributes,
                          @RequestParam(name = "files", required = false) MultipartFile[] files,
                          Authentication authentication) {
 
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
         String username = authentication.getName();
         Long userId = userService.findUserIdByUsername(username);
+
+        // ✅ 작성자/권한 검증(서비스에서 더 강하게 검증해도 됨)
+        BoardFileDTO origin = boardService.getDetail(boardDTO.getPostId());
+        if (origin == null || origin.getBoardDTO() == null ||
+                origin.getBoardDTO().getUserId() == null ||
+                !origin.getBoardDTO().getUserId().equals(userId)) {
+            return "redirect:/error/403";
+        }
 
         boardDTO.setUserId(userId);
         boardDTO.setWriter(username);
 
         List<FileDTO> fileDTOList = null;
-        if (files != null && files.length > 0 && !files[0].isEmpty()) {
+        if (files != null && files.length > 0 && files[0] != null && !files[0].isEmpty()) {
             fileDTOList = fileHandler.uploadFile(files);
             if (fileDTOList != null) {
                 fileDTOList = fileDTOList.stream()
@@ -152,24 +175,57 @@ public class BoardController {
         return "redirect:/board/detail";
     }
 
+    // ✅ 삭제: 인증 필수 + 작성자 검증(최소 방어)
     @GetMapping("/remove")
-    public String remove(@RequestParam("postId") long postId) {
+    public String remove(@RequestParam("postId") long postId,
+                         Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        String username = authentication.getName();
+        Long userId = userService.findUserIdByUsername(username);
+
+        BoardFileDTO origin = boardService.getDetail(postId);
+        if (origin == null || origin.getBoardDTO() == null ||
+                origin.getBoardDTO().getUserId() == null ||
+                !origin.getBoardDTO().getUserId().equals(userId)) {
+            return "redirect:/error/403";
+        }
+
         boardService.remove(postId);
         return "redirect:/board/list";
     }
 
+    // ✅ 파일 삭제: 인증 필수 (그리고 작성자 검증 추가)
     @DeleteMapping("/file/{uuid}")
     @ResponseBody
-    public ResponseEntity<String> fileRemove(@PathVariable("uuid") String uuid) {
+    public ResponseEntity<String> fileRemove(@PathVariable("uuid") String uuid,
+                                             Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body("0");
+        }
+
+        String username = authentication.getName();
+        Long userId = userService.findUserIdByUsername(username);
 
         FileDTO removeFile = boardService.getFile(uuid);
         if (removeFile == null) {
             return ResponseEntity.notFound().build();
         }
 
+        // ✅ 파일이 속한 게시글 작성자 검증
+        BoardFileDTO origin = boardService.getDetail(removeFile.getPostId());
+        if (origin == null || origin.getBoardDTO() == null ||
+                origin.getBoardDTO().getUserId() == null ||
+                !origin.getBoardDTO().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("0");
+        }
+
         FileRemoveHandler fileRemoveHandler = new FileRemoveHandler();
         boolean isDel = fileRemoveHandler.removeFile(removeFile);
-
         if (!isDel) {
             return ResponseEntity.internalServerError().build();
         }
