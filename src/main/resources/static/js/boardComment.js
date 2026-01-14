@@ -1,9 +1,13 @@
 console.log("boardComment.js in");
 console.log("bnoValue =", typeof bnoValue !== "undefined" ? bnoValue : "UNDEFINED");
 
-// ✅ CSRF: meta에서 직접 읽기 (전역 csrfToken/csrfHeader 의존 제거)
+// ✅ CSRF: meta에서 직접 읽기
 const _csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute("content") || "";
 const _csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute("content") || "";
+
+// ✅ 로그인 정보(템플릿에서 window.IS_LOGIN / window.LOGIN_USER 주입한 값 사용)
+const IS_LOGIN = !!window.IS_LOGIN;
+const LOGIN_USER = window.LOGIN_USER || "";
 
 // ✅ 공통: 헤더 만들기
 function buildHeaders(extra = {}) {
@@ -22,19 +26,34 @@ async function debugResponse(resp) {
     return text;
 }
 
-// ✅ 페이지 로드 시 댓글 1페이지 출력
+// ✅ XSS 방지(렌더링용)
+function esc(s) {
+    return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+}
+
+// ✅ 페이지 로드 시 댓글 1페이지 출력 (누구나)
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof bnoValue !== "undefined" && bnoValue) {
         spreadCommentList(bnoValue, 1);
     }
 });
 
-// ✅ 댓글 등록 버튼
+// ✅ 댓글 등록 버튼 (로그인만)
 const addBtn = document.getElementById("cmtAddBtn");
 if (addBtn) {
     addBtn.addEventListener("click", async () => {
+        if (!IS_LOGIN) {
+            alert("로그인이 필요합니다. 로그인 페이지로 이동합니다.");
+            location.href = "/user/login";
+            return;
+        }
+
         const cmtText = document.getElementById("cmtText");
-        const cmtWriter = document.getElementById("cmtWriter");
 
         if (!cmtText || cmtText.value.trim() === "") {
             alert("댓글 입력요망!");
@@ -49,14 +68,14 @@ if (addBtn) {
 
         const cmtData = {
             postId: bnoValue,
-            writer: cmtWriter ? cmtWriter.innerText : (typeof loginUser !== "undefined" ? loginUser : ""),
+            writer: LOGIN_USER,
             content: cmtText.value.trim()
         };
 
         const result = await postCommentToServer(cmtData);
         console.log("post result =", result);
 
-        if (result === "1") {
+        if (String(result).trim() === "1") {
             alert("등록성공");
             cmtText.value = "";
             cmtText.focus();
@@ -67,7 +86,7 @@ if (addBtn) {
     });
 }
 
-// ✅ 댓글 리스트 출력
+// ✅ 댓글 리스트 출력 (누구나)
 async function spreadCommentList(bno, page = 1) {
     const ul = document.getElementById("cmtListArea");
     if (!ul) return;
@@ -83,23 +102,25 @@ async function spreadCommentList(bno, page = 1) {
     if (result.list.length > 0) {
         if (page === 1) ul.innerHTML = "";
 
-        let li = "";
+        let html = "";
         for (const comment of result.list) {
-            li += `<li class="list-group-item" data-cno="${comment.cno}">`;
-            li += `  <div class="ms-2 me-auto">`;
-            li += `    <div class="fw-bold">${comment.writer}</div>`;
-            li += `    ${comment.content}`;
-            li += `  </div>`;
-            li += `  <span class="badge text-bg-primary">${comment.regDate}</span>`;
+            const isMine = IS_LOGIN && LOGIN_USER && (LOGIN_USER === comment.writer);
 
-            if (typeof loginUser !== "undefined" && loginUser && loginUser === comment.writer) {
-                li += `  <button type="button" class="btn btn-sm btn-outline-warning mod" data-bs-toggle="modal" data-bs-target="#commentModal">e</button>`;
-                li += `  <button type="button" class="btn btn-sm btn-outline-danger del">x</button>`;
+            html += `<li class="list-group-item" data-cno="${esc(comment.cno)}">`;
+            html += `  <div class="ms-2 me-auto">`;
+            html += `    <div class="fw-bold">${esc(comment.writer)}</div>`;
+            html += `    <span class="cmt-content">${esc(comment.content)}</span>`;
+            html += `  </div>`;
+            html += `  <span class="badge text-bg-primary">${esc(comment.regDate)}</span>`;
+
+            if (isMine) {
+                html += `  <button type="button" class="btn btn-sm btn-outline-warning mod" data-bs-toggle="modal" data-bs-target="#commentModal">e</button>`;
+                html += `  <button type="button" class="btn btn-sm btn-outline-danger del">x</button>`;
             }
 
-            li += `</li>`;
+            html += `</li>`;
         }
-        ul.innerHTML += li;
+        ul.innerHTML += html;
 
         const moreBtn = document.getElementById("moreBtn");
         if (moreBtn) {
@@ -112,45 +133,81 @@ async function spreadCommentList(bno, page = 1) {
         }
     } else {
         ul.innerHTML = `<li class="list-group-item">Comment List Empty</li>`;
+        const moreBtn = document.getElementById("moreBtn");
+        if (moreBtn) moreBtn.style.visibility = "hidden";
     }
 }
 
 // ✅ 이벤트 위임(수정/삭제/더보기)
 document.addEventListener("click", async (e) => {
+    // 더보기
     if (e.target.id === "moreBtn") {
         spreadCommentList(bnoValue, parseInt(e.target.dataset.page, 10));
+        return;
     }
 
+    // 수정 버튼 클릭 → 모달 세팅 (본인만 버튼이 보이지만, 방어적으로 로그인 체크)
     if (e.target.classList.contains("mod")) {
+        if (!IS_LOGIN) {
+            alert("로그인이 필요합니다.");
+            location.href = "/user/login";
+            return;
+        }
+
         const li = e.target.closest("li");
         const cno = li?.dataset.cno;
 
-        const writerEl = li?.querySelector(".fw-bold");
-        const cmtWriter = writerEl ? writerEl.innerText : "";
-        const cmtTextNode = writerEl ? writerEl.nextSibling : null;
-        const cmtText = cmtTextNode ? cmtTextNode.nodeValue : "";
+        const cmtWriter = li?.querySelector(".fw-bold")?.innerText || "";
+        const cmtText = li?.querySelector(".cmt-content")?.innerText || "";
 
-        document.getElementById("cmtWriterMod").innerHTML = `no.${cno}  <b>${cmtWriter}</b>`;
+        document.getElementById("cmtWriterMod").innerHTML = `no.${esc(cno)}  <b>${esc(cmtWriter)}</b>`;
         document.getElementById("cmtTextMod").value = (cmtText || "").trim();
         document.getElementById("cmtModBtn").setAttribute("data-cno", cno);
+        return;
     }
 
+    // 모달 수정 확정
     if (e.target.id === "cmtModBtn") {
+        if (!IS_LOGIN) {
+            alert("로그인이 필요합니다.");
+            location.href = "/user/login";
+            return;
+        }
+
+        const content = document.getElementById("cmtTextMod")?.value?.trim() || "";
+        if (!content) {
+            alert("내용을 입력하세요.");
+            document.getElementById("cmtTextMod")?.focus();
+            return;
+        }
+
         const modData = {
-            cno: e.target.dataset.cno,
-            content: document.getElementById("cmtTextMod").value.trim()
+            cno: Number(e.target.dataset.cno),
+            content
         };
 
         const result = await updateCommentToServer(modData);
-        if (result === "1") alert("수정성공!");
+        if (String(result).trim() === "1") alert("수정성공!");
         spreadCommentList(bnoValue, 1);
         document.querySelector("#commentModal .btn-close")?.click();
+        return;
     }
 
+    // 삭제
     if (e.target.classList.contains("del")) {
+        if (!IS_LOGIN) {
+            alert("로그인이 필요합니다.");
+            location.href = "/user/login";
+            return;
+        }
+
+        if (!confirm("댓글을 삭제할까요?")) return;
+
         const li = e.target.closest("li");
-        const result = await removeCommentToServer(li.dataset.cno);
-        if (result === "1") alert("댓글삭제성공!");
+        const cno = li?.dataset.cno;
+
+        const result = await removeCommentToServer(cno);
+        if (String(result).trim() === "1") alert("댓글삭제성공!");
         spreadCommentList(bnoValue, 1);
     }
 });
@@ -190,7 +247,7 @@ async function updateCommentToServer(modData) {
     }
 }
 
-// list
+// list (누구나)
 async function commentListFromServer(bno, page) {
     try {
         const resp = await fetch("/comment/list/" + bno + "/" + page, { method: "GET" });
@@ -202,7 +259,7 @@ async function commentListFromServer(bno, page) {
     }
 }
 
-// post (JSON only)
+// post (로그인만)
 async function postCommentToServer(cmtData) {
     try {
         const url = "/comment/post";
