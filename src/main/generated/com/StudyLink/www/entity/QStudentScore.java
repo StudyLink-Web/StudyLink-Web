@@ -24,7 +24,7 @@ public class QStudentScore extends EntityPathBase<StudentScore> {
 
     public final StringPath category = createString("category");
 
-    public final NumberPath<Integer> score = createNumber("score", Integer.class);
+    public final NumberPath<Double> score = createNumber("score", Double.class);
 
     public final NumberPath<Long> scoreId = createNumber("scoreId", Long.class);
 

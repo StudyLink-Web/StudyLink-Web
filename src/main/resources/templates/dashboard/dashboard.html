@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/layout}"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title>마이 대시보드 - StudyLink</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      .dashboard-container {
+        padding: 40px 0;
+        background-color: #f4f7f6;
+        min-height: calc(100vh - 150px);
+      }
+      .card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        background: #ffffff;
+        margin-bottom: 25px;
+      }
+      .card-header {
+        background: none;
+        border-bottom: 1px solid #f1f1f1;
+        padding: 20px 25px;
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: #333;
+      }
+      .card-body {
+        padding: 25px;
+      }
+      .score-input-item {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        border: 1px solid #eee;
+        transition: all 0.2s;
+      }
+      .score-input-item:hover {
+        border-color: #667eea;
+        background: #fff;
+      }
+      .score-label {
+        font-weight: 700;
+        color: #444;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: space-between;
+      }
+      .analysis-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 300px;
+        color: #adb5bd;
+        text-align: center;
+      }
+      .btn-save {
+        padding: 12px 30px;
+        border-radius: 10px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        transition: transform 0.2s;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+      .btn-save:hover {
+        transform: translateY(-2px);
+        color: white;
+      }
+      .analysis-section {
+        opacity: 0;
+        transition: opacity 0.5s;
+      }
+      .analysis-section.show {
+        opacity: 1;
+      }
+      .score-type-select,
+      .subject-select {
+        border-radius: 8px;
+        font-size: 0.9rem;
+      }
+      .score-value-input {
+        border-radius: 8px;
+        font-weight: 600;
+        text-align: center;
+      }
+      .inquiry-group-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 15px;
+        margin-bottom: 5px;
+        padding-left: 5px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+
+  <div layout:fragment="content" class="dashboard-container">
+    <div class="container">
+      <div class="row">
+        <!-- 왼쪽: 성적 관리 섹션 -->
+        <div class="col-lg-5">
+          <div class="card h-100">
+            <div class="card-header">
+              <i class="fas fa-edit me-2"></i> 나의 성적표 관리
+            </div>
+            <div class="card-body">
+              <p class="text-muted small mb-4">
+                과목별 <strong>표준점수</strong>, <strong>백분위</strong> 또는
+                <strong>등급</strong>을 정확히 입력해 주세요. 정밀한 점수를
+                입력할수록 AI 분석 결과가 더 정확해집니다.
+              </p>
+
+              <!-- 성적 입력 폼 -->
+              <div id="scoreForm">
+                <!-- 국어 -->
+                <div class="score-input-item" data-fixed-subject="국어">
+                  <label class="score-label"
+                    ><span class="badge bg-dark">국어</span></label
+                  >
+                  <div class="row g-2">
+                    <div class="col-5">
+                      <select
+                        class="form-select score-type-select"
+                        onchange="toggleHint(this)"
+                      >
+                        <option value="표점">표준점수</option>
+                        <option value="백분위">백분위</option>
+                        <option value="등급">등급</option>
+                      </select>
+                    </div>
+                    <div class="col-7">
+                      <input
+                        type="number"
+                        class="form-control score-value-input"
+                        placeholder="점수 입력"
+                        step="0.1"
+                        value="100"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 수학 -->
+                <div class="score-input-item" data-fixed-subject="수학">
+                  <label class="score-label"
+                    ><span class="badge bg-primary">수학</span></label
+                  >
+                  <div class="row g-2">
+                    <div class="col-5">
+                      <select
+                        class="form-select score-type-select"
+                        onchange="toggleHint(this)"
+                      >
+                        <option value="표점">표준점수</option>
+                        <option value="백분위">백분위</option>
+                        <option value="등급">등급</option>
+                      </select>
+                    </div>
+                    <div class="col-7">
+                      <input
+                        type="number"
+                        class="form-control score-value-input"
+                        placeholder="점수 입력"
+                        step="0.1"
+                        value="100"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 영어 -->
+                <div class="score-input-item" data-fixed-subject="영어">
+                  <label class="score-label"
+                    ><span class="badge bg-success">영어</span></label
+                  >
+                  <div class="row g-2">
+                    <div class="col-5">
+                      <select
+                        class="form-select score-type-select"
+                        onchange="toggleHint(this)"
+                      >
+                        <option value="등급">등급(절대)</option>
+                        <option value="백분위">백분위</option>
+                      </select>
+                    </div>
+                    <div class="col-7">
+                      <input
+                        type="number"
+                        class="form-control score-value-input"
+                        placeholder="등급 입력"
+                        step="1"
+                        min="1"
+                        max="9"
+                        value="3"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="inquiry-group-label">
+                  <i class="fas fa-search me-1"></i> 탐구 영역 (최대 2과목 선택)
+                </div>
+
+                <!-- 탐구 1 -->
+                <div
+                  class="score-input-item inquiry-item"
+                  data-inquiry-index="1"
+                >
+                  <div class="score-label">
+                    <span class="badge bg-warning text-dark">탐구 1</span>
+                    <select
+                      class="form-select form-select-sm subject-select w-auto"
+                      onchange="updateCategory(this)"
+                    >
+                      <option value="">과목 선택</option>
+                      <optgroup label="사회탐구">
+                        <option value="생활과 윤리" data-cat="사탐">
+                          생활과 윤리
+                        </option>
+                        <option value="윤리와 사상" data-cat="사탐">
+                          윤리와 사상
+                        </option>
+                        <option value="한국지리" data-cat="사탐">
+                          한국지리
+                        </option>
+                        <option value="세계지리" data-cat="사탐">
+                          세계지리
+                        </option>
+                        <option value="동아시아사" data-cat="사탐">
+                          동아시아사
+                        </option>
+                        <option value="세계사" data-cat="사탐">세계사</option>
+                        <option value="경제" data-cat="사탐">경제</option>
+                        <option value="정치와 법" data-cat="사탐">
+                          정치와 법
+                        </option>
+                        <option value="사회·문화" data-cat="사탐">
+                          사회·문화
+                        </option>
+                      </optgroup>
+                      <optgroup label="과학탐구">
+                        <option value="물리학Ⅰ" data-cat="과탐">물리학Ⅰ</option>
+                        <option value="물리학Ⅱ" data-cat="과탐">물리학Ⅱ</option>
+                        <option value="화학Ⅰ" data-cat="과탐">화학Ⅰ</option>
+                        <option value="화학Ⅱ" data-cat="과탐">화학Ⅱ</option>
+                        <option value="생명과학Ⅰ" data-cat="과탐">
+                          생명과학Ⅰ
+                        </option>
+                        <option value="생명과학Ⅱ" data-cat="과탐">
+                          생명과학Ⅱ
+                        </option>
+                        <option value="지구과학Ⅰ" data-cat="과탐">
+                          지구과학Ⅰ
+                        </option>
+                        <option value="지구과학Ⅱ" data-cat="과탐">
+                          지구과학Ⅱ
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div class="row g-2 mt-1">
+                    <div class="col-5">
+                      <select
+                        class="form-select score-type-select"
+                        onchange="toggleHint(this)"
+                      >
+                        <option value="표점">표준점수</option>
+                        <option value="백분위">백분위</option>
+                        <option value="등급">등급</option>
+                      </select>
+                    </div>
+                    <div class="col-7">
+                      <input
+                        type="number"
+                        class="form-control score-value-input"
+                        placeholder="점수"
+                        step="0.1"
+                        value="50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 탐구 2 -->
+                <div
+                  class="score-input-item inquiry-item"
+                  data-inquiry-index="2"
+                >
+                  <div class="score-label">
+                    <span class="badge bg-warning text-dark">탐구 2</span>
+                    <select
+                      class="form-select form-select-sm subject-select w-auto"
+                      onchange="updateCategory(this)"
+                    >
+                      <option value="">과목 선택</option>
+                      <optgroup label="사회탐구">
+                        <option value="생활과 윤리" data-cat="사탐">
+                          생활과 윤리
+                        </option>
+                        <option value="윤리와 사상" data-cat="사탐">
+                          윤리와 사상
+                        </option>
+                        <option value="한국지리" data-cat="사탐">
+                          한국지리
+                        </option>
+                        <option value="세계지리" data-cat="사탐">
+                          세계지리
+                        </option>
+                        <option value="동아시아사" data-cat="사탐">
+                          동아시아사
+                        </option>
+                        <option value="세계사" data-cat="사탐">세계사</option>
+                        <option value="경제" data-cat="사탐">경제</option>
+                        <option value="정치와 법" data-cat="사탐">
+                          정치와 법
+                        </option>
+                        <option value="사회·문화" data-cat="사탐">
+                          사회·문화
+                        </option>
+                      </optgroup>
+                      <optgroup label="과학탐구">
+                        <option value="물리학Ⅰ" data-cat="과탐">물리학Ⅰ</option>
+                        <option value="물리학Ⅱ" data-cat="과탐">물리학Ⅱ</option>
+                        <option value="화학Ⅰ" data-cat="과탐">화학Ⅰ</option>
+                        <option value="화학Ⅱ" data-cat="과탐">화학Ⅱ</option>
+                        <option value="생명과학Ⅰ" data-cat="과탐">
+                          생명과학Ⅰ
+                        </option>
+                        <option value="생명과학Ⅱ" data-cat="과탐">
+                          생명과학Ⅱ
+                        </option>
+                        <option value="지구과학Ⅰ" data-cat="과탐">
+                          지구과학Ⅰ
+                        </option>
+                        <option value="지구과학Ⅱ" data-cat="과탐">
+                          지구과학Ⅱ
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div class="row g-2 mt-1">
+                    <div class="col-5">
+                      <select
+                        class="form-select score-type-select"
+                        onchange="toggleHint(this)"
+                      >
+                        <option value="표점">표준점수</option>
+                        <option value="백분위">백분위</option>
+                        <option value="등급">등급</option>
+                      </select>
+                    </div>
+                    <div class="col-7">
+                      <input
+                        type="number"
+                        class="form-control score-value-input"
+                        placeholder="점수"
+                        step="0.1"
+                        value="50"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 text-center">
+                <button class="btn btn-save w-100" onclick="saveScores()">
+                  <i class="fas fa-save me-2"></i> 성적 저장 및 분석하기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 오른쪽: 분석 리포트 섹션 -->
+        <div class="col-lg-7">
+          <div class="card h-100">
+            <div
+              class="card-header d-flex justify-content-between align-items-center"
+            >
+              <span
+                ><i class="fas fa-chart-pie me-2"></i> AI 입시 분석 리포트</span
+              >
+              <span
+                id="analysisStatus"
+                class="badge bg-light text-dark fw-normal"
+                style="font-size: 0.75rem"
+                >데이터 분석 대기 중</span
+              >
+            </div>
+            <div class="card-body">
+              <div id="noDataArea" class="analysis-placeholder">
+                <i class="fas fa-robot fa-4x mb-3" style="opacity: 0.1"></i>
+                <p>
+                  성적을 저장하면 AI가 지원 가능권 대학을<br />시각적으로 분석해
+                  드립니다.
+                </p>
+              </div>
+
+              <div id="analysisArea" class="analysis-section d-none">
+                <div class="row">
+                  <div class="col-md-6 mb-4">
+                    <h6 class="fw-bold small text-muted mb-3">
+                      종합 합격권 분포
+                      <i
+                        class="fas fa-info-circle"
+                        title="현재 성적으로 지원 가능한 대학들의 합격 안정성 분포입니다."
+                      ></i>
+                    </h6>
+                    <canvas id="barChart" height="220"></canvas>
+                  </div>
+                  <div class="col-md-6 mb-4">
+                    <h6 class="fw-bold small text-muted mb-3">
+                      전형별 역량 밸런스
+                      <i
+                        class="fas fa-info-circle"
+                        title="과목별 성적을 기반으로 분석한 인텔리전스 차트입니다."
+                      ></i>
+                    </h6>
+                    <canvas id="radarChart" height="220"></canvas>
+                  </div>
+                </div>
+                <hr />
+                <div class="mt-3">
+                  <h6 class="fw-bold text-primary">
+                    <i class="fas fa-magic me-2"></i> StudyLink AI 입시 컨설팅
+                  </h6>
+                  <div
+                    id="aiSummary"
+                    class="alert alert-info py-3 mt-2"
+                    style="
+                      font-size: 0.95rem;
+                      line-height: 1.7;
+                      border: none;
+                      background: #f0f7ff;
+                      color: #333;
+                    "
+                  >
+                    분석 결과를 불러오는 중입니다...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⭐ 자바스크립트는 fragment 내부에 위치 -->
+    <script th:inline="javascript">
+      const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+      const csrfHeader = document.querySelector(
+        'meta[name="_csrf_header"]'
+      ).content;
+
+      let barChart = null;
+      let radarChart = null;
+
+      window.onload = function () {
+        loadInitialData();
+      };
+
+      function toggleHint(select) {
+        const input = select.closest(".row").querySelector("input");
+        if (select.value === "등급") {
+          input.placeholder = "1~9 입력";
+          input.step = "1";
+        } else if (select.value === "백분위") {
+          input.placeholder = "0~100 입력";
+          input.step = "0.1";
+        } else {
+          input.placeholder = "표점 입력";
+          input.step = "0.1";
+        }
+      }
+
+      function updateCategory(select) {
+        // 필요 시 과목 선택에 따른 부가 로직 (현재는 save 시 option의 data-cat을 직접 읽음)
+      }
+
+      async function loadInitialData() {
+        try {
+          const res = await fetch("/api/dashboard/data");
+          if (!res.ok) return;
+          const data = await res.json();
+
+          if (data.scores && data.scores.length > 0) {
+            let inquiryIdx = 1;
+            data.scores.forEach((s) => {
+              // 고정 과목 (국어, 수학, 영어)
+              const fixedItem = document.querySelector(
+                `.score-input-item[data-fixed-subject="${s.subjectName}"]`
+              );
+              if (fixedItem) {
+                fixedItem.querySelector("select").value = s.scoreType;
+                fixedItem.querySelector("input").value = s.score;
+                toggleHint(fixedItem.querySelector("select"));
+              } else if (s.category === "사탐" || s.category === "과탐") {
+                // 탐구 과목
+                const inqItem = document.querySelector(
+                  `.inquiry-item[data-inquiry-index="${inquiryIdx}"]`
+                );
+                if (inqItem) {
+                  inqItem.querySelector(".subject-select").value =
+                    s.subjectName;
+                  inqItem.querySelector(".score-type-select").value =
+                    s.scoreType;
+                  inqItem.querySelector(".score-value-input").value = s.score;
+                  toggleHint(inqItem.querySelector(".score-type-select"));
+                  inquiryIdx++;
+                }
+              }
+            });
+            requestAnalysis();
+          }
+        } catch (e) {
+          console.error("초기 데이터 로드 중 오류:", e);
+        }
+      }
+
+      async function saveScores() {
+        const scores = [];
+
+        // 1. 고정 과목 수집
+        document
+          .querySelectorAll(".score-input-item[data-fixed-subject]")
+          .forEach((item) => {
+            const subj = item.getAttribute("data-fixed-subject");
+            if (subj) {
+              scores.push({
+                subjectName: subj,
+                scoreType: item.querySelector("select").value,
+                score: parseFloat(item.querySelector("input").value),
+                category: "공통",
+              });
+            }
+          });
+
+        // 2. 탐구 과목 수집
+        document.querySelectorAll(".inquiry-item").forEach((item) => {
+          const subjectSelect = item.querySelector(".subject-select");
+          const subjectName = subjectSelect.value;
+          if (subjectName) {
+            const selectedOption =
+              subjectSelect.options[subjectSelect.selectedIndex];
+            scores.push({
+              subjectName: subjectName,
+              scoreType: item.querySelector(".score-type-select").value,
+              score: parseFloat(item.querySelector(".score-value-input").value),
+              category: selectedOption.dataset.cat,
+            });
+          }
+        });
+
+        // 유효성 검사 (과목명이 없는 데이터는 제외)
+        const validScores = scores.filter(
+          (s) => s.subjectName && !isNaN(s.score)
+        );
+
+        if (validScores.length === 0) {
+          alert("입력된 성적 정보가 없습니다. 점수와 과목을 확인해 주세요.");
+          return;
+        }
+
+        try {
+          const res = await fetch("/api/dashboard/save", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              [csrfHeader]: csrfToken,
+            },
+            body: JSON.stringify(validScores),
+          });
+
+          if (res.ok) {
+            alert("모든 성적 데이터가 안전하게 저장되었습니다.");
+            requestAnalysis();
+          }
+        } catch (e) {
+          alert("데이터 저장 중 문제가 발생했습니다.");
+        }
+      }
+
+      async function requestAnalysis() {
+        const noDataArea = document.getElementById("noDataArea");
+        const analysisArea = document.getElementById("analysisArea");
+        const statusEl = document.getElementById("analysisStatus");
+
+        noDataArea.classList.add("d-none");
+        analysisArea.classList.remove("d-none");
+        analysisArea.classList.add("show");
+        statusEl.innerText = "AI 데이터 마이닝 중...";
+
+        try {
+          const res = await fetch("/api/dashboard/analysis");
+          if (!res.ok) throw new Error("분석 요청 실패");
+
+          const data = await res.json();
+          renderCharts(data);
+          document.getElementById("aiSummary").innerHTML =
+            data.aiSummary.replace(/\n/g, "<br>");
+          statusEl.innerText = "분석 완료 (2026학년도 입시 반영)";
+        } catch (e) {
+          document.getElementById("aiSummary").innerText =
+            "AI 서버와 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.";
+          statusEl.innerText = "분석 오류";
+        }
+      }
+
+      function renderCharts(data) {
+        const ctxBar = document.getElementById("barChart").getContext("2d");
+        if (barChart) barChart.destroy();
+        barChart = new Chart(ctxBar, {
+          type: "bar",
+          data: data.chartData,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+          },
+        });
+
+        const ctxRadar = document.getElementById("radarChart").getContext("2d");
+        if (radarChart) radarChart.destroy();
+        radarChart = new Chart(ctxRadar, {
+          type: "radar",
+          data: data.radarData,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: {
+                angleLines: { display: true },
+                suggestedMin: 0,
+                suggestedMax: 10,
+              },
+            },
+          },
+        });
+      }
+    </script>
+  </div>
+</html>

@@ -120,6 +120,20 @@
             등급을 조절하여 지원 가능한 대학을 확인해보세요.
           </p>
 
+          <!-- [NEW] 내 성적 불러오기 버튼 -->
+          <div class="mb-4" th:if="${isAuthenticated}">
+            <button
+              id="loadScoreBtn"
+              class="btn btn-primary w-100 shadow-sm"
+              style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border: none;
+              "
+            >
+              <i class="fas fa-file-invoice me-1"></i> 내 성적 불러오기
+            </button>
+          </div>
+
           <!-- 국어 등급 -->
           <div class="mb-4">
             <label
@@ -462,11 +476,11 @@
                       "https://search.naver.com/search.naver?query=" +
                         representative.univ +
                         " 공식홈페이지"
-                    }" 
-                       target="_blank" 
+                    }"
+                       target="_blank"
                        title="공식 홈페이지 바로가기"
                        style="text-decoration:none; color:inherit; cursor:pointer;"
-                       onmouseover="this.style.color='#007bff'" 
+                       onmouseover="this.style.color='#007bff'"
                        onmouseout="this.style.color='inherit'">
                         ${
                           representative.univ
@@ -579,6 +593,42 @@
           viewToggleBtn.classList.add("btn-outline-info");
         }
       };
+
+      // 7. 내 성적 불러오기 기능 구현
+      const loadScoreBtn = document.getElementById("loadScoreBtn");
+      if (loadScoreBtn) {
+        loadScoreBtn.onclick = async function () {
+          try {
+            const res = await fetch("/api/dashboard/data");
+            if (!res.ok) throw new Error("데이터를 가져올 수 없습니다.");
+            const data = await res.json();
+
+            if (data.scores && data.scores.length > 0) {
+              data.scores.forEach((s) => {
+                if (s.subjectName === "국어") {
+                  const el = document.getElementById("korGrade");
+                  el.value = s.score;
+                  handleGradeChange({ target: el }, "korVal", "korBadge");
+                }
+                if (s.subjectName === "수학") {
+                  const el = document.getElementById("matGrade");
+                  el.value = s.score;
+                  handleGradeChange({ target: el }, "matVal", "matBadge");
+                }
+              });
+              alert("내 성적을 성공적으로 불러왔습니다!");
+              loadMapData(); // 지도 리프레시
+            } else {
+              alert(
+                "저장된 성적이 없습니다. 대시보드에서 성적을 먼저 입력해주세요."
+              );
+            }
+          } catch (e) {
+            console.error(e);
+            alert("성적을 불러오는 중 오류가 발생했습니다.");
+          }
+        };
+      }
     </script>
   </div>
 </html>
