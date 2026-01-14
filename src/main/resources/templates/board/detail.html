@@ -185,10 +185,9 @@
         <div class="mt-4 d-flex gap-2">
             <a th:href="@{/board/list}" class="btn btn-secondary">목록</a>
 
-            <!-- 수정/삭제: 로그인 + 작성자만 -->
             <div class="d-flex gap-2"
                  sec:authorize="isAuthenticated()"
-                 th:if="${boardFileDTO.boardDTO.userId == #authentication.name}">
+                 th:if="${boardFileDTO.boardDTO.writer == #authentication.name}">
                 <a th:href="@{/board/detail(postId=${boardFileDTO.boardDTO.postId}, mode='modify')}"
                    class="btn btn-primary">수정</a>
 
