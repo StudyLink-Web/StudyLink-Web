@@ -1,4 +1,4 @@
-package com.StudyLink.www.canvas;
+package com.StudyLink.www.webSocketMessage;
 
 import lombok.*;
 

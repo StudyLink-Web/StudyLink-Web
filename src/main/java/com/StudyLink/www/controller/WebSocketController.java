@@ -1,6 +1,6 @@
 package com.StudyLink.www.controller;
 
-import com.StudyLink.www.canvas.*;
+import com.StudyLink.www.webSocketMessage.*;
 import com.StudyLink.www.dto.MessageDTO;
 import com.StudyLink.www.dto.RoomFileDTO;
 import com.StudyLink.www.handler.RoomFileHandler;
@@ -70,6 +70,18 @@ public class WebSocketController {
     @MessageMapping("/erase")
     @SendTo("/topic/erase")
     public EraseMessage eraseMessage (EraseMessage message) {
+        return message;
+    }
+
+    @MessageMapping("/selectMode")
+    @SendTo("/topic/selectMode")
+    public SelectModeMessage selectModeMessage (SelectModeMessage message) {
+        return message;
+    }
+
+    @MessageMapping("/select")
+    @SendTo("/topic/select")
+    public SelectMessage selectMessage (SelectMessage message) {
         return message;
     }
 

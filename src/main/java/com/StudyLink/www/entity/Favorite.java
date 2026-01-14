@@ -1,5 +1,6 @@
 package com.StudyLink.www.entity;
 
+import com.StudyLink.www.dto.FavoriteDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -63,5 +64,15 @@ public class Favorite {
      */
     public Long getMentorId() {
         return this.mentor != null ? this.mentor.getUserId() : null;
+    }
+
+    /**
+     * DTO를 받아 엔티티 생성
+     */
+    public Favorite(FavoriteDTO dto, Users student, Users mentor) {
+        this.favoriteId = dto.getFavoriteId();
+        this.student = student; // Users 엔티티
+        this.mentor = mentor;   // Users 엔티티
+        this.createdAt = LocalDateTime.now();
     }
 }

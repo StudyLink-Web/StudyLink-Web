@@ -1,14 +1,13 @@
-package com.StudyLink.www.canvas;
+package com.StudyLink.www.webSocketMessage;
 
 import lombok.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 @Getter
 @Setter
-public class InitailizeCurrentActionMessage {
+@ToString
+public class SelectModeMessage {
     private long senderId;
-    private int seq;
     private String type;
 }

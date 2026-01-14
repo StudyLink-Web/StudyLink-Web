@@ -63,7 +63,7 @@ function connect() {
         stompClient.subscribe('/topic/draw', function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
-            handleMessage(msg, drawInterpolatedLine);
+            handleMessage(msg, drawLine);
             scheduleRender();
         });
 
@@ -72,6 +72,30 @@ function connect() {
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, eraseInterpolated);
+            scheduleRender();
+        });
+
+        // 영역 선택 모드 on/off
+        stompClient.subscribe('/topic/selectMode', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            if (msg.type === 'selectModeOn') {
+                isSelectLocked = true;
+                if (selectedTool === 'select') {
+                    selectedTool = 'draw'; // 내가 select 중이면 강제로 draw로
+                    alert("다른 사람이 선택 모드를 사용합니다. select 모드 종료");
+                }
+            } else if (msg.type === 'selectModeOff') {
+                isSelectLocked = false;
+            }
+            updateToolUI(); // 여기서 라디오 버튼 잠금/해제
+        });
+
+        // select
+        stompClient.subscribe('/topic/select', function(message){
+            const msg = JSON.parse(message.body);
+            if (msg.senderId === senderId) return;
+            handleMessage(msg, objectUpdate);
             scheduleRender();
         });
 
@@ -410,6 +434,7 @@ document.addEventListener('keydown', (e)=> {
 // ============================================================ 캔버스 ==================================================================
 // 캔버스 관련 전역 변수
 const canvas = new fabric.Canvas('canvas');
+canvas.isDrawingMode = false; // 드로잉 모드
 
 // 도구 선택
 let selectedTool = 'draw';
@@ -427,30 +452,73 @@ let currentPointer = null;
 const ERASE_STEP = 3; // 지우기 점 간격
 const ERASE_RADIUS = 10; // 지우개 반경
 
+// 영역선택 관련
+let isSelectLocked = false; // 같은 객체를 양쪽에서 이동시키면 충돌위험. 한쪽이 select모드면 다른쪽은 잠금
+let isTransform = false;
+
 // 메시지 번호
 // undo, redo와 관련된 메시지는 처리 순서가 중요
 // 항상 번호 순서대로 처리하기 위한 변수
-let lastSeq = 0;         // 마지막 처리된 메시지 seq
-const pendingQueue = {};     // seq -> message
-let mySeq = 1;           // 내가 보낸 메시지 번호
+let lastSeq = 0; // 마지막 처리된 메시지 seq
+const pendingQueue = {}; // seq -> message
+let mySeq = 1; // 내가 보낸 메시지 번호
 
 // undo, redo
 const undoStack = [];
 const redoStack = [];
 let currentAction = null; // 현재 드래그 중인 액션
 
+// 툴 선택
+document.getElementById('btnradio1').addEventListener('click', () => selectTool('draw'));
+document.getElementById('btnradio2').addEventListener('click', () => selectTool('erase'));
+document.getElementById('btnradio3').addEventListener('click', (e) => {
+    if (isSelectLocked) {
+        alert("다른 사람이 선택 모드를 사용 중입니다.");
+        e.preventDefault(); // 체크 변경 막기
+        return;
+    }
+    selectTool('select');
+});
 
+// undo / redo
+document.getElementById('btnradio4').addEventListener('click', () => { undo(); sendUndoRedoMessage('undo'); });
+document.getElementById('btnradio5').addEventListener('click', () => { redo(); sendUndoRedoMessage('redo'); });
 
-// 도구 선택
+// 도구 선택 함수
 function selectTool(tool) {
+    // select 모드 잠금 확인
+    if (tool === 'select' && isSelectLocked) {
+        alert("다른 사람이 선택 모드를 사용 중입니다.");
+        return; // 선택 불가
+    }
     selectedTool = tool;
+    // ui 갱신
+    updateToolUI();
+
+    // 박스 선택 도구 선택 시 canvas.selection 활성화
+    if (tool === 'select') {
+        canvas.selection = true; // 다중 선택 가능
+        canvas.getObjects('line').forEach(line => {
+            line.selectable = true; // 선택 가능
+            line.evented = true; // 마우스 이벤트 가능
+        });
+        const message = { senderId: senderId, type: 'selectModeOn' }
+        safeSend('/app/selectMode', message);
+    } else {
+        canvas.selection = false;
+        canvas.getObjects('line').forEach(line => {
+            line.selectable = false;
+            line.evented = false;
+        });
+        const message = { senderId: senderId, type: 'selectModeOff' }
+        safeSend('/app/selectMode', message);
+    }
 }
 
 // 렌더링 요청이 많아도 화면 렌더링은 한 프레임에 1회로 제한
 function scheduleRender() {
     if (renderScheduled) return;
     renderScheduled = true;
-
     requestAnimationFrame(() => {
         canvas.requestRenderAll();
         renderScheduled = false;
@@ -460,17 +528,16 @@ function scheduleRender() {
 // 메시지가 번호순서대로 처리되도록하는 함수
 function handleMessage(msg, callback) {
     const seq = msg.seq;
+    console.log(msg, lastSeq);
     // seq가 없으면 바로 처리 (순서가 중요하지 않은 메시지)
     if (seq === undefined || seq === null) {
         callback(msg);
         return;
     }
-
     if (seq === lastSeq + 1) {
         // 바로 처리
         callback(msg);
         lastSeq++;
-
         // 대기 중인 다음 메시지 처리
         while (pendingQueue[lastSeq + 1]) {
             const next = pendingQueue[lastSeq + 1];
@@ -490,12 +557,49 @@ function handleMessage(msg, callback) {
 // currentAction 초기화 함수
 function initializeCurrentAction(msg){
     const type = msg.type
-    currentAction = {
-        type: type, // 'draw' | 'erase' | 'move' | 'rotate' | 'scale' ...
-        targets: [],   // 영향을 받은 객체들
-        before: null,  // 작업 전 상태
-        after: null    // 작업 후 상태
-    };
+    if (type === 'draw' || type === 'erase'){
+        currentAction = {
+            type: type, // 'draw' | 'erase' | 'move' | 'rotate' | 'scale' ...
+            targets: [], // 영향을 받은 객체들
+            before: null, // 작업 전 상태
+            after: null // 작업 후 상태
+        };
+    }
+    if (type === 'select'){
+        currentAction = {
+            type: type, // 'draw' | 'erase' | 'move' | 'rotate' | 'scale' ...
+            targets: [], // 영향을 받은 객체들
+            before: null, // 작업 전 상태
+            after: null // 작업 후 상태
+        };
+        captureBeforeState();
+    }
+}
+
+// 다중 선택 객체 초기 상태 캡쳐
+function captureBeforeState() {
+    const objects = canvas.getActiveObjects();
+    if (!objects.length) return;
+    const activeSelection = canvas.getActiveObject();
+    currentAction.targets = objects.map(obj => obj);
+    currentAction.before = objects.map(obj => {
+        return {
+            left: activeSelection.left + (activeSelection.width / 2) + obj.left,
+            top: activeSelection.top + (activeSelection.height / 2) + obj.top
+        };
+    });
+    console.log(currentAction.before)
+}
+
+// 다중 선택 객체 변화 후 상태 캡쳐
+function captureAfterState() {
+    if (!currentAction.targets.length) return;
+    currentAction.after = currentAction.targets.map(obj => {
+        return {
+            left: activeSelection.left + (activeSelection.width / 2) + obj.left,
+            top: activeSelection.top + (activeSelection.height / 2) + obj.top
+        };
+    });
 }
 
 // currentAction 리셋
@@ -517,16 +621,6 @@ function loop() {
     if (isDrawing && currentPointer && lastPoint) {
         if (selectedTool === 'draw') {
             drawInterpolatedLine({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
-
-            message = {
-                senderId: senderId,
-                seq: mySeq++,
-                x1: lastPoint.x,
-                y1: lastPoint.y,
-                x2: currentPointer.x,
-                y2: currentPointer.y
-            }
-            safeSend("/app/draw", message);
         }
         if (selectedTool === 'erase') {
             eraseInterpolated({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
@@ -541,9 +635,30 @@ function loop() {
             }
             safeSend("/app/erase", message);
         }
-
         lastPoint = { ...currentPointer };
         scheduleRender();
+    }
+
+    // 이동, 회전 스케일된 객체 좌표 업데이트 및 메시지 전송
+    if (isTransform) {
+        const activeSelection = canvas.getActiveObject();
+        if (currentAction && currentAction.targets.length > 0) {
+            const positions = currentAction.targets.map(obj => ({
+                uuid: obj.uuid,
+                left: activeSelection.left + (activeSelection.width / 2) + obj.left,
+                top: activeSelection.top + (activeSelection.height / 2) + obj.top
+            }));
+
+            // 객체 이동, 회전, 스케일 메시지 전송
+            const message = {
+                senderId: senderId,
+                seq: mySeq++,
+                positions: positions
+            };
+            safeSend("/app/select", message);
+        }
+        // 이거 false안하면 transform 끝난 시점에도 계속 메시지 송신
+        isTransform = false;
     }
     // requestAnimationFrame : rAF
     // 브라우저에서 화면을 다시 그릴 타이밍에 맞춰 함수를 호출하도록 예약하는 JavaScript 함수
@@ -552,21 +667,20 @@ function loop() {
 loop();
 
 // 그리기
-function drawLine(x1, y1, x2, y2){ // 색상, 두께 등 나중에 추가하기
+function drawLine(msg){
+    // 색상, 두께 등 나중에 추가하기
     // 길이가 0이면 skip
-    if (x1 === x2 && y1 === y2) return;
-
-    const line = new fabric.Line([x1, y1, x2, y2], {
+    if (msg.x1 === msg.x2 && msg.y1 === msg.y2) return;
+    const line = new fabric.Line([msg.x1, msg.y1, msg.x2, msg.y2], {
+        uuid: msg.uuid,
         stroke: '#000',
         strokeWidth: 2,
         selectable: false,
         evented: false,
-        strokeLineCap: 'round',  // 끝점 둥글게
-        strokeLineJoin: 'round'  // 연결점 부드럽게
+        strokeLineCap: 'round', // 끝점 둥글게
+        strokeLineJoin: 'round' // 연결점 부드럽게
     });
-
     canvas.add(line);
-
     if (currentAction && currentAction.type === 'draw') {
         currentAction.targets.push(line);
     }
@@ -578,17 +692,13 @@ function drawInterpolatedLine(msg) {
     const p2 = {x: msg.x2, y:msg.y2}
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
+
     let distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance === 0) distance = 1; // 최소 1 step 보장
 
-    // distance가 0이면 한 점 찍기 위해 1로 처리
-    if (distance === 0) distance = 1;
-
-    // 최소 1 step 보장
     const steps = Math.max(Math.floor(distance / DRAW_STEP), 1);
     const stepX = dx / steps;
     const stepY = dy / steps;
-
-    // 위에 2개 로직에서 최소 1로 설정하지 않으면 마우스가 느릴때 점이 안찍힘
 
     let prevX = p1.x;
     let prevY = p1.y;
@@ -596,38 +706,38 @@ function drawInterpolatedLine(msg) {
     for (let i = 1; i <= steps; i++) {
         const x = p1.x + stepX * i;
         const y = p1.y + stepY * i;
-        drawLine(prevX, prevY, x, y);
+        const newObjectId = crypto.randomUUID();
+        drawLine({x1: prevX, y1: prevY, x2: x, y2: y, uuid: newObjectId});
         prevX = x;
         prevY = y;
+        message = {
+            senderId: senderId,
+            seq: mySeq++,
+            uuid: newObjectId,
+            x1: lastPoint.x,
+            y1: lastPoint.y,
+            x2: currentPointer.x,
+            y2: currentPointer.y
+        }
+        safeSend("/app/draw", message);
     }
 }
 
 // 지우기
 function eraseLine(x, y, threshold = 10) {
     // threshold: 지울 기준 거리(px)
-
     const objects = canvas.getObjects('line'); // 모든 Line 객체 가져오기
     const toRemove = [];
-
     objects.forEach(line => {
         const [x1, y1, x2, y2] = line.get('points') || [line.x1, line.y1, line.x2, line.y2];
-
-        // 점과 선 사이 최소 거리 계산
         const dist = distancePointToLine(x, y, x1, y1, x2, y2);
-
         if (dist <= threshold) {
             toRemove.push(line);
-
-            if (
-                currentAction &&
-                currentAction.type === 'erase' &&
-                !currentAction.targets.includes(line)
-            ) {
+            if (currentAction && currentAction.type === 'erase' && !currentAction.targets.includes(line)) {
                 currentAction.targets.push(line);
             }
         }
     });
-
     toRemove.forEach(line => canvas.remove(line));
 }
 
@@ -637,8 +747,8 @@ function eraseInterpolated(msg) {
     const p2 = {x: msg.x2, y:msg.y2}
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
 
+    const distance = Math.sqrt(dx * dx + dy * dy);
     if (distance === 0) return;
 
     const steps = Math.ceil(distance / ERASE_STEP);
@@ -652,26 +762,22 @@ function eraseInterpolated(msg) {
 
 // 점(x0,y0)과 선(x1,y1)-(x2,y2) 사이 최소 거리 계산 함수
 function distancePointToLine(x0, y0, x1, y1, x2, y2) {
-    const A = x0 - x1; // 점 -> 선분 시작점 벡터
+    const A = x0 - x1;
     const B = y0 - y1;
-
-    const C = x2 - x1; // 선분 벡터
+    const C = x2 - x1;
     const D = y2 - y1;
 
-    const dot = A * C + B * D; // 점 벡터 · 선분 벡터 (dot product)
-    const len_sq = C * C + D * D; // 선분 길이^2
-    let param = -1;
+    const dot = A * C + B * D;
+    const len_sq = C * C + D * D;
 
-    if (len_sq !== 0) param = dot / len_sq; // 점을 선분에 투영한 비율 (t)
+    let param = -1;
+    if (len_sq !== 0) param = dot / len_sq;
 
     let xx, yy;
-
     if (param < 0) {
-        xx = x1;
-        yy = y1;
+        xx = x1; yy = y1;
     } else if (param > 1) {
-        xx = x2;
-        yy = y2;
+        xx = x2; yy = y2;
     } else {
         xx = x1 + param * C;
         yy = y1 + param * D;
@@ -682,20 +788,34 @@ function distancePointToLine(x0, y0, x1, y1, x2, y2) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
+// select
+function objectUpdate(msg){
+    const positions = msg.positions;
+    positions.forEach(pos => {
+        const obj = canvas.getObjects().find(o => o.uuid === pos.uuid);
+        if (!obj) return;
+        obj.set({ top: pos.top, left: pos.left });
+    });
+}
+
 // undo
 function undo() {
     if (undoStack.length === 0) return;
-
     const action = undoStack.pop();
-
-    if (action.type === 'draw') {
-        action.targets.forEach(obj => canvas.remove(obj));
+    switch(action.type) {
+        case 'draw':
+            action.targets.forEach(obj => canvas.remove(obj));
+            break;
+        case 'erase':
+            action.targets.forEach(obj => canvas.add(obj));
+            break;
+        case 'select':
+            action.targets.forEach((obj, idx) => {
+                const state = action.before[idx];
+                obj.set({ left: state.left, top: state.top });
+            });
+            break;
     }
-
-    if (action.type === 'erase') {
-        action.targets.forEach(obj => canvas.add(obj));
-    }
-
     redoStack.push(action);
     scheduleRender();
 }
@@ -703,17 +823,21 @@ function undo() {
 // redo
 function redo() {
     if (redoStack.length === 0) return;
-
     const action = redoStack.pop();
-
-    if (action.type === 'draw') {
-        action.targets.forEach(obj => canvas.add(obj));
+    switch(action.type) {
+        case 'draw':
+            action.targets.forEach(obj => canvas.add(obj));
+            break;
+        case 'erase':
+            action.targets.forEach(obj => canvas.remove(obj));
+            break;
+        case 'select':
+            action.targets.forEach((obj, idx) => {
+                const state = action.after[idx];
+                obj.set({ left: state.left, top: state.top });
+            });
+            break;
     }
-
-    if (action.type === 'erase') {
-        action.targets.forEach(obj => canvas.remove(obj));
-    }
-
     undoStack.push(action);
     scheduleRender();
 }
@@ -723,12 +847,46 @@ function sendUndoRedoMessage(type){
     const message = {
         senderId: senderId,
         seq: mySeq++,
-        type: type // undo, redo
+        type: type
     }
     safeSend('/app/undoRedo', message)
 }
 
+// 라디오 클릭 방지 + UI 동기화
+document.querySelectorAll('input[name="btnradio"]').forEach(radio => {
+    radio.addEventListener('click', (e) => {
+        if (isSelectLocked && radio.value === 'select') {
+            e.preventDefault();
+            alert("다른 사람이 select 모드를 사용 중입니다.");
+            const drawRadio = document.querySelector('input[name="btnradio"][value="draw"]');
+            if (drawRadio) drawRadio.checked = true;
+            selectedTool = 'draw';
+        }
+    });
+});
 
+// updateToolUI에서 기존 체크 상태 보정
+function updateToolUI() {
+    const radios = document.querySelectorAll('input[name="btnradio"]');
+    radios.forEach(radio => {
+        const label = radio.parentElement;
+        if (isSelectLocked && radio.value === 'select') {
+            radio.disabled = true;
+            label.classList.add('disabled');
+            if (radio.checked) {
+                radio.checked = false;
+                const drawRadio = document.querySelector('input[name="btnradio"][value="draw"]');
+                if (drawRadio) drawRadio.checked = true;
+                selectedTool = 'draw';
+            }
+        } else {
+            radio.disabled = false;
+            label.classList.remove('disabled');
+        }
+    });
+}
+
+// canvas 이벤트 바인딩
 canvas.on('mouse:down', (opt) => {
     isDrawing = selectedTool === 'draw' || selectedTool === 'erase';
     lastPoint = canvas.getPointer(opt.e);
@@ -752,17 +910,14 @@ canvas.on('mouse:move', (opt) => {
 });
 
 canvas.on('mouse:up', () => {
+    if (!isDrawing) return;
     isDrawing = false;
     currentPointer = null;
 
     if (currentAction && currentAction.targets.length > 0) {
         pushToUndoStack();
-
-        const message = {
-            senderId: senderId,
-            seq: mySeq++
-        }
-        safeSend('/app/pushToUndoStack', message)
+        const message = { senderId: senderId, seq: mySeq++ }
+        safeSend('/app/pushToUndoStack', message);
     }
 
     resetCurrentAction();
@@ -774,7 +929,61 @@ canvas.on('mouse:up', () => {
     safeSend('/app/resetCurrentAction', message)
 });
 
+// select 이벤트
+canvas.on('selection:created', function(e) {
+    initializeCurrentAction({type: selectedTool});
+    const message = {
+        senderId: senderId,
+        seq: mySeq++,
+        type: selectedTool
+    }
+    safeSend('/app/initializeCurrentAction', message);
+});
 
+canvas.on('object:moving', function (e) { isTransform = true; });
 
-// webSocket 연결
+canvas.on('object:rotating', function (e) { isTransform = true; });
+
+canvas.on('object:scaling', function (e) { isTransform = true; });
+
+canvas.on('object:modified', function(e) {
+    if (currentAction && currentAction.targets.length > 0) {
+        pushToUndoStack();
+        const message = {
+            senderId: senderId,
+            seq: mySeq++
+        }
+        safeSend('/app/pushToUndoStack', message);
+    }
+
+    resetCurrentAction();
+    const message = {
+        senderId: senderId,
+        seq: mySeq++
+    }
+    safeSend('/app/resetCurrentAction', message);
+
+    initializeCurrentAction({type: selectedTool});
+
+    const message2 = {
+        senderId: senderId,
+        seq: mySeq++,
+        type: selectedTool
+    }
+    safeSend('/app/initializeCurrentAction', message2);
+});
+
+canvas.on('selection:cleared', function(e) {
+    resetCurrentAction();
+    const message = {
+        senderId: senderId,
+        seq: mySeq++
+    }
+    safeSend('/app/resetCurrentAction', message);
+});
+
+// WebSocket 연결
 connect();
+
+// 기본 도구 draw
+selectTool('draw');

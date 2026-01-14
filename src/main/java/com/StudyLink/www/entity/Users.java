@@ -1,5 +1,6 @@
 package com.StudyLink.www.entity;
 
+import com.StudyLink.www.dto.UsersDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -144,5 +145,26 @@ public class Users {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+
+    // 🔹 DTO -> 엔티티 생성자
+    public Users(UsersDTO usersDTO) {
+        this.userId = usersDTO.getUserId();
+        this.email = usersDTO.getEmail();
+        this.password = usersDTO.getPassword();
+        this.name = usersDTO.getName();
+        this.nickname = usersDTO.getNickname();
+        this.username = usersDTO.getUsername();
+        this.role = usersDTO.getRole();
+        this.emailVerified = usersDTO.getEmailVerified() != null ? usersDTO.getEmailVerified() : false;
+        this.isStudentVerified = usersDTO.getIsStudentVerified() != null ? usersDTO.getIsStudentVerified() : false;
+        this.isActive = usersDTO.getIsActive() != null ? usersDTO.getIsActive() : true;
+        this.oauthProvider = usersDTO.getOauthProvider();
+        this.oauthId = usersDTO.getOauthId();
+        this.profileImageUrl = usersDTO.getProfileImageUrl();
+        this.gradeYear = usersDTO.getGradeYear();
+        this.interests = usersDTO.getInterests();
+        this.phone = usersDTO.getPhone();
     }
 }

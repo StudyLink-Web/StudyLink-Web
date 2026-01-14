@@ -1,4 +1,4 @@
-package com.StudyLink.www.canvas;
+package com.StudyLink.www.webSocketMessage;
 
 import lombok.*;
 
@@ -7,8 +7,7 @@ import lombok.*;
 @ToString
 @Getter
 @Setter
-public class UndoRedoMessage {
+public class SenderMessage {
     private long senderId;
     private int seq;
-    private String type;
 }

@@ -1,6 +1,7 @@
 package com.StudyLink.www.dto;
 
 import com.StudyLink.www.entity.Room;
+import com.StudyLink.www.entity.Subject;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -21,7 +22,7 @@ public class RoomDTO {
     private Boolean isPublic;
     private Status status;
     private Integer point;
-    private Integer subjectId;
+    private SubjectDTO subjectDTO;
     private Integer rating;
 
     public enum Status {
@@ -39,7 +40,7 @@ public class RoomDTO {
         this.isPublic = room.getIsPublic();
         this.status = Status.valueOf(room.getStatus().name()); // Enum 매핑
         this.point = room.getPoint();
-        this.subjectId = room.getSubjectId();
+        this.subjectDTO = room.getSubject() != null ? new SubjectDTO(room.getSubject()) : null;
         this.rating = room.getRating();
     }
 }

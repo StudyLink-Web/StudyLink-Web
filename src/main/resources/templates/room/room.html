@@ -6,23 +6,50 @@
 <div layout:fragment="content" class="container-md">
 	<h1>문제 풀이 페이지</h1>
 
+	<div>
+		<button id="registerBtn">등록</button>
+		<button id="exitBtn"><a href="/room/list">나가기</a></button>
+	</div>
+
+	<!-- 모달 -->
+	<div id="myModal" class="modal">
+		<div class="modal-content">
+			<span class="close">&times;</span>
+			<h2>과목 선택</h2>
+			<form id="registerForm" action="/room/register" method="post">
+				<div id="subjectDiv"></div>
+				<label>
+					<input type="checkbox" id="assignMentorCheckbox">
+					멘토 배정
+				</label>
+
+				<!-- 초기에는 비활성화 -->
+				<select id="mentorSelect" name="mentorId" disabled></select>
+
+				<div>보유 포인트 : [[${point}]]</div>
+				<div id="pointDiv"></div>
+				<div id="btnDiv"></div>
+			</form>
+		</div>
+	</div>
+
 	<div class="d-flex">
 		<div>
 			<div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-				<input type="radio" onclick="selectTool('draw')" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
-				<label class="btn btn-outline-primary" for="btnradio1">펜</label>
+				<input type="radio" class="btn-check" name="btnradio" id="btnradio1" value="draw" autocomplete="off" checked>
+				<label class="btn btn-outline-primary btn-tool" for="btnradio1">펜</label>
 
-				<input type="radio" onclick="selectTool('erase')" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
-				<label class="btn btn-outline-primary" for="btnradio2">지우개</label>
+				<input type="radio" class="btn-check" name="btnradio" id="btnradio2" value="erase" autocomplete="off">
+				<label class="btn btn-outline-primary btn-tool" for="btnradio2">지우개</label>
 
-				<input type="radio" onclick="selectTool('select')" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off">
-				<label class="btn btn-outline-primary" for="btnradio3">선택</label>
+				<input type="radio" class="btn-check" name="btnradio" id="btnradio3" value="select" autocomplete="off">
+				<label class="btn btn-outline-primary btn-tool" for="btnradio3">선택</label>
 
-				<input type="radio" onclick="undo(); sendUndoRedoMessage('undo')" class="btn-check" name="btnradio" id="btnradio4" autocomplete="off">
-				<label class="btn btn-outline-primary" for="btnradio4">undo</label>
+				<input type="radio" class="btn-check" name="btnradio" id="btnradio4" value="undo" autocomplete="off">
+				<label class="btn btn-outline-primary btn-tool" for="btnradio4">undo</label>
 
-				<input type="radio" onclick="redo(); sendUndoRedoMessage('redo')" class="btn-check" name="btnradio" id="btnradio5" autocomplete="off">
-				<label class="btn btn-outline-primary" for="btnradio5">redo</label>
+				<input type="radio" class="btn-check" name="btnradio" id="btnradio5" value="redo" autocomplete="off">
+				<label class="btn btn-outline-primary btn-tool" for="btnradio5">redo</label>
 			</div>
 			<canvas id="canvas" width="1200" height="700" style="border:1px solid black;"></canvas>
 		</div>
@@ -35,5 +62,12 @@
 			<textarea name="message" class="form-control w-100 mt-auto" style="height: 100px;"></textarea>
 		</div>
 	</div>
+	<script th:inline="javascript">
+        // 서버에서 넘어온 데이터를 JS 변수로 변환
+        let subjectList = [[${subjectList}]];
+        let favoriteList = [[${favoriteList}]];
+        let point = [[${point}]];
+	</script>
 	<script src="/js/room.js"></script>
+	<script src="/js/roomRegister.js"></script>
 </div>

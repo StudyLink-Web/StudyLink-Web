@@ -1,5 +1,6 @@
 package com.StudyLink.www.entity;
 
+import com.StudyLink.www.dto.StudentProfileDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,6 +35,12 @@ public class StudentProfile {
     @Column(length = 50)
     private String regionPreference;
 
+    @Column(columnDefinition = "int default 0")
+    private int chargedPoint;
+
+    @Column(columnDefinition = "int default 0")
+    private int bonusPoint;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -49,5 +56,18 @@ public class StudentProfile {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    // 🔹 DTO -> 엔티티 생성자
+    public StudentProfile(StudentProfileDTO studentProfileDTO, Users users) {
+        this.userId = studentProfileDTO.getUserId();
+        this.user = users;
+        this.targetUniversity = studentProfileDTO.getTargetUniversity();
+        this.targetMajor = studentProfileDTO.getTargetMajor();
+        this.regionPreference = studentProfileDTO.getRegionPreference();
+        this.chargedPoint = studentProfileDTO.getChargedPoint();
+        this.bonusPoint = studentProfileDTO.getBonusPoint();
+        this.createdAt = studentProfileDTO.getCreatedAt();
+        this.updatedAt = studentProfileDTO.getUpdatedAt();
     }
 }

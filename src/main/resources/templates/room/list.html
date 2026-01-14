@@ -6,7 +6,10 @@
 <div layout:fragment="content" class="container-md">
 	<h1>문제 리스트 페이지</h1>
 
-	<a href="/room/room">문제 등록</a>
+	<form action="/room/enterRoom" method="post">
+		<input type="hidden" name="username" th:value="${#authentication.name}">
+		<button type="submit">문제 등록</button>
+	</form>
 
 	<h3>Sqecial Question</h3>
 	<p>1:1 선택 질문으로, 우선순위로 답변해주세요</p>

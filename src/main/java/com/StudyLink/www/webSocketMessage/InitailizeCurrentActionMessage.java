@@ -1,4 +1,4 @@
-package com.StudyLink.www.canvas;
+package com.StudyLink.www.webSocketMessage;
 
 import lombok.*;
 
@@ -7,7 +7,8 @@ import lombok.*;
 @ToString
 @Getter
 @Setter
-public class SenderMessage {
+public class InitailizeCurrentActionMessage {
     private long senderId;
     private int seq;
+    private String type;
 }
