@@ -38,7 +38,13 @@
                 검색
             </button>
         </form>
-            <div class="total_gun"><p>총 <span class="g">[[${ph.totalElement}]]</span>건이 검색 되었습니다.</p></div>
+            <div class="total_gun"
+                 th:if="${(ph.type != null and ph.type != '')
+                  or (ph.keyword != null and ph.keyword != '')}">
+                <p>
+                    총 <span class="g">[[${ph.totalElement}]]</span>건이 검색 되었습니다.
+                </p>
+            </div>
 
 
         <!-- 데이터 없을 때 -->
