@@ -1,10 +1,13 @@
 package com.StudyLink.www.service;
 
 import com.StudyLink.www.dto.RoomDTO;
+import com.StudyLink.www.dto.RoomFileDTO;
 import com.StudyLink.www.dto.SubjectDTO;
 import com.StudyLink.www.entity.Room;
 import com.StudyLink.www.entity.Subject;
+import com.StudyLink.www.handler.RoomFileHandler;
 import com.StudyLink.www.repository.MessageRepository;
+import com.StudyLink.www.repository.RoomFileRepository;
 import com.StudyLink.www.repository.RoomRepository;
 import com.StudyLink.www.repository.SubjectRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,6 +27,8 @@ public class RoomServiceImpl implements RoomService{
     private final RoomRepository roomRepository;
     private final MessageRepository messageRepository;
     private final SubjectRepository subjectRepository;
+    private final RoomFileRepository roomFileRepository;
+    private final RoomFileHandler roomFileHandler;
 
     @Override
     public List<SubjectDTO> getSubjectDTOList() {
@@ -43,25 +48,60 @@ public class RoomServiceImpl implements RoomService{
         return roomRepository.findByStatusAndIsPublic(Room.Status.PENDING, true, pageable).map(RoomDTO::new);
     }
 
-    @Transactional
     @Override
-    public void update(long roomId, int subjectId, Long mentorId, int point) {
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 방이 없습니다."));
-        Subject subject = subjectRepository.findById(subjectId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 방이 없습니다."));
-
-        room.setSubject(subject);
-        if (mentorId != null) {
-            room.setMentorId(mentorId);
-            room.setIsPublic(false);
-        }
-        room.setPoint(point);
-        room.setStatus(Room.Status.PENDING);
+    public void save(RoomDTO roomDTO) {
+        roomRepository.save(new Room(roomDTO));
     }
 
     @Override
     public Page<RoomDTO> getPrivateRoomList(long mentorId, Pageable pageable) {
         return roomRepository.findByStatusAndIsPublicAndMentorId(Room.Status.PENDING, false, mentorId, pageable).map(RoomDTO::new);
+    }
+
+    @Override
+    public RoomDTO getRoomDTO(long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 방이 없습니다."));
+        return new RoomDTO(room);
+    }
+
+    @Transactional
+    @Override
+    public int updateStatusIfPending(long roomId, Room.Status newStatus) {
+        return roomRepository.updateStatusIfPending(roomId, newStatus);
+    }
+
+    @Transactional
+    @Override
+    public int deleteIfPending(long roomId) {
+        int deletedCount = roomRepository.deleteIfPending(roomId); // Room 삭제 시도
+        if (deletedCount > 0) {
+            // Room이 실제로 삭제된 경우만 파일/메시지 삭제
+            List<RoomFileDTO> roomFileDTOList = roomFileRepository.findByRoomId(roomId).stream().map(RoomFileDTO::new).toList();
+            for (RoomFileDTO roomFileDTO : roomFileDTOList) {
+                roomFileHandler.removeFile(roomFileDTO);
+            }
+            roomFileRepository.deleteByRoomId(roomId);
+            messageRepository.deleteByRoomId(roomId);
+        }
+        return deletedCount;
+    }
+
+    @Transactional
+    @Override
+    public void deleteRoom(long roomId) {
+        List<RoomFileDTO> roomFileDTOList = roomFileRepository.findByRoomId(roomId).stream().map(RoomFileDTO::new).toList();
+        for (RoomFileDTO roomFileDTO : roomFileDTOList){
+            roomFileHandler.removeFile(roomFileDTO);
+        }
+        roomFileRepository.deleteByRoomId(roomId);
+        messageRepository.deleteByRoomId(roomId);
+        roomRepository.deleteById(roomId);
+    }
+
+    @Transactional
+    @Override
+    public void deleteMentorMessage(long roomId, long mentorId) {
+        messageRepository.deleteByRoomIdAndMentorId(roomId, mentorId);
     }
 }

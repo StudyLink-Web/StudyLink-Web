@@ -2,6 +2,7 @@ package com.StudyLink.www.service;
 
 import com.StudyLink.www.dto.RoomDTO;
 import com.StudyLink.www.dto.SubjectDTO;
+import com.StudyLink.www.entity.Room;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -15,7 +16,17 @@ public interface RoomService {
 
     Page<RoomDTO> getRoomList(Pageable pageable);
 
-    void update(long roomId, int subjectId, Long mentorId, int point);
+    void save(RoomDTO roomDTO);
 
     Page<RoomDTO> getPrivateRoomList(long mentorId, Pageable pageable);
+
+    RoomDTO getRoomDTO(long roomId);
+
+    int updateStatusIfPending(long roomId, Room.Status newStatus);
+
+    int deleteIfPending(long roomId);
+
+    void deleteRoom(long roomId);
+
+    void deleteMentorMessage(long roomId, long mentorId);
 }
