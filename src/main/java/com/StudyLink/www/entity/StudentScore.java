@@ -27,7 +27,7 @@ public class StudentScore {
     private String subjectName; // 예: 국어, 수학, 영어, 생활과 윤리 등
 
     @Column(nullable = false)
-    private Integer score; // 표준점수 또는 등급
+    private Double score; // 표준점수, 등급, 백분위 등 모든 타입 수용 (Double로 확장)
 
     @Column(name = "score_type", length = 20)
     private String scoreType; // "표점", "등급"

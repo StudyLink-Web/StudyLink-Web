@@ -32,7 +32,7 @@ public class ChatbotDTO {
         @com.fasterxml.jackson.annotation.JsonProperty("subject_name")
         @com.fasterxml.jackson.annotation.JsonAlias("subjectName")
         private String subjectName;
-        private Integer score;
+        private Double score;
         @com.fasterxml.jackson.annotation.JsonProperty("score_type")
         @com.fasterxml.jackson.annotation.JsonAlias("scoreType")
         private String scoreType;
