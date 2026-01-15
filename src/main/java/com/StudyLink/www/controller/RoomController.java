@@ -9,6 +9,10 @@ import com.StudyLink.www.service.StudentProfileService;
 import com.StudyLink.www.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -29,24 +33,40 @@ public class RoomController {
     private final StudentProfileService studentProfileService;
 
     @GetMapping("/list")
-    public void list(Authentication authentication, Model model){
+    public void list(@RequestParam(defaultValue = "0") int publicPage,
+                     @RequestParam(defaultValue = "0") int privatePage,
+                        Authentication authentication, Model model){
+        Pageable privatePageable =
+                PageRequest.of(privatePage, 3, Sort.by(Sort.Direction.ASC, "createdAt"));
+
         List<RoomDTO> privateRoomList = new ArrayList<>();
 
         if (authentication != null && authentication.isAuthenticated()
                 && !(authentication instanceof AnonymousAuthenticationToken)) {
             String username = authentication.getName();
             long mentorId = userService.findUserIdByUsername(username);
-            privateRoomList = roomService.getPrivateRoomList(mentorId);
+
+            Page<RoomDTO> privateRoomPage =
+                    roomService.getPrivateRoomList(mentorId, privatePageable);
+            model.addAttribute("privateRoomPage", privateRoomPage);
+
+            privateRoomList = privateRoomPage.getContent();
         }
         // 멘토 개인 방
         log.info(">>> privateRoomList {}", privateRoomList);
         model.addAttribute("privateRoomList", privateRoomList);
 
 
+        Pageable publicPageable =
+                PageRequest.of(publicPage, 9, Sort.by(Sort.Direction.ASC, "createdAt"));
+
         // 공개 방
-        List<RoomDTO> roomList = roomService.getRoomList();
-        log.info(">>> roomList {}", roomList);
-        model.addAttribute("roomList", roomList);
+        Page<RoomDTO> publicRoomPage =
+                roomService.getRoomList(publicPageable);
+        log.info(">>> roomList {}", publicRoomPage.getContent());
+
+        model.addAttribute("roomPage", publicRoomPage);
+        model.addAttribute("roomList", publicRoomPage.getContent());
     }
 
     // list에서 room으로 입장하는 경우(학생이 첫 생성시)

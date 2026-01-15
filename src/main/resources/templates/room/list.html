@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
 	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
 	  layout:decorate="~{layout/layout}">
 
 <div layout:fragment="content" class="container-md">
@@ -13,20 +14,35 @@
 
 	<h3>Sqecial Question</h3>
 	<p>1:1 선택 질문으로, 우선순위로 답변해주세요</p>
-	<div id="privateContainer" class="text-center grid-container"></div>
-	<nav aria-label="Page navigation example">
+	<div id="privateContainer" class="text-center grid-container">
+		<div th:if="${privateRoomPage.totalElements == 0}" class="empty-message">
+			모든 문제가 해결되었습니다.
+		</div>
+	</div>
+	<nav aria-label="Page navigation example" class="mt-2 d-flex justify-content-center" th:if="${privateRoomPage.totalElements > 0}">
 		<ul class="pagination">
-			<li class="page-item">
-				<a class="page-link" href="#" aria-label="Previous">
-					<span aria-hidden="true">&laquo;</span>
+			<!-- 이전 -->
+			<li class="page-item" th:classappend="${privateRoomPage.first} ? 'disabled'">
+				<a class="page-link"
+				   th:href="@{/room/list(privatePage=${privateRoomPage.number - 1}, publicPage=${roomPage.number})}">
+					&laquo;
 				</a>
 			</li>
-			<li class="page-item"><a class="page-link" href="#">1</a></li>
-			<li class="page-item"><a class="page-link" href="#">2</a></li>
-			<li class="page-item"><a class="page-link" href="#">3</a></li>
-			<li class="page-item">
-				<a class="page-link" href="#" aria-label="Next">
-					<span aria-hidden="true">&raquo;</span>
+
+			<!-- 페이지 번호 -->
+			<li class="page-item" th:each="i : ${#numbers.sequence(0, privateRoomPage.totalPages - 1)}"
+				th:classappend="${i == privateRoomPage.number} ? 'active'">
+				<a class="page-link"
+				   th:text="${i + 1}"
+				   th:href="@{/room/list(privatePage=${i}, publicPage=${roomPage.number})}">
+				</a>
+			</li>
+
+			<!-- 다음 -->
+			<li class="page-item" th:classappend="${privateRoomPage.last} ? 'disabled'">
+				<a class="page-link"
+				   th:href="@{/room/list(privatePage=${privateRoomPage.number + 1}, publicPage=${roomPage.number})}">
+					&raquo;
 				</a>
 			</li>
 		</ul>
@@ -35,21 +51,36 @@
 
 	<h3>Qube Question</h3>
 	<p>답변 가능한 과목으로 선택한 과목의 질문만 확인할 수 있습니다.</p>
-	<div id="publicContainer" class="text-center grid-container"></div>
+	<div id="publicContainer" class="text-center grid-container">
+		<div th:if="${roomPage.totalElements == 0}" class="empty-message">
+			모든 문제가 해결되었습니다.
+		</div>
+	</div>
 
-	<nav aria-label="Page navigation example">
+	<nav aria-label="Page navigation example" class="mt-2 d-flex justify-content-center" th:if="${roomPage.totalElements > 0}">
 		<ul class="pagination">
-			<li class="page-item">
-				<a class="page-link" href="#" aria-label="Previous">
-					<span aria-hidden="true">&laquo;</span>
+			<!-- 이전 -->
+			<li class="page-item" th:classappend="${roomPage.first} ? 'disabled'">
+				<a class="page-link"
+				   th:href="@{/room/list(publicPage=${roomPage.number - 1}, privatePage=${privateRoomPage.number})}">
+					&laquo;
 				</a>
 			</li>
-			<li class="page-item"><a class="page-link" href="#">1</a></li>
-			<li class="page-item"><a class="page-link" href="#">2</a></li>
-			<li class="page-item"><a class="page-link" href="#">3</a></li>
-			<li class="page-item">
-				<a class="page-link" href="#" aria-label="Next">
-					<span aria-hidden="true">&raquo;</span>
+
+			<!-- 페이지 번호 -->
+			<li class="page-item" th:each="i : ${#numbers.sequence(0, roomPage.totalPages - 1)}"
+				th:classappend="${i == roomPage.number} ? 'active'">
+				<a class="page-link"
+				   th:text="${i + 1}"
+				   th:href="@{/room/list(publicPage=${i}, privatePage=${privateRoomPage.number})}">
+				</a>
+			</li>
+
+			<!-- 다음 -->
+			<li class="page-item" th:classappend="${roomPage.last} ? 'disabled'">
+				<a class="page-link"
+				   th:href="@{/room/list(publicPage=${roomPage.number + 1}, privatePage=${privateRoomPage.number})}">
+					&raquo;
 				</a>
 			</li>
 		</ul>

@@ -2,6 +2,8 @@ package com.StudyLink.www.service;
 
 import com.StudyLink.www.dto.RoomDTO;
 import com.StudyLink.www.dto.SubjectDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -11,9 +13,9 @@ public interface RoomService {
 
     RoomDTO createRoom(long studentId);
 
-    List<RoomDTO> getRoomList();
+    Page<RoomDTO> getRoomList(Pageable pageable);
 
     void update(long roomId, int subjectId, Long mentorId, int point);
 
-    List<RoomDTO> getPrivateRoomList(long mentorId);
+    Page<RoomDTO> getPrivateRoomList(long mentorId, Pageable pageable);
 }

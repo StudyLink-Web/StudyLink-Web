@@ -10,6 +10,8 @@ import com.StudyLink.www.repository.SubjectRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,9 +39,8 @@ public class RoomServiceImpl implements RoomService{
     }
 
     @Override
-    public List<RoomDTO> getRoomList() {
-        List<Room> roomList = roomRepository.findByStatusAndIsPublic(Room.Status.PENDING, true);
-        return roomList.stream().map(RoomDTO::new).toList();
+    public Page<RoomDTO> getRoomList(Pageable pageable) {
+        return roomRepository.findByStatusAndIsPublic(Room.Status.PENDING, true, pageable).map(RoomDTO::new);
     }
 
     @Transactional
@@ -60,8 +61,7 @@ public class RoomServiceImpl implements RoomService{
     }
 
     @Override
-    public List<RoomDTO> getPrivateRoomList(long mentorId) {
-        List<Room> roomList = roomRepository.findByStatusAndIsPublicAndMentorId(Room.Status.PENDING, false, mentorId);
-        return roomList.stream().map(RoomDTO::new).toList();
+    public Page<RoomDTO> getPrivateRoomList(long mentorId, Pageable pageable) {
+        return roomRepository.findByStatusAndIsPublicAndMentorId(Room.Status.PENDING, false, mentorId, pageable).map(RoomDTO::new);
     }
 }
