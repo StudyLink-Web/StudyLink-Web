@@ -32,7 +32,7 @@ public class Room {
     @CreatedDate
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "TINYINT(1) DEFAULT 1")
     private Boolean isPublic;
 
     @Column(nullable = false)
@@ -42,8 +42,9 @@ public class Room {
     @Column(columnDefinition = "INT DEFAULT 0")
     private Integer point;
 
-    @Column(nullable = false)
-    private Integer subjectId;
+    @ManyToOne(fetch = FetchType.LAZY) // ManyToOne 관계
+    @JoinColumn(name = "subject_id")
+    private Subject subject;
 
     @Column
     private Integer rating;
@@ -52,8 +53,18 @@ public class Room {
         TEMP,
         PENDING,
         IN_PROGRESS,
+        ANSWERED,
         COMPLETED
     }
+
+
+    @PrePersist
+    protected void onCreate() {
+        if (isPublic == null) isPublic = true;
+        if (point == null) point = 0;
+        if (status == null) status = Status.TEMP;
+    }
+
 
     public Room(RoomDTO dto) {
         this.roomId = dto.getRoomId();
@@ -63,7 +74,7 @@ public class Room {
         this.isPublic = dto.getIsPublic();
         this.status = Status.valueOf(dto.getStatus().name());
         this.point = dto.getPoint();
-        this.subjectId = dto.getSubjectId();
+        this.subject = new Subject(dto.getSubjectDTO());
         this.rating = dto.getRating();
     }
 }

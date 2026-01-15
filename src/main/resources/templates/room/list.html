@@ -6,26 +6,14 @@
 <div layout:fragment="content" class="container-md">
 	<h1>문제 리스트 페이지</h1>
 
-	<a href="/room/room">문제 등록</a>
+	<form action="/room/enterRoom" method="post">
+		<input type="hidden" name="username" th:value="${#authentication.name}">
+		<button type="submit">문제 등록</button>
+	</form>
 
 	<h3>Sqecial Question</h3>
 	<p>1:1 선택 질문으로, 우선순위로 답변해주세요</p>
-	<div class="container text-center">
-		<div class="row">
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-		</div>
-	</div>
+	<div id="privateContainer" class="text-center grid-container"></div>
 	<nav aria-label="Page navigation example">
 		<ul class="pagination">
 			<li class="page-item">
@@ -47,67 +35,8 @@
 
 	<h3>Qube Question</h3>
 	<p>답변 가능한 과목으로 선택한 과목의 질문만 확인할 수 있습니다.</p>
-	<div class="container text-center">
-		<div class="row">
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-		</div>
-		<br/>
-		<div class="row">
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-		</div>
-		<br/>
-		<div class="row">
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-		</div>
-		<br/>
-		<div class="row">
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-			<div class="col border border-black">
-				<p>수학</p>
-				<p>510p</p>
-			</div>
-		</div>
-	</div>
+	<div id="publicContainer" class="text-center grid-container"></div>
+
 	<nav aria-label="Page navigation example">
 		<ul class="pagination">
 			<li class="page-item">
@@ -125,4 +54,10 @@
 			</li>
 		</ul>
 	</nav>
+	<script th:inline="javascript">
+        // 서버에서 넘어온 데이터를 JS 변수로 변환
+        let roomList = [[${roomList}]];
+        let privateRoomList = [[${privateRoomList}]];
+	</script>
+	<script src="/js/roomList.js"></script>
 </div>

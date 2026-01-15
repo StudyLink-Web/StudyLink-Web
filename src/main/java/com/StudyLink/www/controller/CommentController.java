@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -22,11 +23,25 @@ public class CommentController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE
     )
-    public ResponseEntity<String> post(@RequestBody CommentDTO commentDTO) {
+    public ResponseEntity<String> post(@RequestBody CommentDTO commentDTO,
+                                       Authentication authentication) {
+        log.info(">>> /comment/post dto = {}", commentDTO);
+
+        // ✅ 로그인 필수(작성)
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("0");
+        }
+
+        // ✅ writer는 서버에서 강제 세팅 (클라 조작 방지)
+        String loginUser = authentication.getName();
+        commentDTO.setWriter(loginUser);
+
         long cno = commentService.post(commentDTO);
+        log.info(">>> /comment/post result cno = {}", cno);
+
         return cno > 0
-                ? new ResponseEntity<>("1", HttpStatus.OK)
-                : new ResponseEntity<>("0", HttpStatus.INTERNAL_SERVER_ERROR);
+                ? ResponseEntity.ok("1")
+                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");
     }
 
     @GetMapping(
@@ -39,7 +54,7 @@ public class CommentController {
         Page<CommentDTO> list = commentService.getList(postId, page);
         PageHandler<CommentDTO> pageHandler = new PageHandler<>(list, page);
 
-        return new ResponseEntity<>(pageHandler, HttpStatus.OK);
+        return ResponseEntity.ok(pageHandler);
     }
 
     @PutMapping(
@@ -47,21 +62,45 @@ public class CommentController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE
     )
-    public ResponseEntity<String> modify(@RequestBody CommentDTO commentDTO) {
+    public ResponseEntity<String> modify(@RequestBody CommentDTO commentDTO,
+                                         Authentication authentication) {
+        log.info(">>> /comment/modify dto = {}", commentDTO);
+
+        // ✅ 로그인 필수(수정)
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("0");
+        }
+
+        // ✅ writer 강제 세팅(서비스에서 작성자 검증할 때 사용 가능)
+        String loginUser = authentication.getName();
+        commentDTO.setWriter(loginUser);
+
         long result = commentService.modify(commentDTO);
+        log.info(">>> /comment/modify result = {}", result);
+
         return result > 0
-                ? new ResponseEntity<>("1", HttpStatus.OK)
-                : new ResponseEntity<>("0", HttpStatus.INTERNAL_SERVER_ERROR);
+                ? ResponseEntity.ok("1")
+                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");
     }
 
     @DeleteMapping(
             value = "/remove/{cno}",
             produces = MediaType.TEXT_PLAIN_VALUE
     )
-    public ResponseEntity<String> remove(@PathVariable("cno") long cno) {
+    public ResponseEntity<String> remove(@PathVariable("cno") long cno,
+                                         Authentication authentication) {
+        log.info(">>> /comment/remove cno = {}", cno);
+
+        // ✅ 로그인 필수(삭제)
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("0");
+        }
+
         long result = commentService.remove(cno);
+        log.info(">>> /comment/remove result = {}", result);
+
         return result > 0
-                ? new ResponseEntity<>("1", HttpStatus.OK)
-                : new ResponseEntity<>("0", HttpStatus.INTERNAL_SERVER_ERROR);
+                ? ResponseEntity.ok("1")
+                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");
     }
 }

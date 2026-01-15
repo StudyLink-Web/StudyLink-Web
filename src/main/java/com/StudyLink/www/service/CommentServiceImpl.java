@@ -18,53 +18,42 @@ public class CommentServiceImpl implements CommentService {
 
     @Transactional
     @Override
-    public long post(CommentDTO dto) {
-        if (dto == null || dto.getPostId() == null) {
-            log.error("post failed: postId is null. dto={}", dto);
-            return 0L;
-        }
-        if (dto.getWriter() == null || dto.getWriter().trim().isEmpty()) {
-            log.error("post failed: writer is null/blank. dto={}", dto);
-            return 0L;
-        }
-        if (dto.getContent() == null || dto.getContent().trim().isEmpty()) {
-            log.error("post failed: content is null/blank. dto={}", dto);
-            return 0L;
-        }
+    public int post(CommentDTO dto) {
+        if (dto == null || dto.getPostId() == null) return 0;
+        if (dto.getWriter() == null || dto.getWriter().trim().isEmpty()) return 0;
+        if (dto.getContent() == null || dto.getContent().trim().isEmpty()) return 0;
 
-        Comment comment = convertDtoToEntity(dto);
-        Comment saved = commentRepository.save(comment);
-        return saved.getCno() != null ? saved.getCno() : 0L;
+        Comment saved = commentRepository.save(convertDtoToEntity(dto));
+        return (saved.getCno() != null && saved.getCno() > 0) ? 1 : 0;
     }
 
     @Transactional
     @Override
-    public long modify(CommentDTO dto) {
-        if (dto == null || dto.getCno() == null) {
-            log.error("modify failed: cno is null. dto={}", dto);
-            return 0L;
-        }
+    public int modify(CommentDTO dto) {
+        if (dto == null || dto.getCno() == null || dto.getCno() <= 0) return 0;
+        if (dto.getContent() == null || dto.getContent().trim().isEmpty()) return 0;
 
-        Comment origin = commentRepository.findById(dto.getCno())
-                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다. cno=" + dto.getCno()));
+        Comment origin = commentRepository.findById(dto.getCno()).orElse(null);
+        if (origin == null) return 0;
 
-        // ✅ 내용만 수정(보통 writer/postId는 유지)
+        // ✅ 작성자 검증 (Controller에서 writer 주입됨)
+        if (!origin.getWriter().equals(dto.getWriter())) return 0;
+
         origin.setContent(dto.getContent());
-
-        Comment saved = commentRepository.save(origin);
-        return saved.getCno() != null ? saved.getCno() : 0L;
+        commentRepository.save(origin);
+        return 1;
     }
 
     @Transactional
     @Override
-    public long remove(long cno) {
-        if (cno <= 0) return 0L;
+    public int remove(long cno) {
+        if (cno <= 0) return 0;
 
-        if (!commentRepository.existsById(cno)) {
-            return 0L;
-        }
-        commentRepository.deleteById(cno);
-        return 1L;
+        Comment origin = commentRepository.findById(cno).orElse(null);
+        if (origin == null) return 0;
+
+        commentRepository.delete(origin);
+        return 1;
     }
 
     @Transactional(readOnly = true)
@@ -72,12 +61,13 @@ public class CommentServiceImpl implements CommentService {
     public Page<CommentDTO> getList(Long postId, int page) {
         if (postId == null) return Page.empty();
 
-        int size = 10;
-        int pageIndex = Math.max(page - 1, 0);
+        Pageable pageable = PageRequest.of(
+                Math.max(page - 1, 0),
+                10,
+                Sort.by(Sort.Direction.DESC, "cno")
+        );
 
-        Pageable pageable = PageRequest.of(pageIndex, size, Sort.by(Sort.Direction.DESC, "cno"));
-        Page<Comment> result = commentRepository.findByPostId(postId, pageable);
-
-        return result.map(this::convertEntityToDto);
+        return commentRepository.findByPostId(postId, pageable)
+                .map(this::convertEntityToDto);
     }
 }

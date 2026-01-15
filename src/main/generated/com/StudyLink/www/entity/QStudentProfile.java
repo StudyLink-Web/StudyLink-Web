@@ -22,6 +22,10 @@ public class QStudentProfile extends EntityPathBase<StudentProfile> {
 
     public static final QStudentProfile studentProfile = new QStudentProfile("studentProfile");
 
+    public final NumberPath<Integer> bonusPoint = createNumber("bonusPoint", Integer.class);
+
+    public final NumberPath<Integer> chargedPoint = createNumber("chargedPoint", Integer.class);
+
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
     public final StringPath regionPreference = createString("regionPreference");

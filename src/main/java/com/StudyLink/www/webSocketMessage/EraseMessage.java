@@ -1,4 +1,4 @@
-package com.StudyLink.www.canvas;
+package com.StudyLink.www.webSocketMessage;
 
 import lombok.*;
 
@@ -9,6 +9,7 @@ import lombok.*;
 @Setter
 public class EraseMessage {
     private long senderId;
+    private int seq;
     private double x1;
     private double y1;
     private double x2;

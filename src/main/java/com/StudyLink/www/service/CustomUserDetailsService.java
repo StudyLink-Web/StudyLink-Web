@@ -2,7 +2,8 @@ package com.StudyLink.www.service;
 
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -14,33 +15,28 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
- * 사용자 상세 정보 서비스
- * 로그인 시 사용자 검증 (데이터베이스 연동)
- */
+@Slf4j
+@RequiredArgsConstructor
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // 데이터베이스에서 사용자 조회
-        // username 또는 email로 조회
+
         Users user = userRepository.findByNickname(username)
                 .orElseGet(() -> userRepository.findByEmail(username)
-                        .orElseThrow(() -> new UsernameNotFoundException(
-                                "사용자를 찾을 수 없습니다: " + username)));
+                        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username)));
 
-        // 권한 설정
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-        String role = user.getRole() != null ? user.getRole() : "STUDENT";
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+        String role = (user.getRole() != null && !user.getRole().trim().isEmpty()) ? user.getRole() : "STUDENT";
+        authorities.add(new SimpleGrantedAuthority(role.startsWith("ROLE_") ? role : "ROLE_" + role));
 
-        System.out.println("✅ 사용자 로드: " + user.getUsername() + " (" + user.getEmail() + ") - Role: " + role);
+        log.info("✅ 사용자 로드: {} ({}) - Role: {}", user.getUsername(), user.getEmail(), role);
 
-        // Spring Security UserDetails 반환
+        // ✅ 여기서 Security 인증ID를 "username"이 아니라 "nickname"으로 맞추고 싶으면 아래 한 줄만 바꾸면 됨
+        // .username(user.getNickname())
         return User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
