@@ -35,38 +35,64 @@ public class RoomController {
     @GetMapping("/list")
     public void list(@RequestParam(defaultValue = "0") int publicPage,
                      @RequestParam(defaultValue = "0") int privatePage,
-                        Authentication authentication, Model model){
-        Pageable privatePageable =
-                PageRequest.of(privatePage, 3, Sort.by(Sort.Direction.ASC, "createdAt"));
+                     Authentication authentication, Model model) {
 
-        List<RoomDTO> privateRoomList = new ArrayList<>();
+        int pageGroupSize = 5; // 한 그룹에 보여줄 페이지 수
+
+        // ================================
+        // 1. 멘토 개인 방 (Private Rooms)
+        // ================================
+        Pageable privatePageable = PageRequest.of(privatePage, 3, Sort.by(Sort.Direction.ASC, "createdAt"));
+        Page<RoomDTO> privateRoomPage;
 
         if (authentication != null && authentication.isAuthenticated()
                 && !(authentication instanceof AnonymousAuthenticationToken)) {
             String username = authentication.getName();
             long mentorId = userService.findUserIdByUsername(username);
-
-            Page<RoomDTO> privateRoomPage =
-                    roomService.getPrivateRoomList(mentorId, privatePageable);
-            model.addAttribute("privateRoomPage", privateRoomPage);
-
-            privateRoomList = privateRoomPage.getContent();
+            privateRoomPage = roomService.getPrivateRoomList(mentorId, privatePageable);
+        } else {
+            // 익명 유저는 빈 페이지
+            privateRoomPage = Page.empty(privatePageable);
         }
-        // 멘토 개인 방
+
+        List<RoomDTO> privateRoomList = privateRoomPage.getContent();
         log.info(">>> privateRoomList {}", privateRoomList);
+
+        // 그룹 시작/끝 페이지 계산
+        int privateStartPage = (privateRoomPage.getNumber() / pageGroupSize) * pageGroupSize;
+        int privateEndPage = Math.min(privateStartPage + pageGroupSize, privateRoomPage.getTotalPages());
+
+        int privatePrevGroup = Math.max(privateStartPage - pageGroupSize, 0);
+        int privateNextGroup = Math.min(privateStartPage + pageGroupSize, privateRoomPage.getTotalPages());
+
+        model.addAttribute("privateRoomPage", privateRoomPage);
         model.addAttribute("privateRoomList", privateRoomList);
+        model.addAttribute("privateStartPage", privateStartPage);
+        model.addAttribute("privateEndPage", privateEndPage);
+        model.addAttribute("privatePrevGroup", privatePrevGroup);
+        model.addAttribute("privateNextGroup", privateNextGroup);
 
+        // ================================
+        // 2. 공개 방 (Public Rooms)
+        // ================================
+        Pageable publicPageable = PageRequest.of(publicPage, 9, Sort.by(Sort.Direction.ASC, "createdAt"));
+        Page<RoomDTO> publicRoomPage = roomService.getRoomList(publicPageable);
+        List<RoomDTO> roomList = publicRoomPage.getContent();
+        log.info(">>> roomList {}", roomList);
 
-        Pageable publicPageable =
-                PageRequest.of(publicPage, 9, Sort.by(Sort.Direction.ASC, "createdAt"));
+        // 그룹 시작/끝 페이지 계산
+        int publicStartPage = (publicRoomPage.getNumber() / pageGroupSize) * pageGroupSize;
+        int publicEndPage = Math.min(publicStartPage + pageGroupSize, publicRoomPage.getTotalPages());
 
-        // 공개 방
-        Page<RoomDTO> publicRoomPage =
-                roomService.getRoomList(publicPageable);
-        log.info(">>> roomList {}", publicRoomPage.getContent());
+        int publicPrevGroup = Math.max(publicStartPage - pageGroupSize, 0);
+        int publicNextGroup = Math.min(publicStartPage + pageGroupSize, publicRoomPage.getTotalPages());
 
         model.addAttribute("roomPage", publicRoomPage);
-        model.addAttribute("roomList", publicRoomPage.getContent());
+        model.addAttribute("roomList", roomList);
+        model.addAttribute("publicStartPage", publicStartPage);
+        model.addAttribute("publicEndPage", publicEndPage);
+        model.addAttribute("publicPrevGroup", publicPrevGroup);
+        model.addAttribute("publicNextGroup", publicNextGroup);
     }
 
     // list에서 room으로 입장하는 경우(학생이 첫 생성시)

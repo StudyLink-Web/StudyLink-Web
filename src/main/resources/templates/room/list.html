@@ -7,7 +7,7 @@
 <div layout:fragment="content" class="container-md">
 	<h1>문제 리스트 페이지</h1>
 
-	<form action="/room/enterRoom" method="post">
+	<form action="/room/enterRoom" method="post" sec:authorize="hasRole('STUDENT')">
 		<input type="hidden" name="username" th:value="${#authentication.name}">
 		<button type="submit">문제 등록</button>
 	</form>
@@ -20,36 +20,29 @@
 		</div>
 	</div>
 	<nav aria-label="Page navigation example" class="mt-2 d-flex justify-content-center" th:if="${privateRoomPage.totalElements > 0}">
+		<!-- private 페이지네이션 -->
 		<ul class="pagination">
-			<!-- 이전 -->
-			<li class="page-item" th:classappend="${privateRoomPage.first} ? 'disabled'">
-				<a class="page-link"
-				   th:href="@{/room/list(privatePage=${privateRoomPage.number - 1}, publicPage=${roomPage.number})}">
-					&laquo;
-				</a>
+			<!-- 이전 그룹 -->
+			<li class="page-item" th:classappend="${privateStartPage == 0} ? 'disabled'">
+				<a class="page-link" th:href="@{/room/list(privatePage=${privatePrevGroup}, publicPage=${roomPage.number})}">&lt;&lt;</a>
 			</li>
 
-			<!-- 페이지 번호 -->
-			<li class="page-item" th:each="i : ${#numbers.sequence(0, privateRoomPage.totalPages - 1)}"
+			<!-- 현재 그룹 페이지 번호 -->
+			<li class="page-item" th:each="i : ${#numbers.sequence(privateStartPage, privateEndPage - 1)}"
 				th:classappend="${i == privateRoomPage.number} ? 'active'">
-				<a class="page-link"
-				   th:text="${i + 1}"
-				   th:href="@{/room/list(privatePage=${i}, publicPage=${roomPage.number})}">
-				</a>
+				<a class="page-link" th:text="${i + 1}"
+				   th:href="@{/room/list(privatePage=${i}, publicPage=${roomPage.number})}"></a>
 			</li>
 
-			<!-- 다음 -->
-			<li class="page-item" th:classappend="${privateRoomPage.last} ? 'disabled'">
-				<a class="page-link"
-				   th:href="@{/room/list(privatePage=${privateRoomPage.number + 1}, publicPage=${roomPage.number})}">
-					&raquo;
-				</a>
+			<!-- 다음 그룹 -->
+			<li class="page-item" th:classappend="${privateEndPage >= privateRoomPage.totalPages} ? 'disabled'">
+				<a class="page-link" th:href="@{/room/list(privatePage=${privateNextGroup}, publicPage=${roomPage.number})}">&gt;&gt;</a>
 			</li>
 		</ul>
 	</nav>
 	<br/>
 
-	<h3>Qube Question</h3>
+	<h3>StudyLink Question</h3>
 	<p>답변 가능한 과목으로 선택한 과목의 질문만 확인할 수 있습니다.</p>
 	<div id="publicContainer" class="text-center grid-container">
 		<div th:if="${roomPage.totalElements == 0}" class="empty-message">
@@ -59,29 +52,21 @@
 
 	<nav aria-label="Page navigation example" class="mt-2 d-flex justify-content-center" th:if="${roomPage.totalElements > 0}">
 		<ul class="pagination">
-			<!-- 이전 -->
-			<li class="page-item" th:classappend="${roomPage.first} ? 'disabled'">
-				<a class="page-link"
-				   th:href="@{/room/list(publicPage=${roomPage.number - 1}, privatePage=${privateRoomPage.number})}">
-					&laquo;
-				</a>
+			<!-- 이전 그룹 -->
+			<li class="page-item" th:classappend="${publicStartPage == 0} ? 'disabled'">
+				<a class="page-link" th:href="@{/room/list(publicPage=${publicPrevGroup}, privatePage=${privateRoomPage.number})}">&lt;&lt;</a>
 			</li>
 
-			<!-- 페이지 번호 -->
-			<li class="page-item" th:each="i : ${#numbers.sequence(0, roomPage.totalPages - 1)}"
+			<!-- 현재 그룹 페이지 번호 -->
+			<li class="page-item" th:each="i : ${#numbers.sequence(publicStartPage, publicEndPage - 1)}"
 				th:classappend="${i == roomPage.number} ? 'active'">
-				<a class="page-link"
-				   th:text="${i + 1}"
-				   th:href="@{/room/list(publicPage=${i}, privatePage=${privateRoomPage.number})}">
-				</a>
+				<a class="page-link" th:text="${i + 1}"
+				   th:href="@{/room/list(publicPage=${i}, privatePage=${privateRoomPage.number})}"></a>
 			</li>
 
-			<!-- 다음 -->
-			<li class="page-item" th:classappend="${roomPage.last} ? 'disabled'">
-				<a class="page-link"
-				   th:href="@{/room/list(publicPage=${roomPage.number + 1}, privatePage=${privateRoomPage.number})}">
-					&raquo;
-				</a>
+			<!-- 다음 그룹 -->
+			<li class="page-item" th:classappend="${publicEndPage >= roomPage.totalPages} ? 'disabled'">
+				<a class="page-link" th:href="@{/room/list(publicPage=${publicNextGroup}, privatePage=${privateRoomPage.number})}">&gt;&gt;</a>
 			</li>
 		</ul>
 	</nav>
