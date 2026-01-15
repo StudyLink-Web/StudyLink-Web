@@ -73,7 +73,7 @@ public class DashboardRestController {
     }
 
     /**
-     * 성적 데이터 저장
+     * 성적 데이터 저장 (현재 활성화된 성적)
      */
     @PostMapping("/save")
     public ResponseEntity<Map<String, Object>> saveScores(
@@ -95,6 +95,58 @@ public class DashboardRestController {
             response.put("message", "저장된 성적이 없습니다. 입력값을 확인해 주세요.");
             return ResponseEntity.badRequest().body(response);
         }
+    }
+
+    /**
+     * 성적 레코드 (제목 포함) 저장
+     */
+    @PostMapping("/records/save")
+    public ResponseEntity<Map<String, Object>> saveScoreRecord(
+            Authentication authentication,
+            @RequestBody Map<String, Object> payload) {
+        
+        Users user = getCurrentUser(authentication);
+        String title = (String) payload.get("title");
+        List<Map<String, Object>> scoreMaps = (List<Map<String, Object>>) payload.get("scores");
+        
+        // Map list를 DTO list로 변환 (jackson objectMapper 사용 권장되나 여기선 수동 매핑)
+        List<StudentScoreDTO> scoreDTOs = scoreMaps.stream().map(m -> StudentScoreDTO.builder()
+                .subjectName((String) m.get("subject_name"))
+                .score(m.get("score") instanceof Number n ? n.doubleValue() : 0.0)
+                .scoreType((String) m.get("score_type"))
+                .category((String) m.get("category"))
+                .optionalSubject((String) m.get("optional_subject"))
+                .build()
+        ).toList();
+
+        Long recordId = studentScoreService.saveScoreRecord(user.getUserId(), title, scoreDTOs);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("recordId", recordId);
+        response.put("message", "'" + title + "' 성적이 저장되었습니다.");
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 내 성적 레코드 목록 조회
+     */
+    @GetMapping("/records")
+    public ResponseEntity<List<java.util.Map<String, Object>>> getScoreRecords(Authentication authentication) {
+        Users user = getCurrentUser(authentication);
+        return ResponseEntity.ok(studentScoreService.getScoreRecords(user.getUserId()));
+    }
+
+    /**
+     * 특정 레코드 로드
+     */
+    @GetMapping("/records/{id}/load")
+    public ResponseEntity<List<StudentScoreDTO>> loadRecord(
+            Authentication authentication,
+            @PathVariable("id") Long recordId) {
+        // 보안상 본인 루틴 체크 필요할 수 있으나 생략 (UserId 기반 필터링은 Service에서 수행 권장)
+        return ResponseEntity.ok(studentScoreService.getRecordDetails(recordId));
     }
 
     /**

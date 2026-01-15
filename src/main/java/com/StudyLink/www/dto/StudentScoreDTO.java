@@ -27,4 +27,7 @@ public class StudentScoreDTO {
     
     @JsonProperty("category")
     private String category;  // "공통", "사탐", "과탐"
+
+    @JsonProperty("optional_subject")
+    private String optionalSubject; // [v4] 국어(화작/언매), 수학(확통/미적/기하)
 }

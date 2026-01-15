@@ -39,6 +39,8 @@ public class DashboardDTO {
         private String aiSummary;
         @com.fasterxml.jackson.annotation.JsonProperty("gap_analysis")
         private Map<String, Double> gapAnalysis;
+        @com.fasterxml.jackson.annotation.JsonProperty("top_universities")
+        private Map<String, Object> topUniversities;
     }
 
     @Data

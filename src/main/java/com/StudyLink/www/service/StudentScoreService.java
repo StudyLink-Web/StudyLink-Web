@@ -20,6 +20,7 @@ public class StudentScoreService {
 
     private final StudentScoreRepository studentScoreRepository;
     private final UserRepository userRepository;
+    private final ScoreRecordRepository scoreRecordRepository;
 
     /**
      * 특정 사용자의 모든 성적 조회
@@ -63,6 +64,7 @@ public class StudentScoreService {
                         .score(dto.getScore())
                         .scoreType(dto.getScoreType())
                         .category(dto.getCategory())
+                        .optionalSubject(dto.getOptionalSubject())
                         .build())
                 .collect(Collectors.toList());
 
@@ -82,6 +84,63 @@ public class StudentScoreService {
         return newScores.size();
     }
 
+    /**
+     * 제목과 함께 성적 레코드 저장
+     */
+    @Transactional
+    public Long saveScoreRecord(Long userId, String title, List<StudentScoreDTO> scoreDTOs) {
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        com.StudyLink.www.entity.ScoreRecord record = com.StudyLink.www.entity.ScoreRecord.builder()
+                .user(user)
+                .title(title)
+                .build();
+
+        List<StudentScore> scores = scoreDTOs.stream()
+                .filter(dto -> dto.getSubjectName() != null && !dto.getSubjectName().trim().isEmpty())
+                .map(dto -> StudentScore.builder()
+                        .user(user)
+                        .subjectName(dto.getSubjectName())
+                        .score(dto.getScore())
+                        .scoreType(dto.getScoreType())
+                        .category(dto.getCategory())
+                        .optionalSubject(dto.getOptionalSubject())
+                        .scoreRecord(record)
+                        .build())
+                .collect(Collectors.toList());
+
+        record.setScores(scores);
+        com.StudyLink.www.entity.ScoreRecord saved = scoreRecordRepository.save(record);
+        return saved.getRecordId();
+    }
+
+    /**
+     * 사용자의 모든 성적 레코드 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<java.util.Map<String, Object>> getScoreRecords(Long userId) {
+        return scoreRecordRepository.findByUser_UserIdOrderByCreatedAtDesc(userId).stream()
+                .map(r -> {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("id", r.getRecordId());
+                    map.put("title", r.getTitle());
+                    map.put("createdAt", r.getCreatedAt());
+                    return map;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 특정 레코드의 상세 성적 조회
+     */
+    @Transactional(readOnly = true)
+    public List<StudentScoreDTO> getRecordDetails(Long recordId) {
+        return studentScoreRepository.findByScoreRecord_RecordId(recordId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     private StudentScoreDTO convertToDTO(StudentScore score) {
         return StudentScoreDTO.builder()
                 .scoreId(score.getScoreId())
@@ -89,6 +148,7 @@ public class StudentScoreService {
                 .score(score.getScore())
                 .scoreType(score.getScoreType())
                 .category(score.getCategory())
+                .optionalSubject(score.getOptionalSubject())
                 .build();
     }
 }

@@ -131,9 +131,16 @@
               <div id="scoreForm">
                 <!-- 국어 -->
                 <div class="score-input-item" data-fixed-subject="국어">
-                  <label class="score-label"
-                    ><span class="badge bg-dark">국어</span></label
-                  >
+                  <label class="score-label">
+                    <div><span class="badge bg-dark">국어</span></div>
+                    <select
+                      class="form-select form-select-sm w-auto subject-detail-select"
+                    >
+                      <option value="">(공통)</option>
+                      <option value="화법과 작문">화법과 작문</option>
+                      <option value="언어와 매체">언어와 매체</option>
+                    </select>
+                  </label>
                   <div class="row g-2">
                     <div class="col-5">
                       <select
@@ -159,9 +166,17 @@
 
                 <!-- 수학 -->
                 <div class="score-input-item" data-fixed-subject="수학">
-                  <label class="score-label"
-                    ><span class="badge bg-primary">수학</span></label
-                  >
+                  <label class="score-label">
+                    <div><span class="badge bg-primary">수학</span></div>
+                    <select
+                      class="form-select form-select-sm w-auto subject-detail-select"
+                    >
+                      <option value="">(공통)</option>
+                      <option value="확률과 통계">확률과 통계</option>
+                      <option value="미적분">미적분</option>
+                      <option value="기하">기하</option>
+                    </select>
+                  </label>
                   <div class="row g-2">
                     <div class="col-5">
                       <select
@@ -379,10 +394,37 @@
                 </div>
               </div>
 
-              <div class="mt-4 text-center">
-                <button class="btn btn-save w-100" onclick="saveScores()">
-                  <i class="fas fa-save me-2"></i> 성적 저장 및 분석하기
-                </button>
+              <!-- 성적 제목 입력 및 저장 구역 -->
+              <div class="mt-4 pt-3 border-top">
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-muted"
+                    >분석 성적 제목 (선택)</label
+                  >
+                  <input
+                    type="text"
+                    id="recordTitle"
+                    class="form-control form-control-sm"
+                    placeholder="예: 2024_03_모의고사"
+                  />
+                </div>
+                <div class="d-grid gap-2">
+                  <button class="btn btn-save" onclick="saveScores()">
+                    <i class="fas fa-save me-2"></i> 성적 저장 및 분석하기
+                  </button>
+                </div>
+              </div>
+
+              <!-- 저장된 성적 이력 (최신 5개) -->
+              <div id="scoreHistoryArea" class="mt-4 d-none">
+                <h6 class="fw-bold small text-muted mb-2">
+                  <i class="fas fa-history me-1"></i> 저장된 성적 이력
+                </h6>
+                <div
+                  id="recordList"
+                  class="list-group list-group-flush small border rounded"
+                >
+                  <!-- 동적 삽입됨 -->
+                </div>
               </div>
             </div>
           </div>
@@ -475,10 +517,102 @@
 
       let barChart = null;
       let radarChart = null;
+      let analysisData = null; // 분석 데이터 전역 저장
 
       window.onload = function () {
         loadInitialData();
+        fetchHistory(); // 이력 불러오기 추가
       };
+
+      async function fetchHistory() {
+        try {
+          const res = await fetch("/api/dashboard/records");
+          if (!res.ok) return;
+          const records = await res.json();
+          const area = document.getElementById("scoreHistoryArea");
+          const list = document.getElementById("recordList");
+
+          if (records.length > 0) {
+            area.classList.remove("d-none");
+            list.innerHTML = "";
+            records.slice(0, 5).forEach((r) => {
+              const date = new Date(r.createdAt).toLocaleDateString();
+              const item = document.createElement("a");
+              item.href = "javascript:void(0)";
+              item.className =
+                "list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2";
+              item.innerHTML = `
+                <span class="text-truncate" style="max-width: 150px;">${r.title}</span>
+                <span class="text-muted" style="font-size: 0.7rem;">${date}</span>
+              `;
+              item.onclick = () => loadRecord(r.id, r.title);
+              list.appendChild(item);
+            });
+          }
+        } catch (e) {
+          console.error("이력 로드 실패:", e);
+        }
+      }
+
+      async function loadRecord(id, title) {
+        if (
+          !confirm(
+            `'${title}' 성적을 불러오시겠습니까? 현재 입력된 내용은 사라집니다.`
+          )
+        )
+          return;
+
+        try {
+          const res = await fetch(`/api/dashboard/records/${id}/load`);
+          if (!res.ok) throw new Error("로드 실패");
+          const scores = await res.json();
+
+          // 기존 UI 초기화 후 데이터 삽입
+          populateScoreFields(scores);
+          document.getElementById("recordTitle").value = title;
+
+          // 분석 요청
+          requestAnalysis();
+        } catch (e) {
+          alert("성적을 불러오는 중 오류가 발생했습니다.");
+        }
+      }
+
+      function populateScoreFields(scores) {
+        let inquiryIdx = 1;
+
+        // 탐구 필드 초기화 (과목 선택 해제)
+        document
+          .querySelectorAll(".inquiry-item .subject-select")
+          .forEach((s) => (s.value = ""));
+
+        scores.forEach((s) => {
+          const fixedItem = document.querySelector(
+            `.score-input-item[data-fixed-subject="${s.subject_name}"]`
+          );
+          if (fixedItem) {
+            fixedItem.querySelector(".score-type-select").value = s.score_type;
+            fixedItem.querySelector("input").value = s.score;
+            const detailSelect = fixedItem.querySelector(
+              ".subject-detail-select"
+            );
+            if (detailSelect && s.optional_subject)
+              detailSelect.value = s.optional_subject;
+            toggleHint(fixedItem.querySelector(".score-type-select"));
+          } else if (s.category === "사탐" || s.category === "과탐") {
+            const inqItem = document.querySelector(
+              `.inquiry-item[data-inquiry-index="${inquiryIdx}"]`
+            );
+            if (inqItem) {
+              inqItem.querySelector(".subject-select").value = s.subject_name;
+              inqItem.querySelector(".score-type-select").value = s.score_type;
+              inqItem.querySelector(".score-value-input").value = s.score;
+              toggleHint(inqItem.querySelector(".score-type-select"));
+              inquiryIdx++;
+            }
+          }
+        });
+      }
 
       function toggleHint(select) {
         const input = select.closest(".row").querySelector("input");
@@ -513,9 +647,16 @@
                 `.score-input-item[data-fixed-subject="${s.subject_name}"]`
               );
               if (fixedItem) {
-                fixedItem.querySelector("select").value = s.score_type;
+                fixedItem.querySelector(".score-type-select").value =
+                  s.score_type;
                 fixedItem.querySelector("input").value = s.score;
-                toggleHint(fixedItem.querySelector("select"));
+                const detailSelect = fixedItem.querySelector(
+                  ".subject-detail-select"
+                );
+                if (detailSelect && s.optional_subject) {
+                  detailSelect.value = s.optional_subject;
+                }
+                toggleHint(fixedItem.querySelector(".score-type-select"));
               } else if (s.category === "사탐" || s.category === "과탐") {
                 // 탐구 과목
                 const inqItem = document.querySelector(
@@ -550,9 +691,11 @@
             if (subj) {
               scores.push({
                 subject_name: subj,
-                score_type: item.querySelector("select").value,
+                score_type: item.querySelector(".score-type-select").value,
                 score: parseFloat(item.querySelector("input").value),
                 category: "공통",
+                optional_subject:
+                  item.querySelector(".subject-detail-select")?.value || null,
               });
             }
           });
@@ -594,6 +737,20 @@
             body: JSON.stringify(validScores),
           });
 
+          // 제목이 있는 경우 레코드로도 저장
+          const title = document.getElementById("recordTitle").value.trim();
+          if (title) {
+            await fetch("/api/dashboard/records/save", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                [csrfHeader]: csrfToken,
+              },
+              body: JSON.stringify({ title: title, scores: validScores }),
+            });
+            fetchHistory(); // 목록 갱신
+          }
+
           const result = await res.json();
           if (res.ok) {
             alert(result.message || "성적이 성공적으로 저장되었습니다.");
@@ -628,6 +785,7 @@
           }
 
           const data = await res.json();
+          analysisData = data; // 데이터 저장
           console.log("📊 [Frontend] Received Analysis Data:", data);
 
           // 데이터 필드명 싱크 (snake_case 대응)
@@ -666,6 +824,20 @@
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            onClick: (event, elements, chart) => {
+              const activePoints = chart.getElementsAtEventForMode(
+                event.native || event,
+                "nearest",
+                { intersect: true },
+                true
+              );
+              if (activePoints.length > 0) {
+                const index = activePoints[0].index;
+                const status = chart.data.labels[index];
+                console.log("🖱️ Chart Clicked:", status);
+                showUnivList(status);
+              }
+            },
           },
         });
 
@@ -687,6 +859,148 @@
           },
         });
       }
+
+      function showUnivList(status) {
+        if (!analysisData) {
+          console.error("❌ 분석 데이터가 없습니다.");
+          return;
+        }
+        const topUnivs =
+          analysisData.top_universities || analysisData.topUniversities;
+        if (!topUnivs) {
+          console.error(
+            "❌ 대학 상세 데이터(top_universities)가 응답에 포함되지 않았습니다."
+          );
+          return;
+        }
+
+        const list = topUnivs[status] || [];
+        const body = document.getElementById("univListBody");
+        const title = document.getElementById("modalTitle");
+
+        title.innerHTML = `<span class="badge ${getStatusBadgeClass(
+          status
+        )} me-2">${status}</span> 권 주요 분석 대학`;
+        body.innerHTML = "";
+
+        if (list.length === 0) {
+          body.innerHTML =
+            '<tr><td colspan="4" class="text-center py-4 text-muted">해당 구간에 분석된 대학 정보가 없습니다.</td></tr>';
+        } else {
+          list.forEach((u) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td class="ps-4 fw-bold text-dark">${u.univ}</td>
+                <td><span class="text-muted small">${u.major}</span></td>
+                <td class="text-center"><span class="badge bg-light text-dark fw-normal">${
+                  u.target_per
+                }%</span></td>
+                <td class="text-center"><span class="fw-bold ${getStatusTextClass(
+                  status
+                )}">${status}</span></td>
+              `;
+            body.appendChild(tr);
+          });
+        }
+
+        const modalId = "univListModal";
+        const modalEl = document.getElementById(modalId);
+
+        // Bootstrap v5 방식 시도 후 실패 시 v4(jQuery) 시도
+        if (window.bootstrap && bootstrap.Modal) {
+          const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modal.show();
+        } else if (window.jQuery && jQuery.fn.modal) {
+          $(modalEl).modal("show");
+        } else {
+          console.error("❌ Bootstrap Modal 라이브러리를 찾을 수 없습니다.");
+          alert("상세 리스트를 표시할 수 없습니다 (라이브러리 로드 오류).");
+        }
+      }
+
+      function getStatusBadgeClass(status) {
+        switch (status) {
+          case "안정":
+            return "bg-success";
+          case "적정":
+            return "bg-primary";
+          case "소신":
+            return "bg-warning text-dark";
+          case "불가":
+            return "bg-danger";
+          default:
+            return "bg-secondary";
+        }
+      }
+
+      function getStatusTextClass(status) {
+        switch (status) {
+          case "안정":
+            return "text-success";
+          case "적정":
+            return "text-primary";
+          case "소신":
+            return "text-warning";
+          case "불가":
+            return "text-danger";
+          default:
+            return "text-muted";
+        }
+      }
     </script>
+
+    <!-- 📊 대학 리스트 모달 (최하단으로 이동하여 배경 겹침 이슈 해결) -->
+    <div
+      class="modal fade"
+      id="univListModal"
+      tabindex="-1"
+      aria-hidden="true"
+      style="z-index: 2000"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="background: white">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title fw-bold" id="modalTitle">
+              분석 대학 리스트
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-4">대학교</th>
+                    <th>학과/전공</th>
+                    <th class="text-center">70% 컷(백분위)</th>
+                    <th class="text-center">진단</th>
+                  </tr>
+                </thead>
+                <tbody id="univListBody">
+                  <!-- 데이터가 동적으로 삽입됨 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer border-0 bg-light">
+            <p class="small text-muted mb-0 me-auto ps-2">
+              ※ 상위 10개 대학 정보는 ADIGA(공공데이터) 70% 컷 기준입니다.
+            </p>
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm px-4"
+              data-bs-dismiss="modal"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </html>
