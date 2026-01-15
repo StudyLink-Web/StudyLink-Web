@@ -5,6 +5,7 @@ import com.StudyLink.www.entity.StudentScore;
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.StudentScoreRepository;
 import com.StudyLink.www.repository.UserRepository;
+import com.StudyLink.www.repository.ScoreRecordRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

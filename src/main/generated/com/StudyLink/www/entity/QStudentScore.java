@@ -24,9 +24,13 @@ public class QStudentScore extends EntityPathBase<StudentScore> {
 
     public final StringPath category = createString("category");
 
+    public final StringPath optionalSubject = createString("optionalSubject");
+
     public final NumberPath<Double> score = createNumber("score", Double.class);
 
     public final NumberPath<Long> scoreId = createNumber("scoreId", Long.class);
+
+    public final QScoreRecord scoreRecord;
 
     public final StringPath scoreType = createString("scoreType");
 
@@ -52,6 +56,7 @@ public class QStudentScore extends EntityPathBase<StudentScore> {
 
     public QStudentScore(Class<? extends StudentScore> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
+        this.scoreRecord = inits.isInitialized("scoreRecord") ? new QScoreRecord(forProperty("scoreRecord"), inits.get("scoreRecord")) : null;
         this.user = inits.isInitialized("user") ? new QUsers(forProperty("user"), inits.get("user")) : null;
     }
 
