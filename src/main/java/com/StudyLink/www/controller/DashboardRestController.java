@@ -32,7 +32,14 @@ public class DashboardRestController {
     private final UserRepository userRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    private final String AI_ANALYSIS_URL = "https://yaimbot23-chatbot-docker.hf.space/analyze-dashboard";
+    @org.springframework.beans.factory.annotation.Value("${python.api.url}")
+    private String pythonApiUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${python.api.token:#{null}}")
+    private String pythonApiToken;
+
+    // Remove hardcoded URL
+    // private final String AI_ANALYSIS_URL = ...;
 
     /**
      * 현재 사용자의 점수 저장 여부 및 기본 데이터 조회
@@ -61,6 +68,7 @@ public class DashboardRestController {
         response.put("profile", profile.orElse(null));
         response.put("user", Map.of("nickname", user.getNickname(), "name", user.getName()));
         
+        log.info("📡 [DashboardData] User: {}, Score Count: {}", user.getEmail(), scores.size());
         return ResponseEntity.ok(response);
     }
 
@@ -71,13 +79,22 @@ public class DashboardRestController {
     public ResponseEntity<Map<String, Object>> saveScores(
             Authentication authentication, 
             @RequestBody List<StudentScoreDTO> scores) {
+        
         Users user = getCurrentUser(authentication);
-        studentScoreService.saveScores(user.getUserId(), scores);
+        log.info("📥 [ScoreSaveRequest] User: {}, Incoming Count: {}", user.getEmail(), scores != null ? scores.size() : 0);
+        
+        int savedCount = studentScoreService.saveScores(user.getUserId(), scores);
         
         Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("message", "성적이 성공적으로 저장되었습니다.");
-        return ResponseEntity.ok(response);
+        if (savedCount > 0) {
+            response.put("success", true);
+            response.put("message", savedCount + "건의 성적이 성공적으로 저장되었습니다.");
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("success", false);
+            response.put("message", "저장된 성적이 없습니다. 입력값을 확인해 주세요.");
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     /**
@@ -102,11 +119,14 @@ public class DashboardRestController {
                 .build();
 
         try {
-            log.info("📌 파이썬 서버 분석 요청 중...");
-            DashboardDTO.AnalysisResponse response = restTemplate.postForObject(AI_ANALYSIS_URL, request, DashboardDTO.AnalysisResponse.class);
+            log.info("📌 파이썬 서버 분석 요청 중... URL: {}", pythonApiUrl + "/analyze-dashboard");
+            DashboardDTO.AnalysisResponse response = restTemplate.postForObject(pythonApiUrl + "/analyze-dashboard", request, DashboardDTO.AnalysisResponse.class);
             return ResponseEntity.ok(response);
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            log.error("❌ 파이썬 서버 분석 연동 실패 (HTTP {}): {}", e.getStatusCode(), e.getResponseBodyAsString());
+            return ResponseEntity.internalServerError().build();
         } catch (Exception e) {
-            log.error("❌ 파이썬 서버 분석 연동 실패: {}", e.getMessage());
+            log.error("❌ 파이썬 서버 분석 연동 실패: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -117,30 +137,29 @@ public class DashboardRestController {
             throw new RuntimeException("로그인이 필요한 서비스입니다.");
         }
 
-        String identifier = authentication.getName();
+        String rawId = authentication.getName();
         
         // OAuth2 로그인 대응: 이메일 추출 시도
         if (authentication instanceof org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken token) {
             Map<String, Object> attributes = token.getPrincipal().getAttributes();
             if (attributes.containsKey("email")) {
-                identifier = (String) attributes.get("email");
-            } else if (attributes.containsKey("response")) { // Naver 대응
-                Map<String, Object> response = (Map<String, Object>) attributes.get("response");
-                if (response.containsKey("email")) identifier = (String) response.get("email");
-            } else if (attributes.containsKey("kakao_account")) { // Kakao 대응
-                Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
-                if (kakaoAccount.containsKey("email")) identifier = (String) kakaoAccount.get("email");
+                rawId = (String) attributes.get("email");
+            } else if (attributes.get("response") instanceof Map<?, ?> responseMap) { // Naver 대응
+                if (responseMap.containsKey("email")) rawId = (String) responseMap.get("email");
+            } else if (attributes.get("kakao_account") instanceof Map<?, ?> kakaoMap) { // Kakao 대응
+                if (kakaoMap.containsKey("email")) rawId = (String) kakaoMap.get("email");
             }
         }
 
-        log.info("🔍 사용자 조회 시도 (Identifier: {})", identifier);
+        final String finalIdentifier = rawId;
+        log.info("🔍 사용자 조회 시도 (Identifier: {})", finalIdentifier);
         
-        final String finalId = identifier;
-        return authService.getUserByEmail(finalId)
-                .orElseGet(() -> {
-                    // 이메일로 못 찾으면 username으로 재시도
-                    return userRepository.findByUsername(finalId)
-                            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + finalId));
-                });
+        Optional<Users> userOpt = authService.getUserByEmail(finalIdentifier);
+        if (userOpt.isPresent()) {
+            return userOpt.get();
+        }
+        
+        return userRepository.findByUsername(finalIdentifier)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + finalIdentifier));
     }
 }

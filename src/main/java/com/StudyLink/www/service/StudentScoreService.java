@@ -36,17 +36,27 @@ public class StudentScoreService {
      * 성적 리스트 저장 (기존 성적 삭제 후 일괄 저장)
      */
     @Transactional
-    public void saveScores(Long userId, List<StudentScoreDTO> scoreDTOs) {
+    public int saveScores(Long userId, List<StudentScoreDTO> scoreDTOs) {
+        log.info("💾 [StudentScoreService] Saving scores for userId: {}. Input count: {}", userId, scoreDTOs != null ? scoreDTOs.size() : 0);
+        
+        if (scoreDTOs == null || scoreDTOs.isEmpty()) {
+            log.warn("⚠️ 전송된 성적 데이터가 비어있습니다. userId: {}", userId);
+            return 0;
+        }
+
+        // 디버깅: 첫 번째 데이터의 상세 내용 출력
+        log.info("📝 [Debug] First Item Mapping Check: {}", scoreDTOs.get(0));
+
         Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 기존 성적 삭제
-        List<StudentScore> existingScores = studentScoreRepository.findByUser_UserId(userId);
-        studentScoreRepository.deleteAll(existingScores);
-
-        // 새 성적 저장 (과목명이 없는 데이터는 걸러냄)
+        // 유효한 데이터만 필터링 (과목명 필수)
         List<StudentScore> newScores = scoreDTOs.stream()
-                .filter(dto -> dto.getSubjectName() != null && !dto.getSubjectName().trim().isEmpty()) // 방어 로직 추가
+                .filter(dto -> {
+                    boolean isValid = dto.getSubjectName() != null && !dto.getSubjectName().trim().isEmpty();
+                    if (!isValid) log.warn("🚫 [Skip] Mapping failure or missing name: {}", dto);
+                    return isValid;
+                })
                 .map(dto -> StudentScore.builder()
                         .user(user)
                         .subjectName(dto.getSubjectName())
@@ -57,13 +67,19 @@ public class StudentScoreService {
                 .collect(Collectors.toList());
 
         if (newScores.isEmpty()) {
-            log.warn("⚠️ 저장할 유효한 성적 데이터가 없습니다. (userId: {})", userId);
-            return;
+            log.warn("⚠️ 저장 가능한 유효한 성적 데이터가 0건입니다. 필드 매핑이 실패했을 가능성이 큽니다.");
+            return 0;
         }
 
+        // 기존 성적 삭제 (새 데이터가 확실히 있을 때만 삭제)
+        List<StudentScore> existingScores = studentScoreRepository.findByUser_UserId(userId);
+        studentScoreRepository.deleteAll(existingScores);
+        studentScoreRepository.flush(); // 즉시 반영
+
+        // 새 성적 저장
         studentScoreRepository.saveAll(newScores);
-        log.info("✅ 사용자의 성적이 저장되었습니다: userId={}, subjects={}", 
-                userId, newScores.stream().map(StudentScore::getSubjectName).collect(Collectors.toList()));
+        log.info("✅ 성공적으로 {}건의 성적을 저장했습니다. userId: {}", newScores.size(), userId);
+        return newScores.size();
     }
 
     private StudentScoreDTO convertToDTO(StudentScore score) {

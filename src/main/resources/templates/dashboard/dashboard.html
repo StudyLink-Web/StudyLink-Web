@@ -103,6 +103,11 @@
         padding-left: 5px;
         font-weight: 600;
       }
+      .chart-container {
+        position: relative;
+        height: 250px;
+        width: 100%;
+      }
     </style>
   </head>
 
@@ -418,7 +423,9 @@
                         title="현재 성적으로 지원 가능한 대학들의 합격 안정성 분포입니다."
                       ></i>
                     </h6>
-                    <canvas id="barChart" height="220"></canvas>
+                    <div class="chart-container">
+                      <canvas id="barChart"></canvas>
+                    </div>
                   </div>
                   <div class="col-md-6 mb-4">
                     <h6 class="fw-bold small text-muted mb-3">
@@ -428,7 +435,9 @@
                         title="과목별 성적을 기반으로 분석한 인텔리전스 차트입니다."
                       ></i>
                     </h6>
-                    <canvas id="radarChart" height="220"></canvas>
+                    <div class="chart-container">
+                      <canvas id="radarChart"></canvas>
+                    </div>
                   </div>
                 </div>
                 <hr />
@@ -494,16 +503,17 @@
           const res = await fetch("/api/dashboard/data");
           if (!res.ok) return;
           const data = await res.json();
+          console.log("🔍 [Frontend] Loaded Dashboard Data:", data);
 
           if (data.scores && data.scores.length > 0) {
             let inquiryIdx = 1;
             data.scores.forEach((s) => {
               // 고정 과목 (국어, 수학, 영어)
               const fixedItem = document.querySelector(
-                `.score-input-item[data-fixed-subject="${s.subjectName}"]`
+                `.score-input-item[data-fixed-subject="${s.subject_name}"]`
               );
               if (fixedItem) {
-                fixedItem.querySelector("select").value = s.scoreType;
+                fixedItem.querySelector("select").value = s.score_type;
                 fixedItem.querySelector("input").value = s.score;
                 toggleHint(fixedItem.querySelector("select"));
               } else if (s.category === "사탐" || s.category === "과탐") {
@@ -513,9 +523,9 @@
                 );
                 if (inqItem) {
                   inqItem.querySelector(".subject-select").value =
-                    s.subjectName;
+                    s.subject_name;
                   inqItem.querySelector(".score-type-select").value =
-                    s.scoreType;
+                    s.score_type;
                   inqItem.querySelector(".score-value-input").value = s.score;
                   toggleHint(inqItem.querySelector(".score-type-select"));
                   inquiryIdx++;
@@ -539,8 +549,8 @@
             const subj = item.getAttribute("data-fixed-subject");
             if (subj) {
               scores.push({
-                subjectName: subj,
-                scoreType: item.querySelector("select").value,
+                subject_name: subj,
+                score_type: item.querySelector("select").value,
                 score: parseFloat(item.querySelector("input").value),
                 category: "공통",
               });
@@ -555,8 +565,8 @@
             const selectedOption =
               subjectSelect.options[subjectSelect.selectedIndex];
             scores.push({
-              subjectName: subjectName,
-              scoreType: item.querySelector(".score-type-select").value,
+              subject_name: subjectName,
+              score_type: item.querySelector(".score-type-select").value,
               score: parseFloat(item.querySelector(".score-value-input").value),
               category: selectedOption.dataset.cat,
             });
@@ -565,8 +575,9 @@
 
         // 유효성 검사 (과목명이 없는 데이터는 제외)
         const validScores = scores.filter(
-          (s) => s.subjectName && !isNaN(s.score)
+          (s) => s.subject_name && !isNaN(s.score)
         );
+        console.log("📤 [Frontend] Saving Scores:", validScores);
 
         if (validScores.length === 0) {
           alert("입력된 성적 정보가 없습니다. 점수와 과목을 확인해 주세요.");
@@ -583,12 +594,17 @@
             body: JSON.stringify(validScores),
           });
 
+          const result = await res.json();
           if (res.ok) {
-            alert("모든 성적 데이터가 안전하게 저장되었습니다.");
+            alert(result.message || "성적이 성공적으로 저장되었습니다.");
             requestAnalysis();
+          } else {
+            console.error("❌ 저장 실패:", result);
+            alert("저장 실패: " + (result.message || "알 수 없는 오류"));
           }
         } catch (e) {
-          alert("데이터 저장 중 문제가 발생했습니다.");
+          console.error("❌ 저장 중 예외 발생:", e);
+          alert("데이터 저장 중 시스템 오류가 발생했습니다.");
         }
       }
 
@@ -604,26 +620,47 @@
 
         try {
           const res = await fetch("/api/dashboard/analysis");
-          if (!res.ok) throw new Error("분석 요청 실패");
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(
+              errData.message || "분석 요청 실패 (Status: " + res.status + ")"
+            );
+          }
 
           const data = await res.json();
+          console.log("📊 [Frontend] Received Analysis Data:", data);
+
+          // 데이터 필드명 싱크 (snake_case 대응)
           renderCharts(data);
-          document.getElementById("aiSummary").innerHTML =
-            data.aiSummary.replace(/\n/g, "<br>");
+
+          const summaryText = data.ai_summary || data.aiSummary;
+          document.getElementById("aiSummary").innerHTML = summaryText
+            ? summaryText.replace(/\n/g, "<br>")
+            : "분석 요약을 생성할 수 없습니다.";
+
           statusEl.innerText = "분석 완료 (2026학년도 입시 반영)";
         } catch (e) {
+          console.error("❌ 분석 중 오류:", e);
           document.getElementById("aiSummary").innerText =
-            "AI 서버와 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.";
+            "AI 분석 중 오류가 발생했습니다: " + e.message;
           statusEl.innerText = "분석 오류";
         }
       }
 
       function renderCharts(data) {
+        const chartData = data.chart_data || data.chartData;
+        const radarData = data.radar_data || data.radarData;
+
+        if (!chartData || !radarData) {
+          console.warn("⚠️ 차트 데이터가 누락되었습니다:", data);
+          return;
+        }
+
         const ctxBar = document.getElementById("barChart").getContext("2d");
         if (barChart) barChart.destroy();
         barChart = new Chart(ctxBar, {
           type: "bar",
-          data: data.chartData,
+          data: chartData,
           options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -636,7 +673,7 @@
         if (radarChart) radarChart.destroy();
         radarChart = new Chart(ctxRadar, {
           type: "radar",
-          data: data.radarData,
+          data: radarData,
           options: {
             responsive: true,
             maintainAspectRatio: false,

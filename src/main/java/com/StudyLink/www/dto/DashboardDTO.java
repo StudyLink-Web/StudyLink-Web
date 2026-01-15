@@ -31,9 +31,13 @@ public class DashboardDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AnalysisResponse {
+        @com.fasterxml.jackson.annotation.JsonProperty("chart_data")
         private Map<String, Object> chartData;
+        @com.fasterxml.jackson.annotation.JsonProperty("radar_data")
         private Map<String, Object> radarData;
+        @com.fasterxml.jackson.annotation.JsonProperty("ai_summary")
         private String aiSummary;
+        @com.fasterxml.jackson.annotation.JsonProperty("gap_analysis")
         private Map<String, Double> gapAnalysis;
     }
 
