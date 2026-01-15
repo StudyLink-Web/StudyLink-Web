@@ -22,10 +22,10 @@
             <div class="form_board_box">
                 <select class="form-select" name="type" aria-label="정렬 기준">
                     <option value="" th:selected="${ph.type == null or ph.type == ''}">전체</option>
-                    <option value="new" th:selected="${ph.type == 'new'}">최신 순</option>
-                    <option value="view" th:selected="${ph.type == 'view'}">조회수 순</option>
-                    <option value="like" th:selected="${ph.type == 'like'}" disabled>좋아요 순(준비중)</option>
-                    <option value="cmt" th:selected="${ph.type == 'cmt'}" disabled>댓글 순(준비중)</option>
+                    <option value="new" th:selected="${ph.type == 'new'}">제목 순</option>
+                    <option value="view" th:selected="${ph.type == 'view'}">내용 순</option>
+<!--                    <option value="like" th:selected="${ph.type == 'like'}" disabled>좋아요 순(준비중)</option>-->
+<!--                    <option value="cmt" th:selected="${ph.type == 'cmt'}" disabled>댓글 순(준비중)</option>-->
                 </select>
 
                 <input class="form-control" type="search" name="keyword"
@@ -38,7 +38,13 @@
                 검색
             </button>
         </form>
-            <div class="total_gun"><p>총 <span class="g">[[${ph.totalElement}]]</span>건이 검색 되었습니다.</p></div>
+            <div class="total_gun"
+                 th:if="${(ph.type != null and ph.type != '')
+                  or (ph.keyword != null and ph.keyword != '')}">
+                <p>
+                    총 <span class="g">[[${ph.totalElement}]]</span>건이 검색 되었습니다.
+                </p>
+            </div>
 
 
         <!-- 데이터 없을 때 -->
@@ -63,22 +69,38 @@
                              alt="기본 이미지">
                     </div>
 
-                    <div class="board_info">
-                        <div class="board_title_class">
-                            <span th:text="${b.title}"></span>
+
+                    <div class="profil_imgbox">
+                        <div class="profil_img">
+                            <img th:src="${loginUser != null
+                                          and loginUser.profileImageUrl != null
+                                          and loginUser.profileImageUrl != ''
+                                          ? loginUser.profileImageUrl
+                                          : '/img/default_profile.png'}"
+                                 alt="프로필 이미지"
+                                 onerror="this.src='/img/default_profile.png'">
+
                         </div>
 
-                        <div class="board_writer">
-                            <span>작성자 : </span><span th:text="${b.writer}"></span>
-                            <p th:if="${b.department != null}">
-                                <span th:text="${b.department}"></span>
-                            </p>
+                        <div class="board_info">
+                            <div class="board_title_class">
+                                <span th:text="${b.title}"></span>
+                            </div>
+
+                            <div class="board_writer">
+                                <span>작성자 : </span><span th:text="${b.writer}"></span>
+                                <p th:if="${b.department != null}" class="nowrapbox">
+                                    <span th:text="${b.department}"></span>
+                                </p>
+                            </div>
+
+                            <div class="date_flex">
+                                <p th:text="${b.createdAt != null ? #temporals.format(b.createdAt, 'yyyy-MM-dd') : '-'}"></p>
+                                <p th:text="${b.viewCount}"></p>
+                            </div>
                         </div>
 
-                        <div class="date_flex">
-                            <p th:text="${b.createdAt != null ? #temporals.format(b.createdAt, 'yyyy-MM-dd') : '-'}"></p>
-                            <p th:text="${b.viewCount}"></p>
-                        </div>
+
                     </div>
 
                 </div>
