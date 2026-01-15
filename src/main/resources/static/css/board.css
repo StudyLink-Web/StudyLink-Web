@@ -17,6 +17,7 @@
 
 .board_list_view {display: grid; grid-template-columns:repeat(2, 1fr); gap:20px; padding:0 20px 30px; max-width:1200px; width:100%; margin:30px auto 0;}
 .board_infobox {padding:0 20px; border:1px solid var(--border-color); border-radius: 10px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02); background: #fff;}
+.board_info {width:100%;}
 .board_title_not {text-align: center;}
 .search_button {background: var(--primary-color); flex:none; color:#fff;}
 .search_button:hover {background: var(--primary-color); color:#fff;}
@@ -30,5 +31,9 @@
 .total_gun p {margin-bottom:0;}
 .link_board_details {cursor:pointer;}
 .profil_imgbox {display: flex; align-items: center; gap:20px;}
-.profil_img {position: relative;}
+.profil_img {position: relative; width:40px; height:40px; flex:none;}
 .profil_img img {position: absolute; top:50%; left:50%; transform: translate(-50%,-50%); width:40px; height:40px;}
+
+.board_title_class, .nowrapbox {width:100%; max-width:450px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+
+
