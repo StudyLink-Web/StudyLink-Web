@@ -1,7 +1,17 @@
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3등분 */
-    gap: 1rem; /* 칸 사이 간격 */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    min-height: 100px; /* 메시지가 위에 붙지 않도록 최소 높이 */
+}
+
+.empty-message {
+    grid-column: 1 / -1; /* 전체 열 span */
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    align-self: center; /* 세로 가운데 */
+    justify-self: center; /* 가로 가운데 */
 }
 
 .grid-item {
@@ -11,4 +21,12 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+}
+
+#privateContainer {
+    grid-template-rows: repeat(1, 100px);
+}
+
+#publicContainer {
+    grid-template-rows: repeat(3, 100px);
 }
