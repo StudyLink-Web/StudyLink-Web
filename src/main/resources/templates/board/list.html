@@ -69,22 +69,38 @@
                              alt="기본 이미지">
                     </div>
 
-                    <div class="board_info">
-                        <div class="board_title_class">
-                            <span th:text="${b.title}"></span>
+
+                    <div class="profil_imgbox">
+                        <div class="profil_img">
+                            <img th:src="${loginUser != null
+                                          and loginUser.profileImageUrl != null
+                                          and loginUser.profileImageUrl != ''
+                                          ? loginUser.profileImageUrl
+                                          : '/img/default_profile.png'}"
+                                 alt="프로필 이미지"
+                                 onerror="this.src='/img/default_profile.png'">
+
                         </div>
 
-                        <div class="board_writer">
-                            <span>작성자 : </span><span th:text="${b.writer}"></span>
-                            <p th:if="${b.department != null}">
-                                <span th:text="${b.department}"></span>
-                            </p>
+                        <div class="board_info">
+                            <div class="board_title_class">
+                                <span th:text="${b.title}"></span>
+                            </div>
+
+                            <div class="board_writer">
+                                <span>작성자 : </span><span th:text="${b.writer}"></span>
+                                <p th:if="${b.department != null}">
+                                    <span th:text="${b.department}"></span>
+                                </p>
+                            </div>
+
+                            <div class="date_flex">
+                                <p th:text="${b.createdAt != null ? #temporals.format(b.createdAt, 'yyyy-MM-dd') : '-'}"></p>
+                                <p th:text="${b.viewCount}"></p>
+                            </div>
                         </div>
 
-                        <div class="date_flex">
-                            <p th:text="${b.createdAt != null ? #temporals.format(b.createdAt, 'yyyy-MM-dd') : '-'}"></p>
-                            <p th:text="${b.viewCount}"></p>
-                        </div>
+
                     </div>
 
                 </div>

@@ -29,3 +29,6 @@
 .total_gun span {color:crimson; }
 .total_gun p {margin-bottom:0;}
 .link_board_details {cursor:pointer;}
+.profil_imgbox {display: flex; align-items: center; gap:20px;}
+.profil_img {position: relative;}
+.profil_img img {position: absolute; top:50%; left:50%; transform: translate(-50%,-50%); width:40px; height:40px;}
