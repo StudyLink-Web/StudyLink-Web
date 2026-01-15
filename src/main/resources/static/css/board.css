@@ -2,17 +2,21 @@
 .campus_tab_list {display: flex; align-items: center; justify-content: center; gap:20px; text-align:center; cursor:pointer; margin-top:20px;}
 .campus_tab_list li.active {color:var(--primary-color); font-weight: 700; cursor:pointer;}
 .campus_tab_list li {width:100px;}
-.search_campus {margin-top:30px;}
+.search_campus { width:100%; max-width:1200px; margin:30px auto 0;}
 
 .board_list_box {margin-top:20px; border:1px solid var(--border-color); border-radius: 10px;}
 .register_campus_link {text-align: right; padding-right:20px; font-weight: 700; font-size:20px; color:var(--primary-color); margin-bottom:20px;}
 .register_campus_link span {cursor:pointer;}
-.board_img img {max-width:400px; height:150px; display: block; margin:0 auto;}
+.board_img img {width:100%;  height:150px; display: block; margin:0 auto; object-fit: cover;}
 .board_img { border-bottom:1px solid var(--border-color); padding:20px 0;}
 .board_title_class {font-size:20px; font-weight: 700; margin-top:10px;}
 .date_flex {display: flex; align-items: center; justify-content: space-between}
-.board_list_view {display: grid; grid-template-columns:repeat(4, 1fr); gap:20px; padding:0 20px 30px;}
-.board_infobox {padding:0 20px; border:1px solid var(--border-color); border-radius: 10px;}
+.date_flex p {margin-bottom:6px; font-size:12px; font-weight: 500; }
+.date_flex p:nth-child(1){color:#666;}
+.date_flex p:nth-child(2){color:var(--primary-color); font-weight: 700;}
+
+.board_list_view {display: grid; grid-template-columns:repeat(2, 1fr); gap:20px; padding:0 20px 30px; max-width:1200px; width:100%; margin:0 auto;}
+.board_infobox {padding:0 20px; border:1px solid var(--border-color); border-radius: 10px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02); background: #fff;}
 .board_title_not {text-align: center;}
 .search_button {background: var(--primary-color); flex:none; color:#fff;}
 .search_button:hover {background: var(--primary-color); color:#fff;}
