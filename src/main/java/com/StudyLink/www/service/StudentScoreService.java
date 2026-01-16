@@ -168,7 +168,7 @@ public class StudentScoreService {
      */
     @Transactional(readOnly = true)
     public List<com.StudyLink.www.dto.DashboardDTO.TrendItem> getAllTrendData(Long userId) {
-        return scoreRecordRepository.findByUser_UserIdOrderByCreatedAtAsc(userId).stream()
+        return scoreRecordRepository.findByUser_UserIdOrderByTitleAsc(userId).stream()
                 .map(r -> com.StudyLink.www.dto.DashboardDTO.TrendItem.builder()
                         .examName(r.getTitle())
                         .date(r.getCreatedAt() != null ? r.getCreatedAt().toString() : "")
