@@ -225,6 +225,6 @@ exitBtn.addEventListener('click', ()=>{
         }
     } else {
         // 나머지는 그냥 나가기
-        window.location.href = `/room/list`;
+        window.history.back();
     }
 })

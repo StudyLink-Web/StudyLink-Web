@@ -104,4 +104,9 @@ public class RoomServiceImpl implements RoomService{
     public void deleteMentorMessage(long roomId, long mentorId) {
         messageRepository.deleteByRoomIdAndMentorId(roomId, mentorId);
     }
+
+    @Override
+    public Page<RoomDTO> getMyQuizList(long userId, Pageable pageable) {
+        return roomRepository.findByStudentIdOrMentorId(userId, userId, pageable).map(RoomDTO::new);
+    }
 }

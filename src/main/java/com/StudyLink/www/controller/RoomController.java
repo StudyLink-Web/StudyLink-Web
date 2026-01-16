@@ -156,6 +156,12 @@ public class RoomController {
         roomDTO.setMentorId(mentorId);
         roomDTO.setStatus(RoomDTO.Status.PENDING);
         roomDTO.setPoint(point);
+        if (mentorId != null) {
+            roomDTO.setIsPublic(false);
+        } else {
+            roomDTO.setIsPublic(true);
+        }
+        log.info(">>> roomDTO {}", roomDTO);
         roomService.save(roomDTO);
         redirectAttributes.addFlashAttribute("message", "문제가 등록되었습니다.");
         return "redirect:/room/list";
@@ -321,5 +327,38 @@ public class RoomController {
             }
         }
         return "redirect:/room/list";
+    }
+
+
+    @GetMapping("/myQuiz")
+    public String myQuiz(Authentication authentication, Model model, @RequestParam(defaultValue = "0") int page){
+
+        int pageGroupSize = 5; // 한 그룹에 보여줄 페이지 수
+
+        Pageable pageable = PageRequest.of(page, 12, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<RoomDTO> myQuizPage;
+
+        String username = authentication.getName();
+        long userId = userService.findUserIdByUsername(username);
+        myQuizPage = roomService.getMyQuizList(userId, pageable);
+
+        List<RoomDTO> myQuizList = myQuizPage.getContent();
+        log.info(">>> myQuizList {}", myQuizList);
+
+        // 그룹 시작/끝 페이지 계산
+        int startPage = (myQuizPage.getNumber() / pageGroupSize) * pageGroupSize;
+        int endPage = Math.min(startPage + pageGroupSize, myQuizPage.getTotalPages());
+
+        int prevGroup = Math.max(startPage - pageGroupSize, 0);
+        int nextGroup = Math.min(startPage + pageGroupSize, myQuizPage.getTotalPages());
+
+        model.addAttribute("myQuizPage", myQuizPage);
+        model.addAttribute("myQuizList", myQuizList);
+        model.addAttribute("startPage", startPage);
+        model.addAttribute("endPage", endPage);
+        model.addAttribute("prevGroup", prevGroup);
+        model.addAttribute("nextGroup", nextGroup);
+
+        return "/room/myQuiz";
     }
 }

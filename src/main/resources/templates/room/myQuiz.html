@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content" class="container-md">
+	<h1 th:text="${#authorization.expression('hasRole(''MENTOR'')')
+                  ? '나의 답변 목록'
+                  : '나의 질문 목록'}"></h1>
+
+
+	<div id="myQuizContainer" class="text-center grid-container">
+		<div th:if="${myQuizPage.totalElements == 0}" class="empty-message">
+			<p th:text="${#authorization.expression('hasRole(''MENTOR'')')
+                  ? '해결한 문제가 없습니다.'
+                  : '등록한 문제가 없습니다.'}"></p>
+		</div>
+	</div>
+	<nav aria-label="Page navigation example" class="mt-2 d-flex justify-content-center" th:if="${myQuizPage.totalElements > 0}">
+		<!-- private 페이지네이션 -->
+		<ul class="pagination">
+			<!-- 이전 그룹 -->
+			<li class="page-item" th:classappend="${startPage == 0} ? 'disabled'">
+				<a class="page-link" th:href="@{/room/myQuiz(page=${prevGroup})}">&lt;&lt;</a>
+			</li>
+
+			<!-- 현재 그룹 페이지 번호 -->
+			<li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage - 1)}"
+				th:classappend="${i == myQuizPage.number} ? 'active'">
+				<a class="page-link" th:text="${i + 1}"
+				   th:href="@{/room/myQuiz(page=${i})}"></a>
+			</li>
+
+			<!-- 다음 그룹 -->
+			<li class="page-item" th:classappend="${endPage >= myQuizPage.totalPages} ? 'disabled'">
+				<a class="page-link" th:href="@{/room/myQuiz(page=${nextGroup})}">&gt;&gt;</a>
+			</li>
+		</ul>
+	</nav>
+	<script th:inline="javascript">
+		// 서버에서 넘어온 데이터를 JS 변수로 변환
+		let myQuizList = [[${myQuizList}]];
+	</script>
+	<script src="/js/myQuiz.js"></script>
+</div>

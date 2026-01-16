@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface RoomRepository extends JpaRepository<Room, Long> {
     Page<Room> findByStatusAndIsPublic(Room.Status status, Boolean isPublic, Pageable pageable);
 
@@ -20,4 +22,6 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     @Modifying
     @Query("DELETE FROM Room r WHERE r.roomId = :roomId AND r.status = 'PENDING'")
     int deleteIfPending(@Param("roomId") long roomId);
+
+    Page<Room> findByStudentIdOrMentorId(long userId, long userId1, Pageable pageable);
 }
