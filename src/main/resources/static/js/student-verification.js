@@ -3,9 +3,18 @@
    =========================== */
 
 document.addEventListener('DOMContentLoaded', function() {
-    setupEmailCheckButton();
-    setupFormSubmit();
-    setupEmailInput();
+    // ⭐ 인증 완료 여부 확인
+    const verifiedElement = document.querySelector('.alert-success-verified');
+
+    if (verifiedElement) {
+        // 인증 완료 상태 - 폼 관련 함수 실행 안 함
+        console.log('✅ 대학생 인증이 이미 완료되었습니다');
+    } else {
+        // 인증 미완료 상태 - 폼 설정
+        setupEmailCheckButton();
+        setupFormSubmit();
+        setupEmailInput();
+    }
 });
 
 /**
@@ -21,6 +30,13 @@ function setupEmailCheckButton() {
 
         if (!email) {
             statusEl.textContent = '❌ 이메일을 입력하세요';
+            statusEl.className = 'form-text error';
+            return;
+        }
+
+        // ⭐ 이메일 형식 검증
+        if (!isValidEmail(email)) {
+            statusEl.textContent = '❌ 올바른 이메일 형식을 입력하세요';
             statusEl.className = 'form-text error';
             return;
         }
@@ -60,6 +76,12 @@ function setupFormSubmit() {
         const submitBtn = document.getElementById('submitBtn');
         const originalText = submitBtn.textContent;
 
+        // ⭐ 최종 검증
+        if (!isValidEmail(email)) {
+            showError('올바른 이메일 형식을 입력하세요');
+            return;
+        }
+
         // 로딩 상태
         submitBtn.disabled = true;
         submitBtn.textContent = '전송 중...';
@@ -80,26 +102,20 @@ function setupFormSubmit() {
             const data = await response.json();
 
             if (data.success) {
-                // 성공
-                document.getElementById('verificationForm').style.display = 'none';
-                document.getElementById('successMessage').style.display = 'block';
-                document.getElementById('errorMessage').style.display = 'none';
+                // ✅ 성공
+                hideForm();
+                showSuccess();
                 console.log('✅ 인증 이메일 전송 성공');
             } else {
-                // 실패
-                document.getElementById('verificationForm').style.display = 'block';
-                document.getElementById('successMessage').style.display = 'none';
-                document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('errorText').textContent = data.message || '인증 요청에 실패했습니다';
+                // ❌ 실패
+                showError(data.message || '인증 요청에 실패했습니다');
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
                 console.log('❌ 인증 이메일 전송 실패:', data.message);
             }
         } catch (error) {
             console.error('❌ 폼 제출 오류:', error);
-            document.getElementById('verificationForm').style.display = 'block';
-            document.getElementById('errorMessage').style.display = 'block';
-            document.getElementById('errorText').textContent = '서버 오류가 발생했습니다';
+            showError('서버 오류가 발생했습니다');
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
         }
@@ -121,4 +137,44 @@ function setupEmailInput() {
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = false;
     });
+}
+
+/**
+ * ⭐ 이메일 형식 검증
+ */
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+/**
+ * ⭐ 폼 숨기기
+ */
+function hideForm() {
+    const form = document.getElementById('verificationForm');
+    const infoBox = document.querySelector('.info-box');
+    const logoutSection = document.querySelector('.logout-section');
+
+    if (form) form.style.display = 'none';
+    if (infoBox) infoBox.style.display = 'none';
+    if (logoutSection) logoutSection.style.display = 'none';
+}
+
+/**
+ * ⭐ 성공 메시지 표시
+ */
+function showSuccess() {
+    document.getElementById('verificationForm').style.display = 'none';
+    document.getElementById('successMessage').style.display = 'block';
+    document.getElementById('errorMessage').style.display = 'none';
+}
+
+/**
+ * ⭐ 에러 메시지 표시
+ */
+function showError(message) {
+    document.getElementById('verificationForm').style.display = 'block';
+    document.getElementById('successMessage').style.display = 'none';
+    document.getElementById('errorMessage').style.display = 'block';
+    document.getElementById('errorText').textContent = message;
 }

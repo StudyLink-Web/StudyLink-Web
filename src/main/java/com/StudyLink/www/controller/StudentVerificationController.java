@@ -41,7 +41,7 @@ public class StudentVerificationController {
             String username = auth.getName();
             String displayName = username;
 
-            // ⭐ 추가: OAuth2 사용자인 경우 principal에서 직접 name 가져오기
+            // OAuth2 사용자인 경우 principal에서 직접 name 가져오기
             if (auth instanceof OAuth2AuthenticationToken) {
                 OAuth2AuthenticationToken oauth2Auth = (OAuth2AuthenticationToken) auth;
                 OAuth2User principal = oauth2Auth.getPrincipal();
@@ -62,9 +62,13 @@ public class StudentVerificationController {
                     Users user = userOpt.get();
                     displayName = user.getName();
                     model.addAttribute("username", user.getUsername());
-                    model.addAttribute("name", displayName);  // ⭐ 추가
-                    log.info("✅ 사용자 정보 전달: name={}, username={}",
-                            displayName, user.getUsername());
+                    model.addAttribute("name", displayName);
+
+                    model.addAttribute("schoolEmail", user.getSchoolEmail());
+                    model.addAttribute("schoolEmailVerifiedAt", user.getSchoolEmailVerifiedAt());
+
+                    log.info("✅ 사용자 정보 전달: name={}, username={}, schoolEmail={}, schoolEmailVerifiedAt={}",
+                            displayName, user.getUsername(), user.getSchoolEmail(), user.getSchoolEmailVerifiedAt());
                 } else {
                     model.addAttribute("username", username);
                     model.addAttribute("name", displayName);
@@ -83,10 +87,10 @@ public class StudentVerificationController {
 
     /**
      * AJAX: 학교 이메일 중복 확인
-     * ⭐ 로그인 필수!
+     * 로그인 필수!
      */
     @GetMapping("/check-email")
-    @PreAuthorize("isAuthenticated()")  // ⭐ 로그인한 사용자만 접근 가능
+    @PreAuthorize("isAuthenticated()")  // 로그인한 사용자만 접근 가능
     @ResponseBody
     public ResponseEntity<Map<String, Object>> checkSchoolEmail(@RequestParam String email) {
         log.info("🔍 학교 이메일 확인: {}", email);
@@ -96,10 +100,10 @@ public class StudentVerificationController {
 
     /**
      * AJAX: 인증 이메일 요청
-     * ⭐ 로그인 필수!
+     * 로그인 필수!
      */
     @PostMapping("/request-verification")
-    @PreAuthorize("isAuthenticated()")  // ⭐ 로그인한 사용자만 접근 가능
+    @PreAuthorize("isAuthenticated()")  // 로그인한 사용자만 접근 가능
     @ResponseBody
     public ResponseEntity<Map<String, Object>> requestVerification(
             @RequestBody Map<String, String> request) {
@@ -118,7 +122,7 @@ public class StudentVerificationController {
 
     /**
      * 이메일 인증 링크 클릭 (GET)
-     * ⭐ 이 부분은 로그인 불필요! (토큰으로 인증)
+     * 이 부분은 로그인 불필요! (토큰으로 인증)
      */
     @GetMapping("/verify")
     public String verifyEmail(@RequestParam String token, Model model) {
@@ -142,7 +146,7 @@ public class StudentVerificationController {
 
     /**
      * AJAX: 인증 상태 조회
-     * ⭐ 수정됨: Repository를 통해 안전하게 사용자 조회
+     * 수정됨: Repository를 통해 안전하게 사용자 조회
      */
     @GetMapping("/status")
     @PreAuthorize("isAuthenticated()")  // 로그인한 사용자만 접근 가능
@@ -160,7 +164,7 @@ public class StudentVerificationController {
                 return ResponseEntity.ok(response);
             }
 
-            // ⭐ 수정됨: Repository를 통해 안전하게 조회
+            // Repository를 통해 안전하게 조회
             String username = auth.getName();
             Optional<Users> userOpt = userRepository.findByUsername(username)
                     .or(() -> userRepository.findByEmail(username));
@@ -189,7 +193,7 @@ public class StudentVerificationController {
 
 
     /**
-     * ⭐ 테스트용: 이메일 토큰 초기화 (재인증 요청 가능하게 함)
+     * 테스트용: 이메일 토큰 초기화 (재인증 요청 가능하게 함)
      * 개발 환경에서만 사용!
      */
     @PostMapping("/reset-token")
