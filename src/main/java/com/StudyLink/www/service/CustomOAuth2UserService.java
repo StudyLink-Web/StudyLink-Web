@@ -165,6 +165,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 user.setOauthProvider(provider);
                 user.setOauthId(username);
                 user.setEmail(email);
+                // schoolEmail이 null이면 빈 문자열 설정 (unique 제약 회피)
+                if (user.getSchoolEmail() == null) {
+                    user.setSchoolEmail(null);  // NULL로 유지 (unique 제약 자동 무시)
+                }
             } else {
                 PasswordEncoder encoder = passwordEncoderProvider.getIfAvailable();
                 String encodedPassword = (encoder != null)
@@ -182,6 +186,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .password(encodedPassword)
                         .role("ROLE_USER")
                         .isActive(true)
+                        // OAuth2 사용자는 schoolEmail을 NULL로 설정
+                        .schoolEmail(null)
+                        .isVerifiedStudent(false)
                         .build();
             }
 
