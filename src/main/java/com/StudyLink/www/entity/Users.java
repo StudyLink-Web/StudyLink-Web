@@ -59,11 +59,11 @@ public class Users {
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
-    // ✅ 추가: 학생 인증 여부 (학생 신분증 또는 재학증명서 확인)
+    // 학생 인증 여부 (학생 신분증 또는 재학증명서 확인)
     @Column(name = "is_student_verified", nullable = false)
     private Boolean isStudentVerified = false;
 
-    // ⭐ 추가: 학교 이메일 인증 관련 필드
+    // 학교 이메일 인증 관련 필드
     @Column(name = "school_email", unique = true, nullable = true)
     private String schoolEmail;  // 학교 이메일 (예: student@ewha.ac.kr)
 
@@ -90,7 +90,7 @@ public class Users {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ⭐ 추가: OAuth2 관련 필드
+    // OAuth2 관련 필드
     @Column(length = 50, nullable = true)
     private String oauthProvider;  // oauth_provider로 매핑
 
@@ -149,7 +149,7 @@ public class Users {
         if (this.emailVerified == null) {
             this.emailVerified = false;
         }
-        // ✅ 추가: 학생 인증 여부 기본값
+        // 학생 인증 여부 기본값
         if (this.isStudentVerified == null) {
             this.isStudentVerified = false;
         }

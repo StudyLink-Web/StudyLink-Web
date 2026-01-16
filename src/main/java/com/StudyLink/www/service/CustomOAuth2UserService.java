@@ -69,18 +69,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             // ⭐ Kakao
             else if ("kakao".equals(registrationId)) {
                 log.info("🔍 Kakao 로그인 처리 시작");
-                Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
                 Map<String, Object> properties = (Map<String, Object>) attributes.get("properties");
 
                 String id = attributes.get("id").toString();
                 String nickname = (properties != null) ? (String) properties.get("nickname") : "카카오사용자";
-                String email = (kakaoAccount != null) ? (String) kakaoAccount.get("email") : null;
 
-                // ⭐ 그 다음에 null 체크
-                if (email == null || email.isEmpty()) {
-                    email = "kakao_" + id + "@kakao.com";
-                    log.warn("⚠️ Kakao email이 null - 임시 email 생성: {}", email);
-                }
+                // ⭐ 개발 환경: 카카오 이메일 대신 항상 임시 이메일 생성
+                String email = "kakao_" + id + "@kakao.com";
+                log.warn("⚠️ Kakao 개발환경: 임시 email 생성: {}", email);
 
                 String picture = (properties != null) ? (String) properties.get("profile_image") : "";
 
@@ -165,6 +161,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 user.setOauthProvider(provider);
                 user.setOauthId(username);
                 user.setEmail(email);
+                // schoolEmail이 null이면 빈 문자열 설정 (unique 제약 회피)
+                if (user.getSchoolEmail() == null) {
+                    user.setSchoolEmail(null);  // NULL로 유지 (unique 제약 자동 무시)
+                }
             } else {
                 PasswordEncoder encoder = passwordEncoderProvider.getIfAvailable();
                 String encodedPassword = (encoder != null)
@@ -182,6 +182,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .password(encodedPassword)
                         .role("ROLE_USER")
                         .isActive(true)
+                        // OAuth2 사용자는 schoolEmail을 NULL로 설정
+                        .schoolEmail(null)
+                        .isVerifiedStudent(false)
                         .build();
             }
 

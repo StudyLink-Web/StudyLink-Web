@@ -18,7 +18,10 @@ public class MapController {
     private final MapService mapService;
 
     @GetMapping
-    public String showMap() {
+    public String showMap(org.springframework.security.core.Authentication authentication, org.springframework.ui.Model model) {
+        boolean isAuthenticated = (authentication != null && authentication.isAuthenticated() && 
+                                  !(authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken));
+        model.addAttribute("isAuthenticated", isAuthenticated);
         return "map/map";
     }
 
