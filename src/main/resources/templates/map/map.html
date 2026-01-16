@@ -107,6 +107,67 @@
         background: white;
         border-radius: 50%;
       }
+      /* 히스토리 아이템 스타일 */
+      .history-item {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 4px solid #667eea;
+      }
+      .history-item:hover {
+        transform: translateX(3px);
+        background: #f8f9ff;
+        border-color: #667eea;
+      }
+      .history-item .title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #333;
+        display: block;
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .history-item .date {
+        font-size: 0.75rem;
+        color: #999;
+      }
+
+      /* 분석 모드 뱃지 스타일 */
+      .analysis-mode-badge {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+        border-radius: 20px;
+        background: #eef2ff;
+        color: #4f46e5;
+        border: 1px solid #c7d2fe;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 15px;
+        animation: fadeIn 0.3s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* 시뮬레이션 모드 뱃지 커스텀 */
+      .simulation-mode-badge {
+        background: #f1f5f9;
+        color: #64748b;
+        border-color: #e2e8f0;
+      }
     </style>
   </head>
 
@@ -120,18 +181,22 @@
             등급을 조절하여 지원 가능한 대학을 확인해보세요.
           </p>
 
-          <!-- [NEW] 내 성적 불러오기 버튼 -->
-          <div class="mb-4" th:if="${isAuthenticated}">
-            <button
-              id="loadScoreBtn"
-              class="btn btn-primary w-100 shadow-sm"
-              style="
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                border: none;
-              "
+          <!-- [NEW] 분석 모드 표시기 -->
+          <div id="analysisModeIndicator">
+            <div
+              id="modeBadge"
+              class="analysis-mode-badge simulation-mode-badge"
             >
-              <i class="fas fa-file-invoice me-1"></i> 내 성적 불러오기
-            </button>
+              <i id="modeIcon" class="fas fa-chart-line"></i>
+              <span id="analysisModeText">시뮬레이션 모드 활성화</span>
+              <button
+                id="modeCloseBtn"
+                type="button"
+                class="btn-close d-none"
+                style="font-size: 0.5rem; margin-left: auto"
+                onclick="resetToSimMode()"
+              ></button>
+            </div>
           </div>
 
           <!-- 국어 등급 -->
@@ -209,10 +274,34 @@
           중입니다.
         </div>
 
-        <div class="sim-section mt-auto">
+        <div class="sim-section mt-auto" th:if="${isAuthenticated}">
+          <div
+            class="sim-title d-flex justify-content-between align-items-center"
+          >
+            <span>🕒 성적 히스토리</span>
+            <button
+              id="refreshHistoryBtn"
+              class="btn btn-sm btn-link text-decoration-none p-0"
+              title="새로고침"
+            >
+              <i class="fas fa-sync-alt" style="font-size: 0.8rem"></i>
+            </button>
+          </div>
+          <div
+            id="historyList"
+            class="list-group list-group-flush gap-2"
+            style="max-height: 250px; overflow-y: auto"
+          >
+            <div class="text-center py-3 text-muted small">
+              성적 이력을 불러오는 중...
+            </div>
+          </div>
+        </div>
+
+        <div class="sim-section mt-auto" th:unless="${isAuthenticated}">
           <div class="alert alert-info py-2 small mb-0">
-            💡 <strong>Tip!</strong> 대시보드가 완성되면 실제 내 성적을 불러올
-            수 있습니다.
+            💡 <strong>Tip!</strong> 로그인하시면 저장된 내 성적 이력을 불러와서
+            비교해볼 수 있습니다.
           </div>
         </div>
       </aside>
@@ -274,6 +363,10 @@
       let markers = [];
       let infoWindow = null;
 
+      // [NEW] 전역 정밀 성적 데이터 상태
+      let activeFullScores = null;
+      let activeHistoryTitle = null;
+
       // 1. 카카오 맵 로드 후 초기화
       kakao.maps.load(function () {
         const container = document.getElementById("map");
@@ -300,16 +393,34 @@
         }
         abortController = new AbortController();
 
-        const kor = document.getElementById("korGrade").value;
-        const mat = document.getElementById("matGrade").value;
-
-        // 지도의 현재 경계 정보 가져오기
         const bounds = kakaoMap.getBounds();
         const sw = bounds.getSouthWest();
         const ne = bounds.getNorthEast();
 
-        const requestData = {
-          userScores: [
+        let requestData = {
+          userScores: [],
+          bounds: {
+            minLat: sw.getLat(),
+            maxLat: ne.getLat(),
+            minLng: sw.getLng(),
+            maxLng: ne.getLng(),
+          },
+        };
+
+        // [NEW] 정밀 분석 모드인 경우 full score 사용, 아니면 슬라이더 기반 시뮬레이션
+        if (activeFullScores && activeFullScores.length > 0) {
+          console.log("🚀 [MapAPI] 정밀 분석 모드 데이터 전송:", activeFullScores);
+          requestData.userScores = activeFullScores.map((s) => ({
+            subjectName: s.subject_name || s.subjectName,
+            score: s.score,
+            scoreType: s.score_type || s.scoreType,
+            category: s.category,
+          }));
+        } else {
+          const kor = document.getElementById("korGrade").value;
+          const mat = document.getElementById("matGrade").value;
+          console.log("🛠️ [MapAPI] 시뮬레이션 모드 데이터 전송 (등급 기반)");
+          requestData.userScores = [
             {
               subjectName: "국어",
               score: parseInt(kor),
@@ -322,15 +433,8 @@
               scoreType: "등급",
               category: "공통",
             },
-            // 탐구는 서버에서 자동 유추 로직 적용으로 제거
-          ],
-          bounds: {
-            minLat: sw.getLat(),
-            maxLat: ne.getLat(),
-            minLng: sw.getLng(),
-            maxLng: ne.getLng(),
-          },
-        };
+          ];
+        }
 
         try {
           const response = await fetch("/map/api/data", {
@@ -543,6 +647,12 @@
       };
 
       function handleGradeChange(e, valId, badgeId) {
+        // [NEW] 슬라이더 조작 시 정밀 분석 모드 해제
+        if (activeFullScores) {
+          console.log("♻️ 슬라이더 조작 감지: 시뮬레이션 모드로 전환");
+          resetToSimMode(false); // UI만 갱신하고 데이터 호출은 timer에서 수행
+        }
+
         const val = e.target.value;
         document.getElementById(valId).innerText = val;
 
@@ -594,40 +704,134 @@
         }
       };
 
-      // 7. 내 성적 불러오기 기능 구현
-      const loadScoreBtn = document.getElementById("loadScoreBtn");
-      if (loadScoreBtn) {
-        loadScoreBtn.onclick = async function () {
-          try {
-            const res = await fetch("/api/dashboard/data");
-            if (!res.ok) throw new Error("데이터를 가져올 수 없습니다.");
-            const data = await res.json();
+      // [NEW] 모드 전환 및 UI 갱신 함수
+      function resetToSimMode(refreshData = true) {
+        activeFullScores = null;
+        activeHistoryTitle = null;
 
-            if (data.scores && data.scores.length > 0) {
-              data.scores.forEach((s) => {
-                if (s.subjectName === "국어") {
+        const badge = document.getElementById("modeBadge");
+        const icon = document.getElementById("modeIcon");
+        const text = document.getElementById("analysisModeText");
+        const closeBtn = document.getElementById("modeCloseBtn");
+
+        if (badge && icon && text && closeBtn) {
+          badge.className = "analysis-mode-badge simulation-mode-badge";
+          icon.className = "fas fa-chart-line";
+          text.innerText = "시뮬레이션 모드 활성화";
+          closeBtn.classList.add("d-none");
+        }
+
+        if (refreshData) {
+          clearTimeout(timer);
+          loadMapData();
+        }
+      }
+
+      function updateAnalysisModeUI(title) {
+        const badge = document.getElementById("modeBadge");
+        const icon = document.getElementById("modeIcon");
+        const text = document.getElementById("analysisModeText");
+        const closeBtn = document.getElementById("modeCloseBtn");
+
+        if (badge && icon && text && closeBtn) {
+          badge.className = "analysis-mode-badge"; // Indigo
+          icon.className = "fas fa-microscope";
+          text.innerText = `'${title}' 정밀 분석 중`;
+          closeBtn.classList.remove("d-none");
+        }
+      }
+
+      // 7. 내 성적 불러오기 기능 (이전 중복 버튼 제거로 인해 기능만 보존 - 히스토리를 통해 우회 권장)
+      // 실제 loadScoreBtn은 위에서 제거되었지만 로직은 남겨둘 수 있으나 여기서는 아예 삭제하거나 주석 처리함.
+
+      // 8. 성적 히스토리 로드 및 렌더링 [NEW]
+      async function loadScoreHistory() {
+        const historyList = document.getElementById("historyList");
+        if (!historyList) return;
+
+        try {
+          const res = await fetch("/api/dashboard/records");
+          if (!res.ok) throw new Error("히스토리 로드 실패");
+          const records = await res.json();
+
+          if (records && records.length > 0) {
+            historyList.innerHTML = "";
+            records.slice(0, 5).forEach((r) => {
+              const date = new Date(r.createdAt).toLocaleDateString();
+              const item = document.createElement("div");
+              item.className = "history-item";
+              item.innerHTML = `
+                <span class="title">${r.title}</span>
+                <span class="date">${date} 저장됨</span>
+              `;
+              item.onclick = () => selectHistoryRecord(r.id, r.title);
+              historyList.appendChild(item);
+            });
+          } else {
+            historyList.innerHTML = `
+                <div class="alert alert-light border small py-2 mb-0" style="font-size: 0.75rem; color: #666;">
+                    💡 <strong>Tip!</strong> 대시보드에서 성적을 저장하면 여기에 내역이 표시됩니다.
+                </div>`;
+          }
+        } catch (e) {
+          console.error(e);
+          historyList.innerHTML =
+            '<div class="text-danger small py-2 text-center">히스토리를 불러올 수 없습니다.</div>';
+        }
+      }
+
+      async function selectHistoryRecord(id, title) {
+        try {
+          const res = await fetch(`/api/dashboard/records/${id}/load`);
+          if (!res.ok) throw new Error("성적 로드 실패");
+          const scores = await res.json();
+
+          if (scores && scores.length > 0) {
+            // [NEW] 정밀 분석 모드 활성화 및 전역 상태 저장
+            activeFullScores = scores;
+            activeHistoryTitle = title;
+            updateAnalysisModeUI(title);
+
+            scores.forEach((s) => {
+              const sName = s.subject_name || s.subjectName;
+              const sType = s.score_type || s.scoreType;
+              const sScore = s.score;
+
+              // 슬라이더 업데이트 (참고용 - 등급 데이터가 있을 때만)
+              if (sType === "등급") {
+                if (sName === "국어") {
                   const el = document.getElementById("korGrade");
-                  el.value = s.score;
+                  el.value = sScore;
                   handleGradeChange({ target: el }, "korVal", "korBadge");
                 }
-                if (s.subjectName === "수학") {
+                if (sName === "수학") {
                   const el = document.getElementById("matGrade");
-                  el.value = s.score;
+                  el.value = sScore;
                   handleGradeChange({ target: el }, "matVal", "matBadge");
                 }
-              });
-              alert("내 성적을 성공적으로 불러왔습니다!");
-              loadMapData(); // 지도 리프레시
-            } else {
-              alert(
-                "저장된 성적이 없습니다. 대시보드에서 성적을 먼저 입력해주세요."
-              );
-            }
-          } catch (e) {
-            console.error(e);
-            alert("성적을 불러오는 중 오류가 발생했습니다.");
+              }
+            });
+            clearTimeout(timer);
+            loadMapData();
+            console.log(`[ScoreHistory] Loaded Precise Mode: ${title}`);
           }
-        };
+        } catch (e) {
+          console.error(e);
+          alert("성적을 불러오는 중 오류가 발생했습니다.");
+        }
+      }
+
+      // 초기화: 인증된 경우 히스토리 로드
+      const isAuthenticated = [[${isAuthenticated}]];
+      if (isAuthenticated) {
+        loadScoreHistory();
+        const refreshBtn = document.getElementById("refreshHistoryBtn");
+        if (refreshBtn) {
+          refreshBtn.onclick = function (e) {
+            e.stopPropagation();
+            loadScoreHistory();
+          };
+        }
       }
     </script>
   </div>
