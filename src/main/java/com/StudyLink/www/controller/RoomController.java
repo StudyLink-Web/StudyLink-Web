@@ -15,7 +15,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -24,9 +23,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @RequestMapping("/room/*")
@@ -351,7 +348,7 @@ public class RoomController {
 
         int pageGroupSize = 5; // 한 그룹에 보여줄 페이지 수
 
-        Pageable pageable = PageRequest.of(page, 12);
+        Pageable pageable = PageRequest.of(page, 15);
         Page<RoomDTO> myQuizPage;
 
         String username = authentication.getName();
