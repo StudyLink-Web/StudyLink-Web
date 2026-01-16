@@ -20,71 +20,92 @@
             <small class="user-account" th:text="'닉네임: ' + ${username}"></small>
         </div>
 
-        <h2>🎓 대학생 인증</h2>
-        <p class="subtitle">학교 이메일로 대학생 신분을 인증하세요</p>
+        <!-- ⭐ 인증 완료 상태 -->
+        <div th:if="${schoolEmailVerifiedAt != null}" class="alert alert-success-verified">
+            <div class="verified-header">
+                <span class="verified-badge">✅ 인증 완료</span>
+            </div>
+            <h3>대학생 인증이 완료되었습니다!</h3>
+            <div class="verified-info">
+                <p class="verified-email-label">인증 완료된 이메일</p>
+                <p class="verified-email" th:text="${schoolEmail}"></p>
+                <p class="verified-date" th:text="'인증 완료: ' + ${#temporals.format(schoolEmailVerifiedAt, 'yyyy년 MM월 dd일 HH:mm')}"></p>
+            </div>
+            <form action="/logout" method="post">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-secondary btn-block" style="margin-top: var(--space-20);">
+                    로그아웃
+                </button>
+            </form>
+        </div>
 
-        <form id="verificationForm">
-            <div class="form-group">
-                <label for="schoolEmail">학교 이메일</label>
-                <div class="input-group">
-                    <input type="email"
-                           id="schoolEmail"
-                           name="schoolEmail"
-                           placeholder="student@ewha.ac.kr"
-                           required>
-                    <button type="button" class="btn btn-secondary" id="checkEmailBtn">
-                        중복확인
-                    </button>
+        <!-- ⭐ 인증 미완료 상태 (기존 코드) -->
+        <div th:unless="${schoolEmailVerifiedAt != null}">
+            <h2>🎓 대학생 인증</h2>
+            <p class="subtitle">학교 이메일로 대학생 신분을 인증하세요</p>
+
+            <form id="verificationForm">
+                <div class="form-group">
+                    <label for="schoolEmail">학교 이메일</label>
+                    <div class="input-group">
+                        <input type="email"
+                               id="schoolEmail"
+                               name="schoolEmail"
+                               placeholder="student@ewha.ac.kr"
+                               required>
+                        <button type="button" class="btn btn-secondary" id="checkEmailBtn">
+                            중복확인
+                        </button>
+                    </div>
+                    <small id="emailStatus" class="form-text"></small>
+                    <small class="form-text text-muted">
+                        ✅ 지원되는 학교: 서울대, 이화여자대, 연세대, 고려대, 중앙대, 말라야대 등
+                    </small>
                 </div>
-                <small id="emailStatus" class="form-text"></small>
-                <small class="form-text text-muted">
-                    ✅ 지원되는 학교: 서울대, 이화여자대, 연세대, 고려대, 중앙대, 말라야대 등
-                </small>
+
+                <!-- ⭐ CSRF 토큰 추가 -->
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+
+                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                    인증 이메일 전송
+                </button>
+            </form>
+
+            <div id="successMessage" class="alert alert-success" style="display: none;">
+                <h4>✅ 인증 이메일이 전송되었습니다!</h4>
+                <p>이메일을 확인하여 인증 링크를 클릭하세요.</p>
+                <p class="text-muted">⏰ 유효시간: 24시간</p>
             </div>
 
-            <!-- ⭐ CSRF 토큰 추가 -->
-            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+            <div id="errorMessage" class="alert alert-danger" style="display: none;">
+                <h4>❌ 오류가 발생했습니다</h4>
+                <p id="errorText"></p>
+            </div>
 
-            <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
-                인증 이메일 전송
-            </button>
-        </form>
+            <hr class="my-4">
 
-        <div id="successMessage" class="alert alert-success" style="display: none;">
-            <h4>✅ 인증 이메일이 전송되었습니다!</h4>
-            <p>이메일을 확인하여 인증 링크를 클릭하세요.</p>
-            <p class="text-muted">⏰ 유효시간: 24시간</p>
+            <div class="info-box">
+                <h5>❓ 지원되는 학교</h5>
+                <p class="small">
+                    서울대 • 이화여자대 • 연세대 • 고려대 • 중앙대 • 경희대 • 홍익대 •
+                    KAIST • 포스텍 • 서강대 • 한양대 • 세종대 • 단국대 • 건국대 • 숙명여자대 • 말라야대
+                </p>
+                <p class="small text-muted">
+                    😞 지원되지 않는 학교라면? <a href="/">문의하기</a>
+                </p>
+            </div>
+
+            <!-- 로그아웃 섹션 (기존 코드를 이렇게 수정) -->
+            <div class="logout-section">
+                <p class="small text-muted">
+                    다른 계정으로 인증하시겠어요?
+                <form id="logoutForm" action="/logout" method="post" style="display: inline;">
+                    <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                    <button type="submit" class="logout-link">로그아웃</button>
+                </form>
+                </p>
+            </div>
         </div>
-
-        <div id="errorMessage" class="alert alert-danger" style="display: none;">
-            <h4>❌ 오류가 발생했습니다</h4>
-            <p id="errorText"></p>
-        </div>
-
-        <hr class="my-4">
-
-        <div class="info-box">
-            <h5>❓ 지원되는 학교</h5>
-            <p class="small">
-                서울대 • 이화여자대 • 연세대 • 고려대 • 중앙대 • 경희대 • 홍익대 •
-                KAIST • 포스텍 • 서강대 • 한양대 • 세종대 • 단국대 • 건국대 • 숙명여자대 • 말라야대
-            </p>
-            <p class="small text-muted">
-                😞 지원되지 않는 학교라면? <a href="/">문의하기</a>
-            </p>
-        </div>
-
-        <!-- 로그아웃 섹션 (기존 코드를 이렇게 수정) -->
-        <div class="logout-section">
-            <p class="small text-muted">
-                다른 계정으로 인증하시겠어요?
-            <form id="logoutForm" action="/logout" method="post" style="display: inline;">
-                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-                <button type="submit" class="logout-link">로그아웃</button>
-            </form>
-            </p>
-        </div>
-
 
     </div>
 </div>
