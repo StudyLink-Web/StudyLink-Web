@@ -52,7 +52,11 @@ public class StudentVerificationService {
             "@sookmyung.ac.kr", // 숙명여자대
             "@iseoul.ac.kr",    // 서울시립대
             "@kcu.ac.kr",       // 가톨릭대학교
-            "@siswa.um.edu.my"  // 말라야대학교
+            "@siswa.um.edu.my",  // 말라야대학교
+            "@kcu.ac.kr",
+            "@gangseo.ac.kr",
+            "@naver.com",
+            "@google.com"
     };
 
     /**
