@@ -204,17 +204,22 @@ public class RoomController {
                 .collect(Collectors.toList());
         log.info(">>> userRoles {}", userRoles);
 
+        String username = authentication.getName();
+        long userId = userService.findUserIdByUsername(username);
+
         switch (roomDTO.getStatus()){
             case PENDING -> {
                 if (userRoles.contains("ROLE_MENTOR")) {
                     // 멘토가 문제 풀이 시작버튼을 누른 상태
                     // 조건부 업데이트: PENDING 상태인 경우만 IN_PROGRESS로 변경
                     // 동시에 두 멘토가 접근시 생기는 문제 방지
-                    int updated = roomService.updateStatusIfPending(roomId, Room.Status.IN_PROGRESS);
+                    // mentorId 입력
+                    int updated = roomService.updateStatusIfPending(roomId, userId, Room.Status.IN_PROGRESS);
                     if (updated > 0) {
                         // 업데이트 성공 → 상태 변경 완료
                         redirectAttributes.addFlashAttribute("roomId", roomId);
                         redirectAttributes.addFlashAttribute("message", "문제 풀이를 시작했습니다. 제한시간은 20분 입니다.");
+
 
                         // 학생에게 알림 (선택)
                         return "redirect:/room/enterRoom";

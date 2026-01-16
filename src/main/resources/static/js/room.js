@@ -879,101 +879,129 @@ function updateToolUI() {
     });
 }
 
-// canvas 이벤트 바인딩
-canvas.on('mouse:down', (opt) => {
-    isDrawing = selectedTool === 'draw' || selectedTool === 'erase';
-    lastPoint = canvas.getPointer(opt.e);
-    currentPointer = lastPoint;
 
-    if (isDrawing) {
+document.addEventListener('DOMContentLoaded', () => {
+    // 접근 권한 체크. 권한이 있는 사용자만 캔버스, 메시지 이용가능
+    const canUseCanvasAndMessage =
+        roomDTO.status !== 'COMPLETED' &&
+        (senderId === roomDTO.studentId || senderId === roomDTO.mentorId);
+
+    // 캔버스 활성/비활성
+    if (canUseCanvasAndMessage) {
+        canvas.upperCanvasEl.style.pointerEvents = 'auto';
+    } else {
+        canvas.upperCanvasEl.style.pointerEvents = 'none';
+    }
+
+    // 메시지 입력 영역
+    const messageTextarea = document.querySelector('textarea[name="message"]');
+    const fileInput = document.getElementById('file');
+    const sendFileBtn = document.getElementById('sendFileBtn');
+
+    messageTextarea.disabled = !canUseCanvasAndMessage;
+    fileInput.disabled = !canUseCanvasAndMessage;
+    sendFileBtn.disabled = !canUseCanvasAndMessage;
+
+
+
+    // canvas 이벤트 바인딩
+    canvas.on('mouse:down', (opt) => {
+        isDrawing = selectedTool === 'draw' || selectedTool === 'erase';
+        lastPoint = canvas.getPointer(opt.e);
+        currentPointer = lastPoint;
+
+        if (isDrawing) {
+            initializeCurrentAction({type: selectedTool});
+
+            const message = {
+                senderId: senderId,
+                seq: mySeq++,
+                type: selectedTool
+            }
+            safeSend('/app/initializeCurrentAction', message);
+        }
+    });
+
+    canvas.on('mouse:move', (opt) => {
+        if (!isDrawing) return;
+        currentPointer = canvas.getPointer(opt.e);
+    });
+
+    canvas.on('mouse:up', () => {
+        if (!isDrawing) return;
+        isDrawing = false;
+        currentPointer = null;
+
+        if (currentAction && currentAction.targets.length > 0) {
+            pushToUndoStack();
+            const message = { senderId: senderId, seq: mySeq++ }
+            safeSend('/app/pushToUndoStack', message);
+        }
+
+        resetCurrentAction();
+
+        const message = {
+            senderId: senderId,
+            seq: mySeq++
+        }
+        safeSend('/app/resetCurrentAction', message)
+    });
+
+    // select 이벤트
+    canvas.on('selection:created', function(e) {
         initializeCurrentAction({type: selectedTool});
-
         const message = {
             senderId: senderId,
             seq: mySeq++,
             type: selectedTool
         }
         safeSend('/app/initializeCurrentAction', message);
-    }
-});
+    });
 
-canvas.on('mouse:move', (opt) => {
-    if (!isDrawing) return;
-    currentPointer = canvas.getPointer(opt.e);
-});
+    canvas.on('object:moving', function (e) { isTransform = true; });
 
-canvas.on('mouse:up', () => {
-    if (!isDrawing) return;
-    isDrawing = false;
-    currentPointer = null;
+    canvas.on('object:rotating', function (e) { isTransform = true; });
 
-    if (currentAction && currentAction.targets.length > 0) {
-        pushToUndoStack();
-        const message = { senderId: senderId, seq: mySeq++ }
-        safeSend('/app/pushToUndoStack', message);
-    }
+    canvas.on('object:scaling', function (e) { isTransform = true; });
 
-    resetCurrentAction();
+    canvas.on('object:modified', function(e) {
+        if (currentAction && currentAction.targets.length > 0) {
+            pushToUndoStack();
+            const message = {
+                senderId: senderId,
+                seq: mySeq++
+            }
+            safeSend('/app/pushToUndoStack', message);
+        }
 
-    const message = {
-        senderId: senderId,
-        seq: mySeq++
-    }
-    safeSend('/app/resetCurrentAction', message)
-});
-
-// select 이벤트
-canvas.on('selection:created', function(e) {
-    initializeCurrentAction({type: selectedTool});
-    const message = {
-        senderId: senderId,
-        seq: mySeq++,
-        type: selectedTool
-    }
-    safeSend('/app/initializeCurrentAction', message);
-});
-
-canvas.on('object:moving', function (e) { isTransform = true; });
-
-canvas.on('object:rotating', function (e) { isTransform = true; });
-
-canvas.on('object:scaling', function (e) { isTransform = true; });
-
-canvas.on('object:modified', function(e) {
-    if (currentAction && currentAction.targets.length > 0) {
-        pushToUndoStack();
+        resetCurrentAction();
         const message = {
             senderId: senderId,
             seq: mySeq++
         }
-        safeSend('/app/pushToUndoStack', message);
-    }
+        safeSend('/app/resetCurrentAction', message);
 
-    resetCurrentAction();
-    const message = {
-        senderId: senderId,
-        seq: mySeq++
-    }
-    safeSend('/app/resetCurrentAction', message);
+        initializeCurrentAction({type: selectedTool});
 
-    initializeCurrentAction({type: selectedTool});
+        const message2 = {
+            senderId: senderId,
+            seq: mySeq++,
+            type: selectedTool
+        }
+        safeSend('/app/initializeCurrentAction', message2);
+    });
 
-    const message2 = {
-        senderId: senderId,
-        seq: mySeq++,
-        type: selectedTool
-    }
-    safeSend('/app/initializeCurrentAction', message2);
+    canvas.on('selection:cleared', function(e) {
+        resetCurrentAction();
+        const message = {
+            senderId: senderId,
+            seq: mySeq++
+        }
+        safeSend('/app/resetCurrentAction', message);
+    });
 });
 
-canvas.on('selection:cleared', function(e) {
-    resetCurrentAction();
-    const message = {
-        senderId: senderId,
-        seq: mySeq++
-    }
-    safeSend('/app/resetCurrentAction', message);
-});
+
 
 // WebSocket 연결
 connect();

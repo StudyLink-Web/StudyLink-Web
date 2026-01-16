@@ -67,8 +67,8 @@ public class RoomServiceImpl implements RoomService{
 
     @Transactional
     @Override
-    public int updateStatusIfPending(long roomId, Room.Status newStatus) {
-        return roomRepository.updateStatusIfPending(roomId, newStatus);
+    public int updateStatusIfPending(long roomId, long userId, Room.Status newStatus) {
+        return roomRepository.updateStatusIfPending(roomId, userId, newStatus);
     }
 
     @Transactional

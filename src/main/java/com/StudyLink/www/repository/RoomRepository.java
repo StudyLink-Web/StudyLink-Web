@@ -16,8 +16,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     Page<Room> findByStatusAndIsPublicAndMentorId(Room.Status status, Boolean isPublic, long mentorId, Pageable pageable);
 
     @Modifying
-    @Query("UPDATE Room r SET r.status = :newStatus WHERE r.roomId = :roomId AND r.status = 'PENDING'")
-    int updateStatusIfPending(@Param("roomId") Long roomId, @Param("newStatus") Room.Status newStatus);
+    @Query("UPDATE Room r SET r.status = :newStatus, r.mentorId = :userId WHERE r.roomId = :roomId AND r.status = 'PENDING'")
+    int updateStatusIfPending(@Param("roomId") Long roomId, @Param("userId") Long userId, @Param("newStatus") Room.Status newStatus);
 
     @Modifying
     @Query("DELETE FROM Room r WHERE r.roomId = :roomId AND r.status = 'PENDING'")
