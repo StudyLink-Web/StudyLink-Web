@@ -29,7 +29,7 @@
 				<div>보유 포인트 : [[${point}]]</div>
 				<div id="pointDiv"></div>
 				<div id="btnDiv"></div>
-				<input type="hidden" name="roomId" th:value="${roomId}">
+				<input type="hidden" name="roomId" th:value="${roomDTO.roomId}">
 			</form>
 		</div>
 	</div>
@@ -68,8 +68,10 @@
         let subjectList = [[${subjectList}]];
         let favoriteList = [[${favoriteList}]];
         let point = [[${point}]];
-        let roomId = [[${roomId}]]
-        let senderId = [[${senderId}]]
+        let roomDTO = [[${roomDTO}]];
+        let senderId = [[${senderId}]];
+        let userRoles = [[${#authentication.authorities}]];
+        let message = [[${message}]] // redirect시 담겨오는 메시지
 	</script>
 	<script src="/js/room.js"></script>
 	<script src="/js/roomRegister.js"></script>

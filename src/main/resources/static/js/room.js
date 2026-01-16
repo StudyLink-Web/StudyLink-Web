@@ -1,15 +1,8 @@
-//const roomId = 1;
+const roomId = roomDTO.roomId;
 
-function randomNumberString(length) {
-    let result = '';
-    for (let i = 0; i < length; i++) {
-        result += Math.floor(Math.random() * 10); // 0~9
-    }
-    return Number(result);
+if (message != null) {
+    alert(message);
 }
-
-// const senderId = randomNumberString(10);
-// console.log("senderId =", senderId);
 
 
 function connect() {
