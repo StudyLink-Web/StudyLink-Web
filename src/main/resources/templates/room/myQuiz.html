@@ -40,6 +40,7 @@
 	<script th:inline="javascript">
 		// 서버에서 넘어온 데이터를 JS 변수로 변환
 		let myQuizList = [[${myQuizList}]];
+		let userRoles = [[${#authentication.authorities}]];
 	</script>
 	<script src="/js/myQuiz.js"></script>
 </div>

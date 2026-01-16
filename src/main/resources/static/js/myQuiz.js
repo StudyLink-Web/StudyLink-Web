@@ -14,6 +14,8 @@ const statusOrder = {
     COMPLETED: 5
 };
 
+let roleStrings = userRoles.map(r => r.authority);
+
 myQuizList
     .sort((a, b) => {
         return (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
@@ -38,6 +40,14 @@ myQuizList
         link.appendChild(subjectP);
         link.appendChild(pointP);
         link.appendChild(statusP);
+
+        // 클릭 이벤트 처리
+        link.addEventListener('click', (e) => {
+            if (room.status === 'IN_PROGRESS' && roleStrings.includes("ROLE_STUDENT")) {
+                e.preventDefault(); // 링크 이동 막기
+                alert('멘토가 답변 중입니다. 잠시만 기다려주세요.');
+            }
+        });
 
         myQuizContainer.appendChild(link);
     });

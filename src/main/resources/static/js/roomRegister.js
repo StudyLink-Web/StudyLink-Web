@@ -222,6 +222,8 @@ exitBtn.addEventListener('click', ()=>{
         if (roleStrings.includes("ROLE_MENTOR")) {
             // 문제풀이 중 멘토가 포기하는 경우
             window.location.href = `/room/exitRoom?roomId=${roomDTO.roomId}`;
+        } else {
+            window.history.back();
         }
     } else {
         // 나머지는 그냥 나가기

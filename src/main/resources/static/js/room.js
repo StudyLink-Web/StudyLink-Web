@@ -276,7 +276,7 @@ function readAllMessage(){
 // 서버로 db is_read 변경 요청
 async function readMessageToServer(messageId){
     // 상태가 IN_PROGRESS, ANSWERED, COMPLETED인경우
-    //if (roomDTO.status === "TEMP" || roomDTO.status === "PENDING") return;
+    if (roomDTO.status === "TEMP" || roomDTO.status === "PENDING") return;
     const url = "/room/readMessage/"+messageId;
     const config = {
         method: 'get'
@@ -889,7 +889,7 @@ function updateToolUI() {
 document.addEventListener('DOMContentLoaded', () => {
     // 접근 권한 체크. 권한이 있는 사용자만 캔버스, 메시지 이용가능
     const canUseCanvasAndMessage =
-        roomDTO.status !== 'COMPLETED' &&
+        roomDTO.status !== 'PENDING' && roomDTO.status !== 'COMPLETED' &&
         (senderId === roomDTO.studentId || senderId === roomDTO.mentorId);
 
     // 캔버스 활성/비활성
