@@ -107,6 +107,6 @@ public class RoomServiceImpl implements RoomService{
 
     @Override
     public Page<RoomDTO> getMyQuizList(long userId, Pageable pageable) {
-        return roomRepository.findByStudentIdOrMentorId(userId, userId, pageable).map(RoomDTO::new);
+        return roomRepository.findByStudentOrMentorOrderByStatus(userId, pageable).map(RoomDTO::new);
     }
 }

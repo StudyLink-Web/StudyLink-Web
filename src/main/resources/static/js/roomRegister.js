@@ -1,12 +1,14 @@
 const registerBtn = document.getElementById('registerBtn');
 const modal = document.getElementById('myModal');
-const closeBtn = document.querySelector('.close');
+const closeModalBtn = document.getElementById('closeModalBtn');
 const registerForm = document.getElementById('registerForm');
 const exitBtn = document.getElementById('exitBtn');
 let roleStrings = userRoles.map(r => r.authority);
 
-console.log(roomDTO)
-console.log(userRoles)
+const endModal = document.getElementById('endModal');
+const closeEndModalBtn = document.getElementById('closeEndModalBtn');
+const endForm = document.getElementById('endForm');
+
 // 등록 버튼, 나가기 버튼 텍스트 방 상태, 유저 권한에 따라 바꾸기. 실제 처리는 서버에서
 document.addEventListener('DOMContentLoaded', () => {
     if (roomDTO.status === 'TEMP') {
@@ -43,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
             registerBtn.style.display = 'none';
             exitBtn.textContent = '나가기';
         } else {
-            registerBtn.display = '종료';
+            registerBtn.textContent = '종료';
             exitBtn.textContent = '나가기';
         }
     } else { // COMPLETED
@@ -166,7 +168,6 @@ if (roomDTO.status === 'TEMP') {
 
     // 제출 취소 버튼
     const btnDiv = document.getElementById('btnDiv');
-    registerForm.appendChild(btnDiv);
 
     // 제출 버튼
     const submitBtn = document.createElement('button');
@@ -186,32 +187,46 @@ if (roomDTO.status === 'TEMP') {
     btnDiv.appendChild(cancelBtn);
     // 취소 버튼 클릭
     cancelBtn.addEventListener('click', () => {
-        closeBtn.click();
+        closeModalBtn.click();
     })
 
 
-
-
-    // 모달 닫기
-    closeBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
-    });
-
-    // 모달 바깥 클릭 시 닫기
-    window.addEventListener('click', (event) => {
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    });
 }
+
+// 모달 닫기
+closeModalBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+});
+
+// 종료 모달 닫기
+closeEndModalBtn.addEventListener('click', () => {
+    endModal.style.display = 'none';
+});
+
+// 모달 바깥 클릭 시 닫기
+window.addEventListener('click', (event) => {
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+    if (event.target === endModal) {
+        endModal.style.display = 'none';
+    }
+});
+
 
 registerBtn.addEventListener('click', () => {
     if (roomDTO.status === 'TEMP') {
         modal.style.display = 'block';
+    } else if (roomDTO.status === 'ANSWERED' && roleStrings.includes("ROLE_STUDENT")){
+        // 학생이 종료 버튼 누른 경우
+        // 종료 모달 띄우기
+        // 만족도, 찜
+        endModal.style.display = 'block';
     } else {
         window.location.href = `/room/updateState?roomId=${roomDTO.roomId}`;
     }
 });
+
 
 exitBtn.addEventListener('click', ()=>{
     if (roomDTO.status === 'TEMP') {
@@ -229,4 +244,64 @@ exitBtn.addEventListener('click', ()=>{
         // 나머지는 그냥 나가기
         window.history.back();
     }
+})
+
+
+// 종료 모달
+// 만족도
+const stars = document.querySelectorAll('.star-rating span');
+const ratingInput = document.getElementById('ratingValue');
+
+stars.forEach(star => {
+    star.addEventListener('click', () => {
+        ratingInput.value = star.dataset.value;
+        highlightStars(ratingInput.value);
+    });
+});
+
+function highlightStars(value) {
+    stars.forEach(star => {
+        if (star.dataset.value <= value) {
+            star.classList.add('selected');
+        } else {
+            star.classList.remove('selected');
+        }
+    });
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const favoriteCheckbox = document.getElementById('addFavoriteMentorCheckbox');
+
+    // roomDTO.mentorId가 이미 favoriteList에 있는지 확인
+    const isFavorited = favoriteList.some(fav => fav.mentorId === roomDTO.mentorId);
+
+    if (isFavorited) {
+        favoriteCheckbox.disabled = true;  // 체크박스 비활성화
+    }
+});
+
+// 제출 취소 버튼
+const endFormBtnDiv = document.getElementById('endModalBtnDiv');
+endForm.appendChild(endFormBtnDiv);
+
+// 제출 버튼
+const endFormSubmitBtn = document.createElement('button');
+endFormSubmitBtn.type = 'submit';
+endFormSubmitBtn.textContent = '제출';
+endForm.appendChild(document.createElement('br'));
+endForm.appendChild(document.createElement('br'));
+endFormBtnDiv.appendChild(endFormSubmitBtn);
+
+
+// 취소 버튼
+const endFormCancelBtn = document.createElement('button');
+endFormCancelBtn.type = 'button';
+endFormCancelBtn.textContent = '취소';
+endForm.appendChild(document.createElement('br'));
+endForm.appendChild(document.createElement('br'));
+endFormBtnDiv.appendChild(endFormCancelBtn);
+// 취소 버튼 클릭
+endFormCancelBtn.addEventListener('click', () => {
+    closeEndModalBtn.click();
 })

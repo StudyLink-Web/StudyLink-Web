@@ -23,5 +23,20 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     @Query("DELETE FROM Room r WHERE r.roomId = :roomId AND r.status = 'PENDING'")
     int deleteIfPending(@Param("roomId") long roomId);
 
-    Page<Room> findByStudentIdOrMentorId(long userId, long userId1, Pageable pageable);
+    @Query("""
+    SELECT r 
+    FROM Room r 
+    WHERE r.studentId = :userId OR r.mentorId = :userId
+    ORDER BY 
+        CASE r.status
+            WHEN 'TEMP' THEN 1
+            WHEN 'PENDING' THEN 2
+            WHEN 'IN_PROGRESS' THEN 3
+            WHEN 'ANSWERED' THEN 4
+            WHEN 'COMPLETED' THEN 5
+            ELSE 99
+        END,
+        r.createdAt DESC
+""")
+    Page<Room> findByStudentOrMentorOrderByStatus(@Param("userId") long userId, Pageable pageable);
 }

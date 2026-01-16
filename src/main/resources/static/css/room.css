@@ -117,7 +117,7 @@ input:disabled + label {
     position: relative;
 }
 
-.selected {
+.custom-select > .selected {
     border: 1px solid #ccc;
     padding: 8px;
     cursor: pointer;
@@ -151,4 +151,21 @@ input:disabled + label {
 
 .option:hover {
     background: #eee;
+}
+
+/* 만족도 */
+.star-rating {
+    display: flex;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.star-rating span {
+    font-size: 24px;
+    color: #ccc; /* 기본 회색 별 */
+    transition: color 0.2s;
+}
+
+.star-rating span.selected {
+    color: gold; /* 선택된 별 */
 }

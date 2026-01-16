@@ -11,10 +11,10 @@
 		<button id="exitBtn"><a href="/room/list">나가기</a></button>
 	</div>
 
-	<!-- 모달 -->
+	<!-- 등록 모달 -->
 	<div id="myModal" class="modal">
 		<div class="modal-content">
-			<span class="close">&times;</span>
+			<span class="close" id="closeModalBtn">&times;</span>
 			<h2>과목 선택</h2>
 			<form id="registerForm" action="/room/register" method="post">
 				<div id="subjectDiv"></div>
@@ -30,6 +30,30 @@
 				<div id="pointDiv"></div>
 				<div id="btnDiv"></div>
 				<input type="hidden" name="roomId" th:value="${roomDTO.roomId}">
+			</form>
+		</div>
+	</div>
+
+	<!-- 종료 모달 -->
+	<div id="endModal" class="modal">
+		<div class="modal-content">
+			<span class="close" id="closeEndModalBtn">&times;</span>
+			<form id="endForm" action="/room/endRoom" method="post">
+				<p>답변 만족도</p>
+				<div class="star-rating">
+					<span data-value="1">&#9733;</span>
+					<span data-value="2">&#9733;</span>
+					<span data-value="3">&#9733;</span>
+					<span data-value="4">&#9733;</span>
+					<span data-value="5">&#9733;</span>
+				</div>
+				<input type="hidden" name="rating" id="ratingValue" value="0">
+				<label>
+					<input type="checkbox" id="addFavoriteMentorCheckbox" name="addFavoriteMentorCheckbox">
+					멘토 찜하기
+				</label>
+				<input type="hidden" name="roomId" th:value="${roomDTO.roomId}">
+				<div id="endModalBtnDiv"></div>
 			</form>
 		</div>
 	</div>
