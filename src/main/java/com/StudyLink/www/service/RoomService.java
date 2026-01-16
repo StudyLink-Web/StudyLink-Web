@@ -22,11 +22,13 @@ public interface RoomService {
 
     RoomDTO getRoomDTO(long roomId);
 
-    int updateStatusIfPending(long roomId, Room.Status newStatus);
+    int updateStatusIfPending(long roomId, long userId, Room.Status newStatus);
 
     int deleteIfPending(long roomId);
 
     void deleteRoom(long roomId);
 
     void deleteMentorMessage(long roomId, long mentorId);
+
+    Page<RoomDTO> getMyQuizList(long userId, Pageable pageable);
 }

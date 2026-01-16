@@ -93,6 +93,9 @@ public class SecurityConfig {
                         // ✅ 등록(폼/처리): MENTOR만 허용 ( /board/** permitAll 보다 위에 있어야 함 )
                         .requestMatchers("/board/register", "/board/register/**").hasRole("MENTOR")
 
+                        // 나의 질문, 답변 내역 비로그인시 접근 불가
+                        .requestMatchers("/room/myQuiz").authenticated()
+
                         .requestMatchers(
                                 // ✅ 홈페이지는 누구나 접근 가능
                                 "/",
@@ -118,9 +121,9 @@ public class SecurityConfig {
                                 "/api/**",
                                 "/api/auth/**",
 
-                                // ✅ quiz관련 모두 허용. 나중에 분리 - 김광주
-                                "/room/**",
-                                "/ws/**", // WebSocket 엔드포인트 허용
+                                "/room/list",
+                                "/room/enterRoom",
+                                "/ws/**",
 
                                 // ✅ board 전체 공개(단, register는 위에서 예외로 막음)
                                 "/board/**",

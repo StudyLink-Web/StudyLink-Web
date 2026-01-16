@@ -67,8 +67,8 @@ public class RoomServiceImpl implements RoomService{
 
     @Transactional
     @Override
-    public int updateStatusIfPending(long roomId, Room.Status newStatus) {
-        return roomRepository.updateStatusIfPending(roomId, newStatus);
+    public int updateStatusIfPending(long roomId, long userId, Room.Status newStatus) {
+        return roomRepository.updateStatusIfPending(roomId, userId, newStatus);
     }
 
     @Transactional
@@ -103,5 +103,10 @@ public class RoomServiceImpl implements RoomService{
     @Override
     public void deleteMentorMessage(long roomId, long mentorId) {
         messageRepository.deleteByRoomIdAndMentorId(roomId, mentorId);
+    }
+
+    @Override
+    public Page<RoomDTO> getMyQuizList(long userId, Pageable pageable) {
+        return roomRepository.findByStudentOrMentorOrderByStatus(userId, pageable).map(RoomDTO::new);
     }
 }

@@ -3,6 +3,7 @@ package com.StudyLink.www.controller;
 import com.StudyLink.www.dto.FavoriteDTO;
 import com.StudyLink.www.dto.RoomDTO;
 import com.StudyLink.www.dto.SubjectDTO;
+import com.StudyLink.www.entity.Favorite;
 import com.StudyLink.www.entity.Room;
 import com.StudyLink.www.service.FavoriteService;
 import com.StudyLink.www.service.RoomService;
@@ -156,6 +157,12 @@ public class RoomController {
         roomDTO.setMentorId(mentorId);
         roomDTO.setStatus(RoomDTO.Status.PENDING);
         roomDTO.setPoint(point);
+        if (mentorId != null) {
+            roomDTO.setIsPublic(false);
+        } else {
+            roomDTO.setIsPublic(true);
+        }
+        log.info(">>> roomDTO {}", roomDTO);
         roomService.save(roomDTO);
         redirectAttributes.addFlashAttribute("message", "문제가 등록되었습니다.");
         return "redirect:/room/list";
@@ -182,6 +189,28 @@ public class RoomController {
         }
         log.info(">>> senderId {}", senderId);
         model.addAttribute("senderId", senderId);
+
+        // 필요한 데이터 보내기
+        // 과목
+        List<SubjectDTO> subjectList = roomService.getSubjectDTOList();
+        model.addAttribute("subjectList", subjectList);
+        log.info(">>> subjectList {}", subjectList);
+
+
+
+        // 찜 멘토
+        List<FavoriteDTO> favoriteList = favoriteService.getFavoritesByStudent(senderId).stream().map(FavoriteDTO::new).toList();
+        model.addAttribute("favoriteList", favoriteList);
+        log.info(">>> favoriteList {}", favoriteList);
+
+        // 학생 보유 point
+//        StudentProfile studentProfile = studentProfileService.getStudentProfile(studentId)
+//                .orElseThrow(() -> new IllegalArgumentException("학생 프로필을 찾을 수 없습니다."));
+//        int point = studentProfile.getBonusPoint() + studentProfile.getChargedPoint();
+        model.addAttribute("point", 1500);
+        //log.info(">>> point {}", point);
+
+
         return "/room/room";
     }
 
@@ -198,17 +227,22 @@ public class RoomController {
                 .collect(Collectors.toList());
         log.info(">>> userRoles {}", userRoles);
 
+        String username = authentication.getName();
+        long userId = userService.findUserIdByUsername(username);
+
         switch (roomDTO.getStatus()){
             case PENDING -> {
                 if (userRoles.contains("ROLE_MENTOR")) {
                     // 멘토가 문제 풀이 시작버튼을 누른 상태
                     // 조건부 업데이트: PENDING 상태인 경우만 IN_PROGRESS로 변경
                     // 동시에 두 멘토가 접근시 생기는 문제 방지
-                    int updated = roomService.updateStatusIfPending(roomId, Room.Status.IN_PROGRESS);
+                    // mentorId 입력
+                    int updated = roomService.updateStatusIfPending(roomId, userId, Room.Status.IN_PROGRESS);
                     if (updated > 0) {
                         // 업데이트 성공 → 상태 변경 완료
                         redirectAttributes.addFlashAttribute("roomId", roomId);
                         redirectAttributes.addFlashAttribute("message", "문제 풀이를 시작했습니다. 제한시간은 20분 입니다.");
+
 
                         // 학생에게 알림 (선택)
                         return "redirect:/room/enterRoom";
@@ -246,21 +280,6 @@ public class RoomController {
                     roomDTO.setStatus(RoomDTO.Status.ANSWERED);
                     roomService.save(roomDTO);
                     redirectAttributes.addFlashAttribute("message", "문제풀이가 완료되었습니다.");
-                    return "redirect:/room/list";
-                }
-            }
-            case ANSWERED -> {
-                if (userRoles.contains("ROLE_STUDENT")){
-                    // 학생이 종료버튼을 누른 상태
-                    // 상태 업데이트 ANSWERED -> COMPLETED
-                    roomDTO.setStatus(RoomDTO.Status.COMPLETED);
-                    roomService.save(roomDTO);
-
-
-                    // 멘토에게 포인트 지급
-                    // int point = roomDTO.getPoint();
-
-                    redirectAttributes.addFlashAttribute("message", "문제풀이가 종료되었습니다.");
                     return "redirect:/room/list";
                 }
             }
@@ -319,6 +338,65 @@ public class RoomController {
                 }
 
             }
+        }
+        return "redirect:/room/list";
+    }
+
+
+    @GetMapping("/myQuiz")
+    public String myQuiz(Authentication authentication, Model model, @RequestParam(defaultValue = "0") int page){
+
+        int pageGroupSize = 5; // 한 그룹에 보여줄 페이지 수
+
+        Pageable pageable = PageRequest.of(page, 15);
+        Page<RoomDTO> myQuizPage;
+
+        String username = authentication.getName();
+        long userId = userService.findUserIdByUsername(username);
+        myQuizPage = roomService.getMyQuizList(userId, pageable);
+
+        List<RoomDTO> myQuizList = myQuizPage.getContent();
+        log.info(">>> myQuizList {}", myQuizList);
+
+        // 그룹 시작/끝 페이지 계산
+        int startPage = (myQuizPage.getNumber() / pageGroupSize) * pageGroupSize;
+        int endPage = Math.min(startPage + pageGroupSize, myQuizPage.getTotalPages());
+
+        int prevGroup = Math.max(startPage - pageGroupSize, 0);
+        int nextGroup = Math.min(startPage + pageGroupSize, myQuizPage.getTotalPages());
+
+        model.addAttribute("myQuizPage", myQuizPage);
+        model.addAttribute("myQuizList", myQuizList);
+        model.addAttribute("startPage", startPage);
+        model.addAttribute("endPage", endPage);
+        model.addAttribute("prevGroup", prevGroup);
+        model.addAttribute("nextGroup", nextGroup);
+
+        return "/room/myQuiz";
+    }
+
+    @PostMapping("/endRoom")
+    public String endRoom(long roomId, int rating, @RequestParam(defaultValue = "false") boolean addFavoriteMentorCheckbox,
+                          RedirectAttributes redirectAttributes){
+        // 방 정보 갱신
+        RoomDTO roomDTO = roomService.getRoomDTO(roomId);
+        roomDTO.setStatus(RoomDTO.Status.COMPLETED);
+        roomDTO.setRating(rating);
+        log.info(">>> roomDTO {}", roomDTO);
+        roomService.save(roomDTO);
+        // 멘토에게 포인트 지급
+
+
+        // addFavoriteMentorCheckbox true면 찜 추가
+        try {
+            if (addFavoriteMentorCheckbox) {
+                long studentId = roomDTO.getStudentId();
+                long mentorId = roomDTO.getMentorId();
+                Favorite favorite = favoriteService.addFavorite(studentId, mentorId);
+            }
+            redirectAttributes.addFlashAttribute("message", "문제풀이가 종료되었습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("message", "멘토 찜하기에 실패했습니다.");
         }
         return "redirect:/room/list";
     }

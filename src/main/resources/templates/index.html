@@ -20,6 +20,12 @@
   <div layout:fragment="content" class="content_box">
     <!-- 기존 코드 (그대로 유지!) -->
     <a href="/room/list" class="btn btn-primary">문제 리스트</a>
+	  <a th:href="@{/room/myQuiz}"
+		 class="btn btn-primary"
+		 th:text="${#authorization.expression('hasRole(''MENTOR'')')
+             ? '나의 답변 목록'
+             : '나의 질문 목록'}">
+	  </a>
     <!-- ✅ 챗봇 페이지 및 API 공개 (실험용) -->
     <a href="/chatbot" class="btn btn-success">🤖 AI 대입 상담 챗봇</a>
     <a href="/board/list" class="btn btn-success">대학생활 게시판</a>
@@ -27,4 +33,16 @@
     <a href="/map" class="btn btn-info">📍 입시지도(임시)</a>
     <a href="/community/list" class="btn btn-warning">취준생 커뮤니티 게시판</a>
   </div>
+
+  <script>
+	  function checkLogin(isLogin) {
+		  if (!isLogin) {
+			  location.href = '/login';
+			  return false;
+		  }
+		  return true;
+	  }
+  </script>
 </html>
+
+
