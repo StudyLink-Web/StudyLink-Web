@@ -133,6 +133,9 @@ function connect() {
         loadMessage(roomId).then(result => { // 채팅기록 불러오기
             console.log("💬 로드된 메시지 수:", result.length);
             for(let message of result){
+                // 서버에서 메시지 읽음 처리
+                readMessageToServer(message.messageId);
+
                 if (message.messageType === "TEXT") {
                     spreadTextMessage(message);
                 } else {
@@ -142,6 +145,8 @@ function connect() {
                 }
             }
             safeSend("/app/enterRoom", {roomId: roomId, senderId: senderId})
+
+
         }).catch(error => {
             console.error("❌ 메시지 로드 실패:", error);
         });
@@ -248,7 +253,6 @@ function spreadFileMessage(msg, roomFileDTO) {
 // 해당 메시지 1지우기(읽음 처리)
 function readMessage(messageId){
     // 1. 해당 메시지 요소 찾기
-    console.log(messageId)
     const readSpan = document.querySelector(`.read-indicator[data-message-id='${messageId}']`);
     if (readSpan) {
         readSpan.remove(); // 화면에서 '1' 제거
@@ -271,6 +275,8 @@ function readAllMessage(){
 // 비동기
 // 서버로 db is_read 변경 요청
 async function readMessageToServer(messageId){
+    // 상태가 IN_PROGRESS, ANSWERED, COMPLETED인경우
+    //if (roomDTO.status === "TEMP" || roomDTO.status === "PENDING") return;
     const url = "/room/readMessage/"+messageId;
     const config = {
         method: 'get'
