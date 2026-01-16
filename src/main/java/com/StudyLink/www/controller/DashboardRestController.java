@@ -150,6 +150,23 @@ public class DashboardRestController {
     }
 
     /**
+     * 특정 레코드 삭제
+     */
+    @DeleteMapping("/records/{id}")
+    public ResponseEntity<Map<String, Object>> deleteRecord(
+            Authentication authentication,
+            @PathVariable("id") Long recordId) {
+        
+        studentScoreService.deleteScoreRecord(recordId);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "성적이 성공적으로 삭제되었습니다.");
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * 파이썬 서버 연동 - AI 심층 분석 결과 조회
      */
     @GetMapping("/analysis")
@@ -176,9 +193,41 @@ public class DashboardRestController {
             return ResponseEntity.ok(response);
         } catch (org.springframework.web.client.HttpStatusCodeException e) {
             log.error("❌ 파이썬 서버 분석 연동 실패 (HTTP {}): {}", e.getStatusCode(), e.getResponseBodyAsString());
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.status(e.getStatusCode()).build();
         } catch (Exception e) {
             log.error("❌ 파이썬 서버 분석 연동 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 파이썬 서버 연동 - 성적 추이 분석 (모든 시험 이력 비교)
+     */
+    @GetMapping("/analysis/trend")
+    public ResponseEntity<DashboardDTO.TrendAnalysisResponse> getTrendAnalysis(Authentication authentication) {
+        Users user = getCurrentUser(authentication);
+        List<DashboardDTO.TrendItem> trends = studentScoreService.getAllTrendData(user.getUserId());
+
+        if (trends == null || trends.isEmpty()) {
+            log.warn("⚠️ 성적 이력이 없어 추이 분석을 진행할 수 없습니다. User: {}", user.getEmail());
+            return ResponseEntity.noContent().build();
+        }
+
+        DashboardDTO.TrendAnalysisRequest request = DashboardDTO.TrendAnalysisRequest.builder()
+                .userId(user.getUserId())
+                .name(user.getName())
+                .trends(trends)
+                .build();
+
+        try {
+            log.info("📊 파이썬 서버 성적 추이 분석 요청 중... URL: {}", pythonApiUrl + "/analyze-trend");
+            DashboardDTO.TrendAnalysisResponse response = restTemplate.postForObject(
+                    pythonApiUrl + "/analyze-trend", 
+                    request, 
+                    DashboardDTO.TrendAnalysisResponse.class);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("❌ 파이썬 서버 추이 분석 연동 실패: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }

@@ -57,7 +57,7 @@ public class ChatbotController {
                     .orElseGet(() -> userRepository.findByUsername(identifier).orElse(null));
 
             if (foundUser != null) {
-                List<StudentScore> dbScores = studentScoreRepository.findByUser_UserId(foundUser.getUserId());
+                List<StudentScore> dbScores = studentScoreRepository.findByUser_UserIdAndScoreRecordIsNull(foundUser.getUserId());
                 if (!dbScores.isEmpty()) {
                     List<ChatbotDTO.UserScore> dtoScores = dbScores.stream()
                             .map(score -> ChatbotDTO.UserScore.builder()

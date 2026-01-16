@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface ScoreRecordRepository extends JpaRepository<ScoreRecord, Long> {
     List<ScoreRecord> findByUser_UserIdOrderByCreatedAtDesc(Long userId);
+    List<ScoreRecord> findByUser_UserIdOrderByCreatedAtAsc(Long userId);
 }

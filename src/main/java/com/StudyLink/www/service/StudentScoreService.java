@@ -28,7 +28,7 @@ public class StudentScoreService {
      */
     @Transactional(readOnly = true)
     public List<StudentScoreDTO> getScoresByUserId(Long userId) {
-        List<StudentScore> scores = studentScoreRepository.findByUser_UserId(userId);
+        List<StudentScore> scores = studentScoreRepository.findByUser_UserIdAndScoreRecordIsNull(userId);
         return scores.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -74,8 +74,8 @@ public class StudentScoreService {
             return 0;
         }
 
-        // 기존 성적 삭제 (새 데이터가 확실히 있을 때만 삭제)
-        List<StudentScore> existingScores = studentScoreRepository.findByUser_UserId(userId);
+        // 기존 활성 성적만 삭제 (이력 데이터는 보존)
+        List<StudentScore> existingScores = studentScoreRepository.findByUser_UserIdAndScoreRecordIsNull(userId);
         studentScoreRepository.deleteAll(existingScores);
         studentScoreRepository.flush(); // 즉시 반영
 
@@ -142,6 +142,16 @@ public class StudentScoreService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 특정 성적 레코드 삭제
+     */
+    @Transactional
+    public void deleteScoreRecord(Long recordId) {
+        // CascadeType.ALL에 의해 연관된 StudentScore들도 자동 삭제됨
+        scoreRecordRepository.deleteById(recordId);
+        log.info("🗑️ [StudentScoreService] Deleted ScoreRecord ID: {}", recordId);
+    }
+
     private StudentScoreDTO convertToDTO(StudentScore score) {
         return StudentScoreDTO.builder()
                 .scoreId(score.getScoreId())
@@ -151,5 +161,19 @@ public class StudentScoreService {
                 .category(score.getCategory())
                 .optionalSubject(score.getOptionalSubject())
                 .build();
+    }
+
+    /**
+     * 추이 분석을 위해 모든 성적 레코드와 상세 점수를 함께 조회
+     */
+    @Transactional(readOnly = true)
+    public List<com.StudyLink.www.dto.DashboardDTO.TrendItem> getAllTrendData(Long userId) {
+        return scoreRecordRepository.findByUser_UserIdOrderByCreatedAtAsc(userId).stream()
+                .map(r -> com.StudyLink.www.dto.DashboardDTO.TrendItem.builder()
+                        .examName(r.getTitle())
+                        .date(r.getCreatedAt() != null ? r.getCreatedAt().toString() : "")
+                        .userScores(r.getScores().stream().map(this::convertToDTO).collect(Collectors.toList()))
+                        .build())
+                .collect(Collectors.toList());
     }
 }

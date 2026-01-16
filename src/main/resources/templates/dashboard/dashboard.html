@@ -10,6 +10,11 @@
     <title>마이 대시보드 - StudyLink</title>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome CDN (Dashboard Only) -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
     <style>
       .dashboard-container {
         padding: 40px 0;
@@ -77,6 +82,39 @@
       .btn-save:hover {
         transform: translateY(-2px);
         color: white;
+      }
+
+      /* 저장된 히스토리 아이템 호버 효과 및 삭제 버튼 */
+      .record-item {
+        position: relative !important;
+        transition: background-color 0.2s;
+        cursor: pointer;
+      }
+      .record-item .btn-delete {
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.2s;
+        color: #adb5bd;
+        font-size: 1.1rem;
+        padding: 5px 10px;
+        border-radius: 6px;
+      }
+      .record-item:hover {
+        background-color: #f1f3f9 !important;
+      }
+      .record-item:hover .btn-delete {
+        visibility: visible;
+        opacity: 1;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+      }
+      .btn-delete:hover {
+        background-color: #ffeef0;
+        color: #dc3545 !important;
+      }
+      .record-item:hover .record-info {
+        margin-right: 30px; /* 삭제 버튼 공간 확보 */
       }
       .analysis-section {
         opacity: 0;
@@ -394,19 +432,53 @@
                 </div>
               </div>
 
-              <!-- 성적 제목 입력 및 저장 구역 -->
+              <!-- 성적 제목 입력 및 저장 구역 (선택기 기반) -->
               <div class="mt-4 pt-3 border-top">
-                <div class="mb-3">
+                <div class="mb-2">
                   <label class="form-label small fw-bold text-muted"
-                    >분석 성적 제목 (선택)</label
+                    >분석 성적 정보 선택</label
                   >
-                  <input
-                    type="text"
-                    id="recordTitle"
-                    class="form-control form-control-sm"
-                    placeholder="예: 2024_03_모의고사"
-                  />
+                  <div class="row g-2">
+                    <div class="col-4">
+                      <select
+                        id="recordYear"
+                        class="form-select form-select-sm"
+                      >
+                        <!-- JS에서 동적 생성 -->
+                      </select>
+                    </div>
+                    <div class="col-3">
+                      <select
+                        id="recordMonth"
+                        class="form-select form-select-sm"
+                      >
+                        <option value="03">3월</option>
+                        <option value="04">4월</option>
+                        <option value="05">5월</option>
+                        <option value="06">6월</option>
+                        <option value="07">7월</option>
+                        <option value="08">8월</option>
+                        <option value="09">9월</option>
+                        <option value="10">10월</option>
+                        <option value="11">11월</option>
+                        <option value="12">12월</option>
+                      </select>
+                    </div>
+                    <div class="col-5">
+                      <select
+                        id="recordType"
+                        class="form-select form-select-sm"
+                      >
+                        <option value="모의고사">모의고사</option>
+                        <option value="수능">수능</option>
+                        <option value="기타">기타</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
+                <!-- 숨겨진 필드로 최종 타이틀 유지 (기존 로직 호환용) -->
+                <input type="hidden" id="recordTitle" value="" />
+
                 <div class="d-grid gap-2">
                   <button class="btn btn-save" onclick="saveScores()">
                     <i class="fas fa-save me-2"></i> 성적 저장 및 분석하기
@@ -482,22 +554,28 @@
                     </div>
                   </div>
                 </div>
-                <hr />
+                <!-- 모든 차트 그룹화 섹션 -->
+                <div class="row g-3 mt-2">
+                    <div class="col-12 mb-4">
+                      <h6 class="fw-bold text-dark mb-3">
+                        <i class="fas fa-chart-line me-2 text-primary"></i> 나의 성적 성장 곡선
+                      </h6>
+                      <div id="noTrendArea" class="text-center py-4 bg-light rounded-3 d-none">
+                        <p class="text-muted small mb-0">성적 이력이 2개 이상일 때 추이 분석이 활성화됩니다.</p>
+                      </div>
+                      <div id="trendArea" class="d-none" style="height: 250px; width: 100%;">
+                          <canvas id="trendChart"></canvas>
+                      </div>
+                    </div>
+                </div>
+
+                <hr class="opacity-10" />
+
                 <div class="mt-3">
                   <h6 class="fw-bold text-primary">
-                    <i class="fas fa-magic me-2"></i> StudyLink AI 입시 컨설팅
+                    <i class="fas fa-magic me-2"></i> StudyLink AI 통합 입시 컨설팅 리포트
                   </h6>
-                  <div
-                    id="aiSummary"
-                    class="alert alert-info py-3 mt-2"
-                    style="
-                      font-size: 0.95rem;
-                      line-height: 1.7;
-                      border: none;
-                      background: #f0f7ff;
-                      color: #333;
-                    "
-                  >
+                  <div id="aiSummary" class="alert alert-info py-3 mt-2" style="font-size: 0.95rem; line-height: 1.8; border: none; background: #f0f7ff; color: #333; border-radius: 12px; box-shadow: inset 0 0 10px rgba(0,0,0,0.02);">
                     분석 결과를 불러오는 중입니다...
                   </div>
                 </div>
@@ -505,7 +583,6 @@
             </div>
           </div>
         </div>
-      </div>
     </div>
 
     <!-- ⭐ 자바스크립트는 fragment 내부에 위치 -->
@@ -517,40 +594,87 @@
 
       let barChart = null;
       let radarChart = null;
-      let analysisData = null; // 분석 데이터 전역 저장
+      let trendChart = null; // 추이 차트 변수 추가
+      let analysisData = null;
+      let existingRecords = [];
 
       window.onload = function () {
+        initYearSelect();
         loadInitialData();
         fetchHistory(); // 이력 불러오기 추가
       };
+
+      function initYearSelect() {
+        const yearSelect = document.getElementById("recordYear");
+        const currentYear = new Date().getFullYear();
+        for (let y = currentYear; y >= 2010; y--) {
+          const opt = document.createElement("option");
+          opt.value = y;
+          opt.textContent = y + "년";
+          yearSelect.appendChild(opt);
+        }
+      }
 
       async function fetchHistory() {
         try {
           const res = await fetch("/api/dashboard/records");
           if (!res.ok) return;
           const records = await res.json();
+          existingRecords = records; // 전역 변수에 저장
           const area = document.getElementById("scoreHistoryArea");
           const list = document.getElementById("recordList");
 
           if (records.length > 0) {
             area.classList.remove("d-none");
             list.innerHTML = "";
-            records.slice(0, 5).forEach((r) => {
+            records.slice(0, 10).forEach((r) => {
               const date = new Date(r.createdAt).toLocaleDateString();
-              const item = document.createElement("a");
-              item.href = "javascript:void(0)";
+              const item = document.createElement("div");
               item.className =
-                "list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2";
+                "list-group-item record-item d-flex justify-content-between align-items-center py-2";
               item.innerHTML = `
-                <span class="text-truncate" style="max-width: 150px;">${r.title}</span>
-                <span class="text-muted" style="font-size: 0.7rem;">${date}</span>
+                <div class="record-info text-truncate" style="flex: 1;" onclick="loadRecord(${r.id}, '${r.title}')">
+                  <span class="fw-bold d-block">${r.title}</span>
+                  <span class="text-muted" style="font-size: 0.7rem;">${date} 저장됨</span>
+                </div>
+                <button class="btn btn-link btn-sm btn-delete p-0" title="삭제" onclick="event.stopPropagation(); deleteRecord(${r.id}, '${r.title}')">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
               `;
-              item.onclick = () => loadRecord(r.id, r.title);
               list.appendChild(item);
             });
+          } else {
+            area.classList.add("d-none");
           }
         } catch (e) {
           console.error("이력 로드 실패:", e);
+        }
+      }
+
+      async function deleteRecord(id, title) {
+        if (!confirm(`'${title}' 성적 이력을 삭제하시겠습니까?`)) return;
+
+        try {
+          const csrfToken =
+            document.querySelector('meta[name="_csrf"]')?.content;
+          const csrfHeader = document.querySelector(
+            'meta[name="_csrf_header"]'
+          )?.content;
+
+          const res = await fetch(`/api/dashboard/records/${id}`, {
+            method: "DELETE",
+            headers: {
+              [csrfHeader]: csrfToken,
+            },
+          });
+
+          if (res.ok) {
+            fetchHistory();
+          } else {
+            alert("삭제에 실패했습니다.");
+          }
+        } catch (e) {
+          console.error("삭제 요청 실패:", e);
         }
       }
 
@@ -566,48 +690,101 @@
           const res = await fetch(`/api/dashboard/records/${id}/load`);
           if (!res.ok) throw new Error("로드 실패");
           const scores = await res.json();
+          console.log("📥 [LoadRecord] Data received:", scores);
 
           // 기존 UI 초기화 후 데이터 삽입
           populateScoreFields(scores);
           document.getElementById("recordTitle").value = title;
 
+          // [v4] 불러온 데이터를 즉시 '현재 활성 성적'으로 저장 (분석과 동기화)
+          await saveScoresSilent();
+
           // 분석 요청
           requestAnalysis();
         } catch (e) {
+          console.error("성적 로드 중 오류:", e);
           alert("성적을 불러오는 중 오류가 발생했습니다.");
         }
       }
 
       function populateScoreFields(scores) {
+        if (!scores || !Array.isArray(scores)) return;
+
+        // 1. 기존 UI 전체 초기화 (데이터 잔상 제거)
+        document.querySelectorAll(".score-input-item").forEach((item) => {
+          const typeSelect = item.querySelector(".score-type-select");
+          const valInput =
+            item.querySelector("input") ||
+            item.querySelector(".score-value-input");
+          const detailSelect = item.querySelector(".subject-detail-select");
+          const subjSelect = item.querySelector(".subject-select");
+
+          if (typeSelect)
+            typeSelect.value =
+              item.getAttribute("data-fixed-subject") === "영어"
+                ? "등급"
+                : "표점";
+          if (valInput)
+            valInput.value =
+              item.getAttribute("data-fixed-subject") === "영어"
+                ? "3"
+                : item.classList.contains("inquiry-item")
+                ? "50"
+                : "100";
+          if (detailSelect) detailSelect.value = "";
+          if (subjSelect) {
+            subjSelect.value = "";
+            updateCategory(subjSelect);
+          }
+          if (typeSelect) toggleHint(typeSelect);
+        });
+
+        // 2. 서버 데이터 기반 삽입 (snake_case 및 camelCase 동시 지원으로 완벽 대응)
         let inquiryIdx = 1;
-
-        // 탐구 필드 초기화 (과목 선택 해제)
-        document
-          .querySelectorAll(".inquiry-item .subject-select")
-          .forEach((s) => (s.value = ""));
-
         scores.forEach((s) => {
+          const sSubjectName = s.subject_name || s.subjectName;
+          const sScoreType = s.score_type || s.scoreType;
+          const sScore = s.score;
+          const sCategory = s.category;
+          const sOptionalSubject = s.optional_subject || s.optionalSubject;
+
+          // 공통 과목 (국어, 수학, 영어) 매핑
           const fixedItem = document.querySelector(
-            `.score-input-item[data-fixed-subject="${s.subject_name}"]`
+            `.score-input-item[data-fixed-subject="${sSubjectName}"]`
           );
           if (fixedItem) {
-            fixedItem.querySelector(".score-type-select").value = s.score_type;
-            fixedItem.querySelector("input").value = s.score;
+            if (sScoreType)
+              fixedItem.querySelector(".score-type-select").value = sScoreType;
+            if (sScore !== undefined)
+              fixedItem.querySelector("input").value = sScore;
+
             const detailSelect = fixedItem.querySelector(
               ".subject-detail-select"
             );
-            if (detailSelect && s.optional_subject)
-              detailSelect.value = s.optional_subject;
-            toggleHint(fixedItem.querySelector(".score-type-select"));
-          } else if (s.category === "사탐" || s.category === "과탐") {
+            if (detailSelect) detailSelect.value = sOptionalSubject || "";
+
+            const typeSelect = fixedItem.querySelector(".score-type-select");
+            if (typeSelect) toggleHint(typeSelect);
+          }
+          // 탐구 과목 매핑 (사탐, 과탐)
+          else if (sCategory === "사탐" || sCategory === "과탐") {
             const inqItem = document.querySelector(
               `.inquiry-item[data-inquiry-index="${inquiryIdx}"]`
             );
             if (inqItem) {
-              inqItem.querySelector(".subject-select").value = s.subject_name;
-              inqItem.querySelector(".score-type-select").value = s.score_type;
-              inqItem.querySelector(".score-value-input").value = s.score;
-              toggleHint(inqItem.querySelector(".score-type-select"));
+              const subSelect = inqItem.querySelector(".subject-select");
+              if (subSelect) {
+                subSelect.value = sSubjectName || "";
+                updateCategory(subSelect);
+              }
+
+              if (sScoreType)
+                inqItem.querySelector(".score-type-select").value = sScoreType;
+              if (sScore !== undefined)
+                inqItem.querySelector(".score-value-input").value = sScore;
+
+              const typeSelect = inqItem.querySelector(".score-type-select");
+              if (typeSelect) toggleHint(typeSelect);
               inquiryIdx++;
             }
           }
@@ -680,9 +857,26 @@
         }
       }
 
-      async function saveScores() {
-        const scores = [];
+      async function saveScoresSilent() {
+        const scores = collectScoreData();
+        if (scores.length === 0) return;
 
+        try {
+          await fetch("/api/dashboard/save", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              [csrfHeader]: csrfToken,
+            },
+            body: JSON.stringify(scores),
+          });
+        } catch (e) {
+          console.error("Silent save failed:", e);
+        }
+      }
+
+      function collectScoreData() {
+        const scores = [];
         // 1. 고정 과목 수집
         document
           .querySelectorAll(".score-input-item[data-fixed-subject]")
@@ -716,10 +910,11 @@
           }
         });
 
-        // 유효성 검사 (과목명이 없는 데이터는 제외)
-        const validScores = scores.filter(
-          (s) => s.subject_name && !isNaN(s.score)
-        );
+        return scores.filter((s) => s.subject_name && !isNaN(s.score));
+      }
+
+      async function saveScores() {
+        const validScores = collectScoreData();
         console.log("📤 [Frontend] Saving Scores:", validScores);
 
         if (validScores.length === 0) {
@@ -737,19 +932,36 @@
             body: JSON.stringify(validScores),
           });
 
-          // 제목이 있는 경우 레코드로도 저장
-          const title = document.getElementById("recordTitle").value.trim();
-          if (title) {
-            await fetch("/api/dashboard/records/save", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                [csrfHeader]: csrfToken,
-              },
-              body: JSON.stringify({ title: title, scores: validScores }),
+          // 선택기 기반으로 제목 자동 생성
+          const year = document.getElementById("recordYear").value;
+          const month = document.getElementById("recordMonth").value;
+          const type = document.getElementById("recordType").value;
+          const title = `${year}_${month}_${type}`;
+
+          // 중복 체크 및 덮어쓰기 확인
+          const existing = existingRecords.find((r) => r.title === title);
+          if (existing) {
+            const confirmed = confirm(
+              `'${title}' 성적이 이미 존재합니다. 새로운 점수로 덮어쓰시겠습니까?\n(원래 있던 데이터는 없어질 거예요~ 😅)`
+            );
+            if (!confirmed) return;
+
+            // 덮어쓰기 확인 시에만 기존 데이터 삭제 후 새 저장 진행
+            await fetch(`/api/dashboard/records/${existing.id}`, {
+              method: "DELETE",
+              headers: { [csrfHeader]: csrfToken },
             });
-            fetchHistory(); // 목록 갱신
           }
+
+          await fetch("/api/dashboard/records/save", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              [csrfHeader]: csrfToken,
+            },
+            body: JSON.stringify({ title: title, scores: validScores }),
+          });
+          fetchHistory(); // 목록 갱신
 
           const result = await res.json();
           if (res.ok) {
@@ -792,8 +1004,9 @@
           renderCharts(data);
 
           const summaryText = data.ai_summary || data.aiSummary;
-          document.getElementById("aiSummary").innerHTML = summaryText
-            ? summaryText.replace(/\n/g, "<br>")
+          const aiSummaryEl = document.getElementById("aiSummary");
+          aiSummaryEl.innerHTML = summaryText
+            ? `<div>${summaryText.replace(/\n/g, "<br>")}</div>`
             : "분석 요약을 생성할 수 없습니다.";
 
           statusEl.innerText = "분석 완료 (2026학년도 입시 반영)";
@@ -854,6 +1067,114 @@
                 angleLines: { display: true },
                 suggestedMin: 0,
                 suggestedMax: 10,
+              },
+            },
+          },
+        });
+
+        // 성적 추이 분석 요청 자동 수행
+        requestTrendAnalysis();
+      }
+
+      async function requestTrendAnalysis() {
+        const noTrendArea = document.getElementById("noTrendArea");
+        const trendArea = document.getElementById("trendArea");
+        const aiSummaryEl = document.getElementById("aiSummary");
+
+        try {
+          const res = await fetch("/api/dashboard/analysis/trend");
+          if (res.status === 204) {
+            // 데이터 부족
+            noTrendArea.classList.remove("d-none");
+            trendArea.classList.add("d-none");
+            return;
+          }
+          if (!res.ok) throw new Error("추이 분석 요청 실패");
+
+          const data = await res.json();
+          console.log("📈 [Frontend] Received Trend Data:", data);
+
+          noTrendArea.classList.add("d-none");
+          trendArea.classList.remove("d-none");
+
+          renderTrendChart(data);
+          
+          const trendText = data.ai_interpretation || data.aiInterpretation;
+          if (trendText) {
+            const trendHtml = `
+              <div class="mt-3 pt-3 border-top">
+                <h6 class="fw-bold small mb-2" style="color: #667eea;"><i class="fas fa-chart-line me-1"></i> 성적 추이 통합 분석</h6>
+                <div class="text-muted" style="font-size: 0.9rem;">${trendText.replace(/\n/g, "<br>")}</div>
+              </div>
+            `;
+            aiSummaryEl.innerHTML += trendHtml;
+          }
+        } catch (e) {
+          console.error("❌ 추이 분석 오류:", e);
+        }
+      }
+
+      function renderTrendChart(data) {
+        const ctx = document.getElementById("trendChart").getContext("2d");
+        if (trendChart) trendChart.destroy();
+
+        // 파이썬 서버 응답 구조: { labels: [], datasets: [{subject: '국어', data: []}], total_trend: [] }
+        const chartDatasets = data.datasets.map((ds) => {
+          let color = "#6c757d";
+          if (ds.subject === "국어") color = "#343a40";
+          if (ds.subject === "수학") color = "#0d6efd";
+          if (ds.subject === "영어") color = "#198754";
+          if (ds.subject === "탐구") color = "#ffc107";
+
+          return {
+            label: ds.subject,
+            data: ds.data,
+            borderColor: color,
+            backgroundColor: color + "22",
+            tension: 0.3,
+            borderWidth: 2,
+            pointRadius: 4,
+          };
+        });
+
+        // 전체 평균 추가
+        chartDatasets.push({
+          label: "전체 평균(누백)",
+          data: data.total_trend || data.totalTrend,
+          borderColor: "#dc3545",
+          borderWidth: 3,
+          borderDash: [5, 5],
+          pointRadius: 5,
+          pointBackgroundColor: "#dc3545",
+          fill: false,
+        });
+
+        trendChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: data.labels,
+            datasets: chartDatasets,
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            scales: {
+              y: {
+                reverse: true, // 누백은 숫자가 낮을수록 좋은 것이므로 반전 (선택 사항)
+                title: { display: true, text: "누적 백분위 (%)" },
+                suggestedMin: 0,
+                suggestedMax: 100,
+              },
+            },
+            plugins: {
+              legend: { position: "bottom" },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `${context.dataset.label}: ${context.parsed.y}%`;
+                  },
+                },
               },
             },
           },

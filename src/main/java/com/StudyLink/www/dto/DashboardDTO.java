@@ -51,4 +51,49 @@ public class DashboardDTO {
         private boolean hasScores;
         private String lastUpdatedAt;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TrendAnalysisRequest {
+        @com.fasterxml.jackson.annotation.JsonProperty("user_id")
+        private Long userId;
+        private String name;
+        private List<TrendItem> trends;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TrendItem {
+        @com.fasterxml.jackson.annotation.JsonProperty("exam_name")
+        private String examName;
+        private String date;
+        @com.fasterxml.jackson.annotation.JsonProperty("user_scores")
+        private List<StudentScoreDTO> userScores;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TrendAnalysisResponse {
+        private List<String> labels;
+        private List<SubjectTrend> datasets;
+        @com.fasterxml.jackson.annotation.JsonProperty("total_trend")
+        private List<Double> totalTrend;
+        @com.fasterxml.jackson.annotation.JsonProperty("ai_interpretation")
+        private String aiInterpretation;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SubjectTrend {
+        private String subject;
+        private List<Double> data;
+    }
 }
