@@ -68,7 +68,7 @@ public class DashboardRestController {
         response.put("profile", profile.orElse(null));
         response.put("user", Map.of("nickname", user.getNickname(), "name", user.getName()));
         
-        log.info("📡 [DashboardData] User: {}, Score Count: {}", user.getEmail(), scores.size());
+        log.info("[DashboardData] User: {}, Score Count: {}", user.getEmail(), scores.size());
         return ResponseEntity.ok(response);
     }
 
@@ -81,7 +81,7 @@ public class DashboardRestController {
             @RequestBody List<StudentScoreDTO> scores) {
         
         Users user = getCurrentUser(authentication);
-        log.info("📥 [ScoreSaveRequest] User: {}, Incoming Count: {}", user.getEmail(), scores != null ? scores.size() : 0);
+        log.info("[ScoreSaveRequest] User: {}, Incoming Count: {}", user.getEmail(), scores != null ? scores.size() : 0);
         
         int savedCount = studentScoreService.saveScores(user.getUserId(), scores);
         
@@ -188,14 +188,14 @@ public class DashboardRestController {
                 .build();
 
         try {
-            log.info("📌 파이썬 서버 분석 요청 중... URL: {}", pythonApiUrl + "/analyze-dashboard");
+            log.info("파이썬 서버 분석 요청 중... URL: {}", pythonApiUrl + "/analyze-dashboard");
             DashboardDTO.AnalysisResponse response = restTemplate.postForObject(pythonApiUrl + "/analyze-dashboard", request, DashboardDTO.AnalysisResponse.class);
             return ResponseEntity.ok(response);
         } catch (org.springframework.web.client.HttpStatusCodeException e) {
-            log.error("❌ 파이썬 서버 분석 연동 실패 (HTTP {}): {}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("파이썬 서버 분석 연동 실패 (HTTP {}): {}", e.getStatusCode(), e.getResponseBodyAsString());
             return ResponseEntity.status(e.getStatusCode()).build();
         } catch (Exception e) {
-            log.error("❌ 파이썬 서버 분석 연동 실패: {}", e.getMessage(), e);
+            log.error("파이썬 서버 분석 연동 실패: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -209,7 +209,7 @@ public class DashboardRestController {
         List<DashboardDTO.TrendItem> trends = studentScoreService.getAllTrendData(user.getUserId());
 
         if (trends == null || trends.isEmpty()) {
-            log.warn("⚠️ 성적 이력이 없어 추이 분석을 진행할 수 없습니다. User: {}", user.getEmail());
+            log.warn("성적 이력이 없어 추이 분석을 진행할 수 없습니다. User: {}", user.getEmail());
             return ResponseEntity.noContent().build();
         }
 
@@ -220,21 +220,21 @@ public class DashboardRestController {
                 .build();
 
         try {
-            log.info("📊 파이썬 서버 성적 추이 분석 요청 중... URL: {}", pythonApiUrl + "/analyze-trend");
+            log.info("파이썬 서버 성적 추이 분석 요청 중... URL: {}", pythonApiUrl + "/analyze-trend");
             DashboardDTO.TrendAnalysisResponse response = restTemplate.postForObject(
                     pythonApiUrl + "/analyze-trend", 
                     request, 
                     DashboardDTO.TrendAnalysisResponse.class);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("❌ 파이썬 서버 추이 분석 연동 실패: {}", e.getMessage(), e);
+            log.error("파이썬 서버 추이 분석 연동 실패: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
 
     private Users getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
-            log.error("❌ 인증 정보가 없거나 유효하지 않습니다.");
+            log.error("인증 정보가 없거나 유효하지 않습니다.");
             throw new RuntimeException("로그인이 필요한 서비스입니다.");
         }
 
@@ -253,7 +253,7 @@ public class DashboardRestController {
         }
 
         final String finalIdentifier = rawId;
-        log.info("🔍 사용자 조회 시도 (Identifier: {})", finalIdentifier);
+        log.info("사용자 조회 시도 (Identifier: {})", finalIdentifier);
         
         Optional<Users> userOpt = authService.getUserByEmail(finalIdentifier);
         if (userOpt.isPresent()) {

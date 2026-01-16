@@ -942,7 +942,7 @@
           const existing = existingRecords.find((r) => r.title === title);
           if (existing) {
             const confirmed = confirm(
-              `'${title}' 성적이 이미 존재합니다. 새로운 점수로 덮어쓰시겠습니까?\n(원래 있던 데이터는 없어질 거예요~ 😅)`
+              `'${title}' 성적이 이미 존재합니다. 새로운 점수로 덮어쓰시겠습니까?\n(원래 있던 데이터는 없어질 거예요~)`
             );
             if (!confirmed) return;
 

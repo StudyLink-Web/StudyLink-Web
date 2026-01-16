@@ -39,15 +39,15 @@ public class StudentScoreService {
      */
     @Transactional
     public int saveScores(Long userId, List<StudentScoreDTO> scoreDTOs) {
-        log.info("💾 [StudentScoreService] Saving scores for userId: {}. Input count: {}", userId, scoreDTOs != null ? scoreDTOs.size() : 0);
+        log.info("[StudentScoreService] Saving scores for userId: {}. Input count: {}", userId, scoreDTOs != null ? scoreDTOs.size() : 0);
         
         if (scoreDTOs == null || scoreDTOs.isEmpty()) {
-            log.warn("⚠️ 전송된 성적 데이터가 비어있습니다. userId: {}", userId);
+            log.warn("전송된 성적 데이터가 비어있습니다. userId: {}", userId);
             return 0;
         }
 
         // 디버깅: 첫 번째 데이터의 상세 내용 출력
-        log.info("📝 [Debug] First Item Mapping Check: {}", scoreDTOs.get(0));
+        log.info("[Debug] First Item Mapping Check: {}", scoreDTOs.get(0));
 
         Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -56,7 +56,7 @@ public class StudentScoreService {
         List<StudentScore> newScores = scoreDTOs.stream()
                 .filter(dto -> {
                     boolean isValid = dto.getSubjectName() != null && !dto.getSubjectName().trim().isEmpty();
-                    if (!isValid) log.warn("🚫 [Skip] Mapping failure or missing name: {}", dto);
+                    if (!isValid) log.warn("[Skip] Mapping failure or missing name: {}", dto);
                     return isValid;
                 })
                 .map(dto -> StudentScore.builder()
@@ -70,7 +70,7 @@ public class StudentScoreService {
                 .collect(Collectors.toList());
 
         if (newScores.isEmpty()) {
-            log.warn("⚠️ 저장 가능한 유효한 성적 데이터가 0건입니다. 필드 매핑이 실패했을 가능성이 큽니다.");
+            log.warn("저장 가능한 유효한 성적 데이터가 0건입니다. 필드 매핑이 실패했을 가능성이 큽니다.");
             return 0;
         }
 
@@ -81,7 +81,7 @@ public class StudentScoreService {
 
         // 새 성적 저장
         studentScoreRepository.saveAll(newScores);
-        log.info("✅ 성공적으로 {}건의 성적을 저장했습니다. userId: {}", newScores.size(), userId);
+        log.info("성공적으로 {}건의 성적을 저장했습니다. userId: {}", newScores.size(), userId);
         return newScores.size();
     }
 
@@ -149,7 +149,7 @@ public class StudentScoreService {
     public void deleteScoreRecord(Long recordId) {
         // CascadeType.ALL에 의해 연관된 StudentScore들도 자동 삭제됨
         scoreRecordRepository.deleteById(recordId);
-        log.info("🗑️ [StudentScoreService] Deleted ScoreRecord ID: {}", recordId);
+        log.info("[StudentScoreService] Deleted ScoreRecord ID: {}", recordId);
     }
 
     private StudentScoreDTO convertToDTO(StudentScore score) {
