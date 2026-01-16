@@ -7,13 +7,18 @@ StudyLink - Header JavaScript
  */
 document.addEventListener('DOMContentLoaded', function () {
     console.log('✅ StudyLink Header 로드됨');
-    setupMenuEvents();
-    highlightActiveMenu();
-    setupMobileMenuAutoClose();
-    setupLogoutForm();
-    setupProfileDropdown();
-    updateDday();
-}); // ← DOMContentLoaded 닫기
+
+    // jQuery와 Bootstrap이 완전히 로드될 때까지 약간 지연
+    setTimeout(() => {
+        setupMenuEvents();
+        highlightActiveMenu();
+        setupMobileMenuAutoClose();
+        setupLogoutForm();
+        setupProfileDropdown();
+        updateDday();
+        initializeMyPageTabs();
+    }, 100);
+}); // ← DOMContentLoated 닫기
 
 /**
  * 로그아웃 폼 설정
@@ -33,38 +38,110 @@ function setupLogoutForm() {
  */
 function setupProfileDropdown() {
     const currentPath = window.location.pathname;
-    const dropdownMenu = document.querySelector('.dropdown-menu');
 
-    // ⭐ login/signup 페이지에서는 드롭다운 완전히 비활성화
+    // ⭐ login/signup 페이지에서는 드롭다운 비활성화
     if (currentPath.includes('/login') || currentPath.includes('/signup')) {
-        if (dropdownMenu) {
-            dropdownMenu.classList.remove('show');
-            dropdownMenu.classList.remove('active');
-            dropdownMenu.style.display = 'none';
-
-            const userDropdown = document.getElementById('userDropdown');
-            if (userDropdown && userDropdown._bsDropdown) {
-                userDropdown._bsDropdown.hide();
-            }
-
-            console.log('🔒 로그인/회원가입 페이지: 드롭다운 완전 비활성화');
-        }
+        console.log('🔒 로그인/회원가입 페이지: 드롭다운 비활성화');
         return;
     }
 
-    // 다른 페이지에서 외부 클릭 시 드롭다운 닫기
-    if (dropdownMenu) {
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.dropdown')) {
-                dropdownMenu.classList.remove('show');
-                if (e.target.closest('.dropdown-toggle')) {
-                    return;
-                }
+    // ⭐ Bootstrap 드롭다운 비활성화 (자체 구현 사용)
+    if (typeof $ !== 'undefined' && $.fn.dropdown) {
+        $('[data-toggle="dropdown"]').off('click');
+        console.log('✅ Bootstrap 4 드롭다운 비활성화 (자체 구현 사용)');
+    }
+
+    // ⭐ 추가: 수동 클릭 이벤트 바인딩
+    const userDropdown = document.getElementById('userDropdown');
+    if (userDropdown) {
+        userDropdown.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const menu = this.nextElementSibling; // 바로 다음 ul 요소
+            if (menu && menu.classList.contains('dropdown-menu')) {
+                menu.classList.toggle('show');
+                console.log('🎯 드롭다운 메뉴 토글됨');
             }
         });
     }
 
+    // ⭐ 수정: 외부 클릭 시 드롭다운 닫기 (header의 dropdown만)
+    document.addEventListener('click', function(e) {
+        // ⭐ mypage 영역은 제외!
+        if (e.target.closest('.mypage-container')) {
+            console.log('📌 mypage 영역: 드롭다운 유지');
+            return;
+        }
+
+        const dropdown = document.querySelector('.header .dropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+            const menu = dropdown.querySelector('.dropdown-menu');
+            if (menu) {
+                menu.classList.remove('show');
+                console.log('❌ 드롭다운 메뉴 닫음');
+            }
+        }
+    });
+
     console.log('✅ 프로필 드롭다운 설정 완료');
+}
+
+/**
+ * 마이페이지 탭 초기화
+ */
+function initializeMyPageTabs() {
+    // 마이페이지가 아니면 실행 안 함
+    if (!document.querySelector('.mypage-container')) {
+        return;
+    }
+
+    console.log('🔍 마이페이지 탭 초기화 시작');
+
+    const tabLinks = document.querySelectorAll('.nav-link[data-tab]');
+    console.log(`📍 찾은 탭 링크 개수: ${tabLinks.length}`);
+
+    if (tabLinks.length === 0) {
+        console.error('❌ 탭 링크를 찾을 수 없습니다!');
+        return;
+    }
+
+    tabLinks.forEach(link => {
+        const tabName = link.getAttribute('data-tab');
+        console.log(`📌 탭 링크 바인딩: ${tabName}`);
+
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const clickedTab = this.getAttribute('data-tab');
+            console.log(`🔄 클릭된 탭: ${clickedTab}`);
+
+            // 1️⃣ 모든 탭 콘텐츠 숨기기
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 2️⃣ 모든 네비게이션 링크 비활성화
+            document.querySelectorAll('.nav-link[data-tab]').forEach(nav => {
+                nav.classList.remove('active');
+            });
+
+            // 3️⃣ 클릭한 링크 활성화
+            this.classList.add('active');
+
+            // 4️⃣ 해당 탭 콘텐츠 활성화
+            const selectedContent = document.querySelector(`#${clickedTab}-tab`);
+            if (selectedContent) {
+                selectedContent.classList.add('active');
+                console.log(`✅ 탭 변경 완료: ${clickedTab}`);
+            } else {
+                console.error(`❌ 탭을 찾을 수 없습니다: #${clickedTab}-tab`);
+            }
+        });
+    });
+
+    console.log('✅ 마이페이지 탭 초기화 완료');
 }
 
 /**
@@ -181,19 +258,26 @@ function setupMenuEvents() {
  */
 function highlightActiveMenu() {
     const currentPath = window.location.pathname;
+    console.log('🔍 현재 경로:', currentPath);
+
     const navLinks = document.querySelectorAll('.header-nav-link');
 
     navLinks.forEach(link => {
         const href = link.getAttribute('href');
         if (!href) return;
 
-        if (href === currentPath || (href !== '/' && currentPath.startsWith(href))) {
+        // ⭐ 추가: /my-page 경로 명시적 처리
+        if (currentPath === '/my-page' && href === '/my-page') {
+            link.classList.add('active');
+            console.log('✅ 마이페이지 활성화됨');
+        } else if (href === currentPath || (href !== '/' && currentPath.startsWith(href))) {
             link.classList.add('active');
         } else {
             link.classList.remove('active');
         }
     });
 }
+
 
 /**
  * 모바일 메뉴 자동 닫기

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<head>
+    <!-- ⭐ CSS 외부 파일 링크 -->
+    <link rel="stylesheet" th:href="@{/css/verification-result.css}">
+</head>
+
+<div layout:fragment="content" class="result-container">
+    <div class="result-card" th:classappend="${success} ? 'success' : 'error'">
+        <div class="result-icon" th:classappend="${success} ? 'success-icon' : 'error-icon'">
+            <span th:text="${success} ? '✅' : '❌'"></span>
+        </div>
+
+        <!-- ⭐ 성공 메시지 (인증 완료) -->
+        <div th:if="${success}">
+            <h2>대학생 인증 완료!</h2>
+            <p class="message">축하합니다! 🎉</p>
+            <p class="message" th:text="${message}"></p>
+
+            <!-- 사용자 정보 표시 -->
+            <div class="user-info-box">
+                <h4>✅ 인증 정보</h4>
+                <ul class="info-list">
+                    <li><strong>학교 이메일:</strong> <span th:text="${schoolEmail}"></span></li>
+                    <li><strong>역할:</strong> <span class="role-badge">MENTOR</span></li>
+                    <li><strong>인증 완료 시간:</strong> <span th:text="${verifiedAt}"></span></li>
+                </ul>
+            </div>
+
+            <div class="actions">
+                <a href="/my-page" class="btn btn-primary">마이페이지</a>
+                <a href="/" class="btn btn-secondary">메인 페이지로</a>
+            </div>
+        </div>
+
+        <!-- ⭐ 실패 메시지 (인증 실패) -->
+        <div th:unless="${success}">
+            <h2>인증 실패</h2>
+            <p class="message" th:text="${message}"></p>
+
+            <div class="error-info-box">
+                <p class="error-code" th:text="'오류 코드: ' + ${code}"></p>
+            </div>
+
+            <div class="actions">
+                <a href="/auth/student-verification" class="btn btn-primary">다시 인증하기</a>
+                <a href="/" class="btn btn-secondary">메인 페이지로</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ⭐ JS 외부 파일 링크 (body 끝) -->
+<script th:src="@{/js/verification-result.js}"></script>
+
+</html>
