@@ -243,6 +243,19 @@ body {
     min-width: 160px;
     padding: 0.5rem 0;
     margin-top: 8px;
+
+    /* ⭐ 기본: 숨김 상태 */
+    display: none !important;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+/* ⭐ show 클래스: 표시 상태 */
+.dropdown-menu.show {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .dropdown-menu-end {

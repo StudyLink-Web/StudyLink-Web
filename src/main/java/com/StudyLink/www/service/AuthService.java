@@ -102,7 +102,14 @@ public class AuthService {
 
         Users user = optionalUser.get();
 
+        // ⭐ 추가: OAuth 사용자는 비밀번호 검증 스킵
+        if (user.getOauthProvider() != null && !user.getOauthProvider().isEmpty()) {
+            log.info("✅ OAuth 사용자 로그인: {} ({})", email, user.getOauthProvider());
+            return user;
+        }
+
         // 2. 비밀번호 검증 (BCrypt로 암호화된 비밀번호와 비교)
+        // ⭐ 수정: OAuth가 아닌 일반 사용자만 비밀번호 검증
         if (!passwordEncoder.matches(password, user.getPassword())) {
             log.warn("❌ 로그인 실패: 비밀번호 불일치 - {}", email);
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
@@ -111,6 +118,7 @@ public class AuthService {
         log.info("✅ 로그인 성공: {}", email);
         return user;
     }
+
 
     /**
      * 이메일 중복 확인

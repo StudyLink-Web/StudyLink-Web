@@ -18,7 +18,8 @@ import java.util.List;
 @Entity
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = "email"),
-        @UniqueConstraint(columnNames = "username")
+        @UniqueConstraint(columnNames = "username"),
+        @UniqueConstraint(columnNames = "school_email")
 })
 @Data
 @NoArgsConstructor
@@ -61,6 +62,22 @@ public class Users {
     // ✅ 추가: 학생 인증 여부 (학생 신분증 또는 재학증명서 확인)
     @Column(name = "is_student_verified", nullable = false)
     private Boolean isStudentVerified = false;
+
+    // ⭐ 추가: 학교 이메일 인증 관련 필드
+    @Column(name = "school_email", unique = true, nullable = true)
+    private String schoolEmail;  // 학교 이메일 (예: student@ewha.ac.kr)
+
+    @Column(name = "is_verified_student", nullable = false)
+    private Boolean isVerifiedStudent = false;  // 학교 이메일 인증 여부
+
+    @Column(name = "school_email_verification_token", nullable = true)
+    private String schoolEmailVerificationToken;  // 이메일 인증 토큰
+
+    @Column(name = "school_email_token_expires", nullable = true)
+    private LocalDateTime schoolEmailTokenExpires;  // 토큰 만료 시간
+
+    @Column(name = "school_email_verified_at", nullable = true)
+    private LocalDateTime schoolEmailVerifiedAt;  // 학교 이메일 인증 완료 시간
 
     /**
      * 가입일 (코호트 분석용)
@@ -135,6 +152,10 @@ public class Users {
         // ✅ 추가: 학생 인증 여부 기본값
         if (this.isStudentVerified == null) {
             this.isStudentVerified = false;
+        }
+        // 추가: 학교 이메일 인증 여부 기본값
+        if (this.isVerifiedStudent == null) {
+            this.isVerifiedStudent = false;
         }
         // OAuth 사용자는 isActive 기본값 true
         if (this.isActive == null) {
