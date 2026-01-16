@@ -1,8 +1,10 @@
 package com.StudyLink.www.config;
 
+import com.StudyLink.www.entity.Users;
+import com.StudyLink.www.repository.UserRepository;
+import com.StudyLink.www.service.CustomOAuth2UserService;
 import com.StudyLink.www.service.CustomUserDetailsService;
-import com.StudyLink.www.service.OAuth2UserService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.core.context.SecurityContextHolder;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 @Configuration
 @EnableWebSecurity
 // @RequiredArgsConstructor
@@ -31,7 +37,13 @@ public class SecurityConfig {
     private CustomUserDetailsService userDetailsService;
 
     @Autowired
-    private OAuth2UserService oAuth2UserService;
+    private CustomOAuth2UserService customOAuth2UserService;  // ✅ 새 서비스 주입
+
+    @Autowired
+    private UserRepository userRepository;  // ⭐ 추가!
+
+    @Autowired
+    private ObjectProvider<PasswordEncoder> passwordEncoderProvider;  // ⭐ 추가!
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -156,22 +168,41 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
-                                .userService(oAuth2UserService)        // ⭐ Naver, Kakao OAuth2
+                                .userService(customOAuth2UserService)
                         )
-
-                        // ⭐ successHandler - 명시적으로 Authentication을 SecurityContext에 저장
                         .successHandler((request, response, authentication) -> {
                             try {
                                 log.info("════════════════════════════════════════════════════════════");
                                 log.info("✅ OAuth2 로그인 성공!");
                                 log.info("🔍 authentication.getName(): {}", authentication.getName());
-                                log.info("🔍 authentication.getPrincipal(): {}", authentication.getPrincipal());
-                                log.info("════════════════════════════════════════════════════════════");
 
-                                // ⭐ SecurityContext에 인증 정보 저장
+                                // ⭐ Google OIDC 사용자 정보 추출
+                                var principal = authentication.getPrincipal();
+                                Map<String, Object> attributes = null;
+
+                                if (principal instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser) {
+                                    org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser =
+                                            (org.springframework.security.oauth2.core.oidc.user.OidcUser) principal;
+                                    attributes = new HashMap<>(oidcUser.getAttributes());
+                                    log.info("🔐 OIDC 사용자 감지 - Google 처리");
+
+                                    String sub = oidcUser.getSubject();
+                                    String email = (String) attributes.getOrDefault("email", "");
+                                    String name = (String) attributes.getOrDefault("name", "구글사용자");
+                                    String picture = (String) attributes.getOrDefault("picture", "");
+
+                                    if (email == null || email.isEmpty()) {
+                                        email = "google_" + sub + "@google.com";
+                                    }
+
+                                    String fixedUsername = "google_" + sub;
+                                    String fixedNickname = "Google_" + sub;
+
+                                    log.info("✅ Google OIDC 사용자: name={}, email={}", name, email);
+                                    saveGoogleUser(fixedUsername, email, picture, name, fixedNickname);
+                                }
+
                                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                                // ⭐ 메인 페이지로 리다이렉트
                                 response.sendRedirect("/");
                             } catch (Exception e) {
                                 log.error("❌ OAuth2 successHandler 오류: {}", e.getMessage(), e);
@@ -180,7 +211,6 @@ public class SecurityConfig {
                         })
                         .failureUrl("/login?error=true")
                 )
-
                 // Logout 설정
                 .logout(logout -> logout
                         .logoutUrl("/logout")
@@ -201,4 +231,58 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+    // ⭐ 이 메서드를 클래스 내부에 추가!
+    private void saveGoogleUser(String username, String email, String picture, String name, String nickname) {
+        try {
+            log.info("🔐 Google 사용자 저장 시작: {}", username);
+
+            // ⭐ email이 null이면 생성
+            if (email == null || email.isEmpty()) {
+                email = username + "@oauth.com";
+                log.warn("⚠️ email이 null - 임시 email 생성: {}", email);
+            }
+
+            Optional<Users> existingUser = userRepository.findByUsername(username);
+
+            Users user;
+            if (existingUser.isPresent()) {
+                user = existingUser.get();
+                user.setName(name);
+                user.setNickname(nickname);
+                user.setProfileImageUrl(picture);
+                user.setOauthProvider("google");
+                user.setOauthId(username);
+                user.setEmail(email);
+                log.info("🔄 기존 Google 사용자 업데이트");
+            } else {
+                PasswordEncoder encoder = passwordEncoderProvider.getIfAvailable();
+                String encodedPassword = (encoder != null)
+                        ? encoder.encode("oauth_google_" + System.currentTimeMillis())
+                        : "oauth_google_" + System.currentTimeMillis();
+
+                user = Users.builder()
+                        .username(username)
+                        .nickname(nickname)
+                        .email(email)
+                        .name(name)
+                        .profileImageUrl(picture)
+                        .oauthProvider("google")
+                        .oauthId(username)
+                        .password(encodedPassword)
+                        .role("ROLE_USER")
+                        .isActive(true)
+                        .build();
+
+                log.info("✅ 신규 Google 사용자 생성");
+            }
+
+            Users savedUser = userRepository.save(user);
+            log.info("💾 Google 사용자 저장 완료: user_id={}, email={}", savedUser.getUserId(), email);
+
+        } catch (Exception e) {
+            log.error("❌ Google 사용자 저장 실패: {}", e.getMessage());
+        }
+    }
+
 }

@@ -68,11 +68,12 @@
 						-->
 
 						👤 <span th:text="${
-						   #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
-							  ? #authentication.principal.attributes['name']
-							  : #authentication.name
-						}">
-						</span>
+   #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
+     ? #authentication.principal.attributes['name']
+     : #authentication.name
+}">
+</span>
+
 
 
 					</a>
