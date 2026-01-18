@@ -1014,3 +1014,82 @@ connect();
 
 // 기본 도구 draw
 selectTool('draw');
+
+document.getElementById('mongodbSave').addEventListener('click', async ()=>{
+    // canvas에서 line 객체만 가져오기
+    const lines = canvas.getObjects('line');
+
+    // DTO 배열 만들기
+    const payload = lines.map(line => ({
+        roomId: roomId,
+        senderId: senderId,
+        uuid: line.uuid,
+        x1: line.x1,
+        y1: line.y1,
+        x2: line.x2,
+        y2: line.y2
+    }));
+
+    // 서버로 전송
+    try {
+        const response = await fetch('/room/saveDrawData', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const err = await response.text();
+            alert('저장 실패: ' + err);
+            return;
+        }
+
+        alert('MongoDB 저장 완료!');
+    } catch (e) {
+        alert('서버 연결 실패: ' + e.message);
+    }
+})
+
+document.getElementById('mongodbRead').addEventListener('click', async ()=>{
+    try {
+        const response = await fetch(`/room/readDrawData?roomId=${roomId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const err = await response.text();
+            alert('불러오기 실패: ' + err);
+            return;
+        }
+
+        const drawDataList = await response.json();
+
+        // 기존 캔버스 초기화 (선만 지우고 싶다면 line만 삭제)
+        canvas.getObjects('line').forEach(line => canvas.remove(line));
+
+        // 받아온 데이터로 캔버스에 선 그리기
+        drawDataList.forEach(data => {
+            const line = new fabric.Line([data.x1, data.y1, data.x2, data.y2], {
+                uuid: data.uuid,
+                stroke: '#000',
+                strokeWidth: 2,
+                selectable: false,
+                evented: false,
+                strokeLineCap: 'round',
+                strokeLineJoin: 'round'
+            });
+            canvas.add(line);
+        });
+
+        scheduleRender();
+        alert('MongoDB 불러오기 완료!');
+        console.log(drawDataList)
+    } catch (e) {
+        alert('서버 연결 실패: ' + e.message);
+    }
+})

@@ -1,5 +1,7 @@
 package com.StudyLink.www.controller;
 
+import com.StudyLink.www.dto.DrawDataDTO;
+import com.StudyLink.www.service.DrawDataService;
 import com.StudyLink.www.webSocketMessage.*;
 import com.StudyLink.www.dto.MessageDTO;
 import com.StudyLink.www.dto.RoomFileDTO;
@@ -33,6 +35,7 @@ public class WebSocketController {
     private final MessageService messageService;
     private final RoomFileService roomFileService;
     private final RoomFileHandler roomFileHandler;
+    private final DrawDataService drawDataService;
 
 
     // webSocket요청
@@ -187,5 +190,20 @@ public class WebSocketController {
     @ResponseBody
     public RoomFileDTO loadRoomFileDTO(@PathVariable String uuid){
         return roomFileService.loadFile(uuid);
+    }
+
+
+
+
+    @PostMapping("/saveDrawData")
+    public ResponseEntity<?> saveDrawData(@RequestBody List<DrawDataDTO> lines) {
+        drawDataService.saveDrawData(lines);
+        return ResponseEntity.ok("saved");
+    }
+
+    @GetMapping("/readDrawData")
+    public ResponseEntity<List<DrawDataDTO>> readDrawData(@RequestParam long roomId) {
+        List<DrawDataDTO> list = drawDataService.findByRoomId(roomId);
+        return ResponseEntity.ok(list);
     }
 }
