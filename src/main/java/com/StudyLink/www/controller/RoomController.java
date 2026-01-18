@@ -199,9 +199,12 @@ public class RoomController {
 
 
         // 찜 멘토
-        List<FavoriteDTO> favoriteList = favoriteService.getFavoritesByStudent(senderId).stream().map(FavoriteDTO::new).toList();
-        model.addAttribute("favoriteList", favoriteList);
-        log.info(">>> favoriteList {}", favoriteList);
+        if (senderId != null) {
+            List<FavoriteDTO> favoriteList = favoriteService.getFavoritesByStudent(senderId).stream().map(FavoriteDTO::new).toList();
+            model.addAttribute("favoriteList", favoriteList);
+            log.info(">>> favoriteList {}", favoriteList);
+        }
+
 
         // 학생 보유 point
 //        StudentProfile studentProfile = studentProfileService.getStudentProfile(studentId)
