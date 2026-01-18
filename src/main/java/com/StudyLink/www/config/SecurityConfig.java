@@ -94,6 +94,7 @@ public class SecurityConfig {
 
                                 // ✅ board 전체 공개(단, register는 위에서 예외로 막음)
                                 "/board/**",
+                                "/community/**",
 
                                 "/.well-known/**",
                                 "/oauth2/**",

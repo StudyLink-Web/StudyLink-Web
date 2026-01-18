@@ -45,43 +45,44 @@
       <div class="board_title_not">등록된 게시글이 없습니다.</div>
     </div>
 
-    <!-- 목록 -->
-    <div class="board_list_view">
-      <div th:if="${ph.list != null and !#lists.isEmpty(ph.list)}"
-           th:each="b : ${ph.list}"
-           class="board_infobox">
+    <table class="table table-hover board_list_table">
+      <thead>
+      <tr>
+        <th style="width: 120px;">이미지</th>
+        <th>제목</th>
+        <th>작성자</th>
+        <th>학과</th>
+        <th>등록일</th>
+        <th>조회수</th>
+      </tr>
+      </thead>
 
-        <div class="board_img">
-          <img th:if="${b.thumbPath != null}"
-               th:src="${b.thumbPath}"
-               alt="게시글 이미지">
+      <tbody>
+      <tr th:if="${ph.list == null or #lists.isEmpty(ph.list)}">
+        <td colspan="6" style="text-align: center;">등록된 게시글이 없습니다.</td>
+      </tr>
 
-          <img th:unless="${b.thumbPath != null}"
-               th:src="@{/img/logo_img.png}"
-               alt="기본 이미지">
-        </div>
+      <tr th:each="b : ${ph.list}">
+        <!-- 제목 -->
+        <td>
+          <a th:href="@{/board/detail(postId=${b.postId})}"
+             th:text="${b.title}"></a>
+        </td>
 
-        <div class="board_info">
-          <div class="board_title_class">
-            <a th:href="@{/board/detail(postId=${b.postId})}"
-               th:text="${b.title}"></a>
-          </div>
+        <!-- 작성자 -->
+        <td th:text="${b.writer}"></td>
 
-          <div class="board_writer">
-            <span>작성자 : </span><span th:text="${b.writer}"></span>
-            <p th:if="${b.department != null}">
-              <span th:text="${b.department}"></span>
-            </p>
-          </div>
+        <!-- 학과 -->
+        <td th:text="${b.department != null ? b.department : '-'}"></td>
 
-          <div class="date_flex">
-            <p th:text="${b.createdAt != null ? #temporals.format(b.createdAt, 'yyyy-MM-dd') : '-'}"></p>
-            <p th:text="${b.viewCount}"></p>
-          </div>
-        </div>
-      </div>
-    </div>
+        <!-- 등록일 -->
+        <td th:text="${b.createdAt != null ? #temporals.format(b.createdAt, 'yyyy-MM-dd') : '-'}"></td>
 
+        <!-- 조회수 -->
+        <td th:text="${b.viewCount}"></td>
+      </tr>
+      </tbody>
+    </table>
     <!-- ✅ 페이징: 게시글 있을 때만 + (선택) 2페이지 이상일 때만 -->
     <nav aria-label="Page navigation"
          th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list) and ph.totalPage > 1}">
