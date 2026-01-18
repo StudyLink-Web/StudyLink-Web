@@ -38,6 +38,8 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final BooleanPath isStudentVerified = createBoolean("isStudentVerified");
 
+    public final BooleanPath isVerifiedStudent = createBoolean("isVerifiedStudent");
+
     public final ListPath<MentorAvailability, QMentorAvailability> mentorAvailabilities = this.<MentorAvailability, QMentorAvailability>createList("mentorAvailabilities", MentorAvailability.class, QMentorAvailability.class, PathInits.DIRECT2);
 
     public final QMentorProfile mentorProfile;
@@ -57,6 +59,14 @@ public class QUsers extends EntityPathBase<Users> {
     public final StringPath profileImageUrl = createString("profileImageUrl");
 
     public final StringPath role = createString("role");
+
+    public final StringPath schoolEmail = createString("schoolEmail");
+
+    public final DateTimePath<java.time.LocalDateTime> schoolEmailTokenExpires = createDateTime("schoolEmailTokenExpires", java.time.LocalDateTime.class);
+
+    public final StringPath schoolEmailVerificationToken = createString("schoolEmailVerificationToken");
+
+    public final DateTimePath<java.time.LocalDateTime> schoolEmailVerifiedAt = createDateTime("schoolEmailVerifiedAt", java.time.LocalDateTime.class);
 
     public final QStudentProfile studentProfile;
 

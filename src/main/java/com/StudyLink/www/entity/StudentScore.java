@@ -34,4 +34,11 @@ public class StudentScore {
 
     @Column(length = 20)
     private String category; // "공통", "사탐", "과탐"
+
+    @Column(name = "optional_subject", length = 50)
+    private String optionalSubject; // [v4] 국어(화작/언매), 수학(확통/미적/기하)
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "record_id")
+    private ScoreRecord scoreRecord;
 }

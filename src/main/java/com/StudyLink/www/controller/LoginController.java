@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.StudyLink.www.entity.Users;
+import com.StudyLink.www.repository.UserRepository;
 import com.StudyLink.www.service.AuthService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,9 @@ public class LoginController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private UserRepository userRepository;  // ⭐ 추가
 
     /**
      * 로그인 페이지 표시
@@ -95,6 +99,8 @@ public class LoginController {
     /**
      * 현재 로그인된 사용자 정보 확인
      * GET /api/auth/me
+     *
+     * ⭐ 수정: UserRepository를 통해 안전하게 사용자 조회
      */
     @GetMapping("/api/auth/me")
     public String getCurrentUser(Model model) {
@@ -105,13 +111,22 @@ public class LoginController {
             return "redirect:/login";
         }
 
-        String email = auth.getName();
-        Optional<Users> user = authService.getUserByEmail(email);
+        try {
+            String username = auth.getName();
 
-        if (user.isPresent()) {
-            model.addAttribute("user", user.get());
-            log.info("✅ 현재 로그인된 사용자: {}", email);
-            return "user/profile";  // 사용자 프로필 페이지
+            // ⭐ 수정: username으로 먼저 조회 (OAuth2 친화적)
+            Optional<Users> userOpt = userRepository.findByUsername(username)
+                    .or(() -> userRepository.findByEmail(username));
+
+            if (userOpt.isPresent()) {
+                Users user = userOpt.get();
+                model.addAttribute("user", user);
+                log.info("✅ 현재 로그인된 사용자: {} (name: {})", username, user.getName());
+                return "user/profile";  // 사용자 프로필 페이지
+            }
+
+        } catch (Exception e) {
+            log.error("❌ 사용자 정보 조회 중 오류: {}", e.getMessage());
         }
 
         return "redirect:/login";

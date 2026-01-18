@@ -25,15 +25,17 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        Users user = userRepository.findByNickname(username)
-                .orElseGet(() -> userRepository.findByEmail(username)
-                        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username)));
+        // ⭐ 수정: username을 먼저 조회 (OAuth2 친화적)
+        Users user = userRepository.findByUsername(username)
+                .orElseGet(() -> userRepository.findByNickname(username)
+                        .orElseGet(() -> userRepository.findByEmail(username)
+                                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username))));
 
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-        String role = (user.getRole() != null && !user.getRole().trim().isEmpty()) ? user.getRole() : "STUDENT";
+        String role = (user.getRole() != null && !user.getRole().trim().isEmpty()) ? user.getRole() : "ROLE_USER";
         authorities.add(new SimpleGrantedAuthority(role.startsWith("ROLE_") ? role : "ROLE_" + role));
 
-        log.info("✅ 사용자 로드: {} ({}) - Role: {}", user.getUsername(), user.getEmail(), role);
+        log.info("✅ 사용자 로드: {} (name: {}) - Role: {}", user.getUsername(), user.getName(), role);
 
         // ✅ 여기서 Security 인증ID를 "username"이 아니라 "nickname"으로 맞추고 싶으면 아래 한 줄만 바꾸면 됨
         // .username(user.getNickname())

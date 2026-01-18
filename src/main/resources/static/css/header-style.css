@@ -241,8 +241,27 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1000;
     min-width: 160px;
-    padding: 0.5rem 0;
+    padding: 0.5rem 0 !important;  /* ✅ !important 추가 */
     margin-top: 8px;
+
+    /* ⭐ 기본: 숨김 상태 */
+    display: none !important;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+
+    text-align: center;  /* ✅ 이 줄 추가 */
+
+    /* ✅ 이 부분 추가: 메뉴 자체를 flex로 만들고 정렬 */
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+/* ⭐ show 클래스: 표시 상태 */
+.dropdown-menu.show {
+    display: flex !important;  /* ✅ block → flex */
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .dropdown-menu-end {
@@ -251,10 +270,10 @@ body {
 }
 
 .dropdown-item {
-    padding: 10px 16px;
+    padding: 10px 16px !important;  /* ✅ !important 추가 */
     display: block;
     width: 100%;
-    text-align: left;
+    text-align: center !important;  /* ✅ !important 추가 */
     color: #333;
     text-decoration: none;
     transition: background 0.2s ease;
@@ -283,6 +302,7 @@ body {
     margin: 8px 0;
     border: none;
     border-top: 1px solid #eee;
+    width: 100% !important;  /* ✅ 추가: 구분선 전체 너비 */
 }
 
 /* =========================
@@ -429,3 +449,7 @@ body {
         color: #667eea;
     }
 }
+
+
+
+

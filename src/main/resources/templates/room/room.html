@@ -11,10 +11,10 @@
 		<button id="exitBtn"><a href="/room/list">나가기</a></button>
 	</div>
 
-	<!-- 모달 -->
+	<!-- 등록 모달 -->
 	<div id="myModal" class="modal">
 		<div class="modal-content">
-			<span class="close">&times;</span>
+			<span class="close" id="closeModalBtn">&times;</span>
 			<h2>과목 선택</h2>
 			<form id="registerForm" action="/room/register" method="post">
 				<div id="subjectDiv"></div>
@@ -29,7 +29,31 @@
 				<div>보유 포인트 : [[${point}]]</div>
 				<div id="pointDiv"></div>
 				<div id="btnDiv"></div>
-				<input type="hidden" name="roomId" th:value="${roomId}">
+				<input type="hidden" name="roomId" th:value="${roomDTO.roomId}">
+			</form>
+		</div>
+	</div>
+
+	<!-- 종료 모달 -->
+	<div id="endModal" class="modal">
+		<div class="modal-content">
+			<span class="close" id="closeEndModalBtn">&times;</span>
+			<form id="endForm" action="/room/endRoom" method="post">
+				<p>답변 만족도</p>
+				<div class="star-rating">
+					<span data-value="1">&#9733;</span>
+					<span data-value="2">&#9733;</span>
+					<span data-value="3">&#9733;</span>
+					<span data-value="4">&#9733;</span>
+					<span data-value="5">&#9733;</span>
+				</div>
+				<input type="hidden" name="rating" id="ratingValue" value="0">
+				<label>
+					<input type="checkbox" id="addFavoriteMentorCheckbox" name="addFavoriteMentorCheckbox">
+					멘토 찜하기
+				</label>
+				<input type="hidden" name="roomId" th:value="${roomDTO.roomId}">
+				<div id="endModalBtnDiv"></div>
 			</form>
 		</div>
 	</div>
@@ -57,10 +81,10 @@
 		<div class="border border-black d-flex flex-column flex-shrink-0" style="width: 300px; height: 750px;">
 			<div class="w-100" style="height: 650px;" id="messageArea"></div>
 			<div class="mb-3">
-				<input type="file" class="form-control" name="files" id="file" multiple />
+				<input type="file" class="form-control" name="files" id="file" multiple disabled/>
 			</div>
-			<button type="button" id="sendFileBtn">파일 전송</button>
-			<textarea name="message" class="form-control w-100 mt-auto" style="height: 100px;"></textarea>
+			<button type="button" id="sendFileBtn" disabled>파일 전송</button>
+			<textarea name="message" class="form-control w-100 mt-auto" style="height: 100px;" disabled></textarea>
 		</div>
 	</div>
 	<script th:inline="javascript">
@@ -68,8 +92,10 @@
         let subjectList = [[${subjectList}]];
         let favoriteList = [[${favoriteList}]];
         let point = [[${point}]];
-        let roomId = [[${roomId}]]
-        let senderId = [[${senderId}]]
+        let roomDTO = [[${roomDTO}]];
+        let senderId = [[${senderId}]];
+        let userRoles = [[${#authentication.authorities}]];
+        let message = [[${message}]] // redirect시 담겨오는 메시지
 	</script>
 	<script src="/js/room.js"></script>
 	<script src="/js/roomRegister.js"></script>

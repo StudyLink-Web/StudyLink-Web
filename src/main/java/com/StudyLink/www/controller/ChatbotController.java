@@ -36,7 +36,7 @@ public class ChatbotController {
     @PostMapping("/chatbot/send")
     @ResponseBody
     public ChatbotDTO.Response send(@RequestBody ChatbotDTO.Request request, Principal principal) {
-        log.info("[CHAT] 요청 수신 - Session ID: {}, Query: {}", request.getSessionId(), request.getQuery());
+        log.info("요청 수신 - Session ID: {}, Query: {}", request.getSessionId(), request.getQuery());
         
         // 1. 대화 내역 저장 (사용자 질문)
         if (request.getSessionId() != null) {
@@ -57,7 +57,7 @@ public class ChatbotController {
                     .orElseGet(() -> userRepository.findByUsername(identifier).orElse(null));
 
             if (foundUser != null) {
-                List<StudentScore> dbScores = studentScoreRepository.findByUser_UserId(foundUser.getUserId());
+                List<StudentScore> dbScores = studentScoreRepository.findByUser_UserIdAndScoreRecordIsNull(foundUser.getUserId());
                 if (!dbScores.isEmpty()) {
                     List<ChatbotDTO.UserScore> dtoScores = dbScores.stream()
                             .map(score -> ChatbotDTO.UserScore.builder()
