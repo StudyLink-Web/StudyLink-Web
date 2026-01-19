@@ -235,12 +235,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ⭐ 이 메서드를 클래스 내부에 추가!
     private void saveGoogleUser(String username, String email, String picture, String name, String nickname) {
         try {
             log.info("🔐 Google 사용자 저장 시작: {}", username);
 
-            // ⭐ email이 null이면 생성
+            // email이 null이면 생성
             if (email == null || email.isEmpty()) {
                 email = username + "@oauth.com";
                 log.warn("⚠️ email이 null - 임시 email 생성: {}", email);
@@ -273,7 +272,7 @@ public class SecurityConfig {
                         .oauthProvider("google")
                         .oauthId(username)
                         .password(encodedPassword)
-                        .role("ROLE_USER")
+                        .role("STUDENT")
                         .isActive(true)
                         .build();
 

@@ -19,11 +19,11 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
 
-    // ⭐ 수정: 필드 주입에서 ObjectProvider로 변경 (순환 참조 방지)
+    // 필드 주입에서 ObjectProvider로 변경 (순환 참조 방지)
     @Autowired
     private ObjectProvider<PasswordEncoder> passwordEncoderProvider;
 
-    // ⭐ 생성자 제거 - 필드 주입 사용으로 변경됨
+    // 생성자 제거 - 필드 주입 사용으로 변경됨
     //public AuthService(PasswordEncoder passwordEncoder) {
     //    this.passwordEncoder = passwordEncoder;
 
@@ -33,7 +33,7 @@ public class AuthService {
      */
     @Transactional
     public Users signup(String email, String password, String name, String nickname, String role) {
-        // ⭐ 추가: ObjectProvider에서 PasswordEncoder 가져오기
+        // ObjectProvider에서 PasswordEncoder 가져오기
         PasswordEncoder passwordEncoder = passwordEncoderProvider.getIfAvailable();
         if (passwordEncoder == null) {
             log.error("❌ PasswordEncoder를 찾을 수 없습니다");
@@ -56,7 +56,13 @@ public class AuthService {
         // 4. 비밀번호 해싱
         String encodedPassword = passwordEncoder.encode(password);
 
-        // 5. 사용자 생성
+        // 5. 자동 학생 설정
+        if (role == null || role.isEmpty()) {
+            role = "STUDENT";
+            log.info("✅ 역할 자동 설정: STUDENT");
+        }
+
+        // 6. 사용자 생성
         Users user = Users.builder()
                 .email(email)
                 .password(encodedPassword)
@@ -69,7 +75,7 @@ public class AuthService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        // 6. 데이터베이스에 저장
+        // 7. 데이터베이스에 저장
         Users savedUser = userRepository.save(user);
         log.info("✅ 회원가입 완료: {}", email);
 

@@ -43,13 +43,13 @@ public class AuthController {
 
         try {
             // 1단계: role 검증 (필수값 확인)
-            if (request.getRole() == null || request.getRole().isEmpty()) {
-                log.warn("❌ 역할(role) 선택 안 됨");
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "INVALID_ROLE",
-                        "message", "역할(role)은 필수입니다."
-                ));
-            }
+//            if (request.getRole() == null || request.getRole().isEmpty()) {
+//                log.warn("❌ 역할(role) 선택 안 됨");
+//                return ResponseEntity.badRequest().body(Map.of(
+//                        "error", "INVALID_ROLE",
+//                        "message", "역할(role)은 필수입니다."
+//                ));
+//            }
 
             // 2단계: 이메일 검증
             if (!isValidEmail(request.getEmail())) {
@@ -70,13 +70,13 @@ public class AuthController {
             }
 
             // 4단계: 역할 값 검증 (STUDENT 또는 MENTOR만 허용)
-            if (!request.getRole().equals("STUDENT") && !request.getRole().equals("MENTOR")) {
-                log.warn("❌ 유효하지 않은 역할: {}", request.getRole());
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "INVALID_ROLE",
-                        "message", "역할은 STUDENT 또는 MENTOR여야 합니다."
-                ));
-            }
+//            if (!request.getRole().equals("STUDENT") && !request.getRole().equals("MENTOR")) {
+//                log.warn("❌ 유효하지 않은 역할: {}", request.getRole());
+//                return ResponseEntity.badRequest().body(Map.of(
+//                        "error", "INVALID_ROLE",
+//                        "message", "역할은 STUDENT 또는 MENTOR여야 합니다."
+//                ));
+//            }
 
             // 5단계: 이름 검증
             if (request.getName() == null || request.getName().trim().isEmpty()) {

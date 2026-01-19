@@ -247,7 +247,8 @@ async function handleSignup(e) {
     const password = document.getElementById('password').value;
     const name = document.getElementById('name').value;
     const nickname = document.getElementById('nickname').value;
-    const role = document.getElementById('role').value;
+    // const role = document.getElementById('role').value;
+    const role = "STUDENT";
 
     // ===== 입력값 검증 =====
 

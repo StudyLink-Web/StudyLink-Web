@@ -100,7 +100,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 log.info("✅ Kakao 사용자 처리 완료");
             }
 
-// ⭐ Naver
+            // ⭐ Naver
             else if ("naver".equals(registrationId)) {
                 log.info("🔍 Naver 로그인 처리 시작");
                 Map<String, Object> response = (Map<String, Object>) attributes.get("response");
@@ -180,7 +180,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .oauthProvider(provider)
                         .oauthId(username)
                         .password(encodedPassword)
-                        .role("ROLE_USER")
+                        .role("STUDENT")
                         .isActive(true)
                         // OAuth2 사용자는 schoolEmail을 NULL로 설정
                         .schoolEmail(null)
