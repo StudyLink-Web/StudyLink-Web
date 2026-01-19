@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface DrawDataRepository extends MongoRepository<DrawData, String> {
     List<DrawData> findByRoomId(long roomId);
+
+    void deleteByRoomIdAndUuid(long roomId, String uuid);
 }

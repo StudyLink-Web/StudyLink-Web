@@ -4,14 +4,56 @@ if (message != null) {
     alert(message);
 }
 
+// 웹소켓 연결 끊김 탐지(일정 주기마다 서버에 ping을 보냄 -> 서버로부터 pong을 응답 받음, pong이 안오면 끊김으로 판단)
+let socket;
+let lastPong = Date.now();
+let heartbeatInterval;
+const HEARTBEAT_INTERVAL = 1000; // 1초마다 ping
+const TIMEOUT = 3000; // 3초 동안 응답 없으면 끊김으로 판단
+
+function startHeartbeat() {
+    lastPong = Date.now();
+    heartbeatInterval = setInterval(() => {
+        // pong 응답 없으면 강제 끊김 처리
+        if (Date.now() - lastPong > TIMEOUT) {
+            console.log('웹소켓 끊김 감지');
+            stompClient.disconnect(() => {
+                stopHeartbeat();
+                attemptReconnect();
+            });
+        } else {
+            // 서버에 ping 전송 (STOMP로 메시지 보내기)
+            if (stompClient && stompClient.connected) {
+                stompClient.send("/app/ping", {}, JSON.stringify({senderId: senderId}));
+            }
+        }
+    }, HEARTBEAT_INTERVAL);
+}
+
+function stopHeartbeat() {
+    clearInterval(heartbeatInterval);
+}
+
+function attemptReconnect() {
+    console.log('재연결 시도 중...');
+    setTimeout(() => {
+        connect(); // 재연결 시도
+    }, 3000); // 3초 후 재시도
+}
 
 function connect() {
-    const socket = new SockJS('/ws');
+    socket = new SockJS('/ws');
     stompClient = Stomp.over(socket);
     stompClient.connect({}, function(frame) {
         console.log('Connected: ' + frame);
 
         // 구독
+        stompClient.subscribe('/topic/pong', function(message) {
+            const msg = JSON.parse(message.body);
+            if (msg.senderId !== senderId) return;
+            lastPong = Date.now(); // pong 도착 시 갱신
+        });
+
         // 채팅창
         stompClient.subscribe('/topic/sendMessage', function(message){
             const msg = JSON.parse(message.body);
@@ -145,11 +187,13 @@ function connect() {
                 }
             }
             safeSend("/app/enterRoom", {roomId: roomId, senderId: senderId})
-
-
         }).catch(error => {
             console.error("❌ 메시지 로드 실패:", error);
         });
+        readDrawData();
+        scheduleRender();
+
+        startHeartbeat();
     });
 }
 
@@ -619,12 +663,16 @@ function pushToUndoStack(){
 function loop() {
     if (isDrawing && currentPointer && lastPoint) {
         if (selectedTool === 'draw') {
-            drawInterpolatedLine({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
+            const lines = drawInterpolatedLine({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
+
+            // DB 반영
+            saveCanvasActionToDB('draw', lines);
         }
         if (selectedTool === 'erase') {
-            eraseInterpolated({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
+            const removeLines = eraseInterpolated({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
 
             message = {
+                roomId: roomId,
                 senderId: senderId,
                 seq: mySeq++,
                 x1: lastPoint.x,
@@ -633,6 +681,10 @@ function loop() {
                 y2: currentPointer.y
             }
             safeSend("/app/erase", message);
+
+            // DB 반영 (uuid 배열로)
+            const erasePayload = removeLines.map(l => ({ uuid: l.uuid }));
+            if (erasePayload.length) saveCanvasActionToDB('erase', erasePayload);
         }
         lastPoint = { ...currentPointer };
         scheduleRender();
@@ -655,6 +707,9 @@ function loop() {
                 positions: positions
             };
             safeSend("/app/select", message);
+
+            // DB 반영
+            saveCanvasActionToDB('select', positions);
         }
         // 이거 false안하면 transform 끝난 시점에도 계속 메시지 송신
         isTransform = false;
@@ -664,6 +719,28 @@ function loop() {
     requestAnimationFrame(loop);
 }
 loop();
+
+
+// db 저장 함수
+async function saveCanvasActionToDB(actionType, payload) {
+    try {
+        const response = await fetch('/room/saveCanvasAction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                roomId: roomId,
+                actionType: actionType, // 'draw', 'erase', 'select'
+                payload: payload      // draw: line 배열, erase: line uuid 배열, select: 객체 위치 정보 등
+            })
+        });
+        if (!response.ok) {
+            console.error('DB 저장 실패');
+        }
+    } catch (e) {
+        console.error('서버 연결 실패:', e);
+    }
+}
+
 
 // 그리기
 function drawLine(msg){
@@ -702,11 +779,13 @@ function drawInterpolatedLine(msg) {
     let prevX = p1.x;
     let prevY = p1.y;
 
+    lines = []
     for (let i = 1; i <= steps; i++) {
         const x = p1.x + stepX * i;
         const y = p1.y + stepY * i;
         const newObjectId = crypto.randomUUID();
         drawLine({x1: prevX, y1: prevY, x2: x, y2: y, uuid: newObjectId});
+        lines.push({x1: prevX, y1: prevY, x2: x, y2: y, uuid: newObjectId})
         prevX = x;
         prevY = y;
         message = {
@@ -720,6 +799,7 @@ function drawInterpolatedLine(msg) {
         }
         safeSend("/app/draw", message);
     }
+    return lines;
 }
 
 // 지우기
@@ -727,17 +807,20 @@ function eraseLine(x, y, threshold = 10) {
     // threshold: 지울 기준 거리(px)
     const objects = canvas.getObjects('line'); // 모든 Line 객체 가져오기
     const toRemove = [];
+    const removeLines = [];
     objects.forEach(line => {
         const [x1, y1, x2, y2] = line.get('points') || [line.x1, line.y1, line.x2, line.y2];
         const dist = distancePointToLine(x, y, x1, y1, x2, y2);
         if (dist <= threshold) {
             toRemove.push(line);
+            removeLines.push({uuid: line.uuid, x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2})
             if (currentAction && currentAction.type === 'erase' && !currentAction.targets.includes(line)) {
                 currentAction.targets.push(line);
             }
         }
     });
     toRemove.forEach(line => canvas.remove(line));
+    return removeLines;
 }
 
 // 지우개 보간 함수
@@ -748,15 +831,26 @@ function eraseInterpolated(msg) {
     const dy = p2.y - p1.y;
 
     const distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance === 0) return;
+    if (distance === 0) return [];
 
     const steps = Math.ceil(distance / ERASE_STEP);
 
+    let removeLines = [];
     for (let i = 0; i <= steps; i++) {
         const x = p1.x + (dx / steps) * i;
         const y = p1.y + (dy / steps) * i;
-        eraseLine(x, y, ERASE_RADIUS);
+        removeLines = removeLines.concat(eraseLine(x, y, ERASE_RADIUS));
     }
+
+    // uuid 중복 제거
+    const seen = new Set();
+    removeLines = removeLines.filter(line => {
+        if (seen.has(line.uuid)) return false;
+        seen.add(line.uuid);
+        return true;
+    });
+
+    return removeLines;
 }
 
 // 점(x0,y0)과 선(x1,y1)-(x2,y2) 사이 최소 거리 계산 함수
@@ -850,6 +944,48 @@ function sendUndoRedoMessage(type){
     }
     safeSend('/app/undoRedo', message)
 }
+
+
+async function readDrawData(){
+    try {
+        console.log("캔버스 불러오기 시작");
+        const response = await fetch(`/room/readDrawData?roomId=${roomId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const err = await response.text();
+            alert('불러오기 실패: ' + err);
+            return;
+        }
+
+        const drawDataList = await response.json();
+
+        // 기존 캔버스 초기화 (선만 지우고 싶다면 line만 삭제)
+        canvas.getObjects('line').forEach(line => canvas.remove(line));
+
+        // 받아온 데이터로 캔버스에 선 그리기
+        drawDataList.forEach(data => {
+            const line = new fabric.Line([data.x1, data.y1, data.x2, data.y2], {
+                uuid: data.uuid,
+                stroke: '#000',
+                strokeWidth: 2,
+                selectable: false,
+                evented: false,
+                strokeLineCap: 'round',
+                strokeLineJoin: 'round'
+            });
+            canvas.add(line);
+        });
+    } catch (e) {
+        alert('서버 연결 실패: ' + e.message);
+    }
+}
+
+
 
 // 라디오 클릭 방지 + UI 동기화
 document.querySelectorAll('input[name="btnradio"]').forEach(radio => {
@@ -981,6 +1117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         resetCurrentAction();
+
         const message = {
             senderId: senderId,
             seq: mySeq++
@@ -1014,82 +1151,3 @@ connect();
 
 // 기본 도구 draw
 selectTool('draw');
-
-document.getElementById('mongodbSave').addEventListener('click', async ()=>{
-    // canvas에서 line 객체만 가져오기
-    const lines = canvas.getObjects('line');
-
-    // DTO 배열 만들기
-    const payload = lines.map(line => ({
-        roomId: roomId,
-        senderId: senderId,
-        uuid: line.uuid,
-        x1: line.x1,
-        y1: line.y1,
-        x2: line.x2,
-        y2: line.y2
-    }));
-
-    // 서버로 전송
-    try {
-        const response = await fetch('/room/saveDrawData', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            const err = await response.text();
-            alert('저장 실패: ' + err);
-            return;
-        }
-
-        alert('MongoDB 저장 완료!');
-    } catch (e) {
-        alert('서버 연결 실패: ' + e.message);
-    }
-})
-
-document.getElementById('mongodbRead').addEventListener('click', async ()=>{
-    try {
-        const response = await fetch(`/room/readDrawData?roomId=${roomId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            const err = await response.text();
-            alert('불러오기 실패: ' + err);
-            return;
-        }
-
-        const drawDataList = await response.json();
-
-        // 기존 캔버스 초기화 (선만 지우고 싶다면 line만 삭제)
-        canvas.getObjects('line').forEach(line => canvas.remove(line));
-
-        // 받아온 데이터로 캔버스에 선 그리기
-        drawDataList.forEach(data => {
-            const line = new fabric.Line([data.x1, data.y1, data.x2, data.y2], {
-                uuid: data.uuid,
-                stroke: '#000',
-                strokeWidth: 2,
-                selectable: false,
-                evented: false,
-                strokeLineCap: 'round',
-                strokeLineJoin: 'round'
-            });
-            canvas.add(line);
-        });
-
-        scheduleRender();
-        alert('MongoDB 불러오기 완료!');
-        console.log(drawDataList)
-    } catch (e) {
-        alert('서버 연결 실패: ' + e.message);
-    }
-})

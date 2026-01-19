@@ -1,6 +1,8 @@
 package com.StudyLink.www.controller;
 
+import com.StudyLink.www.dto.CanvasActionRequestDTO;
 import com.StudyLink.www.dto.DrawDataDTO;
+import com.StudyLink.www.entity.DrawData;
 import com.StudyLink.www.service.DrawDataService;
 import com.StudyLink.www.webSocketMessage.*;
 import com.StudyLink.www.dto.MessageDTO;
@@ -24,14 +26,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @Slf4j
 @Controller
 @RequestMapping("/room")  // ← /room/* 제거
 public class WebSocketController {
-
     private final MessageService messageService;
     private final RoomFileService roomFileService;
     private final RoomFileHandler roomFileHandler;
@@ -39,6 +42,13 @@ public class WebSocketController {
 
 
     // webSocket요청
+    // ================== 끊김 탐지 ==================
+    @MessageMapping("/ping")
+    @SendTo("/topic/pong")
+    public SenderMessage ping(SenderMessage message) {
+        return message;
+    }
+
     // ================== 채팅창 ==================
     @MessageMapping("/sendMessage")
     @SendTo("/topic/sendMessage")
@@ -64,6 +74,7 @@ public class WebSocketController {
 
 
     // ================== 캔버스 ==================
+
     @MessageMapping("/draw")
     @SendTo("/topic/draw")
     public DrawMessage drawMessage (DrawMessage message) {
@@ -195,10 +206,47 @@ public class WebSocketController {
 
 
 
-    @PostMapping("/saveDrawData")
-    public ResponseEntity<?> saveDrawData(@RequestBody List<DrawDataDTO> lines) {
-        drawDataService.saveDrawData(lines);
-        return ResponseEntity.ok("saved");
+    // 몽고디비
+    @PostMapping("/saveCanvasAction")
+    public ResponseEntity<String> saveCanvasAction(@RequestBody CanvasActionRequestDTO request) {
+        try {
+            String actionType = request.getActionType();
+
+            if ("draw".equals(actionType)) {
+                List<DrawData> drawDataList = new ArrayList<>();
+
+                for (Map<String, Object> line : request.getPayload()) {
+                    DrawData drawData = DrawData.builder()
+                            .roomId(request.getRoomId())
+                            .senderId(request.getSenderId())
+                            .uuid((String) line.get("uuid"))
+                            .x1(Double.parseDouble(line.get("x1").toString()))
+                            .y1(Double.parseDouble(line.get("y1").toString()))
+                            .x2(Double.parseDouble(line.get("x2").toString()))
+                            .y2(Double.parseDouble(line.get("y2").toString()))
+                            .build();
+                    drawDataList.add(drawData);
+                }
+                drawDataService.draw(drawDataList);
+
+            } else if ("erase".equals(actionType)) {
+                List<DrawData> drawDataList = new ArrayList<>();
+
+                for (Map<String, Object> line : request.getPayload()) {
+                    DrawData drawData = DrawData.builder()
+                            .roomId(request.getRoomId())
+                            .uuid((String) line.get("uuid"))
+                            .build();
+                    drawDataList.add(drawData);
+                }
+                drawDataService.erase(drawDataList);
+
+            }
+
+            return ResponseEntity.ok("1");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");
+        }
     }
 
     @GetMapping("/readDrawData")
