@@ -1,0 +1,60 @@
+<!doctype html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/layout}"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StudyLink Modern - AI 입시 컨설팅</title>
+
+    <!-- Pretendard 폰트 -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- CSRF 토큰 (리액트 API 통신용) -->
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+    <!-- 리액트 스타일 (Vite 빌드 후 생성됨) -->
+    <link rel="stylesheet" th:href="@{/js/react-main.css}" />
+
+    <style>
+      /* 📍 레이아웃의 박스 제한을 강제로 해제하여 전체 너비 확보 */
+      .content_box {
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+      body {
+        background-color: #f8f9fa; /* 기본 배경색 */
+      }
+    </style>
+  </head>
+
+  <div layout:fragment="content">
+    <!-- 📍 React "Island" 마운트 포인트 -->
+    <div id="root"></div>
+
+    <!-- 📍 리액트 빌드 파일 (Vite 빌드 후 생성될 파일) -->
+    <!-- 개발 모드에서는 빈 태그로 두거나, 나중에 Gradle 자동화 시 경로를 동적으로 처리할 예정입니다. -->
+    <script type="module" th:src="@{/js/react-main.js}"></script>
+
+    <!-- 초기 데이터 전달 (Thymeleaf -> React) -->
+    <script th:inline="javascript">
+      window.__INITIAL_DATA__ = {
+        user: /*[[${user}]]*/ null,
+        isAuthenticated: /*[[${isAuthenticated}]]*/ false,
+        topMentors: /*[[${topMentors}]]*/ [], // 👈 백엔드에서인기 멘토 데이터 넘겨줄 곳
+      };
+    </script>
+  </div>
+</html>

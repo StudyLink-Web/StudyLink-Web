@@ -23,7 +23,7 @@ public class HomeController {
             model.addAttribute("isAuthenticated", false);
             System.out.println("❌ 비로그인 사용자");
         }
-        return "index";
+        return "modern_index";
     }
 
     /**
@@ -37,6 +37,36 @@ public class HomeController {
         } else {
             model.addAttribute("isAuthenticated", false);
         }
+        return "modern_index";
+    }
+
+    /**
+     * 기존 바닐라 JS 기반 페이지 백업
+     * GET /legacy → templates/index.html
+     */
+    @GetMapping("/legacy")
+    public String legacyHome(Authentication authentication, Model model) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            model.addAttribute("user", authentication.getPrincipal());
+            model.addAttribute("isAuthenticated", true);
+        } else {
+            model.addAttribute("isAuthenticated", false);
+        }
         return "index";
+    }
+
+    /**
+     * 리액트 기반 모던 메인 페이지
+     * GET /modern → templates/modern_index.html
+     */
+    @GetMapping("/modern")
+    public String modernHome(Authentication authentication, Model model) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            model.addAttribute("user", authentication.getPrincipal());
+            model.addAttribute("isAuthenticated", true);
+        } else {
+            model.addAttribute("isAuthenticated", false);
+        }
+        return "modern_index";
     }
 }

@@ -1,0 +1,47 @@
+import Hero from "./components/Hero";
+import MentorSection from "./components/MentorSection";
+import AdSection from "./components/AdSection";
+import CommunitySection from "./components/CommunitySection";
+import QuickActionGrid from "./components/QuickActionGrid";
+
+function App() {
+  return (
+    <div className="min-h-screen w-full bg-slate-50 dark:bg-[#030014] transition-colors duration-300 overflow-x-hidden">
+      <main className="relative">
+        <Hero />
+        <QuickActionGrid />
+
+        {/* Infinite Ticker */}
+        <div className="bg-white/50 dark:bg-[#030014] border-y border-slate-200 dark:border-white/5 py-4 overflow-hidden whitespace-nowrap relative z-20 backdrop-blur-sm">
+          <div className="inline-block animate-shimmer bg-gradient-to-r from-transparent via-teal-500/5 dark:via-white/5 to-transparent bg-[length:200%_100%] w-full absolute inset-0 pointer-events-none" />
+          <div className="inline-block animate-marquee">
+            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+              ✨ 2024 SKY Admission Rate 94%
+            </span>
+            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+              ✨ Verified Mentors Only
+            </span>
+            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+              ✨ 15,000+ Matches
+            </span>
+            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+              ✨ 2024 SKY Admission Rate 94%
+            </span>
+            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+              ✨ Verified Mentors Only
+            </span>
+            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+              ✨ 15,000+ Matches
+            </span>
+          </div>
+        </div>
+
+        <MentorSection />
+        <AdSection />
+        <CommunitySection />
+      </main>
+    </div>
+  );
+}
+
+export default App;

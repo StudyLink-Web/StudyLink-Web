@@ -90,6 +90,39 @@ tasks.withType(JavaCompile) {
 	options.generatedSourceOutputDirectory = file(querydslSrcDir)
 }
 
+// ===== React Build Automation =====
+def frontendDir = "$projectDir/src/main/frontend"
+
+task installFrontend(type: Exec) {
+    workingDir "$frontendDir"
+    inputs.file("$frontendDir/package.json")
+    outputs.dir("$frontendDir/node_modules")
+    group = 'frontend'
+
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'npm.cmd', 'install'
+    } else {
+        commandLine 'npm', 'install'
+    }
+}
+
+task buildFrontend(type: Exec) {
+    dependsOn installFrontend
+    workingDir "$frontendDir"
+    inputs.dir("$frontendDir/src")
+    outputs.dir("$projectDir/src/main/resources/static/js")
+    group = 'frontend'
+
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'npm.cmd', 'run', 'build'
+    } else {
+        commandLine 'npm', 'run', 'build'
+    }
+}
+
+// Spring Boot 리소스 처리 시 리액트 빌드를 먼저 수행하도록 함
+processResources.dependsOn buildFrontend
+
 // ===== Spring Boot Main Class Configuration =====
 springBoot {
 	mainClass = 'com.StudyLink.www.WwwApplication'
