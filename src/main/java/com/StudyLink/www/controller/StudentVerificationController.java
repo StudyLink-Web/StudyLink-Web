@@ -53,30 +53,34 @@ public class StudentVerificationController {
                 }
             }
 
-            // OAuth2가 아닌 경우 또는 name이 없으면 DB에서 조회
-            if (displayName.equals(username)) {
-                Optional<Users> userOpt = userRepository.findByUsername(username)
-                        .or(() -> userRepository.findByEmail(username));
+            // ⭐ 수정: 먼저 email로 조회 (Google OIDC는 auth.getName()이 이메일 반환)
+            Optional<Users> userOpt = userRepository.findByEmail(username);
 
-                if (userOpt.isPresent()) {
-                    Users user = userOpt.get();
-                    displayName = user.getName();
-                    model.addAttribute("username", user.getUsername());
-                    model.addAttribute("name", displayName);
+            // email로 못 찾으면 username으로 재시도
+            if (!userOpt.isPresent()) {
+                userOpt = userRepository.findByUsername(username);
+            }
 
-                    model.addAttribute("schoolEmail", user.getSchoolEmail());
-                    model.addAttribute("schoolEmailVerifiedAt", user.getSchoolEmailVerifiedAt());
+            if (userOpt.isPresent()) {
+                Users user = userOpt.get();
+                displayName = user.getName();
+                model.addAttribute("username", user.getUsername());
+                model.addAttribute("name", displayName);
 
-                    log.info("✅ 사용자 정보 전달: name={}, username={}, schoolEmail={}, schoolEmailVerifiedAt={}",
-                            displayName, user.getUsername(), user.getSchoolEmail(), user.getSchoolEmailVerifiedAt());
-                } else {
-                    model.addAttribute("username", username);
-                    model.addAttribute("name", displayName);
-                }
+                model.addAttribute("schoolEmail", user.getSchoolEmail());
+                model.addAttribute("schoolEmailVerifiedAt", user.getSchoolEmailVerifiedAt());
+
+                // ⭐ 추가: 디버깅 로그
+                log.info("✅ 사용자 정보: name={}, username={}", displayName, user.getUsername());
+                log.info("✅ 학교이메일: schoolEmail={}", user.getSchoolEmail());
+                log.info("✅ 인증상태: schoolEmailVerifiedAt={}", user.getSchoolEmailVerifiedAt());
+
+                // ⭐ 추가: isVerifiedStudent도 함께 전달 (HTML에서 사용 가능)
+                model.addAttribute("isVerifiedStudent", user.getIsVerifiedStudent());
+
             } else {
                 model.addAttribute("username", username);
                 model.addAttribute("name", displayName);
-                log.info("✅ 사용자 정보 전달 (OAuth2): name={}, username={}", displayName, username);
             }
         }
 

@@ -21,7 +21,8 @@
         </div>
 
         <!-- ⭐ 인증 완료 상태 -->
-        <div th:if="${schoolEmailVerifiedAt != null}" class="alert alert-success-verified">
+        <div th:if="${schoolEmailVerifiedAt != null and schoolEmailVerifiedAt != ''}"
+             class="alert alert-success-verified">
             <div class="verified-header">
                 <span class="verified-badge">✅ 인증 완료</span>
             </div>
@@ -39,8 +40,8 @@
             </form>
         </div>
 
-        <!-- ⭐ 인증 미완료 상태 (기존 코드) -->
-        <div th:unless="${schoolEmailVerifiedAt != null}">
+        <!-- ⭐ 인증 미완료 상태 -->
+        <div th:unless="${schoolEmailVerifiedAt != null and schoolEmailVerifiedAt != ''}">
             <h2>🎓 대학생 인증</h2>
             <p class="subtitle">학교 이메일로 대학생 신분을 인증하세요</p>
 
@@ -59,7 +60,7 @@
                     </div>
                     <small id="emailStatus" class="form-text"></small>
                     <small class="form-text text-muted">
-                        ✅ 지원되는 학교: 서울대, 이화여자대, 연세대, 고려대, 중앙대, 말라야대 등
+                        <!-- ✅ 지원되는 학교: 서울대, 이화여자대, 연세대, 고려대, 중앙대, 말라야대 등 -->
                     </small>
                 </div>
 
