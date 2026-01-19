@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <!-- SQL 로깅 -->
+        <Logger name="jdbc.sqlonly" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="jdbc.sqltiming" level="INFO" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="jdbc.audit" level="OFF" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="jdbc.resultset" level="OFF" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="jdbc.connection" level="OFF" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- Spring 로깅 -->
+        <Logger name="org.springframework.web" level="INFO"/>
+        <Logger name="org.springframework.security" level="INFO"/>
+        <Logger name="com.StudyLink" level="DEBUG"/>
+
+        <!-- Root Logger -->
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -1,0 +1,253 @@
+/* room css */
+/* 메시지 영역 */
+#messageArea {
+    height: 500px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+
+/* 메시지 컨테이너 - 공통 */
+.message-container {
+    display: flex;
+    align-items: end;
+    margin: 4px 0;
+}
+
+/* 내 메시지 컨테이너 */
+.message-container-right {
+    justify-content: flex-end;
+}
+
+/* 상대 메시지 컨테이너 */
+.message-container-left {
+    justify-content: flex-start;
+}
+
+/* 메시지 박스 */
+.message-left {
+    background-color: #e0e0e0;
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    white-space: pre-wrap; /* 공백과 줄바꿈 유지 */
+}
+
+.message-right {
+    background-color: #0084ff;
+    color: white;
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    white-space: pre-wrap; /* 공백과 줄바꿈 유지 */
+}
+
+/* 읽음 표시 */
+.read-indicator {
+    font-size: 12px;
+    color: red;
+    background: transparent; /* 배경 없음 */
+    margin-right: 6px;       /* 메시지와 간격 */
+}
+
+/* 스크롤 숨기기 */
+#messageArea::-webkit-scrollbar {
+    display: none;
+}
+
+/* 채팅창 이미지 크기 */
+.chat-image {
+    max-width: 100px;      /* 이미지 가로 최대 크기 */
+    max-height: 100px;     /* 이미지 세로 최대 크기 */
+    width: auto;           /* 비율 유지 */
+    height: auto;          /* 비율 유지 */
+    border-radius: 8px;    /* 모서리 살짝 둥글게 */
+    object-fit: cover;     /* 영역에 맞춰 이미지 자르기 가능 */
+}
+
+/* input이 disabled일 때 label 스타일 */
+input:disabled + label {
+    background-color: #bbb;  /* 조금 더 어두운 배경 색 */
+    cursor: not-allowed; /* 클릭 방지 커서 */
+    opacity: 0.6;  /* 반투명 효과 */
+}
+
+
+
+
+/*-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------*/
+/* roomRegister css */
+.modal {
+    display: none; /* 처음에는 숨김 */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    width: 50%;
+    border-radius: 8px;
+}
+
+.close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+
+/*과목선택 select*/
+.custom-select {
+    width: 220px;
+    position: relative;
+}
+
+.custom-select > .selected {
+    border: 1px solid #ccc;
+    padding: 8px;
+    cursor: pointer;
+    background: #fff;
+    user-select: none;
+}
+
+.options {
+    position: absolute;
+    width: 100%;
+    border: 1px solid #ccc;
+    background: #fff;
+    max-height: 180px;        /* 스크롤 영역 */
+    overflow-y: auto;
+    display: none;
+    z-index: 1000;
+
+    /* 🔥 스크롤바 숨기기 */
+    scrollbar-width: none;   /* Firefox */
+    -ms-overflow-style: none;/* IE */
+}
+
+.options::-webkit-scrollbar {
+    display: none;           /* Chrome, Safari */
+}
+
+.option {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.option:hover {
+    background: #eee;
+}
+
+/* 만족도 */
+.star-rating {
+    display: flex;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.star-rating span {
+    font-size: 24px;
+    color: #ccc; /* 기본 회색 별 */
+    transition: color 0.2s;
+}
+
+.star-rating span.selected {
+    color: gold; /* 선택된 별 */
+}
+
+
+/* roomList */
+/* 개인방 컨테이너: 3x1 고정 */
+#privateContainer {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3열 고정 */
+    grid-template-rows: 1fr;               /* 1행 */
+    gap: 16px;
+    padding: 10px;
+    text-align: center;       /* 텍스트 중앙 */
+}
+
+/* 공개방 컨테이너: 3x3 고정 */
+#publicContainer {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3열 고정 */
+    grid-template-rows: repeat(3, 1fr);    /* 3행 고정 */
+    gap: 16px;
+    padding: 10px;
+    text-align: center;       /* 텍스트 중앙 */
+}
+
+/* myQuizContainer 그리드: 3열 x 5행 */
+#myQuizContainer {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3열 */
+    grid-template-rows: repeat(5, 1fr);    /* 5행 */
+    gap: 16px;
+    padding: 10px;
+    text-align: center;       /* 텍스트 중앙 */
+}
+
+/* 카드 공통 스타일 */
+.room-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+    transition: all 0.2s ease;
+    padding: 10px;
+
+    /* 카드 내부 비율 설정 */
+    box-sizing: border-box;
+}
+
+/* 카드 오버 효과 */
+.room-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* 과목 이름 */
+.room-card p.subject {
+    font-size: 1.1rem; /* 카드 크기에 맞춰 글자 조정 */
+    font-weight: bold;
+    margin: 4px 0;
+}
+
+/* 포인트 */
+.room-card p.point {
+    font-size: 0.9rem;
+    color: #555;
+    margin: 2px 0;
+}
+
+/* 비어 있을 때 메시지 스타일 */
+.empty-message {
+    grid-column: 1 / -1;  /* 모든 열 차지 */
+    grid-row: 1 / -1;     /* 모든 행 차지 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    color: #555;
+    text-align: center;
+}

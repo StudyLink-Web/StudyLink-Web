@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마이페이지 - StudyLink</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+</head>
+<body>
+
+<div layout:fragment="content" class="mypage-container">
+    <!-- 사이드바 (좌측 메뉴) -->
+    <aside class="mypage-sidebar">
+        <div class="sidebar-header">
+            <!-- 사용자 프로필 정보 -->
+            <div class="user-profile-card">
+                <div class="profile-image">
+                    <img th:src="${myPageData.user.profileImageUrl} ?: '/img/default-profile.png'"
+                         alt="프로필 이미지" class="profile-pic">
+                </div>
+                <div class="profile-info">
+                    <h3 class="user-name" th:text="${myPageData.user.name}">사용자 이름</h3>
+                    <p class="user-nickname" th:text="'@' + ${myPageData.user.nickname}">@닉네임</p>
+                    <p class="user-email" th:text="${myPageData.user.email}">email@example.com</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 사이드바 메뉴 -->
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <!-- 프로필 -->
+                <li class="nav-item">
+                    <a href="#profile-tab" class="nav-link" data-tab="profile">
+                        <span class="icon">👤</span>
+                        <span class="label">프로필</span>
+                    </a>
+                </li>
+
+                <!-- 계정 -->
+                <li class="nav-item">
+                    <a href="#account-tab" class="nav-link" data-tab="account">
+                        <span class="icon">🔐</span>
+                        <span class="label">계정</span>
+                    </a>
+                </li>
+
+                <!-- 알림 설정 -->
+                <li class="nav-item">
+                    <a href="#notifications-tab" class="nav-link" data-tab="notifications">
+                        <span class="icon">🔔</span>
+                        <span class="label">알림 설정</span>
+                        <span class="badge" id="notification-badge" th:if="${myPageData.notification.unreadCount > 0}"
+                              th:text="${myPageData.notification.unreadCount}">0</span>
+                    </a>
+                </li>
+
+                <!-- 설정 -->
+                <li class="nav-item">
+                    <a href="#settings-tab" class="nav-link" data-tab="settings">
+                        <span class="icon">⚙️</span>
+                        <span class="label">설정</span>
+                    </a>
+                </li>
+
+                <!-- 구분선 -->
+                <li class="nav-divider"></li>
+
+                <!-- 로그아웃 -->
+                <li class="nav-item">
+                    <form method="post" th:action="@{/logout}" class="logout-form">
+                        <button type="submit" class="nav-link logout-btn">
+                            <span class="icon">🚪</span>
+                            <span class="label">로그아웃</span>
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="mypage-content">
+        <!-- 프로필 탭 -->
+        <section id="profile-tab" class="tab-content active">
+            <div class="content-header">
+                <h2>프로필 관리</h2>
+            </div>
+
+            <div class="card">
+                <!-- 프로필 사진 -->
+                <div class="form-section">
+                    <h3>프로필 사진</h3>
+                    <div class="profile-photo-section">
+                        <img id="profile-preview"
+                             th:src="${myPageData.user.profileImageUrl} ?: '/img/default-profile.png'"
+                             alt="프로필 미리보기" class="profile-preview">
+                        <div class="photo-buttons">
+                            <input type="file" id="profile-image-input" accept="image/*" style="display: none;">
+                            <button type="button" class="btn btn-secondary" id="upload-profile-btn">
+                                📷 사진 업로드
+                            </button>
+                            <button type="button" class="btn btn-outline" id="delete-profile-btn">
+                                🗑️ 사진 삭제
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 기본 정보 -->
+                <div class="form-section">
+                    <h3>기본 정보</h3>
+                    <form id="basic-info-form">
+                        <div class="form-group">
+                            <label for="user-name">이름</label>
+                            <input type="text" id="user-name" class="form-control"
+                                   th:value="${myPageData.user.name}" placeholder="이름을 입력하세요">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="user-nickname">닉네임</label>
+                            <div class="input-group">
+                                <input type="text" id="user-nickname" class="form-control"
+                                       th:value="${myPageData.user.nickname}" placeholder="닉네임을 입력하세요">
+                                <button type="button" class="btn btn-secondary" id="check-nickname-btn">
+                                    중복확인
+                                </button>
+                            </div>
+                            <small id="nickname-status" class="form-text"></small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="user-email">이메일</label>
+                            <input type="email" id="user-email" class="form-control"
+                                   th:value="${myPageData.user.email}" disabled>
+                            <small class="form-text text-muted">이메일은 계정 탭에서 변경 가능합니다</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="user-phone">휴대폰 번호</label>
+                            <input type="tel" id="user-phone" class="form-control"
+                                   th:value="${myPageData.user.phone} ?: ''"
+                                   placeholder="010-0000-0000">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="grade-year">학년/학과</label>
+                            <input type="text" id="grade-year" class="form-control"
+                                   th:value="${myPageData.user.gradeYear} ?: ''"
+                                   placeholder="예: 고3, 대2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="interests">관심사 (쉼표로 구분)</label>
+                            <textarea id="interests" class="form-control" rows="3"
+                                      placeholder="수학, 영어, 물리 등"
+                                      th:text="${myPageData.user.interests} ?: ''"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 계정 탭 -->
+        <section id="account-tab" class="tab-content">
+            <div class="content-header">
+                <h2>계정 관리</h2>
+            </div>
+
+            <div class="card">
+                <!-- 비밀번호 변경 -->
+                <div class="form-section">
+                    <h3>비밀번호 변경</h3>
+                    <form id="change-password-form">
+                        <div class="form-group">
+                            <label for="current-password">현재 비밀번호</label>
+                            <input type="password" id="current-password" class="form-control"
+                                   placeholder="현재 비밀번호를 입력하세요">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="new-password">새 비밀번호</label>
+                            <input type="password" id="new-password" class="form-control"
+                                   placeholder="새 비밀번호를 입력하세요">
+                            <small class="form-text text-muted">8자 이상, 숫자와 문자 조합</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm-password">비밀번호 확인</label>
+                            <input type="password" id="confirm-password" class="form-control"
+                                   placeholder="비밀번호를 다시 입력하세요">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">비밀번호 변경</button>
+                    </form>
+                </div>
+
+                <!-- 이메일 변경 -->
+                <div class="form-section">
+                    <h3>이메일 변경</h3>
+                    <form id="change-email-form">
+                        <div class="form-group">
+                            <label for="current-email">현재 이메일</label>
+                            <input type="email" id="current-email" class="form-control"
+                                   th:value="${myPageData.user.email}" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="new-email">새 이메일</label>
+                            <input type="email" id="new-email" class="form-control"
+                                   placeholder="새 이메일을 입력하세요">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email-password">비밀번호</label>
+                            <input type="password" id="email-password" class="form-control"
+                                   placeholder="비밀번호를 입력하세요">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">이메일 변경</button>
+                    </form>
+                </div>
+
+                <!-- 휴대폰 번호 변경 -->
+                <div class="form-section">
+                    <h3>휴대폰 번호 변경</h3>
+                    <form id="change-phone-form">
+                        <div class="form-group">
+                            <label for="new-phone">새 휴대폰 번호</label>
+                            <input type="tel" id="new-phone" class="form-control"
+                                   placeholder="010-0000-0000">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone-password">비밀번호</label>
+                            <input type="password" id="phone-password" class="form-control"
+                                   placeholder="비밀번호를 입력하세요">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">휴대폰 번호 변경</button>
+                    </form>
+                </div>
+
+                <!-- 계정 상태 -->
+                <div class="form-section">
+                    <h3>계정 상태</h3>
+                    <div class="account-status">
+                        <div class="status-item">
+                            <span class="status-label">활성화 상태:</span>
+                            <span class="badge badge-success" th:if="${myPageData.user.isActive}">활성</span>
+                            <span class="badge badge-danger" th:unless="${myPageData.user.isActive}">비활성</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">이메일 인증:</span>
+                            <span class="badge badge-success" th:if="${myPageData.user.emailVerified}">인증됨</span>
+                            <span class="badge badge-warning" th:unless="${myPageData.user.emailVerified}">미인증</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 계정 탈퇴 -->
+                <div class="form-section danger-zone">
+                    <h3>⚠️ 위험 구역</h3>
+                    <p class="text-muted">계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.</p>
+                    <button type="button" class="btn btn-danger" id="delete-account-btn">
+                        🗑️ 계정 삭제
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 알림 설정 탭 -->
+        <section id="notifications-tab" class="tab-content">
+            <div class="content-header">
+                <h2>알림 설정</h2>
+            </div>
+
+            <div class="card">
+                <!-- 전체 알림 -->
+                <div class="form-section">
+                    <h3>전체 알림</h3>
+                    <div class="toggle-switch">
+                        <label class="switch">
+                            <input type="checkbox" id="notifications-enabled"
+                                   th:checked="${myPageData.settings.notificationsEnabled}">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="label">알림 활성화</span>
+                    </div>
+                </div>
+
+                <!-- 알림 채널 -->
+                <div class="form-section">
+                    <h3>알림 채널</h3>
+                    <div class="channel-list">
+                        <div class="channel-item">
+                            <label class="switch">
+                                <input type="checkbox" id="email-notifications"
+                                       th:checked="${myPageData.settings.emailNotifications}">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">📧 이메일 알림</span>
+                        </div>
+                        <div class="channel-item">
+                            <label class="switch">
+                                <input type="checkbox" id="push-notifications"
+                                       th:checked="${myPageData.settings.pushNotifications}">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">🔔 푸시 알림</span>
+                        </div>
+                        <div class="channel-item">
+                            <label class="switch">
+                                <input type="checkbox" id="sms-notifications"
+                                       th:checked="${myPageData.settings.smsNotifications}">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">💬 SMS 알림</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 알림 유형 -->
+                <div class="form-section">
+                    <h3>알림 유형</h3>
+                    <div class="notification-types">
+                        <div class="type-item">
+                            <label class="switch">
+                                <input type="checkbox" class="notification-type"
+                                       data-type="ANSWER_RECEIVED" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">답변 받음</span>
+                        </div>
+                        <div class="type-item">
+                            <label class="switch">
+                                <input type="checkbox" class="notification-type"
+                                       data-type="COMMENT_RECEIVED" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">댓글 받음</span>
+                        </div>
+                        <div class="type-item">
+                            <label class="switch">
+                                <input type="checkbox" class="notification-type"
+                                       data-type="FOLLOW_RECEIVED" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">팔로우 받음</span>
+                        </div>
+                        <div class="type-item">
+                            <label class="switch">
+                                <input type="checkbox" class="notification-type"
+                                       data-type="PAYMENT_COMPLETED" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">결제 완료</span>
+                        </div>
+                        <div class="type-item">
+                            <label class="switch">
+                                <input type="checkbox" class="notification-type"
+                                       data-type="WITHDRAWAL_COMPLETED" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">환급 완료</span>
+                        </div>
+                        <div class="type-item">
+                            <label class="switch">
+                                <input type="checkbox" class="notification-type"
+                                       data-type="SYSTEM" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">시스템 공지</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 설정 탭 -->
+        <section id="settings-tab" class="tab-content">
+            <div class="content-header">
+                <h2>일반 설정</h2>
+            </div>
+
+            <div class="card">
+                <!-- 테마 설정 -->
+                <div class="form-section">
+                    <h3>테마</h3>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="theme" value="LIGHT"
+                                   th:checked="${myPageData.settings.themeMode == 'LIGHT'}">
+                            <span class="radio-label">☀️ 라이트 모드</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="theme" value="DARK"
+                                   th:checked="${myPageData.settings.themeMode == 'DARK'}">
+                            <span class="radio-label">🌙 다크 모드</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 언어 설정 -->
+                <div class="form-section">
+                    <h3>언어</h3>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="language" value="KO"
+                                   th:checked="${myPageData.settings.language == 'KO'}">
+                            <span class="radio-label">🇰🇷 한국어</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="language" value="EN"
+                                   th:checked="${myPageData.settings.language == 'EN'}">
+                            <span class="radio-label">🇬🇧 English</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="language" value="JA"
+                                   th:checked="${myPageData.settings.language == 'JA'}">
+                            <span class="radio-label">🇯🇵 日本語</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 프로필 공개 설정 -->
+                <div class="form-section">
+                    <h3>프로필 공개</h3>
+                    <div class="toggle-switch">
+                        <label class="switch">
+                            <input type="checkbox" id="profile-public"
+                                   th:checked="${myPageData.settings.profilePublic}">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="label">프로필을 공개합니다</span>
+                    </div>
+                </div>
+
+                <!-- 동의 사항 -->
+                <div class="form-section">
+                    <h3>동의 사항</h3>
+                    <div class="consent-list">
+                        <div class="consent-item">
+                            <label class="switch">
+                                <input type="checkbox" id="privacy-policy-agree"
+                                       th:checked="${myPageData.settings.privacyPolicyAgree}">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">개인정보 처리방침에 동의합니다</span>
+                        </div>
+                        <div class="consent-item">
+                            <label class="switch">
+                                <input type="checkbox" id="terms-agree"
+                                       th:checked="${myPageData.settings.termsOfServiceAgree}">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">서비스 이용약관에 동의합니다</span>
+                        </div>
+                        <div class="consent-item">
+                            <label class="switch">
+                                <input type="checkbox" id="marketing-agree"
+                                       th:checked="${myPageData.settings.marketingAgree}">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="label">마케팅 정보 수신에 동의합니다 (선택)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 설정 초기화 -->
+                <div class="form-section">
+                    <h3>초기화</h3>
+                    <button type="button" class="btn btn-outline" id="reset-settings-btn">
+                        🔄 설정 초기화
+                    </button>
+                    <small class="form-text text-muted">모든 설정을 기본값으로 복구합니다</small>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- 모달: 계정 삭제 확인 -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">계정 삭제</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>⚠️ 경고: 계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.</strong></p>
+                <p>계속하려면 비밀번호를 입력하세요:</p>
+                <input type="password" id="delete-account-password" class="form-control"
+                       placeholder="비밀번호를 입력하세요">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-danger" id="confirm-delete-btn">삭제</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 알림 메시지 -->
+<div id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/mypage.js}"></script>
+</body>
+</html>

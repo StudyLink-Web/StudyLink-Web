@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/layout}"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title>입시 지도 - StudyLink</title>
+    <style>
+      .map-container-wrapper {
+        display: flex;
+        height: calc(100vh - 100px);
+        margin-top: 10px;
+        gap: 15px;
+      }
+
+      .map-sidebar {
+        width: 300px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        overflow-y: auto;
+      }
+
+      .map-content {
+        flex: 1;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        position: relative;
+        overflow: hidden;
+      }
+
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+
+      .sim-section {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 15px;
+      }
+
+      .sim-section:last-child {
+        border-bottom: none;
+      }
+
+      .sim-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .input-group-text {
+        width: 80px;
+        justify-content: center;
+      }
+
+      .mode-toggle-btn {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      /* 반응형 */
+      @media (max-width: 991px) {
+        .map-container-wrapper {
+          flex-direction: column;
+          height: auto;
+        }
+        .map-sidebar {
+          width: 100%;
+          height: auto;
+        }
+        #map {
+          height: 500px;
+        }
+      }
+      /* 프리미엄 커스텀 마커 스타일 */
+      .premium-marker {
+        position: relative;
+        width: 30px;
+        height: 40px;
+        cursor: pointer;
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      .premium-marker:hover {
+        transform: translateY(-5px) scale(1.1);
+        z-index: 100 !important;
+      }
+      .marker-svg {
+        filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.3));
+      }
+      .marker-circle {
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 10px;
+        background: white;
+        border-radius: 50%;
+      }
+      /* 히스토리 아이템 스타일 */
+      .history-item {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 4px solid #667eea;
+      }
+      .history-item:hover {
+        transform: translateX(3px);
+        background: #f8f9ff;
+        border-color: #667eea;
+      }
+      .history-item .title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #333;
+        display: block;
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .history-item .date {
+        font-size: 0.75rem;
+        color: #999;
+      }
+
+      /* 분석 모드 뱃지 스타일 */
+      .analysis-mode-badge {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+        border-radius: 20px;
+        background: #eef2ff;
+        color: #4f46e5;
+        border: 1px solid #c7d2fe;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 15px;
+        animation: fadeIn 0.3s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* 시뮬레이션 모드 뱃지 커스텀 */
+      .simulation-mode-badge {
+        background: #f1f5f9;
+        color: #64748b;
+        border-color: #e2e8f0;
+      }
+    </style>
+  </head>
+
+  <div layout:fragment="content" class="container-fluid">
+    <div class="map-container-wrapper">
+      <!-- 좌측 사이드바: 성적 시뮬레이터 -->
+      <aside class="map-sidebar">
+        <div class="sim-section">
+          <div class="sim-title">📊 가상 성적 설정</div>
+          <p class="text-muted small">
+            등급을 조절하여 지원 가능한 대학을 확인해보세요.
+          </p>
+
+          <!-- [NEW] 분석 모드 표시기 -->
+          <div id="analysisModeIndicator">
+            <div
+              id="modeBadge"
+              class="analysis-mode-badge simulation-mode-badge"
+            >
+              <i id="modeIcon" class="fas fa-chart-line"></i>
+              <span id="analysisModeText">시뮬레이션 모드 활성화</span>
+              <button
+                id="modeCloseBtn"
+                type="button"
+                class="btn-close d-none"
+                style="font-size: 0.5rem; margin-left: auto"
+                onclick="resetToSimMode()"
+              ></button>
+            </div>
+          </div>
+
+          <!-- 국어 등급 -->
+          <div class="mb-4">
+            <label
+              for="korGrade"
+              class="form-label d-flex justify-content-between align-items-center"
+            >
+              <span>국어 등급</span>
+              <div>
+                <span id="korVal" class="badge bg-primary me-1">3</span>
+                <span id="korBadge" class="badge bg-light text-dark border"
+                  >상위 23%</span
+                >
+              </div>
+            </label>
+            <input
+              type="range"
+              class="form-range"
+              id="korGrade"
+              min="1"
+              max="9"
+              step="1"
+              value="3"
+            />
+          </div>
+
+          <!-- 수학 등급 -->
+          <div class="mb-4">
+            <label
+              for="matGrade"
+              class="form-label d-flex justify-content-between align-items-center"
+            >
+              <span>수학 등급</span>
+              <div>
+                <span id="matVal" class="badge bg-primary me-1">3</span>
+                <span id="matBadge" class="badge bg-light text-dark border"
+                  >상위 23%</span
+                >
+              </div>
+            </label>
+            <input
+              type="range"
+              class="form-range"
+              id="matGrade"
+              min="1"
+              max="9"
+              step="1"
+              value="3"
+            />
+          </div>
+
+          <div
+            class="alert alert-secondary py-2 px-2 small mb-4"
+            style="font-size: 0.8rem; background-color: #f1f3f5; color: #6c757d"
+          >
+            * 탐구/영어는 국/수 평균으로 자동 반영
+          </div>
+        </div>
+
+        <div class="sim-section">
+          <div class="sim-title">🛠 시각화 모드</div>
+          <button id="viewToggle" class="btn btn-outline-info mode-toggle-btn">
+            🔄 입시 지형도로 전환
+          </button>
+        </div>
+
+        <!-- 성능 안내 메시지 영역 -->
+        <div
+          id="performanceNotice"
+          class="alert alert-info py-2 px-3 small d-none mt-3"
+          style="font-size: 0.75rem"
+        >
+          <i class="fas fa-info-circle me-1"></i> 상위 50개 결과만 표시
+          중입니다.
+        </div>
+
+        <div class="sim-section mt-auto" th:if="${isAuthenticated}">
+          <div
+            class="sim-title d-flex justify-content-between align-items-center"
+          >
+            <span>🕒 성적 히스토리</span>
+            <button
+              id="refreshHistoryBtn"
+              class="btn btn-sm btn-link text-decoration-none p-0"
+              title="새로고침"
+            >
+              <i class="fas fa-sync-alt" style="font-size: 0.8rem"></i>
+            </button>
+          </div>
+          <div
+            id="historyList"
+            class="list-group list-group-flush gap-2"
+            style="max-height: 250px; overflow-y: auto"
+          >
+            <div class="text-center py-3 text-muted small">
+              성적 이력을 불러오는 중...
+            </div>
+          </div>
+        </div>
+
+        <div class="sim-section mt-auto" th:unless="${isAuthenticated}">
+          <div class="alert alert-info py-2 small mb-0">
+            💡 <strong>Tip!</strong> 로그인하시면 저장된 내 성적 이력을 불러와서
+            비교해볼 수 있습니다.
+          </div>
+        </div>
+      </aside>
+
+      <!-- 우측 지도 영역 -->
+      <main class="map-content">
+        <!-- 지도가 그려질 영역 -->
+        <div id="map"></div>
+
+        <!-- '이 지역 재검색' 버튼 -->
+        <button
+          id="refreshBtn"
+          class="btn btn-primary btn-sm shadow-sm"
+          style="
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-weight: 600;
+          "
+        >
+          <i class="fas fa-sync-alt me-1"></i> 이 지역 재검색
+        </button>
+
+        <!-- 지도 안내 오버레이 (초기 로딩 시만 표시) -->
+        <div
+          id="map-overlay"
+          style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            text-align: center;
+          "
+        >
+          <h5 class="mb-0">📍 입시 지도 엔진 로딩 중...</h5>
+          <small class="text-muted">잠시만 기다려주세요.</small>
+        </div>
+      </main>
+    </div>
+
+    <!-- 카카오 맵 SDK 로드 (autoload=false 사용하여 안정적인 초기화) -->
+    <script
+      type="text/javascript"
+      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=96d7cc705078c2f63da6039b9f9879ce&autoload=false"
+    ></script>
+
+    <script th:inline="javascript">
+      let kakaoMap = null;
+      let markers = [];
+      let infoWindow = null;
+
+      // [NEW] 전역 정밀 성적 데이터 상태
+      let activeFullScores = null;
+      let activeHistoryTitle = null;
+
+      // 1. 카카오 맵 로드 후 초기화
+      kakao.maps.load(function () {
+        const container = document.getElementById("map");
+        const options = {
+          center: new kakao.maps.LatLng(36.5, 127.5),
+          level: 12,
+        };
+        kakaoMap = new kakao.maps.Map(container, options);
+        infoWindow = new kakao.maps.InfoWindow({ zIndex: 1 });
+
+        // 지도 로드 완료 후 오버레이 숨기기 및 데이터 로드
+        document.getElementById("map-overlay").style.display = "none";
+        loadMapData();
+      });
+
+      // 2. 데이터 호출 및 렌더링 함수
+      let abortController = null;
+      async function loadMapData() {
+        if (!kakaoMap) return;
+
+        // 이전 요청이 있다면 취소
+        if (abortController) {
+          abortController.abort();
+        }
+        abortController = new AbortController();
+
+        const bounds = kakaoMap.getBounds();
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+
+        let requestData = {
+          userScores: [],
+          bounds: {
+            minLat: sw.getLat(),
+            maxLat: ne.getLat(),
+            minLng: sw.getLng(),
+            maxLng: ne.getLng(),
+          },
+        };
+
+        // [NEW] 정밀 분석 모드인 경우 full score 사용, 아니면 슬라이더 기반 시뮬레이션
+        if (activeFullScores && activeFullScores.length > 0) {
+          console.log("🚀 [MapAPI] 정밀 분석 모드 데이터 전송:", activeFullScores);
+          requestData.userScores = activeFullScores.map((s) => ({
+            subjectName: s.subject_name || s.subjectName,
+            score: s.score,
+            scoreType: s.score_type || s.scoreType,
+            category: s.category,
+          }));
+        } else {
+          const kor = document.getElementById("korGrade").value;
+          const mat = document.getElementById("matGrade").value;
+          console.log("🛠️ [MapAPI] 시뮬레이션 모드 데이터 전송 (등급 기반)");
+          requestData.userScores = [
+            {
+              subjectName: "국어",
+              score: parseInt(kor),
+              scoreType: "등급",
+              category: "공통",
+            },
+            {
+              subjectName: "수학",
+              score: parseInt(mat),
+              scoreType: "등급",
+              category: "공통",
+            },
+          ];
+        }
+
+        try {
+          const response = await fetch("/map/api/data", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestData),
+            signal: abortController.signal,
+          });
+          const data = await response.json();
+          console.log("전체 응답 데이터:", data);
+
+          if (!data || !data.items) {
+            console.error("서버 응답 결과에 items가 없습니다.");
+            renderMarkers([]);
+            return;
+          }
+
+          console.log(`총 ${data.items.length}개의 데이터를 받았습니다.`);
+          renderMarkers(data.items);
+        } catch (error) {
+          if (error.name === "AbortError") {
+            console.log("이전 요청 취소됨");
+          } else {
+            console.error("데이터 로드 실패:", error);
+            alert(
+              "데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+            );
+          }
+        }
+      }
+
+      function getStatusColor(status) {
+        if (status === "안정") return "#28a745"; // Green
+        if (status === "적정") return "#007bff"; // Blue
+        if (status === "소신") return "#fd7e14"; // Orange
+        if (status === "불가") return "#dc3545"; // Red
+        return "#6c757d"; // Grey
+      }
+
+      function createMarkerContent(item, count) {
+        const color = getStatusColor(item.status);
+
+        // 학과 개수가 1개 이상이면 뱃지 표시
+        const badgeHtml =
+          count > 1
+            ? `<div style="position:absolute; top:-5px; right:-5px; background:#ffc107; color:#000; font-size:10px; font-weight:bold; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; border:1px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);">${count}</div>`
+            : "";
+
+        const div = document.createElement("div");
+        div.className = "premium-marker";
+        div.innerHTML = `
+          <svg class="marker-svg" width="30" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 40C16 40 32 24.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.5 16 40 16 40Z" fill="${color}"/>
+            <circle cx="16" cy="16" r="6" fill="white"/>
+          </svg>
+          ${badgeHtml}
+        `;
+        return div;
+      }
+
+      function renderMarkers(items) {
+        if (!items) items = [];
+
+        // 기존 마커(커스텀 오버레이) 제거
+        markers.forEach((m) => m.setMap(null));
+        markers = [];
+
+        // 1. 대학별로 데이터 그룹핑 (Clustering)
+        const univGroups = {};
+        items.forEach((item) => {
+          if (!univGroups[item.univ]) {
+            univGroups[item.univ] = [];
+          }
+          univGroups[item.univ].push(item);
+        });
+
+        const univKeys = Object.keys(univGroups);
+        console.log(
+          `클러스터링 결과: 총 ${univKeys.length}개의 대학 그룹 생성`
+        );
+
+        // 최상위 50개 대학만 추출 (성능 최적화)
+        const displayUnivs = univKeys.slice(0, 50);
+
+        // 안내 메시지 제어
+        const notice = document.getElementById("performanceNotice");
+        if (notice) {
+          if (univKeys.length > 50) {
+            notice.classList.remove("d-none");
+            notice.innerHTML = `<i class="fas fa-info-circle me-1"></i> 상위 50개 대학만 표시 중입니다. (전체: ${univKeys.length}개)`;
+          } else {
+            notice.classList.add("d-none");
+          }
+        }
+
+        displayUnivs.forEach((univName) => {
+          const groupItems = univGroups[univName];
+          const representative = groupItems[0]; // 대표 아이템 (좌표용)
+          const count = groupItems.length; // 학과 개수
+
+          const position = new kakao.maps.LatLng(
+            representative.lat,
+            representative.lng
+          );
+
+          // 커스텀 오버레이 생성 (마커 이미지 대신 CSS 사용 + 개수 뱃지)
+          const content = createMarkerContent(representative, count);
+
+          const overlay = new kakao.maps.CustomOverlay({
+            position: position,
+            content: content,
+            yAnchor: 1.0,
+          });
+
+          overlay.setMap(kakaoMap);
+
+          // 클릭 이벤트 (CustomOverlay는 DOM 엘리먼트에 직접 이벤트 등록 가능)
+          content.onclick = function () {
+            // [Fix] 정보창 내용 단순화 (UI 개선)
+            // 1. 대표 합격선 계산 (가장 첫 번째 학과 혹은 평균)
+            let rep_per = representative.target_per;
+            if (rep_per < 1 && rep_per > 0)
+              rep_per = (rep_per * 100).toFixed(1);
+
+            // 2. 리스트 생성 (점수 제거, 학과명만 깔끔하게)
+            let listHtml =
+              '<ul style="padding-left:0; list-style:none; max-height:200px; overflow-y:auto; margin-bottom:0;">';
+
+            groupItems.forEach((gItem) => {
+              listHtml += `
+                    <li style="padding:6px 0; border-bottom:1px solid #eee; display:flex; align-items:center;">
+                        <span style="font-size:0.9rem; color:#333;">• ${gItem.major}</span>
+                    </li>
+                `;
+            });
+            listHtml += "</ul>";
+
+            const infoContent = `
+              <div style="padding:15px; min-width:280px; font-family: 'Noto Sans KR', sans-serif; border-radius:10px;">
+                <h6 class="mb-1 d-flex justify-content-between align-items-center" style="color:#2c3e50; font-weight:700; font-size:1rem;">
+                    <a href="${
+                      representative.univ_url ||
+                      "https://search.naver.com/search.naver?query=" +
+                        representative.univ +
+                        " 공식홈페이지"
+                    }"
+                       target="_blank"
+                       title="공식 홈페이지 바로가기"
+                       style="text-decoration:none; color:inherit; cursor:pointer;"
+                       onmouseover="this.style.color='#007bff'"
+                       onmouseout="this.style.color='inherit'">
+                        ${
+                          representative.univ
+                        } <i class="fas fa-external-link-alt" style="font-size:0.75rem; color:#007bff; margin-left:3px;"></i>
+                    </a>
+                    <span class="badge ${getStatusBadgeClass(
+                      representative.status
+                    )}">${representative.status}</span>
+                </h6>
+                <div class="mb-2 d-flex justify-content-between" style="font-size:0.8rem; color:#7f8c8d;">
+                    <span>${representative.region} / ${
+              representative.category
+            }</span>
+                    <span class="text-primary fw-bold">평균 합격선: ${rep_per}%</span>
+                </div>
+                <div class="alert alert-light border small py-1 px-2 mb-2 text-center" style="font-size:0.75rem; color:#666;">
+                    총 <strong>${count}개</strong> 학과 지원 가능
+                </div>
+                <hr class="my-2">
+                ${listHtml}
+              </div>
+            `;
+            infoWindow.setContent(infoContent);
+            // InfoWindow를 해당 위치에 열기
+            infoWindow.setPosition(position);
+            infoWindow.open(kakaoMap);
+          };
+
+          markers.push(overlay);
+        });
+      }
+
+      function getStatusBadgeClass(status) {
+        switch (status) {
+          case "안정":
+            return "bg-success";
+          case "적정":
+            return "bg-primary";
+          case "소신":
+            return "bg-warning text-dark";
+          case "불가":
+            return "bg-danger";
+          default:
+            return "bg-secondary";
+        }
+      }
+
+      // 4. 슬라이더 이벤트 바인딩
+      let timer;
+      const gradePercentMap = {
+        1: "상위 4%",
+        2: "상위 11%",
+        3: "상위 23%",
+        4: "상위 40%",
+        5: "상위 60%",
+        6: "상위 77%",
+        7: "상위 89%",
+        8: "상위 96%",
+        9: "상위 100%",
+      };
+
+      function handleGradeChange(e, valId, badgeId) {
+        // [NEW] 슬라이더 조작 시 정밀 분석 모드 해제
+        if (activeFullScores) {
+          console.log("♻️ 슬라이더 조작 감지: 시뮬레이션 모드로 전환");
+          resetToSimMode(false); // UI만 갱신하고 데이터 호출은 timer에서 수행
+        }
+
+        const val = e.target.value;
+        document.getElementById(valId).innerText = val;
+
+        // 뱃지 업데이트
+        const badge = document.getElementById(badgeId);
+        if (badge) badge.innerText = gradePercentMap[val] || "";
+
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          loadMapData();
+        }, 400);
+      }
+
+      document
+        .getElementById("korGrade")
+        .addEventListener("input", (e) =>
+          handleGradeChange(e, "korVal", "korBadge")
+        );
+      document
+        .getElementById("matGrade")
+        .addEventListener("input", (e) =>
+          handleGradeChange(e, "matVal", "matBadge")
+        );
+
+      // 5. '이 지역 재검색' 버튼 이벤트
+      document.getElementById("refreshBtn").onclick = function () {
+        loadMapData();
+      };
+
+      // 6. 입시 지형도(위성 모드) 토글 구현
+      const viewToggleBtn = document.getElementById("viewToggle");
+      let isSatellite = false;
+
+      viewToggleBtn.onclick = function () {
+        isSatellite = !isSatellite;
+
+        if (isSatellite) {
+          // 위성 모드 (SKYVIEW) + 라벨 (HYBRID 효과)
+          kakaoMap.setMapTypeId(kakao.maps.MapTypeId.HYBRID);
+          viewToggleBtn.innerHTML = "🗺️ 일반 지도로 전환";
+          viewToggleBtn.classList.remove("btn-outline-info");
+          viewToggleBtn.classList.add("btn-info", "text-white");
+        } else {
+          // 일반 모드 (ROADMAP)
+          kakaoMap.setMapTypeId(kakao.maps.MapTypeId.ROADMAP);
+          viewToggleBtn.innerHTML = "🔄 입시 지형도로 전환";
+          viewToggleBtn.classList.remove("btn-info", "text-white");
+          viewToggleBtn.classList.add("btn-outline-info");
+        }
+      };
+
+      // [NEW] 모드 전환 및 UI 갱신 함수
+      function resetToSimMode(refreshData = true) {
+        activeFullScores = null;
+        activeHistoryTitle = null;
+
+        const badge = document.getElementById("modeBadge");
+        const icon = document.getElementById("modeIcon");
+        const text = document.getElementById("analysisModeText");
+        const closeBtn = document.getElementById("modeCloseBtn");
+
+        if (badge && icon && text && closeBtn) {
+          badge.className = "analysis-mode-badge simulation-mode-badge";
+          icon.className = "fas fa-chart-line";
+          text.innerText = "시뮬레이션 모드 활성화";
+          closeBtn.classList.add("d-none");
+        }
+
+        if (refreshData) {
+          clearTimeout(timer);
+          loadMapData();
+        }
+      }
+
+      function updateAnalysisModeUI(title) {
+        const badge = document.getElementById("modeBadge");
+        const icon = document.getElementById("modeIcon");
+        const text = document.getElementById("analysisModeText");
+        const closeBtn = document.getElementById("modeCloseBtn");
+
+        if (badge && icon && text && closeBtn) {
+          badge.className = "analysis-mode-badge"; // Indigo
+          icon.className = "fas fa-microscope";
+          text.innerText = `'${title}' 정밀 분석 중`;
+          closeBtn.classList.remove("d-none");
+        }
+      }
+
+      // 7. 내 성적 불러오기 기능 (이전 중복 버튼 제거로 인해 기능만 보존 - 히스토리를 통해 우회 권장)
+      // 실제 loadScoreBtn은 위에서 제거되었지만 로직은 남겨둘 수 있으나 여기서는 아예 삭제하거나 주석 처리함.
+
+      // 8. 성적 히스토리 로드 및 렌더링 [NEW]
+      async function loadScoreHistory() {
+        const historyList = document.getElementById("historyList");
+        if (!historyList) return;
+
+        try {
+          const res = await fetch("/api/dashboard/records");
+          if (!res.ok) throw new Error("히스토리 로드 실패");
+          const records = await res.json();
+
+          if (records && records.length > 0) {
+            historyList.innerHTML = "";
+            records.slice(0, 5).forEach((r) => {
+              const date = new Date(r.createdAt).toLocaleDateString();
+              const item = document.createElement("div");
+              item.className = "history-item";
+              item.innerHTML = `
+                <span class="title">${r.title}</span>
+                <span class="date">${date} 저장됨</span>
+              `;
+              item.onclick = () => selectHistoryRecord(r.id, r.title);
+              historyList.appendChild(item);
+            });
+          } else {
+            historyList.innerHTML = `
+                <div class="alert alert-light border small py-2 mb-0" style="font-size: 0.75rem; color: #666;">
+                    💡 <strong>Tip!</strong> 대시보드에서 성적을 저장하면 여기에 내역이 표시됩니다.
+                </div>`;
+          }
+        } catch (e) {
+          console.error(e);
+          historyList.innerHTML =
+            '<div class="text-danger small py-2 text-center">히스토리를 불러올 수 없습니다.</div>';
+        }
+      }
+
+      async function selectHistoryRecord(id, title) {
+        try {
+          const res = await fetch(`/api/dashboard/records/${id}/load`);
+          if (!res.ok) throw new Error("성적 로드 실패");
+          const scores = await res.json();
+
+          if (scores && scores.length > 0) {
+            // [NEW] 정밀 분석 모드 활성화 및 전역 상태 저장
+            activeFullScores = scores;
+            activeHistoryTitle = title;
+            updateAnalysisModeUI(title);
+
+            scores.forEach((s) => {
+              const sName = s.subject_name || s.subjectName;
+              const sType = s.score_type || s.scoreType;
+              const sScore = s.score;
+
+              // 슬라이더 업데이트 (참고용 - 등급 데이터가 있을 때만)
+              if (sType === "등급") {
+                if (sName === "국어") {
+                  const el = document.getElementById("korGrade");
+                  el.value = sScore;
+                  handleGradeChange({ target: el }, "korVal", "korBadge");
+                }
+                if (sName === "수학") {
+                  const el = document.getElementById("matGrade");
+                  el.value = sScore;
+                  handleGradeChange({ target: el }, "matVal", "matBadge");
+                }
+              }
+            });
+            clearTimeout(timer);
+            loadMapData();
+            console.log(`[ScoreHistory] Loaded Precise Mode: ${title}`);
+          }
+        } catch (e) {
+          console.error(e);
+          alert("성적을 불러오는 중 오류가 발생했습니다.");
+        }
+      }
+
+      // 초기화: 인증된 경우 히스토리 로드
+      const isAuthenticated = [[${isAuthenticated}]];
+      if (isAuthenticated) {
+        loadScoreHistory();
+        const refreshBtn = document.getElementById("refreshHistoryBtn");
+        if (refreshBtn) {
+          refreshBtn.onclick = function (e) {
+            e.stopPropagation();
+            loadScoreHistory();
+          };
+        }
+      }
+    </script>
+  </div>
+</html>
