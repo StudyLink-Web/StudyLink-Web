@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -41,16 +42,23 @@ public class BoardController {
 
     private static final String UPLOAD_ROOT = "D:/web_0826_shinjw/_myProject/_java/_fileUpload";
 
-    // ✅ 등록 폼: 인증/권한은 SecurityConfig에서 막지만, 컨트롤러에서도 방어적으로 체크
+    /**
+     * ✅ 등록 폼: "DB에서 role 실시간 체크"로 MENTOR만 허용
+     */
+    @PreAuthorize("@authz.isMentor(authentication)")
     @GetMapping("/register")
     public String register(Authentication authentication) {
+        // 여기선 @PreAuthorize가 이미 다 걸러줌 (방어적으로 남겨도 됨)
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
         }
         return "board/register";
     }
 
-    // ✅ 등록 처리: 인증 필수 + NPE 방지
+    /**
+     * ✅ 등록 처리: "DB에서 role 실시간 체크"로 MENTOR만 허용
+     */
+    @PreAuthorize("@authz.isMentor(authentication)")
     @PostMapping("/register")
     public String register(BoardDTO boardDTO,
                            @RequestParam(name = "files", required = false) MultipartFile[] files,
@@ -60,11 +68,12 @@ public class BoardController {
             return "redirect:/login";
         }
 
-        String username = authentication.getName();
-        Long userId = userService.findUserIdByUsername(username);
+        // principal.getName() 값(=identifier)을 email/nickname 둘 다 대응하도록 UserService에서 처리
+        String identifier = authentication.getName();
+        Long userId = userService.findUserIdByIdentifier(identifier);
 
         boardDTO.setUserId(userId);
-        boardDTO.setWriter(username);
+        boardDTO.setWriter(identifier); // writer를 nickname으로 저장하고 싶으면 여기에서 바꿔도 됨
 
         List<FileDTO> fileList = null;
         if (files != null && files.length > 0 && files[0] != null && !files[0].isEmpty()) {
@@ -126,7 +135,7 @@ public class BoardController {
         return "board/detail";
     }
 
-    // ✅ 수정 처리: 인증 필수 + 작성자 검증(최소 방어)
+    // ✅ 수정 처리: 인증 필수 + 작성자 검증
     @PostMapping("/modify")
     public String modify(BoardDTO boardDTO,
                          RedirectAttributes redirectAttributes,
@@ -137,10 +146,9 @@ public class BoardController {
             return "redirect:/login";
         }
 
-        String username = authentication.getName();
-        Long userId = userService.findUserIdByUsername(username);
+        String identifier = authentication.getName();
+        Long userId = userService.findUserIdByIdentifier(identifier);
 
-        // ✅ 작성자/권한 검증(서비스에서 더 강하게 검증해도 됨)
         BoardFileDTO origin = boardService.getDetail(boardDTO.getPostId());
         if (origin == null || origin.getBoardDTO() == null ||
                 origin.getBoardDTO().getUserId() == null ||
@@ -149,7 +157,7 @@ public class BoardController {
         }
 
         boardDTO.setUserId(userId);
-        boardDTO.setWriter(username);
+        boardDTO.setWriter(identifier);
 
         List<FileDTO> fileDTOList = null;
         if (files != null && files.length > 0 && files[0] != null && !files[0].isEmpty()) {
@@ -175,7 +183,7 @@ public class BoardController {
         return "redirect:/board/detail";
     }
 
-    // ✅ 삭제: 인증 필수 + 작성자 검증(최소 방어)
+    // ✅ 삭제: 인증 필수 + 작성자 검증
     @GetMapping("/remove")
     public String remove(@RequestParam("postId") long postId,
                          Authentication authentication) {
@@ -184,8 +192,8 @@ public class BoardController {
             return "redirect:/login";
         }
 
-        String username = authentication.getName();
-        Long userId = userService.findUserIdByUsername(username);
+        String identifier = authentication.getName();
+        Long userId = userService.findUserIdByIdentifier(identifier);
 
         BoardFileDTO origin = boardService.getDetail(postId);
         if (origin == null || origin.getBoardDTO() == null ||
@@ -198,7 +206,7 @@ public class BoardController {
         return "redirect:/board/list";
     }
 
-    // ✅ 파일 삭제: 인증 필수 (그리고 작성자 검증 추가)
+    // ✅ 파일 삭제: 인증 필수 + 작성자 검증
     @DeleteMapping("/file/{uuid}")
     @ResponseBody
     public ResponseEntity<String> fileRemove(@PathVariable("uuid") String uuid,
@@ -208,15 +216,14 @@ public class BoardController {
             return ResponseEntity.status(401).body("0");
         }
 
-        String username = authentication.getName();
-        Long userId = userService.findUserIdByUsername(username);
+        String identifier = authentication.getName();
+        Long userId = userService.findUserIdByIdentifier(identifier);
 
         FileDTO removeFile = boardService.getFile(uuid);
         if (removeFile == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // ✅ 파일이 속한 게시글 작성자 검증
         BoardFileDTO origin = boardService.getDetail(removeFile.getPostId());
         if (origin == null || origin.getBoardDTO() == null ||
                 origin.getBoardDTO().getUserId() == null ||

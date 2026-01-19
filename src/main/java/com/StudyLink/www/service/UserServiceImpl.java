@@ -14,9 +14,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Long findUserIdByUsername(String username) {
-        Users user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 없음 username=" + username));
-        return user.getUserId();
+    public Users findByIdentifier(String identifier) {
+        if (identifier == null || identifier.isBlank()) {
+            throw new IllegalArgumentException("식별자가 비어있습니다.");
+        }
+
+        return userRepository.findByNickname(identifier)
+                .orElseGet(() -> userRepository.findByEmail(identifier)
+                        .orElseGet(() -> userRepository.findByUsername(identifier)
+                                .orElseThrow(() ->
+                                        new IllegalArgumentException("사용자를 찾을 수 없습니다: " + identifier))));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Long findUserIdByIdentifier(String identifier) {
+        return findByIdentifier(identifier).getUserId();
     }
 }

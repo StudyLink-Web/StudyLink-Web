@@ -87,11 +87,11 @@ public class SecurityConfig {
                         // ✅ 댓글 작성/수정/삭제: 로그인 필요
                         .requestMatchers("/comment/post", "/comment/modify", "/comment/remove/**").authenticated()
 
-                        // ✅ 에러 페이지는 누구나 접근 가능 (CustomErrorController가 /error 에서 분기함)
+                        // ✅ 에러 페이지
                         .requestMatchers("/error", "/error/**").permitAll()
 
-                        // ✅ 등록(폼/처리): MENTOR만 허용 ( /board/** permitAll 보다 위에 있어야 함 )
-                        .requestMatchers("/board/register", "/board/register/**").hasRole("MENTOR")
+                        // ✅ 등록(폼/처리): "로그인만" 필요 (멘토 여부는 @PreAuthorize에서 DB로 검사)
+                        .requestMatchers("/board/register", "/board/register/**").authenticated()
 
                         // 나의 질문, 답변 내역 비로그인시 접근 불가
                         .requestMatchers("/room/myQuiz").authenticated()
@@ -125,7 +125,7 @@ public class SecurityConfig {
                                 "/room/enterRoom",
                                 "/ws/**",
 
-                                // ✅ board 전체 공개(단, register는 위에서 예외로 막음)
+                                // board 전체 공개(단, register는 위에서 로그인 필요)
                                 "/board/**",
                                 "/community/**",
 
@@ -152,7 +152,6 @@ public class SecurityConfig {
 
                 )
 
-                // ✅ 권한(403) 처리: /error 로 보내서 CustomErrorController가 403.html로 분기
                 .exceptionHandling(e -> e
                         .accessDeniedPage("/error")
                 )

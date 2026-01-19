@@ -16,16 +16,12 @@
             <span onclick="goRegister();"> 대학생활 등록하기</span>
         </div>
 
-
-        <!-- 검색/정렬 -->
         <form class="form_board" role="search" th:action="@{/board/list}" method="get">
             <div class="form_board_box">
                 <select class="form-select" name="type" aria-label="정렬 기준">
                     <option value="" th:selected="${ph.type == null or ph.type == ''}">전체</option>
                     <option value="new" th:selected="${ph.type == 'new'}">제목 순</option>
                     <option value="view" th:selected="${ph.type == 'view'}">내용 순</option>
-<!--                    <option value="like" th:selected="${ph.type == 'like'}" disabled>좋아요 순(준비중)</option>-->
-<!--                    <option value="cmt" th:selected="${ph.type == 'cmt'}" disabled>댓글 순(준비중)</option>-->
                 </select>
 
                 <input class="form-control" type="search" name="keyword"
@@ -38,28 +34,26 @@
                 검색
             </button>
         </form>
-            <div class="total_gun"
-                 th:if="${(ph.type != null and ph.type != '')
+
+        <div class="total_gun"
+             th:if="${(ph.type != null and ph.type != '')
                   or (ph.keyword != null and ph.keyword != '')}">
-                <p>
-                    총 <span class="g">[[${ph.totalElement}]]</span>건이 검색 되었습니다.
-                </p>
-            </div>
+            <p>
+                총 <span class="g">[[${ph.totalElement}]]</span>건이 검색 되었습니다.
+            </p>
+        </div>
 
-
-        <!-- 데이터 없을 때 -->
         <div th:if="${ph.list == null or #lists.isEmpty(ph.list)}">
             <div class="board_title_not">등록된 게시글이 없습니다.</div>
         </div>
 
-        <!-- 목록 -->
         <div class="board_list_view">
             <div th:if="${ph.list != null and !#lists.isEmpty(ph.list)}"
                  th:each="b : ${ph.list}"
                  class="board_infobox">
 
                 <div class="link_board_details" th:onclick="|location.href='@{/board/detail(postId=${b.postId})}'|">
-                    <div class="board_img" >
+                    <div class="board_img">
                         <img th:if="${b.thumbPath != null}"
                              th:src="${b.thumbPath}"
                              alt="게시글 이미지">
@@ -68,7 +62,6 @@
                              th:src="@{/img/files.svg}"
                              alt="기본 이미지">
                     </div>
-
 
                     <div class="profil_imgbox">
                         <div class="profil_img">
@@ -79,7 +72,6 @@
                                           : '/img/default_profile.png'}"
                                  alt="프로필 이미지"
                                  onerror="this.src='/img/default_profile.png'">
-
                         </div>
 
                         <div class="board_info">
@@ -100,19 +92,16 @@
                             </div>
                         </div>
 
-
                     </div>
 
                 </div>
             </div>
         </div>
 
-        <!-- ✅ 페이징: 게시글 있을 때만 + (선택) 2페이지 이상일 때만 -->
         <nav aria-label="Page navigation"
              th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list) and ph.totalPage > 1}">
             <ul class="pagination justify-content-center">
 
-                <!-- 이전 -->
                 <li class="page-item" th:classappend="${!ph.prev} ? 'disabled'">
                     <a class="page-link"
                        th:href="@{/board/list(pageNo=${ph.startPage-1}, type=${ph.type}, keyword=${ph.keyword})}"
@@ -121,7 +110,6 @@
                     </a>
                 </li>
 
-                <!-- 페이지 번호 -->
                 <li class="page-item"
                     th:each="i : ${#numbers.sequence(ph.startPage, ph.endPage)}"
                     th:classappend="${i == ph.pageNo} ? 'active'">
@@ -130,7 +118,6 @@
                        th:text="${i}"></a>
                 </li>
 
-                <!-- 다음 -->
                 <li class="page-item" th:classappend="${!ph.next} ? 'disabled'">
                     <a class="page-link"
                        th:href="@{/board/list(pageNo=${ph.endPage+1}, type=${ph.type}, keyword=${ph.keyword})}"
@@ -143,10 +130,6 @@
         </nav>
     </div>
 
-    <script th:inline="javascript">
-        window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
-        window.USER_EMAIL = /*[[${#authentication != null ? #authentication.principal.email : null}]]*/ null;
-    </script>
     <script src="/js/board_list.js"></script>
 </div>
 

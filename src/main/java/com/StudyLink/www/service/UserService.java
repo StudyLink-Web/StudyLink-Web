@@ -1,5 +1,10 @@
 package com.StudyLink.www.service;
 
+import com.StudyLink.www.entity.Users;
+
 public interface UserService {
-    Long findUserIdByUsername(String username);
+
+    Users findByIdentifier(String identifier);
+
+    Long findUserIdByIdentifier(String identifier);
 }
