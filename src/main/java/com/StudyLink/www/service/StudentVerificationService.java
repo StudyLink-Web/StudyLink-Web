@@ -32,6 +32,9 @@ public class StudentVerificationService {
     @Value("${app.token.expiration-minutes:1}")  // 기본값: 24시간 (1440분) -> 테스트 1분 변경
     private int tokenExpirationMinutes;
 
+    @Value("${app.email.template-path:templates/email-templates/verification-email.html}")  // ← 추가
+    private String emailTemplatePath;
+
     // 허용된 학교 도메인 목록 (계속 추가 가능)
     private static final String[] ALLOWED_DOMAINS = {
             "@snu.ac.kr",       // 서울대
@@ -150,7 +153,7 @@ public class StudentVerificationService {
 
             // 3. 토큰 생성
             String token = UUID.randomUUID().toString();
-            LocalDateTime expiresAt = LocalDateTime.now().plusHours(24);
+            LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(tokenExpirationMinutes);  // ← plusHours 대신 plusMinutes
 
             // 4. 현재 사용자 정보 수정
             currentUser.setSchoolEmail(email);
@@ -177,6 +180,38 @@ public class StudentVerificationService {
     }
 
     /**
+     * 인증 이메일 전송 (HTML 이메일)
+     * 리소스 파일(templates/email-templates/verification-email.html)에서 로드
+     */
+    private void sendVerificationEmail(String email, String token) {
+        try {
+            String verificationLink = "http://localhost:8088/auth/student-verification/verify?token=" + token;
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(email);
+            helper.setFrom("2021166051@kcu.ac.kr");
+            helper.setSubject("🎓 StudyLink - 대학생 인증");
+
+            // HTML 템플릿 파일에서 로드
+            String htmlContent = loadEmailTemplate(verificationLink, email);
+            helper.setText(htmlContent, true);  // true = HTML 모드
+
+            mailSender.send(message);
+            log.info("✅ HTML 인증 이메일 전송 성공: {}", email);
+
+        } catch (MessagingException e) {
+            log.error("❌ 이메일 전송 실패 (MessagingException): {}", e.getMessage());
+            throw new RuntimeException("이메일 전송에 실패했습니다: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("❌ 이메일 전송 실패: {}", e.getMessage());
+            throw new RuntimeException("이메일 전송에 실패했습니다");
+        }
+    }
+
+
+    /**
      * 학교 이메일 도메인 검증
      */
     private boolean isValidSchoolEmail(String email) {
@@ -188,71 +223,166 @@ public class StudentVerificationService {
         }
         return false;
     }
-
-    /**
-     * 인증 이메일 전송
-     */
-    private void sendVerificationEmail(String email, String token) {
-        try {
-            String verificationLink = "http://localhost:8088/auth/student-verification/verify?token=" + token;
-
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(email);
-            message.setFrom("2021166051@kcu.ac.kr");
-            message.setSubject("🎓 StudyLink - 대학생 인증");
-            message.setText(
-                    "안녕하세요!\n\n" +
-                            "StudyLink 대학생 인증을 완료하려면 아래 링크를 클릭하세요.\n\n" +
-                            "인증 링크: " + verificationLink + "\n\n" +
-                            "⏰ 유효시간: 24시간\n\n" +
-                            "이 링크를 요청하지 않았다면 이 이메일을 무시하세요.\n\n" +
-                            "감사합니다,\nStudyLink 팀"
-            );
-
-            mailSender.send(message);
-            log.info("✅ 인증 이메일 전송 성공: {}", email);
-        } catch (Exception e) {
-            log.error("❌ 이메일 전송 실패: {}", e.getMessage());
-            throw new RuntimeException("이메일 전송에 실패했습니다");
-        }
-    }
+    
 
     /**
      * 이메일 HTML 템플릿 로드 및 변수 치환
      */
     private String loadEmailTemplate(String verificationLink, String email) {
         try {
+            ClassLoader classLoader = getClass().getClassLoader();
             String template = new String(
-                    java.nio.file.Files.readAllBytes(
-                            java.nio.file.Paths.get("src/main/resources/email-templates/verification-email.html")
-                    )
+                    classLoader.getResourceAsStream(emailTemplatePath)
+                            .readAllBytes()
             );
             return template
                     .replace("${verificationLink}", verificationLink)
                     .replace("${email}", email);
-        } catch (Exception e) {
-            log.warn("⚠️ 이메일 템플릿 로드 실패, 기본 텍스트 사용: {}", e.getMessage());
-            // Fallback: 기본 텍스트 이메일
-            return """
-                    안녕하세요!
-                    
-                    StudyLink 대학생 인증을 완료하려면 아래 링크를 클릭하세요.
-                    
-                    인증 링크: """ + verificationLink + """
-                    
-                    ⏰ 유효시간: 24시간
-                    
-                    이 링크를 요청하지 않았다면 이 이메일을 무시하세요.
-                    
-                    감사합니다,
-                    StudyLink 팀
-                    """;
+        }  catch (Exception e) {
+            log.warn("⚠️ 이메일 템플릿 로드 실패 ({}), 기본 HTML 사용합니다", e.getMessage());
+            return getDefaultHtmlTemplate(verificationLink, email);  // ← Fallback 추가
         }
     }
 
     /**
+     * 기본 HTML 이메일 템플릿 (inline CSS)
+     * ⭐ 템플릿 파일 로드 실패 시 사용하는 Fallback
+     */
+    private String getDefaultHtmlTemplate(String verificationLink, String email) {
+        String html = "<!DOCTYPE html>\n" +
+                "<html lang=\"ko\">\n" +
+                "<head>\n" +
+                "    <meta charset=\"UTF-8\">\n" +
+                "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+                "</head>\n" +
+                "<body style=\"margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; background: #f5f7fa;\">\n" +
+                "<table width=\"100%\" style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; border-collapse: collapse;\">\n" +
+                "    <tr>\n" +
+                "        <td style=\"background: linear-gradient(135deg, #2c5aa0 0%, #1e3c72 100%); padding: 40px 30px; text-align: center;\">\n" +
+                "            <div style=\"font-size: 40px; margin-bottom: 10px;\">🎓</div>\n" +
+                "            <h1 style=\"font-size: 32px; color: #ffffff; margin: 0 0 5px 0; font-weight: 700; letter-spacing: -0.5px;\">StudyLink</h1>\n" +
+                "            <p style=\"color: rgba(255, 255, 255, 0.9); font-size: 16px; font-weight: 300; margin: 0;\">대학생 인증 완료</p>\n" +
+                "        </td>\n" +
+                "    </tr>\n" +
+                "    <tr>\n" +
+                "        <td style=\"padding: 40px 30px; color: #333333;\">\n" +
+                "            <div style=\"font-size: 18px; color: #1e3c72; font-weight: 600; margin-bottom: 20px;\">안녕하세요! 👋</div>\n" +
+                "            <p style=\"font-size: 15px; line-height: 1.8; color: #555555; margin: 0 0 15px 0;\">\n" +
+                "                StudyLink에 가입해주셔서 감사합니다!<br>\n" +
+                "                아래 버튼을 클릭하여 대학생 인증을 완료하시면 모든 프리미엄 기능을 이용하실 수 있습니다.\n" +
+                "            </p>\n" +
+                "            <table width=\"100%\" style=\"background: #f8f9fa; border-radius: 8px; border-collapse: collapse; margin: 30px 0; border-left: 4px solid #2c5aa0;\">\n" +
+                "                <tr>\n" +
+                "                    <td style=\"padding: 25px;\">\n" +
+                "                        <table width=\"100%\" style=\"margin-bottom: 15px; border-collapse: collapse;\">\n" +
+                "                            <tr>\n" +
+                "                                <td style=\"width: 30px; text-align: center; vertical-align: middle;\">\n" +
+                "                                    <div style=\"width: 30px; height: 30px; background: #2c5aa0; color: white; border-radius: 50%; font-weight: 700; font-size: 14px; line-height: 30px; text-align: center;\">1</div>\n" +
+                "                                </td>\n" +
+                "                                <td style=\"padding-left: 15px; vertical-align: middle;\">\n" +
+                "                                    <div style=\"font-weight: 600; color: #1e3c72; font-size: 14px;\">아래 버튼 클릭</div>\n" +
+                "                                    <div style=\"font-size: 13px; color: #666666; margin-top: 2px;\">인증 완료 버튼을 클릭해주세요</div>\n" +
+                "                                </td>\n" +
+                "                            </tr>\n" +
+                "                        </table>\n" +
+                "                        <table width=\"100%\" style=\"margin-bottom: 15px; border-collapse: collapse;\">\n" +
+                "                            <tr>\n" +
+                "                                <td style=\"width: 30px; text-align: center; vertical-align: middle;\">\n" +
+                "                                    <div style=\"width: 30px; height: 30px; background: #2c5aa0; color: white; border-radius: 50%; font-weight: 700; font-size: 14px; line-height: 30px; text-align: center;\">2</div>\n" +
+                "                                </td>\n" +
+                "                                <td style=\"padding-left: 15px; vertical-align: middle;\">\n" +
+                "                                    <div style=\"font-weight: 600; color: #1e3c72; font-size: 14px;\">인증 완료</div>\n" +
+                "                                    <div style=\"font-size: 13px; color: #666666; margin-top: 2px;\">자동으로 인증이 완료됩니다</div>\n" +
+                "                                </td>\n" +
+                "                            </tr>\n" +
+                "                        </table>\n" +
+                "                        <table width=\"100%\" style=\"border-collapse: collapse;\">\n" +
+                "                            <tr>\n" +
+                "                                <td style=\"width: 30px; text-align: center; vertical-align: middle;\">\n" +
+                "                                    <div style=\"width: 30px; height: 30px; background: #2c5aa0; color: white; border-radius: 50%; font-weight: 700; font-size: 14px; line-height: 30px; text-align: center;\">3</div>\n" +
+                "                                </td>\n" +
+                "                                <td style=\"padding-left: 15px; vertical-align: middle;\">\n" +
+                "                                    <div style=\"font-weight: 600; color: #1e3c72; font-size: 14px;\">모든 기능 사용 가능</div>\n" +
+                "                                    <div style=\"font-size: 13px; color: #666666; margin-top: 2px;\">StudyLink의 모든 서비스를 이용하세요</div>\n" +
+                "                                </td>\n" +
+                "                            </tr>\n" +
+                "                        </table>\n" +
+                "                    </td>\n" +
+                "                </tr>\n" +
+                "            </table>\n" +
+                "            <div style=\"text-align: center; margin: 35px 0;\">\n" +
+                "                <a href=\"" + verificationLink + "\" style=\"display: inline-block; background: linear-gradient(135deg, #2c5aa0 0%, #1e3c72 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; letter-spacing: 0.5px;\">✅ 인증 완료</a>\n" +
+                "            </div>\n" +
+                "            <table width=\"100%\" style=\"margin: 30px 0; border-collapse: collapse;\">\n" +
+                "                <tr>\n" +
+                "                    <td style=\"width: 50%; padding-right: 8px;\">\n" +
+                "                        <table width=\"100%\" style=\"background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%); padding: 20px; border-radius: 8px; border-collapse: collapse; border-left: 4px solid #2c5aa0;\">\n" +
+                "                            <tr>\n" +
+                "                                <td style=\"padding: 0;\">\n" +
+                "                                    <div style=\"font-size: 12px; color: #2c5aa0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;\">⏰ 유효시간</div>\n" +
+                "                                    <div style=\"font-size: 14px; color: #333333; font-weight: 600;\">24시간</div>\n" +
+                "                                </td>\n" +
+                "                            </tr>\n" +
+                "                        </table>\n" +
+                "                    </td>\n" +
+                "                    <td style=\"width: 50%; padding-left: 8px;\">\n" +
+                "                        <table width=\"100%\" style=\"background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%); padding: 20px; border-radius: 8px; border-collapse: collapse; border-left: 4px solid #2c5aa0;\">\n" +
+                "                            <tr>\n" +
+                "                                <td style=\"padding: 0;\">\n" +
+                "                                    <div style=\"font-size: 12px; color: #2c5aa0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;\">📧 수신자</div>\n" +
+                "                                    <div style=\"font-size: 14px; color: #333333; font-weight: 600; word-break: break-all;\">" + email + "</div>\n" +
+                "                                </td>\n" +
+                "                            </tr>\n" +
+                "                        </table>\n" +
+                "                    </td>\n" +
+                "                </tr>\n" +
+                "            </table>\n" +
+                "            <table width=\"100%\" style=\"background: #f5f7fa; padding: 20px; border-radius: 8px; margin: 25px 0; border-collapse: collapse;\">\n" +
+                "                <tr>\n" +
+                "                    <td style=\"padding: 0;\">\n" +
+                "                        <p style=\"font-size: 13px; color: #333333; margin: 0 0 10px 0; font-weight: 600;\"><strong>버튼이 작동하지 않으면?</strong></p>\n" +
+                "                        <p style=\"font-size: 13px; color: #666666; margin: 0 0 10px 0; line-height: 1.6;\">아래 링크를 복사하여 브라우저에 붙여넣으세요:</p>\n" +
+                "                        <div style=\"background: white; padding: 12px; border-radius: 4px; border: 1px solid #e0e0e0; word-break: break-all; font-size: 12px; color: #2c5aa0; font-weight: 500; font-family: 'Monaco', 'Courier New', monospace; overflow-x: auto;\">" + verificationLink + "</div>\n" +
+                "                    </td>\n" +
+                "                </tr>\n" +
+                "            </table>\n" +
+                "            <table width=\"100%\" style=\"background: #fff9e6; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin: 25px 0; border-collapse: collapse;\">\n" +
+                "                <tr>\n" +
+                "                    <td style=\"padding: 0;\">\n" +
+                "                        <p style=\"font-size: 13px; color: #856404; margin: 0; line-height: 1.6;\">\n" +
+                "                            <strong>⚠️ 주의:</strong> 이 링크를 요청하지 않았다면 이 이메일을 무시하셔도 됩니다. 또한 다른 사람과 이 링크를 공유하지 마세요.\n" +
+                "                        </p>\n" +
+                "                    </td>\n" +
+                "                </tr>\n" +
+                "            </table>\n" +
+                "        </td>\n" +
+                "    </tr>\n" +
+                "    <tr>\n" +
+                "        <td style=\"background: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e0e0e0;\">\n" +
+                "            <p style=\"font-size: 14px; color: #333333; margin: 0 0 5px 0; font-weight: 600;\"><strong>StudyLink 팀</strong></p>\n" +
+                "            <p style=\"font-size: 13px; color: #999999; margin: 0 0 15px 0;\">대학생들을 위한 멘토링 플랫폼</p>\n" +
+                "            <div style=\"width: 50px; height: 2px; background: #2c5aa0; margin: 15px auto;\"></div>\n" +
+                "            <p style=\"font-size: 12px; color: #2c5aa0; margin: 0;\">\n" +
+                "                <a href=\"#\" style=\"color: #2c5aa0; text-decoration: none; margin: 0 10px; font-weight: 500;\">문의하기</a>\n" +
+                "                •\n" +
+                "                <a href=\"#\" style=\"color: #2c5aa0; text-decoration: none; margin: 0 10px; font-weight: 500;\">개인정보 보호정책</a>\n" +
+                "            </p>\n" +
+                "            <p style=\"font-size: 11px; color: #cccccc; margin: 15px 0 0 0;\">\n" +
+                "                © 2026 StudyLink. All rights reserved.\n" +
+                "            </p>\n" +
+                "        </td>\n" +
+                "    </tr>\n" +
+                "</table>\n" +
+                "</body>\n" +
+                "</html>";
+        return html;
+    }
+
+
+
+    /**
      * 토큰으로 이메일 인증 완료
-     * ⭐ 수정됨: 사용자 역할(role) 및 이메일 정보 업데이트 추가
+     * 사용자 역할(role) 및 이메일 정보 업데이트 추가
      */
     public Map<String, Object> verifyEmail(String token) {
         Map<String, Object> response = new HashMap<>();
