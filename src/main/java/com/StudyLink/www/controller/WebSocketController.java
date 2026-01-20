@@ -1,12 +1,10 @@
 package com.StudyLink.www.controller;
 
-import com.StudyLink.www.dto.CanvasActionRequestDTO;
-import com.StudyLink.www.dto.DrawDataDTO;
+import com.StudyLink.www.dto.*;
 import com.StudyLink.www.entity.DrawData;
+import com.StudyLink.www.entity.UndoRedoStack;
 import com.StudyLink.www.service.DrawDataService;
 import com.StudyLink.www.webSocketMessage.*;
-import com.StudyLink.www.dto.MessageDTO;
-import com.StudyLink.www.dto.RoomFileDTO;
 import com.StudyLink.www.handler.RoomFileHandler;
 import com.StudyLink.www.service.MessageService;
 import com.StudyLink.www.service.RoomFileService;
@@ -122,7 +120,6 @@ public class WebSocketController {
     public UndoRedoMessage undoRedoMessage (UndoRedoMessage message) {
         return message;
     }
-
 
 
 
@@ -253,5 +250,30 @@ public class WebSocketController {
     public ResponseEntity<List<DrawDataDTO>> readDrawData(@RequestParam long roomId) {
         List<DrawDataDTO> list = drawDataService.findByRoomId(roomId);
         return ResponseEntity.ok(list);
+    }
+
+    // 액션 저장 (draw, erase, select 등)
+    @PostMapping("/saveUndoRedoStack")
+    public ResponseEntity<String> saveUndoRedoStack(@RequestBody UndoRedoStackDTO undoRedoStackDTO) {
+        try {
+            drawDataService.pushUndoRedoStack(undoRedoStackDTO);
+            return ResponseEntity.ok("1");
+        } catch (Exception e) {
+            log.info(">>> error {}", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");
+        }
+
+    }
+
+    // 방 재연결 시 undo/redo 스택 불러오기
+    @GetMapping("/loadUndoRedoStack")
+    public ResponseEntity<UndoRedoStackDTO> loadUndoRedoStack(@RequestParam long roomId) {
+        try {
+            UndoRedoStack stack = drawDataService.getUndoRedoStack(roomId);
+            return ResponseEntity.ok(new UndoRedoStackDTO(stack));
+        } catch (Exception e) {
+            log.info(">>> error {}", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 }

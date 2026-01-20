@@ -191,6 +191,7 @@ function connect() {
             console.error("❌ 메시지 로드 실패:", error);
         });
         readDrawData();
+        loadUndoRedoStack();
         scheduleRender();
 
         startHeartbeat();
@@ -507,9 +508,12 @@ const pendingQueue = {}; // seq -> message
 let mySeq = 1; // 내가 보낸 메시지 번호
 
 // undo, redo
-const undoStack = [];
-const redoStack = [];
+let undoStack = [];
+let redoStack = [];
 let currentAction = null; // 현재 드래그 중인 액션
+
+// DB 작업 순차 실행용 큐
+let undoRedoQueue = Promise.resolve();
 
 // 툴 선택
 document.getElementById('btnradio1').addEventListener('click', () => selectTool('draw'));
@@ -523,9 +527,20 @@ document.getElementById('btnradio3').addEventListener('click', (e) => {
     selectTool('select');
 });
 
-// undo / redo
-document.getElementById('btnradio4').addEventListener('click', () => { undo(); sendUndoRedoMessage('undo'); });
-document.getElementById('btnradio5').addEventListener('click', () => { redo(); sendUndoRedoMessage('redo'); });
+document.getElementById('btnradio4').addEventListener('click', () => safeUndoRedo('undo'));
+document.getElementById('btnradio5').addEventListener('click', () => safeUndoRedo('redo'));
+
+function safeUndoRedo(actionType) {
+    undoRedoQueue = undoRedoQueue.then(async () => {
+        if (actionType === 'undo') {
+            await undo();                  // undo + DB
+            sendUndoRedoMessage('undo');   // 메시지 전송
+        } else {
+            await redo();                  // redo + DB
+            sendUndoRedoMessage('redo');
+        }
+    }).catch(console.error);
+}
 
 // 도구 선택 함수
 function selectTool(tool) {
@@ -663,13 +678,10 @@ function pushToUndoStack(){
 function loop() {
     if (isDrawing && currentPointer && lastPoint) {
         if (selectedTool === 'draw') {
-            const lines = drawInterpolatedLine({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
-
-            // DB 반영
-            saveCanvasActionToDB('draw', lines);
+            drawInterpolatedLine({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
         }
         if (selectedTool === 'erase') {
-            const removeLines = eraseInterpolated({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
+            eraseInterpolated({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
 
             message = {
                 roomId: roomId,
@@ -681,10 +693,6 @@ function loop() {
                 y2: currentPointer.y
             }
             safeSend("/app/erase", message);
-
-            // DB 반영 (uuid 배열로)
-            const erasePayload = removeLines.map(l => ({ uuid: l.uuid }));
-            if (erasePayload.length) saveCanvasActionToDB('erase', erasePayload);
         }
         lastPoint = { ...currentPointer };
         scheduleRender();
@@ -707,9 +715,6 @@ function loop() {
                 positions: positions
             };
             safeSend("/app/select", message);
-
-            // DB 반영
-            saveCanvasActionToDB('select', positions);
         }
         // 이거 false안하면 transform 끝난 시점에도 계속 메시지 송신
         isTransform = false;
@@ -757,8 +762,18 @@ function drawLine(msg){
         strokeLineJoin: 'round' // 연결점 부드럽게
     });
     canvas.add(line);
+
+    // 직렬화용 정보만 currentAction.targets에 저장
     if (currentAction && currentAction.type === 'draw') {
-        currentAction.targets.push(line);
+        currentAction.targets.push({
+            uuid: msg.uuid,
+            x1: msg.x1,
+            y1: msg.y1,
+            x2: msg.x2,
+            y2: msg.y2,
+            stroke: line.stroke,
+            strokeWidth: line.strokeWidth
+        });
     }
 }
 
@@ -779,13 +794,11 @@ function drawInterpolatedLine(msg) {
     let prevX = p1.x;
     let prevY = p1.y;
 
-    lines = []
     for (let i = 1; i <= steps; i++) {
         const x = p1.x + stepX * i;
         const y = p1.y + stepY * i;
         const newObjectId = crypto.randomUUID();
         drawLine({x1: prevX, y1: prevY, x2: x, y2: y, uuid: newObjectId});
-        lines.push({x1: prevX, y1: prevY, x2: x, y2: y, uuid: newObjectId})
         prevX = x;
         prevY = y;
         message = {
@@ -799,28 +812,36 @@ function drawInterpolatedLine(msg) {
         }
         safeSend("/app/draw", message);
     }
-    return lines;
 }
 
 // 지우기
 function eraseLine(x, y, threshold = 10) {
-    // threshold: 지울 기준 거리(px)
-    const objects = canvas.getObjects('line'); // 모든 Line 객체 가져오기
+    const objects = canvas.getObjects('line');
     const toRemove = [];
-    const removeLines = [];
+
     objects.forEach(line => {
         const [x1, y1, x2, y2] = line.get('points') || [line.x1, line.y1, line.x2, line.y2];
         const dist = distancePointToLine(x, y, x1, y1, x2, y2);
         if (dist <= threshold) {
             toRemove.push(line);
-            removeLines.push({uuid: line.uuid, x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2})
-            if (currentAction && currentAction.type === 'erase' && !currentAction.targets.includes(line)) {
-                currentAction.targets.push(line);
+
+            // currentAction.targets에도 저장
+            if (currentAction && currentAction.type === 'erase') {
+                currentAction.targets.push({
+                    uuid: line.uuid,
+                    x1: line.x1,
+                    y1: line.y1,
+                    x2: line.x2,
+                    y2: line.y2,
+                    stroke: line.stroke,
+                    strokeWidth: line.strokeWidth
+                });
             }
         }
     });
+
+    // Canvas에서 제거
     toRemove.forEach(line => canvas.remove(line));
-    return removeLines;
 }
 
 // 지우개 보간 함수
@@ -839,18 +860,8 @@ function eraseInterpolated(msg) {
     for (let i = 0; i <= steps; i++) {
         const x = p1.x + (dx / steps) * i;
         const y = p1.y + (dy / steps) * i;
-        removeLines = removeLines.concat(eraseLine(x, y, ERASE_RADIUS));
+        eraseLine(x, y, ERASE_RADIUS);
     }
-
-    // uuid 중복 제거
-    const seen = new Set();
-    removeLines = removeLines.filter(line => {
-        if (seen.has(line.uuid)) return false;
-        seen.add(line.uuid);
-        return true;
-    });
-
-    return removeLines;
 }
 
 // 점(x0,y0)과 선(x1,y1)-(x2,y2) 사이 최소 거리 계산 함수
@@ -891,48 +902,130 @@ function objectUpdate(msg){
     });
 }
 
-// undo
-function undo() {
+async function undo() {
     if (undoStack.length === 0) return;
+
     const action = undoStack.pop();
-    switch(action.type) {
+
+    switch (action.type) {
         case 'draw':
-            action.targets.forEach(obj => canvas.remove(obj));
+            // 그린 것 제거
+            action.targets.forEach(t => {
+                const obj = canvas.getObjects().find(o => o.uuid === t.uuid);
+                if (obj) canvas.remove(obj);
+            });
+
+            // DB에서도 제거
+            const drawUUIDs = action.targets.map(t => t.uuid);
+            if (drawUUIDs.length) await saveCanvasActionToDB('erase', drawUUIDs);
             break;
+
         case 'erase':
-            action.targets.forEach(obj => canvas.add(obj));
+            // 지운 것 복구
+            action.targets.forEach(t => {
+                // 이미 있으면 skip
+                if (canvas.getObjects().some(o => o.uuid === t.uuid)) return;
+
+                const line = new fabric.Line(
+                    [t.x1, t.y1, t.x2, t.y2],
+                    {
+                        uuid: t.uuid,
+                        stroke: t.stroke || '#000',
+                        strokeWidth: t.strokeWidth || 2,
+                        selectable: false,
+                        evented: false,
+                        strokeLineCap: 'round',
+                        strokeLineJoin: 'round'
+                    }
+                );
+                canvas.add(line);
+            });
+            // DB에서도 복구
+            await saveCanvasActionToDB('draw', action.targets);
             break;
+
         case 'select':
-            action.targets.forEach((obj, idx) => {
+            action.targets.forEach((t, idx) => {
+                const obj = canvas.getObjects().find(o => o.uuid === t.uuid);
+                if (!obj) return;
+
                 const state = action.before[idx];
                 obj.set({ left: state.left, top: state.top });
+                obj.setCoords();
             });
             break;
     }
+
     redoStack.push(action);
     scheduleRender();
+
+    const undoRedoStackDTO = {
+        roomId: roomId,
+        undoStack: JSON.parse(JSON.stringify(undoStack)),
+        redoStack: JSON.parse(JSON.stringify(redoStack))
+    };
+    saveUndoRedoStack();
 }
 
-// redo
-function redo() {
+async function redo() {
     if (redoStack.length === 0) return;
+
     const action = redoStack.pop();
-    switch(action.type) {
+
+    switch (action.type) {
         case 'draw':
-            action.targets.forEach(obj => canvas.add(obj));
+            // 다시 그리기
+            action.targets.forEach(t => {
+                if (canvas.getObjects().some(o => o.uuid === t.uuid)) return;
+
+                const line = new fabric.Line(
+                    [t.x1, t.y1, t.x2, t.y2],
+                    {
+                        uuid: t.uuid,
+                        stroke: t.stroke || '#000',
+                        strokeWidth: t.strokeWidth || 2,
+                        selectable: false,
+                        evented: false,
+                        strokeLineCap: 'round',
+                        strokeLineJoin: 'round'
+                    }
+                );
+                canvas.add(line);
+            });
+            // DB 반영: draw 액션 저장
+            await saveCanvasActionToDB('draw', action.targets);
             break;
+
         case 'erase':
-            action.targets.forEach(obj => canvas.remove(obj));
-            break;
+            // 다시 지우기
+            action.targets.forEach(t => {
+                const obj = canvas.getObjects().find(o => o.uuid === t.uuid);
+                if (obj) canvas.remove(obj);
+            });
+            // DB 반영: erase 액션 저장
+            await saveCanvasActionToDB('erase', action.targets);
+
         case 'select':
-            action.targets.forEach((obj, idx) => {
+            action.targets.forEach((t, idx) => {
+                const obj = canvas.getObjects().find(o => o.uuid === t.uuid);
+                if (!obj) return;
+
                 const state = action.after[idx];
                 obj.set({ left: state.left, top: state.top });
+                obj.setCoords();
             });
             break;
     }
+
     undoStack.push(action);
     scheduleRender();
+
+    const undoRedoStackDTO = {
+        roomId: roomId,
+        undoStack: JSON.parse(JSON.stringify(undoStack)),
+        redoStack: JSON.parse(JSON.stringify(redoStack))
+    };
+    saveUndoRedoStack();
 }
 
 // undo, redo 메시지 전송
@@ -985,7 +1078,40 @@ async function readDrawData(){
     }
 }
 
+async function saveUndoRedoStack(undoRedoStackDTO) {
+    try {
+        const response = await fetch(`/room/saveUndoRedoStack?roomId=${roomId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(undoRedoStackDTO)
+        });
+        if (!response.ok) {
+            console.error('stack DB 저장 실패');
+        }
+    } catch (e) {
+        console.error('서버 연결 실패:', e);
+    }
+}
 
+async function loadUndoRedoStack() {
+    try {
+        const response = await fetch(`/room/loadUndoRedoStack?roomId=${roomId}`, {
+            method: 'GET'
+        });
+
+        if (!response.ok) {
+            console.error('stack DB 저장 실패');
+            return;
+        }
+        result = await response.json();
+
+        undoStack = result.undoStack;
+        redoStack = result.redoStack;
+
+    } catch (e) {
+        console.error('서버 연결 실패:', e);
+    }
+}
 
 // 라디오 클릭 방지 + UI 동기화
 document.querySelectorAll('input[name="btnradio"]').forEach(radio => {
@@ -1069,24 +1195,57 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPointer = canvas.getPointer(opt.e);
     });
 
-    canvas.on('mouse:up', () => {
+    canvas.on('mouse:up', async () => {
         if (!isDrawing) return;
         isDrawing = false;
         currentPointer = null;
 
         if (currentAction && currentAction.targets.length > 0) {
+            // UI 즉시 반영: undoStack에 push
             pushToUndoStack();
-            const message = { senderId: senderId, seq: mySeq++ }
-            safeSend('/app/pushToUndoStack', message);
-        }
 
-        resetCurrentAction();
+            // pushToUndoStack 메시지는 UI 즉시 전송
+            const pushMsg = {
+                senderId: senderId,
+                seq: mySeq++
+            };
+            safeSend('/app/pushToUndoStack', pushMsg);
 
-        const message = {
-            senderId: senderId,
-            seq: mySeq++
+            // 서버/메시지 전송은 비동기 큐에 넣기
+            const actionCopy = JSON.parse(JSON.stringify(currentAction)); // 직렬화용 복사
+            undoRedoQueue = undoRedoQueue.then(async () => {
+                // DB 저장
+                await saveCanvasActionToDB(actionCopy.type, actionCopy.targets.map(t => ({
+                    uuid: t.uuid,
+                    x1: t.x1,
+                    y1: t.y1,
+                    x2: t.x2,
+                    y2: t.y2
+                })));
+
+                // undo/redo 스택 DB 저장
+                const undoRedoStackDTO = {
+                    roomId: roomId,
+                    undoStack: JSON.parse(JSON.stringify(undoStack)),
+                    redoStack: JSON.parse(JSON.stringify(redoStack))
+                };
+
+                await saveUndoRedoStack(undoRedoStackDTO);
+
+            }).catch(console.error);
+
+            // currentAction 리셋 & 메시지 전송
+            resetCurrentAction();
+
+            const resetMsg = {
+                senderId: senderId,
+                seq: mySeq++
+            };
+            safeSend('/app/resetCurrentAction', resetMsg);
+        } else {
+            // currentAction 비어있으면 그냥 리셋
+            resetCurrentAction();
         }
-        safeSend('/app/resetCurrentAction', message)
     });
 
     // select 이벤트
@@ -1114,6 +1273,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 seq: mySeq++
             }
             safeSend('/app/pushToUndoStack', message);
+
+            saveUndoRedoStack();
         }
 
         resetCurrentAction();
