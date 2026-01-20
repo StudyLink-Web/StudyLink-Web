@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -82,6 +83,16 @@ public class SecurityConfig {
 
                 // 권한 설정
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/**")
+                        .access((auth, context) -> {
+                            String ip = context.getRequest().getRemoteAddr();
+                            // 학원 IP 또는 localhost 허용
+                            boolean allowed = ip.startsWith("192.168.11.")
+                                    || ip.equals("127.0.0.1")
+                                    || ip.equals("0:0:0:0:0:0:0:1")  // IPv6 localhost
+                                    || ip.equals("::1"); // IPv6 localhost
+                            return new AuthorizationDecision(allowed);
+                        })
                         // ✅ 댓글 목록: 비로그인 허용
                         .requestMatchers(HttpMethod.GET, "/comment/list/**").permitAll()
 
