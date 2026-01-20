@@ -5,6 +5,7 @@ import AdSection from "./components/AdSection";
 import CommunitySection from "./components/CommunitySection";
 import QuickActionGrid from "./components/QuickActionGrid";
 import AdmissionEssayPage from "./pages/AdmissionEssayPage";
+import PricingPage from "./pages/PricingPage";
 
 function App() {
   const [scrollY, setScrollY] = useState(0);
@@ -21,6 +22,8 @@ function App() {
     window.location.pathname === "/cover-letter" ||
     window.location.pathname === "/cover_letter";
 
+  const isPricing = window.location.pathname === "/pricing";
+
   // AI 자소서 페이지일 경우 전체 화면 렌더링
   if (isCoverLetter) {
     return (
@@ -28,6 +31,11 @@ function App() {
         <AdmissionEssayPage />
       </div>
     );
+  }
+
+  // 요금제 페이지 렌더링
+  if (isPricing) {
+    return <PricingPage />;
   }
 
   // 배경색 보간 (BG Color Interpolation)

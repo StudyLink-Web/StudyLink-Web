@@ -51,9 +51,12 @@ const AdSection: FC = () => {
                 ))}
               </div>
               <div className="pt-8 flex gap-4">
-                <button className="bg-slate-900 dark:bg-white text-white dark:text-black hover:bg-slate-800 dark:hover:bg-slate-200 px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/10 dark:shadow-purple-500/10">
+                <a
+                  href="/pricing"
+                  className="bg-slate-900 dark:bg-white text-white dark:text-black hover:bg-slate-800 dark:hover:bg-slate-200 px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/10 dark:shadow-purple-500/10 no-underline hover:no-underline"
+                >
                   30일 무료 체험하기
-                </button>
+                </a>
               </div>
             </div>
             {/* Visual element on the right */}
