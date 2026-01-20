@@ -531,15 +531,13 @@ document.getElementById('btnradio4').addEventListener('click', () => safeUndoRed
 document.getElementById('btnradio5').addEventListener('click', () => safeUndoRedo('redo'));
 
 function safeUndoRedo(actionType) {
-    undoRedoQueue = undoRedoQueue.then(async () => {
-        if (actionType === 'undo') {
-            await undo();                  // undo + DB
-            sendUndoRedoMessage('undo');   // 메시지 전송
-        } else {
-            await redo();                  // redo + DB
-            sendUndoRedoMessage('redo');
-        }
-    }).catch(console.error);
+    if (actionType === 'undo') {
+        undo();                  // undo + DB
+        sendUndoRedoMessage('undo');   // 메시지 전송
+    } else {
+        redo();                  // redo + DB
+        sendUndoRedoMessage('redo');
+    }
 }
 
 // 도구 선택 함수
@@ -902,7 +900,7 @@ function objectUpdate(msg){
     });
 }
 
-async function undo() {
+function undo() {
     if (undoStack.length === 0) return;
 
     const action = undoStack.pop();
@@ -916,8 +914,16 @@ async function undo() {
             });
 
             // DB에서도 제거
-            const drawUUIDs = action.targets.map(t => t.uuid);
-            if (drawUUIDs.length) await saveCanvasActionToDB('erase', drawUUIDs);
+            if (action.targets.length){
+                const copiedTargets = [...action.targets];
+                undoRedoQueue = undoRedoQueue.then(async () => {
+                    try {
+                        await saveCanvasActionToDB('erase', copiedTargets);
+                    } catch (e) {
+                        console.error('DB 저장 실패:', e);
+                    }
+                })
+            }
             break;
 
         case 'erase':
@@ -941,7 +947,16 @@ async function undo() {
                 canvas.add(line);
             });
             // DB에서도 복구
-            await saveCanvasActionToDB('draw', action.targets);
+            if (action.targets.length){
+                const copiedTargets = [...action.targets];
+                undoRedoQueue = undoRedoQueue.then(async () => {
+                    try {
+                        await saveCanvasActionToDB('draw', copiedTargets);
+                    } catch (e) {
+                        console.error('DB 저장 실패:', e);
+                    }
+                })
+            }
             break;
 
         case 'select':
@@ -964,10 +979,17 @@ async function undo() {
         undoStack: JSON.parse(JSON.stringify(undoStack)),
         redoStack: JSON.parse(JSON.stringify(redoStack))
     };
-    saveUndoRedoStack();
+
+    undoRedoQueue = undoRedoQueue.then(async () => {
+        try {
+            saveUndoRedoStack(undoRedoStackDTO);
+        } catch (e) {
+            console.error('DB 저장 실패:', e);
+        }
+    })
 }
 
-async function redo() {
+function redo() {
     if (redoStack.length === 0) return;
 
     const action = redoStack.pop();
@@ -993,7 +1015,17 @@ async function redo() {
                 canvas.add(line);
             });
             // DB 반영: draw 액션 저장
-            await saveCanvasActionToDB('draw', action.targets);
+            if (action.targets.length){
+                const copiedTargets = [...action.targets];
+                undoRedoQueue = undoRedoQueue.then(async () => {
+                    try {
+                        await saveCanvasActionToDB('draw', copiedTargets);
+                    } catch (e) {
+                        console.error('DB 저장 실패:', e);
+                    }
+                })
+            }
+
             break;
 
         case 'erase':
@@ -1003,7 +1035,17 @@ async function redo() {
                 if (obj) canvas.remove(obj);
             });
             // DB 반영: erase 액션 저장
-            await saveCanvasActionToDB('erase', action.targets);
+            if (action.targets.length){
+                const copiedTargets = [...action.targets];
+                undoRedoQueue = undoRedoQueue.then(async () => {
+                    try {
+                        await saveCanvasActionToDB('erase', copiedTargets);
+                    } catch (e) {
+                        console.error('DB 저장 실패:', e);
+                    }
+                })
+            }
+
 
         case 'select':
             action.targets.forEach((t, idx) => {
@@ -1025,7 +1067,14 @@ async function redo() {
         undoStack: JSON.parse(JSON.stringify(undoStack)),
         redoStack: JSON.parse(JSON.stringify(redoStack))
     };
-    saveUndoRedoStack();
+
+    undoRedoQueue = undoRedoQueue.then(async () => {
+        try {
+            saveUndoRedoStack(undoRedoStackDTO);
+        } catch (e) {
+            console.error('DB 저장 실패:', e);
+        }
+    })
 }
 
 // undo, redo 메시지 전송
@@ -1211,8 +1260,14 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             safeSend('/app/pushToUndoStack', pushMsg);
 
-            // 서버/메시지 전송은 비동기 큐에 넣기
-            const actionCopy = JSON.parse(JSON.stringify(currentAction)); // 직렬화용 복사
+            const actionCopy = JSON.parse(JSON.stringify(currentAction));
+
+            const undoRedoStackDTO = {
+                roomId: roomId,
+                undoStack: JSON.parse(JSON.stringify(undoStack)),
+                redoStack: JSON.parse(JSON.stringify(redoStack))
+            };
+
             undoRedoQueue = undoRedoQueue.then(async () => {
                 // DB 저장
                 await saveCanvasActionToDB(actionCopy.type, actionCopy.targets.map(t => ({
@@ -1224,14 +1279,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 })));
 
                 // undo/redo 스택 DB 저장
-                const undoRedoStackDTO = {
-                    roomId: roomId,
-                    undoStack: JSON.parse(JSON.stringify(undoStack)),
-                    redoStack: JSON.parse(JSON.stringify(redoStack))
-                };
-
                 await saveUndoRedoStack(undoRedoStackDTO);
-
             }).catch(console.error);
 
             // currentAction 리셋 & 메시지 전송

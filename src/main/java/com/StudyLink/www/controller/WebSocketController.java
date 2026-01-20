@@ -237,9 +237,7 @@ public class WebSocketController {
                     drawDataList.add(drawData);
                 }
                 drawDataService.erase(drawDataList);
-
             }
-
             return ResponseEntity.ok("1");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");

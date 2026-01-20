@@ -45,7 +45,6 @@ public class DrawDataServiceImpl implements DrawDataService {
         drawDataList.forEach(data -> {
             if (data.getUuid() != null) {
                 drawDataRepository.deleteByRoomIdAndUuid(data.getRoomId(), data.getUuid());
-                log.info("🗑 erase UUID 삭제: {}", data.getUuid());
             }
         });
     }
@@ -53,6 +52,7 @@ public class DrawDataServiceImpl implements DrawDataService {
     @Override
     public void removeRoom(long roomId) {
         drawDataRepository.deleteByRoomId(roomId);
+        undoRedoStackRepository.deleteByRoomId(roomId);
     }
 
     @Override

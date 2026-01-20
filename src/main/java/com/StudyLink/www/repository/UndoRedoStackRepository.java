@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface UndoRedoStackRepository extends MongoRepository<UndoRedoStack, String> {
 
     Optional<UndoRedoStack> findByRoomId(long roomId);
+
+    void deleteByRoomId(long roomId);
 }
