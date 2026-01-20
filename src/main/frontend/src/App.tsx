@@ -3,8 +3,23 @@ import MentorSection from "./components/MentorSection";
 import AdSection from "./components/AdSection";
 import CommunitySection from "./components/CommunitySection";
 import QuickActionGrid from "./components/QuickActionGrid";
+import AdmissionEssayPage from "./pages/AdmissionEssayPage";
 
 function App() {
+  const isCoverLetter =
+    window.location.pathname === "/cover-letter" ||
+    window.location.pathname === "/cover_letter";
+
+  // AI 자소서 페이지일 경우 전체 화면 렌더링
+  if (isCoverLetter) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-[#030014] relative z-[9999]">
+        <AdmissionEssayPage />
+      </div>
+    );
+  }
+
+  // 메인 페이지 렌더링
   return (
     <div className="min-h-screen w-full bg-slate-50 dark:bg-[#030014] transition-colors duration-300 overflow-x-hidden">
       <main className="relative">

@@ -46,7 +46,10 @@ public class DashboardRestController {
      */
     @GetMapping("/status")
     public ResponseEntity<DashboardDTO.StatusResponse> getStatus(Authentication authentication) {
-        Users user = getCurrentUser(authentication);
+        Optional<Users> userOpt = getCurrentUser(authentication);
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+        
+        Users user = userOpt.get();
         List<StudentScoreDTO> scores = studentScoreService.getScoresByUserId(user.getUserId());
         
         return ResponseEntity.ok(DashboardDTO.StatusResponse.builder()
@@ -59,14 +62,21 @@ public class DashboardRestController {
      */
     @GetMapping("/data")
     public ResponseEntity<Map<String, Object>> getDashboardData(Authentication authentication) {
-        Users user = getCurrentUser(authentication);
+        Optional<Users> userOpt = getCurrentUser(authentication);
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+        
+        Users user = userOpt.get();
         List<StudentScoreDTO> scores = studentScoreService.getScoresByUserId(user.getUserId());
         Optional<StudentProfile> profile = studentProfileService.getStudentProfile(user.getUserId());
 
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("nickname", user.getNickname() != null ? user.getNickname() : "사용자");
+        userData.put("name", user.getName() != null ? user.getName() : "이름없음");
+        
         Map<String, Object> response = new HashMap<>();
         response.put("scores", scores);
         response.put("profile", profile.orElse(null));
-        response.put("user", Map.of("nickname", user.getNickname(), "name", user.getName()));
+        response.put("user", userData);
         
         log.info("[DashboardData] User: {}, Score Count: {}", user.getEmail(), scores.size());
         return ResponseEntity.ok(response);
@@ -80,7 +90,10 @@ public class DashboardRestController {
             Authentication authentication, 
             @RequestBody List<StudentScoreDTO> scores) {
         
-        Users user = getCurrentUser(authentication);
+        Optional<Users> userOpt = getCurrentUser(authentication);
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+        
+        Users user = userOpt.get();
         log.info("[ScoreSaveRequest] User: {}, Incoming Count: {}", user.getEmail(), scores != null ? scores.size() : 0);
         
         int savedCount = studentScoreService.saveScores(user.getUserId(), scores);
@@ -105,7 +118,10 @@ public class DashboardRestController {
             Authentication authentication,
             @RequestBody Map<String, Object> payload) {
         
-        Users user = getCurrentUser(authentication);
+        Optional<Users> userOpt = getCurrentUser(authentication);
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+        
+        Users user = userOpt.get();
         String title = (String) payload.get("title");
         List<Map<String, Object>> scoreMaps = (List<Map<String, Object>>) payload.get("scores");
         
@@ -134,7 +150,10 @@ public class DashboardRestController {
      */
     @GetMapping("/records")
     public ResponseEntity<List<java.util.Map<String, Object>>> getScoreRecords(Authentication authentication) {
-        Users user = getCurrentUser(authentication);
+        Optional<Users> userOpt = getCurrentUser(authentication);
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+        
+        Users user = userOpt.get();
         return ResponseEntity.ok(studentScoreService.getScoreRecords(user.getUserId()));
     }
 
@@ -145,6 +164,10 @@ public class DashboardRestController {
     public ResponseEntity<List<StudentScoreDTO>> loadRecord(
             Authentication authentication,
             @PathVariable("id") Long recordId) {
+        
+        Optional<Users> userOpt = getCurrentUser(authentication);
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+        
         // 보안상 본인 루틴 체크 필요할 수 있으나 생략 (UserId 기반 필터링은 Service에서 수행 권장)
         return ResponseEntity.ok(studentScoreService.getRecordDetails(recordId));
     }
@@ -171,7 +194,10 @@ public class DashboardRestController {
      */
     @GetMapping("/analysis")
     public ResponseEntity<DashboardDTO.AnalysisResponse> getAnalysis(Authentication authentication) {
-        Users user = getCurrentUser(authentication);
+        Optional<Users> userOpt = getCurrentUser(authentication);
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+        
+        Users user = userOpt.get();
         List<StudentScoreDTO> scores = studentScoreService.getScoresByUserId(user.getUserId());
         Optional<StudentProfile> profile = studentProfileService.getStudentProfile(user.getUserId());
 
@@ -205,7 +231,10 @@ public class DashboardRestController {
      */
     @GetMapping("/analysis/trend")
     public ResponseEntity<DashboardDTO.TrendAnalysisResponse> getTrendAnalysis(Authentication authentication) {
-        Users user = getCurrentUser(authentication);
+        Optional<Users> userOpt = getCurrentUser(authentication);
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+        
+        Users user = userOpt.get();
         List<DashboardDTO.TrendItem> trends = studentScoreService.getAllTrendData(user.getUserId());
 
         if (trends == null || trends.isEmpty()) {
@@ -232,22 +261,21 @@ public class DashboardRestController {
         }
     }
 
-    private Users getCurrentUser(Authentication authentication) {
+    private Optional<Users> getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
-            log.error("인증 정보가 없거나 유효하지 않습니다.");
-            throw new RuntimeException("로그인이 필요한 서비스입니다.");
+            log.warn("인증 정보가 없거나 유효하지 않습니다.");
+            return Optional.empty();
         }
 
         String rawId = authentication.getName();
         
-        // OAuth2 로그인 대응: 이메일 추출 시도
         if (authentication instanceof org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken token) {
             Map<String, Object> attributes = token.getPrincipal().getAttributes();
             if (attributes.containsKey("email")) {
                 rawId = (String) attributes.get("email");
-            } else if (attributes.get("response") instanceof Map<?, ?> responseMap) { // Naver 대응
+            } else if (attributes.get("response") instanceof Map<?, ?> responseMap) {
                 if (responseMap.containsKey("email")) rawId = (String) responseMap.get("email");
-            } else if (attributes.get("kakao_account") instanceof Map<?, ?> kakaoMap) { // Kakao 대응
+            } else if (attributes.get("kakao_account") instanceof Map<?, ?> kakaoMap) {
                 if (kakaoMap.containsKey("email")) rawId = (String) kakaoMap.get("email");
             }
         }
@@ -257,10 +285,11 @@ public class DashboardRestController {
         
         Optional<Users> userOpt = authService.getUserByEmail(finalIdentifier);
         if (userOpt.isPresent()) {
-            return userOpt.get();
+            log.info("✅ 이메일로 사용자 조회 성공: {}", finalIdentifier);
+            return userOpt;
         }
         
-        return userRepository.findByUsername(finalIdentifier)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + finalIdentifier));
+        log.warn("⚠️ 이메일 조회 실패, Username으로 재시도: {}", finalIdentifier);
+        return userRepository.findByUsername(finalIdentifier);
     }
 }

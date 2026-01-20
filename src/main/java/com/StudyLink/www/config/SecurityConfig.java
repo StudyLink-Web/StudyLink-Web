@@ -75,7 +75,8 @@ public class SecurityConfig {
                                 "/chatbot/**",            // 챗봇 관련 요청 허용
                                 "/api/chatbot/archive/**", // 추가: 챗봇 아카이브 API CSRF 제외
                                 "/room/**",               // 방 관련 요청 허용
-                                "/map/**"                 // 추가: 지도 관련 요청 CSRF 제외
+                                "/map/**",                // 추가: 지도 관련 요청 CSRF 제외
+                                "/api/cover-letter/**"    // ✅ 추가: 자소서 API CSRF 제외
                         )
                 )
 
@@ -100,6 +101,8 @@ public class SecurityConfig {
                                 // ✅ 홈페이지는 누구나 접근 가능
                                 "/",
                                 "/index",
+                                "/cover-letter",
+                                "/cover_letter",
 
                                 // ✅ 로그인 관련
                                 "/login",

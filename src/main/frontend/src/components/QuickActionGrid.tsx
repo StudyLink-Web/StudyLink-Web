@@ -6,10 +6,29 @@ import {
   MapPin,
   Users,
   ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import type { FC } from "react";
 
 const actions = [
+  {
+    title: "AI 대입 상담",
+    description: "스마트 입시 컨설팅",
+    icon: Bot,
+    href: "/chatbot",
+    color: "bg-green-600",
+    lightColor: "text-green-600 dark:text-green-400",
+    bgColor: "bg-green-50 dark:bg-green-500/10",
+  },
+  {
+    title: "AI 대입 자소서",
+    description: "나만의 활동으로 만드는 합격 초안",
+    icon: Sparkles,
+    href: "/cover-letter",
+    color: "bg-purple-600",
+    lightColor: "text-purple-600 dark:text-purple-400",
+    bgColor: "bg-purple-50 dark:bg-purple-500/10",
+  },
   {
     title: "문제 리스트",
     description: "SKY 멘토들의 실시간 풀이",
@@ -29,13 +48,13 @@ const actions = [
     bgColor: "bg-blue-50 dark:bg-blue-500/10",
   },
   {
-    title: "AI 대입 상담",
-    description: "스마트 입시 컨설팅",
-    icon: Bot,
-    href: "/chatbot",
-    color: "bg-green-600",
-    lightColor: "text-green-600 dark:text-green-400",
-    bgColor: "bg-green-50 dark:bg-green-500/10",
+    title: "입시지도",
+    description: "내 주변 입시 정보 탐색",
+    icon: MapPin,
+    href: "/map",
+    color: "bg-cyan-500",
+    lightColor: "text-cyan-600 dark:text-cyan-400",
+    bgColor: "bg-cyan-50 dark:bg-cyan-500/10",
   },
   {
     title: "대학생활 게시판",
@@ -45,15 +64,6 @@ const actions = [
     color: "bg-green-600",
     lightColor: "text-green-600 dark:text-green-400",
     bgColor: "bg-green-50 dark:bg-green-500/10",
-  },
-  {
-    title: "입시지도",
-    description: "내 주변 입시 정보 탐색",
-    icon: MapPin,
-    href: "/map",
-    color: "bg-cyan-500",
-    lightColor: "text-cyan-600 dark:text-cyan-400",
-    bgColor: "bg-cyan-50 dark:bg-cyan-500/10",
   },
   {
     title: "취준생 커뮤니티",
@@ -70,7 +80,7 @@ const QuickActionGrid: FC = () => {
   return (
     <section className="py-20 relative overflow-hidden bg-white dark:bg-[#030014] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {actions.map((action, index) => (
             <a
               key={index}
@@ -88,7 +98,9 @@ const QuickActionGrid: FC = () => {
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+              <h3
+                className={`text-xl font-bold ${action.lightColor} group-hover:text-slate-900 dark:group-hover:text-white transition-colors duration-300 mb-2`}
+              >
                 {action.title}
               </h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
