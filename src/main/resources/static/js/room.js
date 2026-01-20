@@ -8,8 +8,8 @@ if (message != null) {
 let socket;
 let lastPong = Date.now();
 let heartbeatInterval;
-const HEARTBEAT_INTERVAL = 1000; // 1초마다 ping
-const TIMEOUT = 3000; // 3초 동안 응답 없으면 끊김으로 판단
+const HEARTBEAT_INTERVAL = 2000; // 2초마다 ping
+const TIMEOUT = 6000; // 3초 동안 응답 없으면 끊김으로 판단
 
 function startHeartbeat() {
     lastPong = Date.now();
@@ -94,6 +94,26 @@ function connect() {
 
 
         // 캔버스
+        // 동기화
+        // 전역변수 초기화
+        stompClient.subscribe('/topic/sync/' + roomId, msg => {
+            const message = JSON.parse(msg.body);
+            if (message.type === 'START') {
+                showLoading();
+                resetCanvasStateForSync();
+                disableCanvas();
+            }
+            if (message.type === 'DATA') {
+                loadCanvas(message.payload.drawData);
+                loadUndoRedo(message.payload.stack);
+                scheduleRender();
+            }
+            if (message.type === 'END') {
+                hideLoading();
+                enableCanvas();
+            }
+        });
+
         // 그리기
         stompClient.subscribe('/topic/draw', function(message){
             const msg = JSON.parse(message.body);
@@ -186,15 +206,12 @@ function connect() {
                     });
                 }
             }
-            safeSend("/app/enterRoom", {roomId: roomId, senderId: senderId})
+            safeSend("/app/enterRoom", {roomId: roomId})
         }).catch(error => {
             console.error("❌ 메시지 로드 실패:", error);
         });
-        readDrawData();
-        loadUndoRedoStack();
-        scheduleRender();
 
-        startHeartbeat();
+        startHeartbeat(); // 서버 연결 탐지
     });
 }
 
@@ -504,7 +521,7 @@ let isTransform = false;
 // undo, redo와 관련된 메시지는 처리 순서가 중요
 // 항상 번호 순서대로 처리하기 위한 변수
 let lastSeq = 0; // 마지막 처리된 메시지 seq
-const pendingQueue = {}; // seq -> message
+let pendingQueue = {}; // seq -> message
 let mySeq = 1; // 내가 보낸 메시지 번호
 
 // undo, redo
@@ -514,6 +531,7 @@ let currentAction = null; // 현재 드래그 중인 액션
 
 // DB 작업 순차 실행용 큐
 let undoRedoQueue = Promise.resolve();
+
 
 // 툴 선택
 document.getElementById('btnradio1').addEventListener('click', () => selectTool('draw'));
@@ -529,6 +547,25 @@ document.getElementById('btnradio3').addEventListener('click', (e) => {
 
 document.getElementById('btnradio4').addEventListener('click', () => safeUndoRedo('undo'));
 document.getElementById('btnradio5').addEventListener('click', () => safeUndoRedo('redo'));
+
+// 초기화 함수
+function resetCanvasStateForSync() {
+    // 1. 캔버스 초기화
+    canvas.getObjects().forEach(obj => canvas.remove(obj));
+
+    // 2. undo/redo 초기화
+    undoStack = [];
+    redoStack = [];
+    currentAction = null;
+
+    // 3. 메시지 순서 관련 초기화
+    lastSeq = 0;
+    pendingQueue = {};
+    mySeq = 1;
+
+    // 4. DB 큐 초기화
+    undoRedoQueue = Promise.resolve();
+}
 
 function safeUndoRedo(actionType) {
     if (actionType === 'undo') {
@@ -1097,44 +1134,26 @@ function sendUndoRedoMessage(type){
     safeSend('/app/undoRedo', message)
 }
 
+// draw_data
+function loadCanvas(drawDataList) {
+    if (!drawDataList || !Array.isArray(drawDataList)) return;
 
-async function readDrawData(){
-    try {
-        console.log("캔버스 불러오기 시작");
-        const response = await fetch(`/room/readDrawData?roomId=${roomId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+    // 기존 캔버스 초기화
+    canvas.getObjects('line').forEach(line => canvas.remove(line));
+
+    // 받아온 데이터로 캔버스에 선 그리기
+    drawDataList.forEach(data => {
+        const line = new fabric.Line([data.x1, data.y1, data.x2, data.y2], {
+            uuid: data.uuid,
+            stroke: '#000',
+            strokeWidth: 2,
+            selectable: false,
+            evented: false,
+            strokeLineCap: 'round',
+            strokeLineJoin: 'round'
         });
-
-        if (!response.ok) {
-            const err = await response.text();
-            alert('불러오기 실패: ' + err);
-            return;
-        }
-
-        const drawDataList = await response.json();
-
-        // 기존 캔버스 초기화 (선만 지우고 싶다면 line만 삭제)
-        canvas.getObjects('line').forEach(line => canvas.remove(line));
-
-        // 받아온 데이터로 캔버스에 선 그리기
-        drawDataList.forEach(data => {
-            const line = new fabric.Line([data.x1, data.y1, data.x2, data.y2], {
-                uuid: data.uuid,
-                stroke: '#000',
-                strokeWidth: 2,
-                selectable: false,
-                evented: false,
-                strokeLineCap: 'round',
-                strokeLineJoin: 'round'
-            });
-            canvas.add(line);
-        });
-    } catch (e) {
-        alert('서버 연결 실패: ' + e.message);
-    }
+        canvas.add(line);
+    });
 }
 
 async function saveUndoRedoStack(undoRedoStackDTO) {
@@ -1152,25 +1171,14 @@ async function saveUndoRedoStack(undoRedoStackDTO) {
     }
 }
 
-async function loadUndoRedoStack() {
-    try {
-        const response = await fetch(`/room/loadUndoRedoStack?roomId=${roomId}`, {
-            method: 'GET'
-        });
+// redo_undo_stack
+function loadUndoRedo(stack) {
+    if (!stack) return;
 
-        if (!response.ok) {
-            console.error('stack DB 저장 실패');
-            return;
-        }
-        result = await response.json();
-
-        undoStack = result.undoStack;
-        redoStack = result.redoStack;
-
-    } catch (e) {
-        console.error('서버 연결 실패:', e);
-    }
+    undoStack = Array.isArray(stack.undoStack) ? stack.undoStack.slice() : [];
+    redoStack = Array.isArray(stack.redoStack) ? stack.redoStack.slice() : [];
 }
+
 
 // 라디오 클릭 방지 + UI 동기화
 document.querySelectorAll('input[name="btnradio"]').forEach(radio => {
@@ -1206,6 +1214,71 @@ function updateToolUI() {
     });
 }
 
+/**
+ * 로딩 화면 표시
+ */
+function showLoading() {
+    let loader = document.getElementById('loading-overlay');
+    if (!loader) {
+        loader = document.createElement('div');
+        loader.id = 'loading-overlay';
+
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        loader.appendChild(spinner);
+
+        document.body.appendChild(loader);
+    }
+
+    loader.style.display = 'flex';
+}
+
+/**
+ * 로딩 화면 숨기기
+ */
+function hideLoading() {
+    const loader = document.getElementById('loading-overlay');
+    if (loader) loader.style.display = 'none';
+}
+
+/**
+ * 캔버스와 메시지 입력 영역 비활성화
+ */
+function disableCanvas() {
+    // 캔버스 상호작용 차단
+    if (canvas && canvas.upperCanvasEl) {
+        canvas.upperCanvasEl.style.pointerEvents = 'none';
+    }
+
+    // 메시지 입력 영역
+    const messageTextarea = document.querySelector('textarea[name="message"]');
+    const fileInput = document.getElementById('file');
+    const sendFileBtn = document.getElementById('sendFileBtn');
+
+    if (messageTextarea) messageTextarea.disabled = true;
+    if (fileInput) fileInput.disabled = true;
+    if (sendFileBtn) sendFileBtn.disabled = true;
+}
+
+
+/**
+ * 캔버스와 메시지 입력 영역 활성화
+ */
+function enableCanvas() {
+    // 캔버스 상호작용 허용
+    if (canvas && canvas.upperCanvasEl) {
+        canvas.upperCanvasEl.style.pointerEvents = 'auto';
+    }
+
+    // 메시지 입력 영역
+    const messageTextarea = document.querySelector('textarea[name="message"]');
+    const fileInput = document.getElementById('file');
+    const sendFileBtn = document.getElementById('sendFileBtn');
+
+    if (messageTextarea) messageTextarea.disabled = false;
+    if (fileInput) fileInput.disabled = false;
+    if (sendFileBtn) sendFileBtn.disabled = false;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     // 접근 권한 체크. 권한이 있는 사용자만 캔버스, 메시지 이용가능
@@ -1215,20 +1288,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 캔버스 활성/비활성
     if (canUseCanvasAndMessage) {
-        canvas.upperCanvasEl.style.pointerEvents = 'auto';
+        enableCanvas();
     } else {
-        canvas.upperCanvasEl.style.pointerEvents = 'none';
+        disableCanvas();
     }
-
-    // 메시지 입력 영역
-    const messageTextarea = document.querySelector('textarea[name="message"]');
-    const fileInput = document.getElementById('file');
-    const sendFileBtn = document.getElementById('sendFileBtn');
-
-    messageTextarea.disabled = !canUseCanvasAndMessage;
-    fileInput.disabled = !canUseCanvasAndMessage;
-    sendFileBtn.disabled = !canUseCanvasAndMessage;
-
 
 
     // canvas 이벤트 바인딩
