@@ -28,7 +28,5 @@ public interface RoomService {
 
     void deleteRoom(long roomId);
 
-    void deleteMentorMessage(long roomId, long mentorId);
-
     Page<RoomDTO> getMyQuizList(long userId, Pageable pageable);
 }
