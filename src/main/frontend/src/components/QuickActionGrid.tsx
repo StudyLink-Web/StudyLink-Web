@@ -30,7 +30,7 @@ const actions = [
   },
   {
     title: "AI 대입 상담",
-    description: "24/7 스마트 입시 컨설팅",
+    description: "스마트 입시 컨설팅",
     icon: Bot,
     href: "/chatbot",
     color: "bg-green-600",
