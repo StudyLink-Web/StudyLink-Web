@@ -69,4 +69,18 @@ public class HomeController {
         }
         return "modern_index";
     }
+
+    /**
+     * AI 대입 자소서 페이지 (리액트 라우팅 대응)
+     */
+    @GetMapping({"/cover-letter", "/cover_letter"})
+    public String coverLetter(Authentication authentication, Model model) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            model.addAttribute("user", authentication.getPrincipal());
+            model.addAttribute("isAuthenticated", true);
+        } else {
+            model.addAttribute("isAuthenticated", false);
+        }
+        return "modern_index";
+    }
 }
