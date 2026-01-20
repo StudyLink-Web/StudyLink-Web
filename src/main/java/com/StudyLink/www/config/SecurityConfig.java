@@ -1,11 +1,10 @@
 package com.StudyLink.www.config;
 
-import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.UserRepository;
 import com.StudyLink.www.service.CustomOAuth2UserService;
+import com.StudyLink.www.service.CustomOidcUserService;
 import com.StudyLink.www.service.CustomUserDetailsService;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,33 +17,21 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.core.context.SecurityContextHolder;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 @Configuration
 @EnableWebSecurity
-// @RequiredArgsConstructor
-
-// 클래스 정의에 추가
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @Slf4j
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
-
-    @Autowired
-    private CustomOAuth2UserService customOAuth2UserService;  // ✅ 새 서비스 주입
-
-    @Autowired
-    private UserRepository userRepository;  // ⭐ 추가!
-
-    @Autowired
-    private ObjectProvider<PasswordEncoder> passwordEncoderProvider;  // ⭐ 추가!
+    private final CustomUserDetailsService userDetailsService;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOidcUserService customOidcUserService; // ✅ 추가
+    private final UserRepository userRepository;
+    private final ObjectProvider<PasswordEncoder> passwordEncoderProvider;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -83,6 +70,11 @@ public class SecurityConfig {
 
                 // 권한 설정
                 .authorizeHttpRequests(authz -> authz
+                        // 멘토 프로필 추가
+                        .requestMatchers("/mentor/edit-profile").permitAll()
+                        .requestMatchers("/mentor/**").permitAll()
+                        .requestMatchers("/api/mentor-profiles/**").permitAll()
+
                         .requestMatchers("/**")
                         .access((auth, context) -> {
                             String ip = context.getRequest().getRemoteAddr();
@@ -153,16 +145,21 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // ⭐ 학교 이메일 인증 페이지는 로그인 필수
-                        .requestMatchers("/auth/student-verification", "/auth/student-verification/check-email", "/auth/student-verification/request-verification", "/auth/student-verification/status", "/auth/student-verification/reset-token").authenticated()
+                        .requestMatchers(
+                                "/auth/student-verification",
+                                "/auth/student-verification/check-email",
+                                "/auth/student-verification/request-verification",
+                                "/auth/student-verification/status",
+                                "/auth/student-verification/reset-token"
+                        ).authenticated()
 
-                                // 마이페이지는 인증된 사용자만 접근
-                                .requestMatchers("/my-page", "/my-page/**").authenticated()
+                        // 마이페이지는 인증된 사용자만 접근
+                        .requestMatchers("/my-page", "/my-page/**").authenticated()
 
-                                // 마이페이지 API는 인증된 사용자만 접근
-                                .requestMatchers("/api/profile/**", "/api/account/**", "/api/settings/**").authenticated()
+                        // 마이페이지 API는 인증된 사용자만 접근
+                        .requestMatchers("/api/profile/**", "/api/account/**", "/api/settings/**").authenticated()
 
-                                .anyRequest().authenticated()
-
+                        .anyRequest().authenticated()
                 )
 
                 // ✅ 권한(403) 처리: /error 로 보내서 CustomErrorController가 403.html로 분기
@@ -176,7 +173,7 @@ public class SecurityConfig {
                         .loginProcessingUrl("/api/auth/login")
                         .usernameParameter("email")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/", true)  // ← true로 변경 (or 커스텀 핸들러 사용)
+                        .defaultSuccessUrl("/", true)
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )
@@ -185,49 +182,13 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
+                                .userService(customOAuth2UserService)      // 카카오 / 네이버
+                                .oidcUserService(customOidcUserService)    // ✅ 구글 OIDC
                         )
-                        .successHandler((request, response, authentication) -> {
-                            try {
-                                log.info("════════════════════════════════════════════════════════════");
-                                log.info("✅ OAuth2 로그인 성공!");
-                                log.info("🔍 authentication.getName(): {}", authentication.getName());
-
-                                // ⭐ Google OIDC 사용자 정보 추출
-                                var principal = authentication.getPrincipal();
-                                Map<String, Object> attributes = null;
-
-                                if (principal instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser) {
-                                    org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser =
-                                            (org.springframework.security.oauth2.core.oidc.user.OidcUser) principal;
-                                    attributes = new HashMap<>(oidcUser.getAttributes());
-                                    log.info("🔐 OIDC 사용자 감지 - Google 처리");
-
-                                    String sub = oidcUser.getSubject();
-                                    String email = (String) attributes.getOrDefault("email", "");
-                                    String name = (String) attributes.getOrDefault("name", "구글사용자");
-                                    String picture = (String) attributes.getOrDefault("picture", "");
-
-                                    if (email == null || email.isEmpty()) {
-                                        email = "google_" + sub + "@google.com";
-                                    }
-
-                                    String fixedUsername = "google_" + sub;
-                                    String fixedNickname = "Google_" + sub;
-
-                                    log.info("✅ Google OIDC 사용자: name={}, email={}", name, email);
-                                    saveGoogleUser(fixedUsername, email, picture, name, fixedNickname);
-                                }
-
-                                SecurityContextHolder.getContext().setAuthentication(authentication);
-                                response.sendRedirect("/");
-                            } catch (Exception e) {
-                                log.error("❌ OAuth2 successHandler 오류: {}", e.getMessage(), e);
-                                response.sendRedirect("/login?error=true");
-                            }
-                        })
+                        .defaultSuccessUrl("/", true)
                         .failureUrl("/login?error=true")
                 )
+
                 // Logout 설정
                 .logout(logout -> logout
                         .logoutUrl("/logout")
@@ -247,58 +208,6 @@ public class SecurityConfig {
                 );
 
         return http.build();
-    }
-
-    private void saveGoogleUser(String username, String email, String picture, String name, String nickname) {
-        try {
-            log.info("🔐 Google 사용자 저장 시작: {}", username);
-
-            // email이 null이면 생성
-            if (email == null || email.isEmpty()) {
-                email = username + "@oauth.com";
-                log.warn("⚠️ email이 null - 임시 email 생성: {}", email);
-            }
-
-            Optional<Users> existingUser = userRepository.findByUsername(username);
-
-            Users user;
-            if (existingUser.isPresent()) {
-                user = existingUser.get();
-                user.setName(name);
-                user.setNickname(nickname);
-                user.setProfileImageUrl(picture);
-                user.setOauthProvider("google");
-                user.setOauthId(username);
-                user.setEmail(email);
-                log.info("🔄 기존 Google 사용자 업데이트");
-            } else {
-                PasswordEncoder encoder = passwordEncoderProvider.getIfAvailable();
-                String encodedPassword = (encoder != null)
-                        ? encoder.encode("oauth_google_" + System.currentTimeMillis())
-                        : "oauth_google_" + System.currentTimeMillis();
-
-                user = Users.builder()
-                        .username(username)
-                        .nickname(nickname)
-                        .email(email)
-                        .name(name)
-                        .profileImageUrl(picture)
-                        .oauthProvider("google")
-                        .oauthId(username)
-                        .password(encodedPassword)
-                        .role("STUDENT")
-                        .isActive(true)
-                        .build();
-
-                log.info("✅ 신규 Google 사용자 생성");
-            }
-
-            Users savedUser = userRepository.save(user);
-            log.info("💾 Google 사용자 저장 완료: user_id={}, email={}", savedUser.getUserId(), email);
-
-        } catch (Exception e) {
-            log.error("❌ Google 사용자 저장 실패: {}", e.getMessage());
-        }
     }
 
 }

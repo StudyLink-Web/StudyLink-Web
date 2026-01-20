@@ -67,20 +67,47 @@
 						</span>
 						-->
 
+						<!-- 이름 (소셜 로그인 패치 완료) -->
+						<!--
 						👤 <span th:text="${
 							   #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
 								 ? #authentication.principal.attributes['name']
 								 : #authentication.name
 							}">
 							</span>
+						-->
+
+						<!-- 이름 + ROLE -->
+						<!--
+						👤 <span th:text="${
+						   #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
+							? #authentication.principal.attributes['name'] + ' [' + #authentication.principal.attributes.get('role') + ']'
+							: #authentication.name + ' [' + #authentication.principal.authorities[0].authority.substring(5) + ']'
+						}">
+						</span>
+						-->
+
+						<!-- 사용자 정보 표시
+						<span th:text="|${userName} [${userRole}]|"></span>
+
+						<p th:text="'DEBUG userName = ' + ${userName}"></p>
+						<p th:text="'DEBUG userRole = ' + ${userRole}"></p>
+						-->
 
 
+						<span th:if="${userName != null}"
+							  th:text="|${userName} [${userRole}]|"></span>
+
+						<span th:if="${userName == null}">
+							Guest [GUEST]
+						</span>
 
 					</a>
 
 					<ul class="dropdown-menu dropdown-menu-right">
-						<li><a class="dropdown-item" href="/my-page"> 환경설정(마이페이지) </a></li>
+						<li><a class="dropdown-item" href="/mentor/edit-profile">멘토 프로필</a></li>
 						<li><a class="dropdown-item" href="/auth/student-verification">멘토 인증</a></li>
+						<li><a class="dropdown-item" href="/my-page"> 환경설정 </a></li>
 						<li><hr class="dropdown-divider"></li>
 						<li>
 							<form method="post" th:action="@{/logout}" style="display: inline; width: 100%;">

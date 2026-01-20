@@ -34,7 +34,7 @@ public class LoginController {
     private AuthService authService;
 
     @Autowired
-    private UserRepository userRepository;  // ⭐ 추가
+    private UserRepository userRepository;
 
     /**
      * 로그인 페이지 표시

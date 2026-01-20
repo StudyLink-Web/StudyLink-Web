@@ -124,7 +124,7 @@ function loadInitialData() {
     console.log('📂 초기 데이터 로드');
 
     // 첫 번째 탭 활성화
-    switchTab('profile');
+    switchTab('account');
 }
 
 

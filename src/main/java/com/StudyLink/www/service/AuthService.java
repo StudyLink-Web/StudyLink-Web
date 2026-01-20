@@ -1,5 +1,6 @@
 package com.StudyLink.www.service;
 
+import com.StudyLink.www.entity.Role;
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -56,9 +57,12 @@ public class AuthService {
         // 4. 비밀번호 해싱
         String encodedPassword = passwordEncoder.encode(password);
 
-        // 5. 자동 학생 설정
-        if (role == null || role.isEmpty()) {
-            role = "STUDENT";
+        // 5. 역할 설정 (기본값: STUDENT)
+        Role userRole = Role.STUDENT;
+        if (role != null && !role.isEmpty()) {
+            userRole = Role.fromString(role);  // String을 Enum으로 변환
+            log.info("✅ 역할 설정: {}", userRole);
+        } else {
             log.info("✅ 역할 자동 설정: STUDENT");
         }
 
@@ -69,7 +73,7 @@ public class AuthService {
                 .name(name)
                 .nickname(nickname)
                 .username(nickname)  // ✅ username을 nickname과 동일하게 설정
-                .role(role)
+                .role(userRole)  // Enum으로 설정
                 .emailVerified(false)  // ✅ 이메일 미인증 상태로 시작
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -91,7 +95,7 @@ public class AuthService {
      */
     @Transactional(readOnly = true)
     public Users login(String email, String password) {
-        // ⭐ 추가: ObjectProvider에서 PasswordEncoder 가져오기
+        // ObjectProvider에서 PasswordEncoder 가져오기
         PasswordEncoder passwordEncoder = passwordEncoderProvider.getIfAvailable();
         if (passwordEncoder == null) {
             log.error("❌ PasswordEncoder를 찾을 수 없습니다");
@@ -108,14 +112,14 @@ public class AuthService {
 
         Users user = optionalUser.get();
 
-        // ⭐ 추가: OAuth 사용자는 비밀번호 검증 스킵
+        // OAuth 사용자는 비밀번호 검증 스킵
         if (user.getOauthProvider() != null && !user.getOauthProvider().isEmpty()) {
             log.info("✅ OAuth 사용자 로그인: {} ({})", email, user.getOauthProvider());
             return user;
         }
 
         // 2. 비밀번호 검증 (BCrypt로 암호화된 비밀번호와 비교)
-        // ⭐ 수정: OAuth가 아닌 일반 사용자만 비밀번호 검증
+        // OAuth가 아닌 일반 사용자만 비밀번호 검증
         if (!passwordEncoder.matches(password, user.getPassword())) {
             log.warn("❌ 로그인 실패: 비밀번호 불일치 - {}", email);
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
@@ -201,7 +205,7 @@ public class AuthService {
      */
     @Transactional
     public void changePassword(Long userId, String currentPassword, String newPassword) {
-        // ⭐ 추가: ObjectProvider에서 PasswordEncoder 가져오기
+        // ObjectProvider에서 PasswordEncoder 가져오기
         PasswordEncoder passwordEncoder = passwordEncoderProvider.getIfAvailable();
         if (passwordEncoder == null) {
             log.error("❌ PasswordEncoder를 찾을 수 없습니다");
@@ -236,7 +240,7 @@ public class AuthService {
      */
     @Transactional
     public void deleteUser(Long userId, String password) {
-        // ⭐ 추가: ObjectProvider에서 PasswordEncoder 가져오기
+        // ObjectProvider에서 PasswordEncoder 가져오기
         PasswordEncoder passwordEncoder = passwordEncoderProvider.getIfAvailable();
         if (passwordEncoder == null) {
             log.error("❌ PasswordEncoder를 찾을 수 없습니다");
@@ -287,6 +291,13 @@ public class AuthService {
             throw new IllegalArgumentException("역할을 선택하세요.");
         }
         if (!role.equals("STUDENT") && !role.equals("MENTOR")) {
+            throw new IllegalArgumentException("역할은 STUDENT 또는 MENTOR이어야 합니다.");
+        }
+
+        // Enum 검증 추가
+        try {
+            Role.fromString(role);  // 유효한 Role인지 확인
+        } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("역할은 STUDENT 또는 MENTOR이어야 합니다.");
         }
     }
