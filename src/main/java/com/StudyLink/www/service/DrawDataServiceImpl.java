@@ -34,7 +34,6 @@ public class DrawDataServiceImpl implements DrawDataService {
 
         // draw 액션은 새로운 선들을 DB에 저장
         drawDataRepository.saveAll(drawDataList);
-        log.info("✅ draw 저장: {}개", drawDataList.size());
     }
 
     @Override
@@ -67,8 +66,6 @@ public class DrawDataServiceImpl implements DrawDataService {
         // undoStack, redoStack 덮어쓰기
         stack.setUndoStack(new UndoRedoStack(undoRedoStackDTO).getUndoStack());
         stack.setRedoStack(new UndoRedoStack(undoRedoStackDTO).getRedoStack());
-        log.info(">>> undoStack {}", stack.getUndoStack());
-        log.info(">>> redoStack {}", stack.getRedoStack());
         // 저장
         undoRedoStackRepository.save(stack);
     }

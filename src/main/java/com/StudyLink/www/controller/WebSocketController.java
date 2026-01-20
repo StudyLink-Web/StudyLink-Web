@@ -4,6 +4,7 @@ import com.StudyLink.www.dto.*;
 import com.StudyLink.www.entity.DrawData;
 import com.StudyLink.www.entity.UndoRedoStack;
 import com.StudyLink.www.service.DrawDataService;
+import com.StudyLink.www.sync.RoomSyncManager;
 import com.StudyLink.www.webSocketMessage.*;
 import com.StudyLink.www.handler.RoomFileHandler;
 import com.StudyLink.www.service.MessageService;
@@ -18,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,7 +38,9 @@ public class WebSocketController {
     private final MessageService messageService;
     private final RoomFileService roomFileService;
     private final RoomFileHandler roomFileHandler;
+    private final SimpMessagingTemplate messagingTemplate;
     private final DrawDataService drawDataService;
+    private final RoomSyncManager roomSyncManager;
 
 
     // webSocket요청
@@ -64,10 +68,39 @@ public class WebSocketController {
     }
 
     @MessageMapping("/enterRoom")
-    @SendTo("/topic/enterRoom")
-    public MessageDTO enterRoom(MessageDTO message) {
-        return message;
+    public void enterRoom(EnterRoomMessage message) {
+        long roomId = message.getRoomId();
+
+        // 1️⃣ 방 동기화 시작
+        roomSyncManager.startSync(roomId);
+
+        // 2️⃣ 로딩 시작 알림
+        messagingTemplate.convertAndSend(
+                "/topic/sync/" + roomId,
+                new SyncMessage(roomId, "START", null)
+        );
+
+        // 3️⃣ DB에서 최신 데이터 조회
+        List<DrawDataDTO> drawData = drawDataService.findByRoomId(roomId);
+        UndoRedoStack stack = drawDataService.getUndoRedoStack(roomId);
+
+        SyncPayload payload = new SyncPayload(drawData, stack);
+
+        // 4️⃣ 데이터 전송
+        messagingTemplate.convertAndSend(
+                "/topic/sync/" + roomId,
+                new SyncMessage(roomId, "DATA", payload)
+        );
+
+        // 5️⃣ 동기화 종료
+        roomSyncManager.endSync(roomId);
+
+        messagingTemplate.convertAndSend(
+                "/topic/sync/" + roomId,
+                new SyncMessage(roomId, "END", null)
+        );
     }
+
 
 
 
