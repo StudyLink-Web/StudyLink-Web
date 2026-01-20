@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import Hero from "./components/Hero";
 import MentorSection from "./components/MentorSection";
 import AdSection from "./components/AdSection";
@@ -6,6 +7,16 @@ import QuickActionGrid from "./components/QuickActionGrid";
 import AdmissionEssayPage from "./pages/AdmissionEssayPage";
 
 function App() {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const isCoverLetter =
     window.location.pathname === "/cover-letter" ||
     window.location.pathname === "/cover_letter";
@@ -19,11 +30,22 @@ function App() {
     );
   }
 
+  // 배경색 보간 (BG Color Interpolation)
+  // slate-50: rgb(248, 250, 252) -> white: rgb(255, 255, 255)
+  // 임계값을 200으로 줄여 더 빠른 반응성 제공
+  const progress = Math.min(scrollY / 200, 1);
+  const bgColor = `rgb(${248 + (255 - 248) * progress}, ${
+    250 + (255 - 250) * progress
+  }, ${252 + (255 - 252) * progress})`;
+
   // 메인 페이지 렌더링
   return (
-    <div className="min-h-screen w-full bg-slate-50 dark:bg-[#030014] transition-colors duration-300 overflow-x-hidden">
+    <div
+      className="min-h-screen w-full dark:bg-[#030014] transition-colors duration-300 overflow-x-hidden"
+      style={{ backgroundColor: bgColor }}
+    >
       <main className="relative">
-        <Hero />
+        <Hero scrollProgress={progress} />
         <QuickActionGrid />
 
         {/* Infinite Ticker */}

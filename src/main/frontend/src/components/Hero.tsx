@@ -1,17 +1,42 @@
 import { BookOpen, Trophy, ArrowRight, Sparkles } from "lucide-react";
 import type { FC } from "react";
 
-const Hero: FC = () => {
+interface HeroProps {
+  scrollProgress?: number;
+}
+
+const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
+  // 스크롤에 따른 블루 스팟 투명도 계산 (1 -> 0)
+  const spotOpacity = 1 - scrollProgress;
+
   return (
-    <section className="relative w-full min-h-[90vh] flex flex-col justify-center items-center overflow-hidden bg-slate-50 dark:bg-[#030014] pt-20 transition-colors duration-300">
+    <section className="relative w-full min-h-[90vh] flex flex-col justify-center items-center overflow-hidden bg-transparent dark:bg-transparent pt-20 transition-colors duration-300">
       {/* Background Layers */}
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 z-[1] pointer-events-none mix-blend-soft-light" />
       <div className="absolute inset-0 bg-grid-white/[0.03] bg-[bottom_1px_center] z-[0] pointer-events-none mask-image-gradient-vertical" />
 
-      {/* Spotlights - 하얀 배경에서도 확실히 보이도록 채도 및 투명도 대폭 상향 */}
-      <div className="absolute top-[-30%] left-[-50%] w-[200%] h-[120vh] bg-teal-300/40 dark:bg-purple-800/20 rounded-full blur-[160px] pointer-events-none animate-pulse-slow" />
-      <div className="absolute top-[15%] left-[-10%] w-[60vw] h-[60vw] bg-teal-200/30 dark:bg-blue-800/15 rounded-full blur-[140px] pointer-events-none animate-blob" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-teal-100/30 dark:bg-indigo-800/15 rounded-full blur-[140px] pointer-events-none animate-blob animation-delay-2000" />
+      {/* Spotlights - 스크롤에 따라 점점 투명해짐 & 하단으로 갈수록 정적 페이드아웃 마스크 적용 */}
+      <div
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        style={{
+          maskImage: "linear-gradient(to bottom, black 40%, transparent 95%)",
+          WebkitMaskImage:
+            "linear-gradient(to bottom, black 40%, transparent 95%)",
+        }}
+      >
+        <div
+          className="absolute top-[-10%] left-[-30%] w-[160%] h-[140vh] bg-teal-300/40 dark:bg-purple-800/20 rounded-full blur-[160px] animate-pulse-slow transition-opacity duration-300"
+          style={{ opacity: spotOpacity * 0.4 }}
+        />
+        <div
+          className="absolute top-[40%] left-[-10%] w-[80vw] h-[80vw] bg-teal-200/30 dark:bg-blue-800/15 rounded-full blur-[140px] animate-blob transition-opacity duration-300"
+          style={{ opacity: spotOpacity * 0.3 }}
+        />
+        <div
+          className="absolute bottom-[-10%] right-[-10%] w-[80vw] h-[80vw] bg-teal-100/30 dark:bg-indigo-800/15 rounded-full blur-[140px] animate-blob animation-delay-2000 transition-opacity duration-300"
+          style={{ opacity: spotOpacity * 0.3 }}
+        />
+      </div>
 
       {/* Floating Elements (Desktop only) */}
       <div className="absolute top-[20%] left-[10%] hidden lg:block animate-float opacity-80 dark:opacity-60">
@@ -109,6 +134,9 @@ const Hero: FC = () => {
           </a>
         </div>
       </div>
+
+      {/* Bottom Fade-out Overlay - 더 부드럽고 길게 고도화 */}
+      <div className="absolute bottom-0 left-0 w-full h-80 bg-gradient-to-t from-white via-white/80 to-transparent z-20 pointer-events-none dark:from-[#030014] dark:to-transparent" />
     </section>
   );
 };
