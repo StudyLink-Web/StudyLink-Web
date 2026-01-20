@@ -744,6 +744,16 @@ async function saveCanvasActionToDB(actionType, payload) {
     }
 }
 
+function generateUUID() {
+    if (crypto && crypto.randomUUID) {
+        return crypto.randomUUID();
+    } else {
+        // fallback (간단한 임시 UUID, 충돌 가능성 거의 없음)
+        return 'xxxx-xxxx-xxxx-xxxx'.replace(/[x]/g, () =>
+            Math.floor(Math.random() * 16).toString(16)
+        );
+    }
+}
 
 // 그리기
 function drawLine(msg){
@@ -795,7 +805,7 @@ function drawInterpolatedLine(msg) {
     for (let i = 1; i <= steps; i++) {
         const x = p1.x + stepX * i;
         const y = p1.y + stepY * i;
-        const newObjectId = crypto.randomUUID();
+        const newObjectId = generateUUID();
         drawLine({x1: prevX, y1: prevY, x2: x, y2: y, uuid: newObjectId});
         prevX = x;
         prevY = y;
