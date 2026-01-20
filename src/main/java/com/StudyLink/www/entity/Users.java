@@ -54,7 +54,8 @@ public class Users {
      * ADMIN: 관리자
      */
     @Column(length = 20, nullable = false)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.STUDENT;  // 기본값 설정
 
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
@@ -177,7 +178,7 @@ public class Users {
         this.name = usersDTO.getName();
         this.nickname = usersDTO.getNickname();
         this.username = usersDTO.getUsername();
-        this.role = usersDTO.getRole();
+        this.role = Role.fromString(usersDTO.getRole());
         this.emailVerified = usersDTO.getEmailVerified() != null ? usersDTO.getEmailVerified() : false;
         this.isStudentVerified = usersDTO.getIsStudentVerified() != null ? usersDTO.getIsStudentVerified() : false;
         this.isActive = usersDTO.getIsActive() != null ? usersDTO.getIsActive() : true;

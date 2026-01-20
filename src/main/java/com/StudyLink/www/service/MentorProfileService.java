@@ -1,14 +1,20 @@
 package com.StudyLink.www.service;
 
+import com.StudyLink.www.dto.MentorProfileDTO;
 import com.StudyLink.www.entity.MentorProfile;
 import com.StudyLink.www.entity.Users;
+import com.StudyLink.www.handler.MentorProfileImageHandler;
 import com.StudyLink.www.repository.MentorProfileRepository;
 import com.StudyLink.www.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +25,8 @@ public class MentorProfileService {
 
     private final MentorProfileRepository mentorProfileRepository;
     private final UserRepository userRepository;
+    private final MentorProfileImageHandler imageHandler;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 멘토 프로필 생성
@@ -135,5 +143,213 @@ public class MentorProfileService {
 
         profile.setPoint(profile.getPoint() + amount);
         return mentorProfileRepository.save(profile);
+    }
+
+    /**
+     * 멘토 프로필 저장/업데이트 (Controller에서 사용)
+     */
+    @Transactional
+    public MentorProfile updateProfile(MentorProfile mentorProfile) {
+        return mentorProfileRepository.save(mentorProfile);
+    }
+
+    /**
+     * username으로 프로필 조회
+     */
+    @Transactional(readOnly = true)
+    public Optional<MentorProfile> getMentorProfileByUsername(String username) {
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+        return mentorProfileRepository.findByUser_UserId(user.getUserId());
+    }
+
+    /**
+     * 비밀번호로 프로필 업데이트
+     */
+    @Transactional
+    public void updateMentorProfileWithPassword(String username, MentorProfileDTO dto, MultipartFile profileImage) {
+        log.info("📝 멘토 프로필 업데이트 시작: {}", username);
+
+        try {
+            log.debug("🔍 사용자 조회 중: {}", username);
+            Users user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+            log.debug("✅ 사용자 조회 완료: userId={}", user.getUserId());
+
+            log.debug("🔍 멘토 프로필 조회 중: {}", user.getUserId());
+            MentorProfile mentorProfile = mentorProfileRepository.findByUser_UserId(user.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("멘토 프로필을 찾을 수 없습니다"));
+            log.debug("✅ 멘토 프로필 조회 완료");
+
+            if (dto.getFirstName() != null && !dto.getFirstName().isEmpty()) {
+                user.setName(dto.getFirstName());
+            }
+            if (dto.getNickname() != null && !dto.getNickname().isEmpty()) {
+                user.setNickname(dto.getNickname());
+            }
+            if (dto.getPhone() != null && !dto.getPhone().isEmpty()) {
+                user.setPhone(dto.getPhone());
+            }
+
+            if (profileImage != null && !profileImage.isEmpty()) {
+                log.info("📸 프로필 이미지 처리 시작: size={} bytes", profileImage.getSize());
+                try {
+                    if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isEmpty()) {
+                        log.debug("🗑️  기존 이미지 삭제: {}", user.getProfileImageUrl());
+                        imageHandler.deleteProfileImage(user.getProfileImageUrl());
+                    }
+                    log.debug("💾 새 이미지 저장 중...");
+                    String imageUrl = imageHandler.saveProfileImage(profileImage, user.getUserId());
+                    user.setProfileImageUrl(imageUrl);
+                    log.info("✅ 프로필 이미지 저장 완료: {}", imageUrl);
+                } catch (IOException e) {
+                    log.error("❌ 이미지 저장 실패: {}", e.getMessage(), e);
+                    throw new RuntimeException("이미지 저장 중 오류가 발생했습니다: " + e.getMessage());
+                }
+            }
+
+            if (dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
+                log.debug("🔒 비밀번호 변경 중...");
+                validatePasswordChange(user, dto);
+                user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+                log.info("✅ 비밀번호 변경 완료");
+            }
+
+            if (dto.getBio() != null && !dto.getBio().isEmpty()) {
+                mentorProfile.setIntroduction(dto.getBio());
+            }
+
+            if (dto.getUniversity() != null && !dto.getUniversity().isEmpty()) {
+                mentorProfile.setUniversity(dto.getUniversity());
+            }
+            if (dto.getMajor() != null && !dto.getMajor().isEmpty()) {
+                mentorProfile.setMajor(dto.getMajor());
+            }
+            if (dto.getEntranceYear() != null) {
+                mentorProfile.setEntranceYear(dto.getEntranceYear());
+            }
+            if (dto.getGraduationYear() != null) {
+                mentorProfile.setGraduationYear(dto.getGraduationYear());
+            }
+            if (dto.getCredentials() != null && !dto.getCredentials().isEmpty()) {
+                mentorProfile.setCredentials(dto.getCredentials());
+            }
+
+            if (dto.getSubjects() != null && !dto.getSubjects().isEmpty()) {
+                mentorProfile.setSubjects(dto.getSubjects());
+            }
+            if (dto.getGrades() != null && !dto.getGrades().isEmpty()) {
+                mentorProfile.setGrades(dto.getGrades());
+            }
+            if (dto.getPricePerHour() != null) {
+                mentorProfile.setPricePerHour(dto.getPricePerHour());
+            }
+            if (dto.getMinLessonHours() != null) {
+                mentorProfile.setMinLessonHours(dto.getMinLessonHours());
+            }
+            if (dto.getLessonType() != null && !dto.getLessonType().isEmpty()) {
+                mentorProfile.setLessonType(dto.getLessonType());
+            }
+            if (dto.getLessonLocation() != null && !dto.getLessonLocation().isEmpty()) {
+                mentorProfile.setLessonLocation(dto.getLessonLocation());
+            }
+            if (dto.getAvailableTime() != null && !dto.getAvailableTime().isEmpty()) {
+                mentorProfile.setAvailableTime(dto.getAvailableTime());
+            }
+
+            if (dto.getNotificationLesson() != null) {
+                mentorProfile.setNotificationLesson(dto.getNotificationLesson());
+            }
+            if (dto.getNotificationMessage() != null) {
+                mentorProfile.setNotificationMessage(dto.getNotificationMessage());
+            }
+            if (dto.getNotificationReview() != null) {
+                mentorProfile.setNotificationReview(dto.getNotificationReview());
+            }
+
+            mentorProfile.setUpdatedAt(LocalDateTime.now());
+            user.setUpdatedAt(LocalDateTime.now());
+
+            log.debug("💾 사용자 저장 중...");
+            userRepository.save(user);
+            log.debug("💾 멘토 프로필 저장 중...");
+            mentorProfileRepository.save(mentorProfile);
+
+            log.info("✅ 멘토 프로필 업데이트 완료: userId={}", user.getUserId());
+
+        } catch (IllegalArgumentException e) {
+            log.error("❌ 유효성 검사 실패: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("❌ 프로필 업데이트 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("프로필 업데이트 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 프로필 정보만 업데이트 (이미지 없음)
+     */
+    @Transactional
+    public void updateMentorProfileWithoutImage(String username, MentorProfileDTO dto) {
+        updateMentorProfileWithPassword(username, dto, null);
+    }
+
+    /**
+     * 비밀번호 변경 유효성 검사
+     */
+    private void validatePasswordChange(Users user, MentorProfileDTO dto) {
+        if (dto.getCurrentPassword() == null || dto.getCurrentPassword().isEmpty()) {
+            throw new IllegalArgumentException("현재 비밀번호를 입력해주세요");
+        }
+
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다");
+        }
+
+        if (dto.getNewPassword() == null || dto.getNewPassword().isEmpty()) {
+            throw new IllegalArgumentException("새 비밀번호를 입력해주세요");
+        }
+
+        if (dto.getNewPassword().length() < 8) {
+            throw new IllegalArgumentException("새 비밀번호는 최소 8자 이상이어야 합니다");
+        }
+
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다");
+        }
+    }
+
+    /**
+     * 멘토 프로필 조회 (통계 포함)
+     * 수업 횟수와 리뷰 개수를 동적으로 계산
+     */
+    @Transactional(readOnly = true)
+    public MentorProfile getMentorProfileWithStats(Long userId) {
+        log.info("📊 멘토 프로필 조회 (통계 포함): userId={}", userId);
+
+        MentorProfile mentor = mentorProfileRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("멘토 프로필을 찾을 수 없습니다"));
+
+        // 수업 횟수 계산 (완료된 수업만)
+        long lessonCount = mentorProfileRepository.countLessonsByMentorId(userId);
+        mentor.setLessonCount(lessonCount);
+
+        // 리뷰 개수 계산
+        long reviewCount = mentorProfileRepository.countReviewsByMentorId(userId);
+        mentor.setReviewCount(reviewCount);
+
+        log.debug("✅ 통계: lessonCount={}, reviewCount={}", lessonCount, reviewCount);
+
+        return mentor;
+    }
+
+    /**
+     * username으로 프로필 조회 (통계 포함)
+     */
+    @Transactional(readOnly = true)
+    public Optional<MentorProfile> getMentorProfileWithStatsByUsername(String username) {
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+        return Optional.of(getMentorProfileWithStats(user.getUserId()));
     }
 }
