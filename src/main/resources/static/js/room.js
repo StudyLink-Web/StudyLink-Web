@@ -105,7 +105,7 @@ function connect() {
             }
             if (message.type === 'DATA') {
                 loadCanvas(message.payload.drawData);
-                loadUndoRedo(message.payload.stack);
+                loadUndoRedo(message.payload.undoRedoStack);
                 scheduleRender();
             }
             if (message.type === 'END') {
@@ -502,15 +502,17 @@ let selectedTool = 'draw';
 
 // 랜더링 관련
 let renderScheduled = false;
+let lastRenderTime = 0;
+const RENDER_INTERVAL = 50; // 50ms마다 1번 랜더링
 
 // 그리기 관련
 let isDrawing = false;
 let lastPoint = null;
-const DRAW_STEP = 3; // px (작을수록 촘촘), 선 길이 조절
+const DRAW_STEP = 20; // px (작을수록 촘촘), 선 길이 조절
 let currentPointer = null;
 
 // 지우기 관련
-const ERASE_STEP = 3; // 지우기 점 간격
+const ERASE_STEP = 5; // 지우기 점 간격
 const ERASE_RADIUS = 10; // 지우개 반경
 
 // 영역선택 관련
