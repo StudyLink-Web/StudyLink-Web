@@ -5,10 +5,7 @@ import com.StudyLink.www.dto.RoomDTO;
 import com.StudyLink.www.dto.SubjectDTO;
 import com.StudyLink.www.entity.Favorite;
 import com.StudyLink.www.entity.Room;
-import com.StudyLink.www.service.FavoriteService;
-import com.StudyLink.www.service.RoomService;
-import com.StudyLink.www.service.StudentProfileService;
-import com.StudyLink.www.service.UserService;
+import com.StudyLink.www.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -35,6 +32,7 @@ public class RoomController {
     private final FavoriteService favoriteService;
     private final UserService userService;
     private final StudentProfileService studentProfileService;
+    private final DrawDataService drawDataService;
 
     @GetMapping("/list")
     public void list(@RequestParam(defaultValue = "0") int publicPage,
@@ -199,9 +197,12 @@ public class RoomController {
 
 
         // 찜 멘토
-        List<FavoriteDTO> favoriteList = favoriteService.getFavoritesByStudent(senderId).stream().map(FavoriteDTO::new).toList();
-        model.addAttribute("favoriteList", favoriteList);
-        log.info(">>> favoriteList {}", favoriteList);
+        if (senderId != null) {
+            List<FavoriteDTO> favoriteList = favoriteService.getFavoritesByStudent(senderId).stream().map(FavoriteDTO::new).toList();
+            model.addAttribute("favoriteList", favoriteList);
+            log.info(">>> favoriteList {}", favoriteList);
+        }
+
 
         // 학생 보유 point
 //        StudentProfile studentProfile = studentProfileService.getStudentProfile(studentId)
@@ -259,7 +260,8 @@ public class RoomController {
 
                     if (deleted > 0) {
                         // 삭제 성공
-
+                        // mongodb 캔버스 데이터 삭제
+                        drawDataService.removeRoom(roomId);
                         // 포인트 반환하기
 
 
@@ -306,34 +308,28 @@ public class RoomController {
                 // 임시방 삭제
                 // 메시지 삭제
                 // 파일 삭제
+                // 캔버스 데이터 삭제
                 roomService.deleteRoom(roomId);
+                drawDataService.removeRoom(roomId);
                 redirectAttributes.addFlashAttribute("message", "문제 등록이 취소되었습니다.");
                 return "redirect:/room/list";
             }
             case IN_PROGRESS -> {
                 // 멘토가 문제풀이를 포기하는 경우
                 if (roomDTO.getIsPublic()) {
-                    // 공개방인경우 리스트로 반환
-                    // 상태 업데이트 IN_PROGRESS -> PENDING
-                    roomDTO.setStatus(RoomDTO.Status.PENDING);
-                    roomService.save(roomDTO);
+                    // 방 삭제, 학생에게 알림(선택)
+                    roomService.deleteRoom(roomId);
+                    drawDataService.removeRoom(roomId);
 
-                    // 멘토가 작성한 메시지는 삭제
-                    // username -> mentorId
-                    String username = authentication.getName();
-                    long mentorId = userService.findUserIdByUsername(username);
-                    log.info(">>> mentorId {}", mentorId);
-                    roomService.deleteMentorMessage(roomId, mentorId);
+                    // 포인트 차감 100p
 
-                    // 포인트 차감 50p
-
-                    redirectAttributes.addFlashAttribute("message", "문제가 반환되었습니다.");
+                    redirectAttributes.addFlashAttribute("message", "문제풀이가 취소되었습니다.");
                     return "redirect:/room/list";
                 } else {
                     // 1대1 문제 일경우
                     // 삭제 후 학생에게 알림
                     roomService.deleteRoom(roomId);
-                    redirectAttributes.addFlashAttribute("message", "1대1 문제가 취소되었습니다.");
+                    redirectAttributes.addFlashAttribute("message", "1대1 문제풀이가 취소되었습니다.");
                     return "redirect:/room/list";
                 }
 

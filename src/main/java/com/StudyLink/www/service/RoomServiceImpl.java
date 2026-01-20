@@ -4,7 +4,6 @@ import com.StudyLink.www.dto.RoomDTO;
 import com.StudyLink.www.dto.RoomFileDTO;
 import com.StudyLink.www.dto.SubjectDTO;
 import com.StudyLink.www.entity.Room;
-import com.StudyLink.www.entity.Subject;
 import com.StudyLink.www.handler.RoomFileHandler;
 import com.StudyLink.www.repository.MessageRepository;
 import com.StudyLink.www.repository.RoomFileRepository;
@@ -97,12 +96,6 @@ public class RoomServiceImpl implements RoomService{
         roomFileRepository.deleteByRoomId(roomId);
         messageRepository.deleteByRoomId(roomId);
         roomRepository.deleteById(roomId);
-    }
-
-    @Transactional
-    @Override
-    public void deleteMentorMessage(long roomId, long mentorId) {
-        messageRepository.deleteByRoomIdAndMentorId(roomId, mentorId);
     }
 
     @Override

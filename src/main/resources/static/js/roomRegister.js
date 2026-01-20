@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (roomDTO.status === 'TEMP') {
         // 학생만 temp방 생성 가능
         registerBtn.textContent = '등록';
-        exitBtn.textContent = '나가기';
+        exitBtn.textContent = '취소';
     } else if (roomDTO.status === 'PENDING') {
         if (roleStrings.includes("ROLE_MENTOR")) {
             registerBtn.textContent = '문제풀이 시작';
