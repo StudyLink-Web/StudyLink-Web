@@ -101,7 +101,6 @@ function connect() {
             if (message.type === 'START') {
                 showLoading();
                 resetCanvasStateForSync();
-                disableCanvas();
             }
             if (message.type === 'DATA') {
                 loadCanvas(message.payload.drawData);
@@ -110,7 +109,6 @@ function connect() {
             }
             if (message.type === 'END') {
                 hideLoading();
-                enableCanvas();
             }
         });
 
@@ -503,7 +501,7 @@ let selectedTool = 'draw';
 // 랜더링 관련
 let renderScheduled = false;
 let lastRenderTime = 0;
-const RENDER_INTERVAL = 50; // 50ms마다 1번 랜더링
+const RENDER_INTERVAL = 100; // 100ms마다 1번 랜더링
 
 // 그리기 관련
 let isDrawing = false;
@@ -610,14 +608,17 @@ function selectTool(tool) {
     }
 }
 
-// 렌더링 요청이 많아도 화면 렌더링은 한 프레임에 1회로 제한
+// 렌더링 요청이 많아도 화면 렌더링은 일정 프레임에 1회로 제한
 function scheduleRender() {
-    if (renderScheduled) return;
-    renderScheduled = true;
-    requestAnimationFrame(() => {
-        canvas.requestRenderAll();
-        renderScheduled = false;
-    });
+    const now = performance.now();
+    if (!renderScheduled && now - lastRenderTime >= RENDER_INTERVAL) {
+        renderScheduled = true;
+        requestAnimationFrame(() => {
+            canvas.requestRenderAll();
+            lastRenderTime = performance.now();
+            renderScheduled = false;
+        });
+    }
 }
 
 // 메시지가 번호순서대로 처리되도록하는 함수
@@ -1246,7 +1247,7 @@ function hideLoading() {
 /**
  * 캔버스와 메시지 입력 영역 비활성화
  */
-function disableCanvas() {
+function disableCanvasAndMessage() {
     // 캔버스 상호작용 차단
     if (canvas && canvas.upperCanvasEl) {
         canvas.upperCanvasEl.style.pointerEvents = 'none';
@@ -1266,7 +1267,7 @@ function disableCanvas() {
 /**
  * 캔버스와 메시지 입력 영역 활성화
  */
-function enableCanvas() {
+function enableCanvasAndMessage() {
     // 캔버스 상호작용 허용
     if (canvas && canvas.upperCanvasEl) {
         canvas.upperCanvasEl.style.pointerEvents = 'auto';
@@ -1290,9 +1291,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 캔버스 활성/비활성
     if (canUseCanvasAndMessage) {
-        enableCanvas();
+        enableCanvasAndMessage();
     } else {
-        disableCanvas();
+        disableCanvasAndMessage();
     }
 
 
