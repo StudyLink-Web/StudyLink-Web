@@ -92,6 +92,124 @@ public class MentorProfile {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    /**
+     * 대학교 이름
+     * 예: "서울대학교"
+     */
+    @Column(name = "university", length = 255)
+    private String university;
+
+    /**
+     * 학과 이름
+     * 예: "수학교육과"
+     */
+    @Column(name = "major", length = 255)
+    private String major;
+
+    /**
+     * 입학년도
+     */
+    @Column(name = "entrance_year")
+    private Integer entranceYear;
+
+    /**
+     * 졸업년도
+     */
+    @Column(name = "graduation_year")
+    private Integer graduationYear;
+
+    /**
+     * 추가 자격사항
+     * 예: "교사 자격증, 공인 자격증 등"
+     */
+    @Column(name = "credentials", columnDefinition = "TEXT")
+    private String credentials;
+
+    /**
+     * 주요 과목 (JSON 형식)
+     * 예: ["math", "korean", "english"]
+     */
+    @Column(name = "subjects", columnDefinition = "JSON")
+    private String subjects;
+
+    /**
+     * 수업 대상 학년 (JSON 형식)
+     * 예: ["middle", "high", "adult"]
+     */
+    @Column(name = "grades", columnDefinition = "JSON")
+    private String grades;
+
+    /**
+     * 시간당 수업료 (원)
+     */
+    @Column(name = "price_per_hour")
+    private Integer pricePerHour;
+
+    /**
+     * 최소 수업 시간
+     * 예: 1, 1.5, 2
+     */
+    @Column(name = "min_lesson_hours")
+    private Double minLessonHours;
+
+    /**
+     * 수업 방식
+     * "online", "offline", "both"
+     */
+    @Column(name = "lesson_type", length = 50)
+    private String lessonType;
+
+    /**
+     * 오프라인 수업 위치
+     * 예: "서울시 강남구"
+     */
+    @Column(name = "lesson_location", length = 255)
+    private String lessonLocation;
+
+    /**
+     * 수업 가능 시간
+     * 예: "평일 오후 6시 이후, 주말 자유"
+     */
+    @Column(name = "available_time", columnDefinition = "TEXT")
+    private String availableTime;
+
+    /**
+     * 새 수업 요청 알림
+     */
+    @Column(name = "notification_lesson", nullable = false)
+    private Boolean notificationLesson = true;
+
+    /**
+     * 메시지 알림
+     */
+    @Column(name = "notification_message", nullable = false)
+    private Boolean notificationMessage = true;
+
+    /**
+     * 리뷰 작성 알림
+     */
+    @Column(name = "notification_review", nullable = false)
+    private Boolean notificationReview = true;
+
+    /**
+     * 수업 횟수 (총 진행한 수업 개수)
+     */
+    @Column(name = "lesson_count", nullable = false)
+    private Long lessonCount = 0L;
+
+    /**
+     * 리뷰 개수 (받은 리뷰의 개수)
+     */
+    @Column(name = "review_count", nullable = false)
+    private Long reviewCount = 0L;
+
+    /**
+     * 멘토 닉네임 (학생들이 보는 이름)
+     * Users.nickname과 동기화
+     */
+    @Column(name = "mentor_nickname", length = 100)
+    private String mentorNickname;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -100,6 +218,9 @@ public class MentorProfile {
         if (this.exp == null) this.exp = 0L;
         if (this.averageRating == null) this.averageRating = 0.0;
         if (this.isVerified == null) this.isVerified = false;
+        if (this.notificationLesson == null) this.notificationLesson = true;
+        if (this.notificationMessage == null) this.notificationMessage = true;
+        if (this.notificationReview == null) this.notificationReview = true;
     }
 
     @PreUpdate
@@ -121,5 +242,24 @@ public class MentorProfile {
         this.exp = dto.getExp() != null ? dto.getExp() : 0L;
         this.createdAt = dto.getCreatedAt();
         this.updatedAt = dto.getUpdatedAt();
+
+        // 추가된 필드들 초기화
+        this.university = dto.getUniversity();
+        this.major = dto.getMajor();
+        this.entranceYear = dto.getEntranceYear();
+        this.graduationYear = dto.getGraduationYear();
+        this.credentials = dto.getCredentials();
+        this.subjects = dto.getSubjects();
+        this.grades = dto.getGrades();
+        this.pricePerHour = dto.getPricePerHour();
+        this.minLessonHours = dto.getMinLessonHours();
+        this.lessonType = dto.getLessonType();
+        this.lessonLocation = dto.getLessonLocation();
+        this.availableTime = dto.getAvailableTime();
+        this.notificationLesson = dto.getNotificationLesson() != null ? dto.getNotificationLesson() : true;
+        this.notificationMessage = dto.getNotificationMessage() != null ? dto.getNotificationMessage() : true;
+        this.notificationReview = dto.getNotificationReview() != null ? dto.getNotificationReview() : true;
     }
+
+
 }

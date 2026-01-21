@@ -39,19 +39,19 @@ function setupLogoutForm() {
 function setupProfileDropdown() {
     const currentPath = window.location.pathname;
 
-    // ⭐ login/signup 페이지에서는 드롭다운 비활성화
+    // login/signup 페이지에서는 드롭다운 비활성화
     if (currentPath.includes('/login') || currentPath.includes('/signup')) {
         console.log('🔒 로그인/회원가입 페이지: 드롭다운 비활성화');
         return;
     }
 
-    // ⭐ Bootstrap 드롭다운 비활성화 (자체 구현 사용)
+    // Bootstrap 드롭다운 비활성화 (자체 구현 사용)
     if (typeof $ !== 'undefined' && $.fn.dropdown) {
         $('[data-toggle="dropdown"]').off('click');
         console.log('✅ Bootstrap 4 드롭다운 비활성화 (자체 구현 사용)');
     }
 
-    // ⭐ 추가: 수동 클릭 이벤트 바인딩
+    // 수동 클릭 이벤트 바인딩
     const userDropdown = document.getElementById('userDropdown');
     if (userDropdown) {
         userDropdown.addEventListener('click', function(e) {
@@ -66,18 +66,25 @@ function setupProfileDropdown() {
         });
     }
 
-    // ⭐ 수정: 외부 클릭 시 드롭다운 닫기 (header의 dropdown만)
+    // ⭐ 수정: 외부 클릭 시 드롭다운 닫기
     document.addEventListener('click', function(e) {
-        // ⭐ mypage 영역은 제외!
-        if (e.target.closest('.mypage-container')) {
-            console.log('📌 mypage 영역: 드롭다운 유지');
+        // 🎯 탭 버튼이면 완전히 무시 (아무것도 하지 않음)
+        if (e.target.closest('.tab-btn')) {
+            console.log('✅ 탭 버튼 - 처리 안 함');
             return;
         }
 
+        // mypage 영역도 무시
+        if (e.target.closest('.mypage-container')) {
+            console.log('📌 mypage 영역 - 처리 안 함');
+            return;
+        }
+
+        // 그 외 모든 곳에서만 드롭다운 닫기
         const dropdown = document.querySelector('.header .dropdown');
         if (dropdown && !dropdown.contains(e.target)) {
             const menu = dropdown.querySelector('.dropdown-menu');
-            if (menu) {
+            if (menu && menu.classList.contains('show')) {
                 menu.classList.remove('show');
                 console.log('❌ 드롭다운 메뉴 닫음');
             }
@@ -151,7 +158,7 @@ function updateDday() {
     try {
         const ddaySpans = document.querySelectorAll('.dday span');
 
-        console.log('🔍 찾은 D-day span 개수:', ddaySpans.length);
+        console.log('🔍 �은 D-day span 개수:', ddaySpans.length);
 
         if (ddaySpans.length === 0) {
             console.warn('⚠️ D-day 요소를 찾을 수 없습니다');

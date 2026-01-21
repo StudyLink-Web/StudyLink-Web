@@ -46,7 +46,7 @@ dependencies {
 	implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
 
 	// ===== Database =====
-	implementation 'com.mysql:mysql-connector-j:8.0.33'  // ✅ 최신 MySQL 드라이버
+	implementation 'com.mysql:mysql-connector-j:8.0.33'  // 최신 MySQL 드라이버
 	implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
 
 	// ===== MongoDB =====
