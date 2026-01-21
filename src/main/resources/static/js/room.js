@@ -24,7 +24,7 @@ function startHeartbeat() {
         } else {
             // 서버에 ping 전송 (STOMP로 메시지 보내기)
             if (stompClient && stompClient.connected) {
-                stompClient.send("/app/ping", {}, JSON.stringify({senderId: senderId}));
+                safeSend("/app/ping", {senderId: senderId});
             }
         }
     }, HEARTBEAT_INTERVAL);
@@ -48,14 +48,14 @@ function connect() {
         console.log('Connected: ' + frame);
 
         // 구독
-        stompClient.subscribe('/topic/pong', function(message) {
+        stompClient.subscribe(`/topic/pong/${roomId}`, function(message) {
             const msg = JSON.parse(message.body);
             if (msg.senderId !== senderId) return;
             lastPong = Date.now(); // pong 도착 시 갱신
         });
 
         // 채팅창
-        stompClient.subscribe('/topic/sendMessage', function(message){
+        stompClient.subscribe(`/topic/sendMessage/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             // 일반적으로 본인 메시지는 무시하지만 messageId를 받기위해 허용
             // if (msg.senderId == senderId){ // 본인 메시지는 무시
@@ -78,14 +78,14 @@ function connect() {
         });
 
         // 이 요청 받으면 해당 메시지 읽음 처리하기(1 제거)
-        stompClient.subscribe('/topic/readMessage', function(message){
+        stompClient.subscribe(`/topic/readMessage/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             readMessage(msg.messageId);
         });
 
         // 이 요청 받으면 모든 메시지에서 1제거(상대방 입장)
-        stompClient.subscribe('/topic/enterRoom', function(message){
+        stompClient.subscribe(`/topic/enterRoom/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             readAllMessage();
@@ -101,21 +101,19 @@ function connect() {
             if (message.type === 'START') {
                 showLoading();
                 resetCanvasStateForSync();
-                disableCanvas();
             }
             if (message.type === 'DATA') {
                 loadCanvas(message.payload.drawData);
-                loadUndoRedo(message.payload.stack);
+                loadUndoRedo(message.payload.undoRedoStack);
                 scheduleRender();
             }
             if (message.type === 'END') {
                 hideLoading();
-                enableCanvas();
             }
         });
 
         // 그리기
-        stompClient.subscribe('/topic/draw', function(message){
+        stompClient.subscribe(`/topic/draw/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, drawLine);
@@ -123,7 +121,7 @@ function connect() {
         });
 
         // 지우기
-        stompClient.subscribe('/topic/erase', function(message){
+        stompClient.subscribe(`/topic/erase/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, eraseInterpolated);
@@ -131,7 +129,7 @@ function connect() {
         });
 
         // 영역 선택 모드 on/off
-        stompClient.subscribe('/topic/selectMode', function(message){
+        stompClient.subscribe(`/topic/selectMode/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             if (msg.type === 'selectModeOn') {
@@ -147,7 +145,7 @@ function connect() {
         });
 
         // select
-        stompClient.subscribe('/topic/select', function(message){
+        stompClient.subscribe(`/topic/select/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, objectUpdate);
@@ -155,28 +153,28 @@ function connect() {
         });
 
         // currentAction 초기화
-        stompClient.subscribe('/topic/initializeCurrentAction', function(message){
+        stompClient.subscribe(`/topic/initializeCurrentAction/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, initializeCurrentAction);
         });
 
         // currentAction 리셋
-        stompClient.subscribe('/topic/resetCurrentAction', function(message){
+        stompClient.subscribe(`/topic/resetCurrentAction/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, resetCurrentAction);
         });
 
         // undoStack에 currentAction push
-        stompClient.subscribe('/topic/pushToUndoStack', function(message){
+        stompClient.subscribe(`/topic/pushToUndoStack/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, pushToUndoStack);
         });
 
         // undo, redo
-        stompClient.subscribe('/topic/undoRedo', function(message){
+        stompClient.subscribe(`/topic/undoRedo/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             if (msg.type === 'undo') {
@@ -192,18 +190,18 @@ function connect() {
 
 
         // connect가 비동기함수이므로 연결이 완료된 후 실행되야하는 함수들은 여기 작성(밖에 작성시 연결되기 전에 실행 될 수 있음)
-        loadMessage(roomId).then(result => { // 채팅기록 불러오기
+        loadMessage(roomId).then(async result => { // 채팅기록 불러오기
             console.log("💬 로드된 메시지 수:", result.length);
             for(let message of result){
                 // 서버에서 메시지 읽음 처리
-                readMessageToServer(message.messageId);
+                await readMessageToServer(message.messageId);
 
                 if (message.messageType === "TEXT") {
                     spreadTextMessage(message);
                 } else {
-                    loadRoomFileDTO(message.fileUuid).then(result => {
-                        spreadFileMessage(message, result);
-                    });
+                    // await로 순서 보장
+                    const roomFileDTO = await loadRoomFileDTO(message.fileUuid);
+                    spreadFileMessage(message, roomFileDTO);
                 }
             }
             safeSend("/app/enterRoom", {roomId: roomId})
@@ -217,7 +215,7 @@ function connect() {
 
 function safeSend(destination, message) {
     if (stompClient && stompClient.connected) {
-        stompClient.send(destination, {}, JSON.stringify(message));
+        stompClient.send(destination + '/' + roomId, {}, JSON.stringify(message));
     }
 }
 
@@ -287,10 +285,20 @@ function spreadFileMessage(msg, roomFileDTO) {
 
     // 이미지 파일
     if (roomFileDTO.fileType === 1) {
+        // 이미지 다운로드 링크 생성
+        const downloadLink = document.createElement('a');
+        downloadLink.href = `/room/loadFile/${roomFileDTO.uuid}`;
+        downloadLink.download = roomFileDTO.fileName;
+
+        // 이미지 생성
         const img = document.createElement('img');
         img.src = `/room/loadFile/${roomFileDTO.uuid}`; // img 태그의 src경로를 브라우저가 자동으로 get요청
         img.classList.add('chat-image');
-        msgDiv.appendChild(img);
+
+        // img를 a로 감싸기
+        downloadLink.appendChild(img);
+
+        msgDiv.appendChild(downloadLink);
 
         // 이미지가 로드 완료되면 스크롤
         img.onload = () => {
@@ -502,15 +510,17 @@ let selectedTool = 'draw';
 
 // 랜더링 관련
 let renderScheduled = false;
+let lastRenderTime = 0;
+const RENDER_INTERVAL = 100; // 100ms마다 1번 랜더링
 
 // 그리기 관련
 let isDrawing = false;
 let lastPoint = null;
-const DRAW_STEP = 3; // px (작을수록 촘촘), 선 길이 조절
+const DRAW_STEP = 20; // px (작을수록 촘촘), 선 길이 조절
 let currentPointer = null;
 
 // 지우기 관련
-const ERASE_STEP = 3; // 지우기 점 간격
+const ERASE_STEP = 5; // 지우기 점 간격
 const ERASE_RADIUS = 10; // 지우개 반경
 
 // 영역선택 관련
@@ -608,14 +618,17 @@ function selectTool(tool) {
     }
 }
 
-// 렌더링 요청이 많아도 화면 렌더링은 한 프레임에 1회로 제한
+// 렌더링 요청이 많아도 화면 렌더링은 일정 프레임에 1회로 제한
 function scheduleRender() {
-    if (renderScheduled) return;
-    renderScheduled = true;
-    requestAnimationFrame(() => {
-        canvas.requestRenderAll();
-        renderScheduled = false;
-    });
+    const now = performance.now();
+    if (!renderScheduled && now - lastRenderTime >= RENDER_INTERVAL) {
+        renderScheduled = true;
+        requestAnimationFrame(() => {
+            canvas.requestRenderAll();
+            lastRenderTime = performance.now();
+            renderScheduled = false;
+        });
+    }
 }
 
 // 메시지가 번호순서대로 처리되도록하는 함수
@@ -1244,7 +1257,7 @@ function hideLoading() {
 /**
  * 캔버스와 메시지 입력 영역 비활성화
  */
-function disableCanvas() {
+function disableCanvasAndMessage() {
     // 캔버스 상호작용 차단
     if (canvas && canvas.upperCanvasEl) {
         canvas.upperCanvasEl.style.pointerEvents = 'none';
@@ -1264,7 +1277,7 @@ function disableCanvas() {
 /**
  * 캔버스와 메시지 입력 영역 활성화
  */
-function enableCanvas() {
+function enableCanvasAndMessage() {
     // 캔버스 상호작용 허용
     if (canvas && canvas.upperCanvasEl) {
         canvas.upperCanvasEl.style.pointerEvents = 'auto';
@@ -1288,9 +1301,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 캔버스 활성/비활성
     if (canUseCanvasAndMessage) {
-        enableCanvas();
+        enableCanvasAndMessage();
     } else {
-        disableCanvas();
+        disableCanvasAndMessage();
     }
 
 

@@ -51,6 +51,7 @@
 					<input type="checkbox" id="addFavoriteMentorCheckbox" name="addFavoriteMentorCheckbox">
 					멘토 찜하기
 				</label>
+				<p id="favoriteMessage" style="display:none; color: red;">이미 찜한 멘토입니다.</p>
 				<input type="hidden" name="roomId" th:value="${roomDTO.roomId}">
 				<div id="endModalBtnDiv"></div>
 			</form>
