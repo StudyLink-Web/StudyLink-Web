@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -45,32 +46,31 @@ public class WebSocketController {
 
     // webSocket요청
     // ================== 끊김 탐지 ==================
-    @MessageMapping("/ping")
-    @SendTo("/topic/pong")
-    public SenderMessage ping(SenderMessage message) {
-        return message;
+    @MessageMapping("/ping/{roomId}")
+    public void ping(@DestinationVariable long roomId, SenderMessage message) {
+        String destination = "/topic/pong/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
     }
 
     // ================== 채팅창 ==================
-    @MessageMapping("/sendMessage")
-    @SendTo("/topic/sendMessage")
-    public MessageDTO sendMessage(MessageDTO message) {
+    @MessageMapping("/sendMessage/{roomId}")
+    public void sendMessage(@DestinationVariable long roomId, MessageDTO message) {
         log.info(">>> messageDTO1 {}", message);
         MessageDTO messageDTO = messageService.insert(message);
         log.info(">>> messageDTO2 {}", messageDTO);
-        return messageDTO;
+
+        String destination = "/topic/sendMessage/" + roomId;
+        messagingTemplate.convertAndSend(destination, messageDTO);
     }
 
-    @MessageMapping("/readMessage")
-    @SendTo("/topic/readMessage")
-    public MessageDTO readMessage(MessageDTO message) {
-        return message;
+    @MessageMapping("/readMessage/{roomId}")
+    public void readMessage(@DestinationVariable long roomId, MessageDTO message) {
+        String destination = "/topic/readMessage/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/enterRoom")
-    public void enterRoom(EnterRoomMessage message) {
-        long roomId = message.getRoomId();
-
+    @MessageMapping("/enterRoom/{roomId}")
+    public void enterRoom(@DestinationVariable long roomId, EnterRoomMessage message) {
         // 1️⃣ 방 동기화 시작
         roomSyncManager.startSync(roomId);
 
@@ -105,53 +105,52 @@ public class WebSocketController {
 
 
     // ================== 캔버스 ==================
-
-    @MessageMapping("/draw")
-    @SendTo("/topic/draw")
-    public DrawMessage drawMessage (DrawMessage message) {
-        return message;
+    @MessageMapping("/draw/{roomId}")
+    public void drawMessage(@DestinationVariable long roomId, DrawMessage message) {
+        String destination = "/topic/draw/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/erase")
-    @SendTo("/topic/erase")
-    public EraseMessage eraseMessage (EraseMessage message) {
-        return message;
+    @MessageMapping("/erase/{roomId}")
+    public void eraseMessage(@DestinationVariable long roomId, EraseMessage message) {
+        String destination = "/topic/erase/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/selectMode")
-    @SendTo("/topic/selectMode")
-    public SelectModeMessage selectModeMessage (SelectModeMessage message) {
-        return message;
+    @MessageMapping("/selectMode/{roomId}")
+    public void selectModeMessage(@DestinationVariable long roomId, SelectModeMessage message) {
+        String destination = "/topic/selectMode/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/select")
-    @SendTo("/topic/select")
-    public SelectMessage selectMessage (SelectMessage message) {
-        return message;
+    @MessageMapping("/select/{roomId}")
+    public void selectMessage(@DestinationVariable long roomId, SelectMessage message) {
+        String destination = "/topic/select/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/initializeCurrentAction")
-    @SendTo("/topic/initializeCurrentAction")
-    public InitailizeCurrentActionMessage initializeCurrentAction (InitailizeCurrentActionMessage message) {
-        return message;
+    @MessageMapping("/initializeCurrentAction/{roomId}")
+    public void initializeCurrentAction(@DestinationVariable long roomId, InitailizeCurrentActionMessage message) {
+        String destination = "/topic/initializeCurrentAction/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/resetCurrentAction")
-    @SendTo("/topic/resetCurrentAction")
-    public SenderMessage resetCurrentAction (SenderMessage message) {
-        return message;
+    @MessageMapping("/resetCurrentAction/{roomId}")
+    public void resetCurrentAction(@DestinationVariable long roomId, SenderMessage message) {
+        String destination = "/topic/resetCurrentAction/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/pushToUndoStack")
-    @SendTo("/topic/pushToUndoStack")
-    public SenderMessage pushToUndoStack (SenderMessage message) {
-        return message;
+    @MessageMapping("/pushToUndoStack/{roomId}")
+    public void pushToUndoStack(@DestinationVariable long roomId, SenderMessage message) {
+        String destination = "/topic/pushToUndoStack/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/undoRedo")
-    @SendTo("/topic/undoRedo")
-    public UndoRedoMessage undoRedoMessage (UndoRedoMessage message) {
-        return message;
+    @MessageMapping("/undoRedo/{roomId}")
+    public void undoRedoMessage(@DestinationVariable long roomId, UndoRedoMessage message) {
+        String destination = "/topic/undoRedo/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
     }
 
 

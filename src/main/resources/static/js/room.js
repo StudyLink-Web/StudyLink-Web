@@ -24,7 +24,7 @@ function startHeartbeat() {
         } else {
             // 서버에 ping 전송 (STOMP로 메시지 보내기)
             if (stompClient && stompClient.connected) {
-                stompClient.send("/app/ping", {}, JSON.stringify({senderId: senderId}));
+                safeSend("/app/ping", {senderId: senderId});
             }
         }
     }, HEARTBEAT_INTERVAL);
@@ -48,14 +48,14 @@ function connect() {
         console.log('Connected: ' + frame);
 
         // 구독
-        stompClient.subscribe('/topic/pong', function(message) {
+        stompClient.subscribe(`/topic/pong/${roomId}`, function(message) {
             const msg = JSON.parse(message.body);
             if (msg.senderId !== senderId) return;
             lastPong = Date.now(); // pong 도착 시 갱신
         });
 
         // 채팅창
-        stompClient.subscribe('/topic/sendMessage', function(message){
+        stompClient.subscribe(`/topic/sendMessage/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             // 일반적으로 본인 메시지는 무시하지만 messageId를 받기위해 허용
             // if (msg.senderId == senderId){ // 본인 메시지는 무시
@@ -78,14 +78,14 @@ function connect() {
         });
 
         // 이 요청 받으면 해당 메시지 읽음 처리하기(1 제거)
-        stompClient.subscribe('/topic/readMessage', function(message){
+        stompClient.subscribe(`/topic/readMessage/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             readMessage(msg.messageId);
         });
 
         // 이 요청 받으면 모든 메시지에서 1제거(상대방 입장)
-        stompClient.subscribe('/topic/enterRoom', function(message){
+        stompClient.subscribe(`/topic/enterRoom/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             readAllMessage();
@@ -113,7 +113,7 @@ function connect() {
         });
 
         // 그리기
-        stompClient.subscribe('/topic/draw', function(message){
+        stompClient.subscribe(`/topic/draw/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, drawLine);
@@ -121,7 +121,7 @@ function connect() {
         });
 
         // 지우기
-        stompClient.subscribe('/topic/erase', function(message){
+        stompClient.subscribe(`/topic/erase/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, eraseInterpolated);
@@ -129,7 +129,7 @@ function connect() {
         });
 
         // 영역 선택 모드 on/off
-        stompClient.subscribe('/topic/selectMode', function(message){
+        stompClient.subscribe(`/topic/selectMode/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             if (msg.type === 'selectModeOn') {
@@ -145,7 +145,7 @@ function connect() {
         });
 
         // select
-        stompClient.subscribe('/topic/select', function(message){
+        stompClient.subscribe(`/topic/select/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, objectUpdate);
@@ -153,28 +153,28 @@ function connect() {
         });
 
         // currentAction 초기화
-        stompClient.subscribe('/topic/initializeCurrentAction', function(message){
+        stompClient.subscribe(`/topic/initializeCurrentAction/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, initializeCurrentAction);
         });
 
         // currentAction 리셋
-        stompClient.subscribe('/topic/resetCurrentAction', function(message){
+        stompClient.subscribe(`/topic/resetCurrentAction/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, resetCurrentAction);
         });
 
         // undoStack에 currentAction push
-        stompClient.subscribe('/topic/pushToUndoStack', function(message){
+        stompClient.subscribe(`/topic/pushToUndoStack/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, pushToUndoStack);
         });
 
         // undo, redo
-        stompClient.subscribe('/topic/undoRedo', function(message){
+        stompClient.subscribe(`/topic/undoRedo/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             if (msg.type === 'undo') {
@@ -215,7 +215,7 @@ function connect() {
 
 function safeSend(destination, message) {
     if (stompClient && stompClient.connected) {
-        stompClient.send(destination, {}, JSON.stringify(message));
+        stompClient.send(destination + '/' + roomId, {}, JSON.stringify(message));
     }
 }
 
