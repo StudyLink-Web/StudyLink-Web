@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<body>
+<div layout:fragment="content" class="content_box">
+
+    <h1>커뮤니티 글 등록</h1>
+
+    <div th:if="${msg != null}" class="alert alert-danger" th:text="${msg}"></div>
+
+    <form th:action="@{/community/post/register}"
+          th:object="${post}"
+          method="post"
+          enctype="multipart/form-data">
+
+        <input type="hidden" th:if="${_csrf != null}"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}"/>
+
+        <div class="mb-3">
+            <label class="form-label">제목</label>
+            <input type="text" th:field="*{title}" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">내용</label>
+            <textarea th:field="*{content}" class="form-control" rows="10" required></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">첨부파일</label>
+            <input type="file" name="uploadFiles" class="form-control" multiple>
+        </div>
+
+        <button type="submit" class="btn btn-primary">등록</button>
+        <a th:href="@{/community/post/list}" class="btn btn-secondary">목록</a>
+    </form>
+
+</div>
+</body>
+</html>
