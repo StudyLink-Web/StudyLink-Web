@@ -6,33 +6,33 @@ import org.springframework.data.domain.Page;
 
 public interface CommunityService {
 
-    default Community convertDtoToEntity(CommunityDTO communityDTO) {
-        if (communityDTO == null) return null;
+    /* CommunityDTO -> Community */
+    default Community convertDtoToEntity(CommunityDTO dto) {
+        if (dto == null) return null;
 
         return Community.builder()
-                .userId(communityDTO.getUserId())
-                .email(communityDTO.getEmail())
-                .name(communityDTO.getName())
-                .nickname(communityDTO.getNickname())
-                .role(communityDTO.getRole())
-                .pagenum(communityDTO.getPagenum())
-                .bno(communityDTO.getBno())
+                .bno(dto.getBno())
+                .title(dto.getTitle())
+                .writer(dto.getWriter())
+                .readCount(dto.getReadCount())
+                .cmtQty(dto.getCmtQty())
+                .fileQty(dto.getFileQty())
                 .build();
     }
 
-    default CommunityDTO convertEntityToDto(Community community) {
-        if (community == null) return null;
+    /* Community -> CommunityDTO */
+    default CommunityDTO convertEntityToDto(Community entity) {
+        if (entity == null) return null;
 
         return CommunityDTO.builder()
-                .userId(community.getUserId())
-                .email(community.getEmail())
-                .name(community.getName())
-                .nickname(community.getNickname())
-                .role(community.getRole())
-                .pagenum(community.getPagenum())
-                .bno(community.getBno())
-                .createdAt(community.getCreatedAt())
-                .updatedAt(community.getUpdatedAt())
+                .bno(entity.getBno())
+                .title(entity.getTitle())
+                .writer(entity.getWriter())
+                .readCount(entity.getReadCount())
+                .cmtQty(entity.getCmtQty())
+                .fileQty(entity.getFileQty())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
                 .build();
     }
 
@@ -40,9 +40,9 @@ public interface CommunityService {
 
     Page<CommunityDTO> getList(int pageNo);
 
-    CommunityDTO getDetail(Long userId);
+    CommunityDTO getDetail(Long bno);
 
     Long modify(CommunityDTO communityDTO);
 
-    void remove(Long userId);
+    void remove(Long bno);
 }

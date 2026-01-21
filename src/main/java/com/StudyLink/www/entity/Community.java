@@ -1,4 +1,5 @@
 package com.StudyLink.www.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,24 +15,21 @@ public class Community extends TimeBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
-    private Long userId;
-
-    @Column(length = 255, nullable = false, unique = true)
-    private String email;
-
-    @Column(length = 100, nullable = false)
-    private String name;
-
-    @Column(length = 100, nullable = false)
-    private String nickname;
-
-    @Column(length = 50, nullable = false)
-    private String role;
-
-    @Column
-    private Long pagenum;
-
-    @Column
+    @Column(name = "bno")
     private Long bno;
+
+    @Column(length = 255, nullable = false)
+    private String title;
+
+    @Column(length = 100, nullable = false)
+    private String writer;
+
+    @Column(name = "read_count", nullable = false)
+    private int readCount;
+
+    @Column(name = "cmt_qty", nullable = false)
+    private int cmtQty;
+
+    @Column(name = "file_qty", nullable = false)
+    private int fileQty;
 }

@@ -20,30 +20,31 @@ public class CommunityServiceImpl implements CommunityService {
     @Transactional
     @Override
     public Long insert(CommunityDTO communityDTO) {
-        if (communityDTO == null) throw new IllegalArgumentException("communityDTO is null");
-
-        // userId가 이미 있으면(중복/갱신 시도) insert가 아니라 modify로 처리되게 방어
-        if (communityDTO.getUserId() != null && communityRepository.existsById(communityDTO.getUserId())) {
-            return modify(communityDTO);
+        if (communityDTO == null) {
+            throw new IllegalArgumentException("communityDTO is null");
         }
 
         Community community = convertDtoToEntity(communityDTO);
-        return communityRepository.save(community).getUserId();
+        return communityRepository.save(community).getBno();
     }
 
     @Transactional(readOnly = true)
     @Override
     public Page<CommunityDTO> getList(int pageNo) {
         int safePageNo = Math.max(pageNo, 1);
-        Pageable pageable = PageRequest.of(safePageNo - 1, 10, Sort.by("userId").descending());
-        return communityRepository.findAll(pageable).map(this::convertEntityToDto);
+        Pageable pageable =
+                PageRequest.of(safePageNo - 1, 10, Sort.by(Sort.Direction.DESC, "bno"));
+
+        return communityRepository.findAll(pageable)
+                .map(this::convertEntityToDto);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public CommunityDTO getDetail(Long userId) {
-        if (userId == null) return null;
-        return communityRepository.findById(userId)
+    public CommunityDTO getDetail(Long bno) {
+        if (bno == null) return null;
+
+        return communityRepository.findById(bno)
                 .map(this::convertEntityToDto)
                 .orElse(null);
     }
@@ -51,33 +52,31 @@ public class CommunityServiceImpl implements CommunityService {
     @Transactional
     @Override
     public Long modify(CommunityDTO communityDTO) {
-        if (communityDTO == null) throw new IllegalArgumentException("communityDTO is null");
-        if (communityDTO.getUserId() == null) throw new IllegalArgumentException("userId is null");
-
-        Community community = communityRepository.findById(communityDTO.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 커뮤니티 사용자"));
-
-        // email은 보통 수정 불가(고유값/로그인키)라서 null/blank면 기존값 유지
-        if (communityDTO.getEmail() != null && !communityDTO.getEmail().isBlank()) {
-            community.setEmail(communityDTO.getEmail());
+        if (communityDTO == null) {
+            throw new IllegalArgumentException("communityDTO is null");
+        }
+        if (communityDTO.getBno() == null) {
+            throw new IllegalArgumentException("bno is null");
         }
 
-        if (communityDTO.getName() != null) community.setName(communityDTO.getName());
-        if (communityDTO.getNickname() != null) community.setNickname(communityDTO.getNickname());
-        if (communityDTO.getRole() != null && !communityDTO.getRole().isBlank()) community.setRole(communityDTO.getRole());
+        Community community = communityRepository.findById(communityDTO.getBno())
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 커뮤니티 글"));
 
-        community.setPagenum(communityDTO.getPagenum());
-        community.setBno(communityDTO.getBno());
+        community.setTitle(communityDTO.getTitle());
+        community.setWriter(communityDTO.getWriter());
+        community.setReadCount(communityDTO.getReadCount());
+        community.setCmtQty(communityDTO.getCmtQty());
+        community.setFileQty(communityDTO.getFileQty());
 
-        // dirty checking으로 update (save() 불필요)
-        return community.getUserId();
+        return community.getBno();
     }
 
     @Transactional
     @Override
-    public void remove(Long userId) {
-        if (userId == null) return;
-        if (!communityRepository.existsById(userId)) return;
-        communityRepository.deleteById(userId);
+    public void remove(Long bno) {
+        if (bno == null) return;
+        if (!communityRepository.existsById(bno)) return;
+
+        communityRepository.deleteById(bno);
     }
 }
