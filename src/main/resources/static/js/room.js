@@ -285,10 +285,20 @@ function spreadFileMessage(msg, roomFileDTO) {
 
     // 이미지 파일
     if (roomFileDTO.fileType === 1) {
+        // 이미지 다운로드 링크 생성
+        const downloadLink = document.createElement('a');
+        downloadLink.href = `/room/loadFile/${roomFileDTO.uuid}`;
+        downloadLink.download = roomFileDTO.fileName;
+
+        // 이미지 생성
         const img = document.createElement('img');
         img.src = `/room/loadFile/${roomFileDTO.uuid}`; // img 태그의 src경로를 브라우저가 자동으로 get요청
         img.classList.add('chat-image');
-        msgDiv.appendChild(img);
+
+        // img를 a로 감싸기
+        downloadLink.appendChild(img);
+
+        msgDiv.appendChild(downloadLink);
 
         // 이미지가 로드 완료되면 스크롤
         img.onload = () => {
