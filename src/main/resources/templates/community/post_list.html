@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+  <meta charset="UTF-8">
+  <title>커뮤니티 글 목록</title>
+</head>
+
+<body>
+<div layout:fragment="content" class="content_box">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="m-0">커뮤니티 글 목록</h1>
+    <a th:href="@{/community/post/register}" class="btn btn-primary">글쓰기</a>
+  </div>
+
+  <div th:if="${page == null or page.content == null or #lists.isEmpty(page.content)}"
+       class="text-center">
+    <p>등록된 글이 없습니다.</p>
+  </div>
+
+  <div th:if="${page != null and page.content != null and !#lists.isEmpty(page.content)}">
+    <table class="table table-hover">
+      <thead>
+      <tr>
+        <th style="width:80px;">No</th>
+        <th>제목</th>
+        <th style="width:160px;">작성일</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr th:each="p, stat : ${page.content}">
+        <!-- 페이지 내 번호 -->
+        <td th:text="${stat.count}">1</td>
+
+        <td>
+          <a th:href="@{/community/post/detail(postId=${p.id})}"
+             th:text="${p.title}">제목</a>
+        </td>
+
+        <td th:text="${p.createdAt != null ? #temporals.format(p.createdAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+      </tr>
+      </tbody>
+    </table>
+
+    <!-- 페이징 -->
+    <nav th:if="${page.totalPages > 1}">
+      <ul class="pagination justify-content-center">
+
+        <!-- 이전 -->
+        <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+          <a class="page-link"
+             th:href="@{/community/post/list(pageNo=${page.number})}">
+            &laquo;
+          </a>
+        </li>
+
+        <!-- 페이지 번호 -->
+        <li class="page-item"
+            th:each="i : ${#numbers.sequence(1, page.totalPages)}"
+            th:classappend="${i == (page.number + 1)} ? 'active'">
+          <a class="page-link"
+             th:href="@{/community/post/list(pageNo=${i})}"
+             th:text="${i}">1</a>
+        </li>
+
+        <!-- 다음 -->
+        <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+          <a class="page-link"
+             th:href="@{/community/post/list(pageNo=${page.number + 2})}">
+            &raquo;
+          </a>
+        </li>
+
+      </ul>
+    </nav>
+
+  </div>
+
+</div>
+</body>
+</html>

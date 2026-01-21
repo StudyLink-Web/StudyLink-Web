@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>커뮤니티 글 상세</title>
+</head>
+
+<body>
+<div layout:fragment="content" class="content_box">
+
+    <div th:if="${post == null}">
+        <h2>글을 찾을 수 없습니다.</h2>
+        <a th:href="@{/community/post/list}" class="btn btn-secondary">목록</a>
+    </div>
+
+    <div th:if="${post != null}">
+        <h1 th:text="${post.title}">제목</h1>
+
+        <div class="text-muted mb-3">
+            <span th:text="${post.createdAt != null ? #temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm') : '-'}">-</span>
+            <span th:if="${post.writerEmail != null}">
+        &nbsp;|&nbsp; <span th:text="${post.writerEmail}">writer@email.com</span>
+      </span>
+        </div>
+
+        <hr/>
+
+        <!-- 내용 -->
+        <div style="white-space: pre-wrap;" th:text="${post.content}">내용</div>
+
+        <hr/>
+
+        <!-- 첨부파일 목록(현재 DTO에 파일 리스트를 안 내려주므로, 추후 확장 자리만 잡아둠) -->
+        <div class="mt-3">
+            <h5>첨부파일</h5>
+            <p class="text-muted">현재는 파일 목록 노출/다운로드 기능을 아직 연결하지 않았습니다.</p>
+            <!--
+            <ul>
+              <li th:each="f : ${post.files}">
+                <a th:href="@{/community/post/file(downloadId=${f.id})}" th:text="${f.originalName}">file</a>
+              </li>
+            </ul>
+            -->
+        </div>
+
+        <div class="mt-4">
+            <a th:href="@{/community/post/list}" class="btn btn-secondary">목록</a>
+            <a th:href="@{/community/post/register}" class="btn btn-primary">새 글</a>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
