@@ -12,6 +12,9 @@ target/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+### QType ###
+/src/main/generated
+
 ### STS ###
 .apt_generated
 .classpath

@@ -190,18 +190,18 @@ function connect() {
 
 
         // connect가 비동기함수이므로 연결이 완료된 후 실행되야하는 함수들은 여기 작성(밖에 작성시 연결되기 전에 실행 될 수 있음)
-        loadMessage(roomId).then(result => { // 채팅기록 불러오기
+        loadMessage(roomId).then(async result => { // 채팅기록 불러오기
             console.log("💬 로드된 메시지 수:", result.length);
             for(let message of result){
                 // 서버에서 메시지 읽음 처리
-                readMessageToServer(message.messageId);
+                await readMessageToServer(message.messageId);
 
                 if (message.messageType === "TEXT") {
                     spreadTextMessage(message);
                 } else {
-                    loadRoomFileDTO(message.fileUuid).then(result => {
-                        spreadFileMessage(message, result);
-                    });
+                    // await로 순서 보장
+                    const roomFileDTO = await loadRoomFileDTO(message.fileUuid);
+                    spreadFileMessage(message, roomFileDTO);
                 }
             }
             safeSend("/app/enterRoom", {roomId: roomId})
