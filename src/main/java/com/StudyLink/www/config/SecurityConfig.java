@@ -77,7 +77,8 @@ public class SecurityConfig {
                                 "/api/chatbot/archive/**", // 추가: 챗봇 아카이브 API CSRF 제외
                                 "/room/**",               // 방 관련 요청 허용
                                 "/map/**",                // 추가: 지도 관련 요청 CSRF 제외
-                                "/api/cover-letter/**"    // ✅ 추가: 자소서 API CSRF 제외
+                                "/api/cover-letter/**",   // 추가: 자소서 API CSRF 제외
+                                "/api/fcm/**"             // 추가: FCM 푸시 알림 API CSRF 제외
                         )
                 )
 
@@ -134,6 +135,7 @@ public class SecurityConfig {
                                 // ✅ API는 모두 공개 (테스트용)
                                 "/api/**",
                                 "/api/auth/**",
+                                "/api/fcm/**",          // ✅ 추가: FCM 푸시 알림 API 공개
 
                                 "/room/list",
                                 "/room/enterRoom",

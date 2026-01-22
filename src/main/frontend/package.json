@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "firebase": "^12.8.0",
     "framer-motion": "^12.27.0",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
@@ -33,6 +34,7 @@
     "tailwindcss": "^3.4.19",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vite-plugin-pwa": "^1.2.0"
   }
 }
