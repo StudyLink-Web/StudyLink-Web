@@ -46,7 +46,7 @@ dependencies {
 	implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
 
 	// ===== Database =====
-	implementation 'com.mysql:mysql-connector-j:8.0.33'  // ✅ 최신 MySQL 드라이버
+	implementation 'com.mysql:mysql-connector-j:8.0.33'  // 최신 MySQL 드라이버
 	implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
 
 	// ===== MongoDB =====
@@ -101,30 +101,30 @@ tasks.withType(JavaCompile) {
 def frontendDir = "$projectDir/src/main/frontend"
 
 task installFrontend(type: Exec) {
-    workingDir "$frontendDir"
-    inputs.file("$frontendDir/package.json")
-    outputs.dir("$frontendDir/node_modules")
-    group = 'frontend'
+	workingDir "$frontendDir"
+	inputs.file("$frontendDir/package.json")
+	outputs.dir("$frontendDir/node_modules")
+	group = 'frontend'
 
-    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
-        commandLine 'npm.cmd', 'install'
-    } else {
-        commandLine 'npm', 'install'
-    }
+	if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+		commandLine 'npm.cmd', 'install'
+	} else {
+		commandLine 'npm', 'install'
+	}
 }
 
 task buildFrontend(type: Exec) {
-    dependsOn installFrontend
-    workingDir "$frontendDir"
-    inputs.dir("$frontendDir/src")
-    outputs.dir("$projectDir/src/main/resources/static/js")
-    group = 'frontend'
+	dependsOn installFrontend
+	workingDir "$frontendDir"
+	inputs.dir("$frontendDir/src")
+	outputs.dir("$projectDir/src/main/resources/static/js")
+	group = 'frontend'
 
-    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
-        commandLine 'npm.cmd', 'run', 'build'
-    } else {
-        commandLine 'npm', 'run', 'build'
-    }
+	if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+		commandLine 'npm.cmd', 'run', 'build'
+	} else {
+		commandLine 'npm', 'run', 'build'
+	}
 }
 
 // Spring Boot 리소스 처리 시 리액트 빌드를 먼저 수행하도록 함

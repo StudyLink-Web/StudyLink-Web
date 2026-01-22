@@ -35,5 +35,11 @@
 .profil_img img {position: absolute; top:50%; left:50%; transform: translate(-50%,-50%); width:40px; height:40px;}
 
 .board_title_class, .nowrapbox {width:100%; max-width:450px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.community_tab {display:flex; justify-content:center; align-items:center; gap:20px;}
+.community_tab li {border:1px solid #ededed; border-radius: 10px; padding:10px; cursor:pointer;}
+.community_tab li.active {background: var(--primary-color); color:#fff;}
 
-
+/* 취준생 */
+.community_table_wrap {width:100%; border-collapse: collapse;}
+.community_table {width:100%;}
+.community_table th, td {text-align: center; padding:10px; border:1px solid #ededed;}

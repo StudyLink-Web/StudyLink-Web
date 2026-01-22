@@ -58,7 +58,7 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final StringPath profileImageUrl = createString("profileImageUrl");
 
-    public final StringPath role = createString("role");
+    public final EnumPath<Role> role = createEnum("role", Role.class);
 
     public final StringPath schoolEmail = createString("schoolEmail");
 

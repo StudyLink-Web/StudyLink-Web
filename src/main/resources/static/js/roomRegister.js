@@ -123,23 +123,27 @@ if (roomDTO.status === 'TEMP') {
     // 초기화
     mentorSelect.innerHTML = '';
 
-    // 🔥 favoriteList로 멘토 옵션 생성
-    favoriteList.forEach(fav => {
-        const option = document.createElement('option');
-        option.value = fav.mentorId;       // 서버로 보낼 값
-        option.textContent = fav.mentorName; // 화면 표시
-        mentorSelect.appendChild(option);
-    });
+    // favoriteList로 멘토 옵션 생성
+    if (favoriteList.length > 0) {
+        favoriteList.forEach(fav => {
+            const option = document.createElement('option');
+            option.value = fav.mentorId;       // 서버로 보낼 값
+            option.textContent = fav.mentorName; // 화면 표시
+            mentorSelect.appendChild(option);
+        });
 
-    // 체크박스에 따라 활성/비활성
-    checkbox.addEventListener('change', () => {
-        mentorSelect.disabled = !checkbox.checked;
+        // 체크박스에 따라 활성/비활성
+        checkbox.addEventListener('change', () => {
+            mentorSelect.disabled = !checkbox.checked;
+        });
 
-        // 체크 해제 시 값 초기화
-        if (!checkbox.checked) {
-            mentorSelect.value = '';
-        }
-    });
+    } else {
+        // 리스트가 비었으면 체크박스 비활성
+        checkbox.disabled = true;
+        checkbox.checked = false;
+        mentorSelect.disabled = true;
+        mentorSelect.value = '';
+    }
 
 
     // point
@@ -278,6 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (isFavorited) {
         favoriteCheckbox.disabled = true;  // 체크박스 비활성화
+        document.getElementById('favoriteMessage').style.display = 'block';
     }
 });
 

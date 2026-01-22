@@ -8,8 +8,8 @@ if (message != null) {
 let socket;
 let lastPong = Date.now();
 let heartbeatInterval;
-const HEARTBEAT_INTERVAL = 1000; // 1초마다 ping
-const TIMEOUT = 3000; // 3초 동안 응답 없으면 끊김으로 판단
+const HEARTBEAT_INTERVAL = 2000; // 2초마다 ping
+const TIMEOUT = 6000; // 3초 동안 응답 없으면 끊김으로 판단
 
 function startHeartbeat() {
     lastPong = Date.now();
@@ -24,7 +24,7 @@ function startHeartbeat() {
         } else {
             // 서버에 ping 전송 (STOMP로 메시지 보내기)
             if (stompClient && stompClient.connected) {
-                stompClient.send("/app/ping", {}, JSON.stringify({senderId: senderId}));
+                safeSend("/app/ping", {senderId: senderId});
             }
         }
     }, HEARTBEAT_INTERVAL);
@@ -48,14 +48,14 @@ function connect() {
         console.log('Connected: ' + frame);
 
         // 구독
-        stompClient.subscribe('/topic/pong', function(message) {
+        stompClient.subscribe(`/topic/pong/${roomId}`, function(message) {
             const msg = JSON.parse(message.body);
             if (msg.senderId !== senderId) return;
             lastPong = Date.now(); // pong 도착 시 갱신
         });
 
         // 채팅창
-        stompClient.subscribe('/topic/sendMessage', function(message){
+        stompClient.subscribe(`/topic/sendMessage/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             // 일반적으로 본인 메시지는 무시하지만 messageId를 받기위해 허용
             // if (msg.senderId == senderId){ // 본인 메시지는 무시
@@ -78,14 +78,14 @@ function connect() {
         });
 
         // 이 요청 받으면 해당 메시지 읽음 처리하기(1 제거)
-        stompClient.subscribe('/topic/readMessage', function(message){
+        stompClient.subscribe(`/topic/readMessage/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             readMessage(msg.messageId);
         });
 
         // 이 요청 받으면 모든 메시지에서 1제거(상대방 입장)
-        stompClient.subscribe('/topic/enterRoom', function(message){
+        stompClient.subscribe(`/topic/enterRoom/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             readAllMessage();
@@ -94,8 +94,26 @@ function connect() {
 
 
         // 캔버스
+        // 동기화
+        // 전역변수 초기화
+        stompClient.subscribe('/topic/sync/' + roomId, msg => {
+            const message = JSON.parse(msg.body);
+            if (message.type === 'START') {
+                showLoading();
+                resetCanvasStateForSync();
+            }
+            if (message.type === 'DATA') {
+                loadCanvas(message.payload.drawData);
+                loadUndoRedo(message.payload.undoRedoStack);
+                scheduleRender();
+            }
+            if (message.type === 'END') {
+                hideLoading();
+            }
+        });
+
         // 그리기
-        stompClient.subscribe('/topic/draw', function(message){
+        stompClient.subscribe(`/topic/draw/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, drawLine);
@@ -103,7 +121,7 @@ function connect() {
         });
 
         // 지우기
-        stompClient.subscribe('/topic/erase', function(message){
+        stompClient.subscribe(`/topic/erase/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, eraseInterpolated);
@@ -111,7 +129,7 @@ function connect() {
         });
 
         // 영역 선택 모드 on/off
-        stompClient.subscribe('/topic/selectMode', function(message){
+        stompClient.subscribe(`/topic/selectMode/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             if (msg.type === 'selectModeOn') {
@@ -127,7 +145,7 @@ function connect() {
         });
 
         // select
-        stompClient.subscribe('/topic/select', function(message){
+        stompClient.subscribe(`/topic/select/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, objectUpdate);
@@ -135,28 +153,28 @@ function connect() {
         });
 
         // currentAction 초기화
-        stompClient.subscribe('/topic/initializeCurrentAction', function(message){
+        stompClient.subscribe(`/topic/initializeCurrentAction/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, initializeCurrentAction);
         });
 
         // currentAction 리셋
-        stompClient.subscribe('/topic/resetCurrentAction', function(message){
+        stompClient.subscribe(`/topic/resetCurrentAction/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, resetCurrentAction);
         });
 
         // undoStack에 currentAction push
-        stompClient.subscribe('/topic/pushToUndoStack', function(message){
+        stompClient.subscribe(`/topic/pushToUndoStack/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             handleMessage(msg, pushToUndoStack);
         });
 
         // undo, redo
-        stompClient.subscribe('/topic/undoRedo', function(message){
+        stompClient.subscribe(`/topic/undoRedo/${roomId}`, function(message){
             const msg = JSON.parse(message.body);
             if (msg.senderId === senderId) return;
             if (msg.type === 'undo') {
@@ -172,35 +190,32 @@ function connect() {
 
 
         // connect가 비동기함수이므로 연결이 완료된 후 실행되야하는 함수들은 여기 작성(밖에 작성시 연결되기 전에 실행 될 수 있음)
-        loadMessage(roomId).then(result => { // 채팅기록 불러오기
+        loadMessage(roomId).then(async result => { // 채팅기록 불러오기
             console.log("💬 로드된 메시지 수:", result.length);
             for(let message of result){
                 // 서버에서 메시지 읽음 처리
-                readMessageToServer(message.messageId);
+                await readMessageToServer(message.messageId);
 
                 if (message.messageType === "TEXT") {
                     spreadTextMessage(message);
                 } else {
-                    loadRoomFileDTO(message.fileUuid).then(result => {
-                        spreadFileMessage(message, result);
-                    });
+                    // await로 순서 보장
+                    const roomFileDTO = await loadRoomFileDTO(message.fileUuid);
+                    spreadFileMessage(message, roomFileDTO);
                 }
             }
-            safeSend("/app/enterRoom", {roomId: roomId, senderId: senderId})
+            safeSend("/app/enterRoom", {roomId: roomId})
         }).catch(error => {
             console.error("❌ 메시지 로드 실패:", error);
         });
-        readDrawData();
-        loadUndoRedoStack();
-        scheduleRender();
 
-        startHeartbeat();
+        startHeartbeat(); // 서버 연결 탐지
     });
 }
 
 function safeSend(destination, message) {
     if (stompClient && stompClient.connected) {
-        stompClient.send(destination, {}, JSON.stringify(message));
+        stompClient.send(destination + '/' + roomId, {}, JSON.stringify(message));
     }
 }
 
@@ -270,10 +285,20 @@ function spreadFileMessage(msg, roomFileDTO) {
 
     // 이미지 파일
     if (roomFileDTO.fileType === 1) {
+        // 이미지 다운로드 링크 생성
+        const downloadLink = document.createElement('a');
+        downloadLink.href = `/room/loadFile/${roomFileDTO.uuid}`;
+        downloadLink.download = roomFileDTO.fileName;
+
+        // 이미지 생성
         const img = document.createElement('img');
         img.src = `/room/loadFile/${roomFileDTO.uuid}`; // img 태그의 src경로를 브라우저가 자동으로 get요청
         img.classList.add('chat-image');
-        msgDiv.appendChild(img);
+
+        // img를 a로 감싸기
+        downloadLink.appendChild(img);
+
+        msgDiv.appendChild(downloadLink);
 
         // 이미지가 로드 완료되면 스크롤
         img.onload = () => {
@@ -485,15 +510,17 @@ let selectedTool = 'draw';
 
 // 랜더링 관련
 let renderScheduled = false;
+let lastRenderTime = 0;
+const RENDER_INTERVAL = 100; // 100ms마다 1번 랜더링
 
 // 그리기 관련
 let isDrawing = false;
 let lastPoint = null;
-const DRAW_STEP = 3; // px (작을수록 촘촘), 선 길이 조절
+const DRAW_STEP = 20; // px (작을수록 촘촘), 선 길이 조절
 let currentPointer = null;
 
 // 지우기 관련
-const ERASE_STEP = 3; // 지우기 점 간격
+const ERASE_STEP = 5; // 지우기 점 간격
 const ERASE_RADIUS = 10; // 지우개 반경
 
 // 영역선택 관련
@@ -504,7 +531,7 @@ let isTransform = false;
 // undo, redo와 관련된 메시지는 처리 순서가 중요
 // 항상 번호 순서대로 처리하기 위한 변수
 let lastSeq = 0; // 마지막 처리된 메시지 seq
-const pendingQueue = {}; // seq -> message
+let pendingQueue = {}; // seq -> message
 let mySeq = 1; // 내가 보낸 메시지 번호
 
 // undo, redo
@@ -514,6 +541,7 @@ let currentAction = null; // 현재 드래그 중인 액션
 
 // DB 작업 순차 실행용 큐
 let undoRedoQueue = Promise.resolve();
+
 
 // 툴 선택
 document.getElementById('btnradio1').addEventListener('click', () => selectTool('draw'));
@@ -529,6 +557,25 @@ document.getElementById('btnradio3').addEventListener('click', (e) => {
 
 document.getElementById('btnradio4').addEventListener('click', () => safeUndoRedo('undo'));
 document.getElementById('btnradio5').addEventListener('click', () => safeUndoRedo('redo'));
+
+// 초기화 함수
+function resetCanvasStateForSync() {
+    // 1. 캔버스 초기화
+    canvas.getObjects().forEach(obj => canvas.remove(obj));
+
+    // 2. undo/redo 초기화
+    undoStack = [];
+    redoStack = [];
+    currentAction = null;
+
+    // 3. 메시지 순서 관련 초기화
+    lastSeq = 0;
+    pendingQueue = {};
+    mySeq = 1;
+
+    // 4. DB 큐 초기화
+    undoRedoQueue = Promise.resolve();
+}
 
 function safeUndoRedo(actionType) {
     if (actionType === 'undo') {
@@ -571,14 +618,17 @@ function selectTool(tool) {
     }
 }
 
-// 렌더링 요청이 많아도 화면 렌더링은 한 프레임에 1회로 제한
+// 렌더링 요청이 많아도 화면 렌더링은 일정 프레임에 1회로 제한
 function scheduleRender() {
-    if (renderScheduled) return;
-    renderScheduled = true;
-    requestAnimationFrame(() => {
-        canvas.requestRenderAll();
-        renderScheduled = false;
-    });
+    const now = performance.now();
+    if (!renderScheduled && now - lastRenderTime >= RENDER_INTERVAL) {
+        renderScheduled = true;
+        requestAnimationFrame(() => {
+            canvas.requestRenderAll();
+            lastRenderTime = performance.now();
+            renderScheduled = false;
+        });
+    }
 }
 
 // 메시지가 번호순서대로 처리되도록하는 함수
@@ -1097,44 +1147,26 @@ function sendUndoRedoMessage(type){
     safeSend('/app/undoRedo', message)
 }
 
+// draw_data
+function loadCanvas(drawDataList) {
+    if (!drawDataList || !Array.isArray(drawDataList)) return;
 
-async function readDrawData(){
-    try {
-        console.log("캔버스 불러오기 시작");
-        const response = await fetch(`/room/readDrawData?roomId=${roomId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+    // 기존 캔버스 초기화
+    canvas.getObjects('line').forEach(line => canvas.remove(line));
+
+    // 받아온 데이터로 캔버스에 선 그리기
+    drawDataList.forEach(data => {
+        const line = new fabric.Line([data.x1, data.y1, data.x2, data.y2], {
+            uuid: data.uuid,
+            stroke: '#000',
+            strokeWidth: 2,
+            selectable: false,
+            evented: false,
+            strokeLineCap: 'round',
+            strokeLineJoin: 'round'
         });
-
-        if (!response.ok) {
-            const err = await response.text();
-            alert('불러오기 실패: ' + err);
-            return;
-        }
-
-        const drawDataList = await response.json();
-
-        // 기존 캔버스 초기화 (선만 지우고 싶다면 line만 삭제)
-        canvas.getObjects('line').forEach(line => canvas.remove(line));
-
-        // 받아온 데이터로 캔버스에 선 그리기
-        drawDataList.forEach(data => {
-            const line = new fabric.Line([data.x1, data.y1, data.x2, data.y2], {
-                uuid: data.uuid,
-                stroke: '#000',
-                strokeWidth: 2,
-                selectable: false,
-                evented: false,
-                strokeLineCap: 'round',
-                strokeLineJoin: 'round'
-            });
-            canvas.add(line);
-        });
-    } catch (e) {
-        alert('서버 연결 실패: ' + e.message);
-    }
+        canvas.add(line);
+    });
 }
 
 async function saveUndoRedoStack(undoRedoStackDTO) {
@@ -1152,25 +1184,14 @@ async function saveUndoRedoStack(undoRedoStackDTO) {
     }
 }
 
-async function loadUndoRedoStack() {
-    try {
-        const response = await fetch(`/room/loadUndoRedoStack?roomId=${roomId}`, {
-            method: 'GET'
-        });
+// redo_undo_stack
+function loadUndoRedo(stack) {
+    if (!stack) return;
 
-        if (!response.ok) {
-            console.error('stack DB 저장 실패');
-            return;
-        }
-        result = await response.json();
-
-        undoStack = result.undoStack;
-        redoStack = result.redoStack;
-
-    } catch (e) {
-        console.error('서버 연결 실패:', e);
-    }
+    undoStack = Array.isArray(stack.undoStack) ? stack.undoStack.slice() : [];
+    redoStack = Array.isArray(stack.redoStack) ? stack.redoStack.slice() : [];
 }
+
 
 // 라디오 클릭 방지 + UI 동기화
 document.querySelectorAll('input[name="btnradio"]').forEach(radio => {
@@ -1206,6 +1227,71 @@ function updateToolUI() {
     });
 }
 
+/**
+ * 로딩 화면 표시
+ */
+function showLoading() {
+    let loader = document.getElementById('loading-overlay');
+    if (!loader) {
+        loader = document.createElement('div');
+        loader.id = 'loading-overlay';
+
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        loader.appendChild(spinner);
+
+        document.body.appendChild(loader);
+    }
+
+    loader.style.display = 'flex';
+}
+
+/**
+ * 로딩 화면 숨기기
+ */
+function hideLoading() {
+    const loader = document.getElementById('loading-overlay');
+    if (loader) loader.style.display = 'none';
+}
+
+/**
+ * 캔버스와 메시지 입력 영역 비활성화
+ */
+function disableCanvasAndMessage() {
+    // 캔버스 상호작용 차단
+    if (canvas && canvas.upperCanvasEl) {
+        canvas.upperCanvasEl.style.pointerEvents = 'none';
+    }
+
+    // 메시지 입력 영역
+    const messageTextarea = document.querySelector('textarea[name="message"]');
+    const fileInput = document.getElementById('file');
+    const sendFileBtn = document.getElementById('sendFileBtn');
+
+    if (messageTextarea) messageTextarea.disabled = true;
+    if (fileInput) fileInput.disabled = true;
+    if (sendFileBtn) sendFileBtn.disabled = true;
+}
+
+
+/**
+ * 캔버스와 메시지 입력 영역 활성화
+ */
+function enableCanvasAndMessage() {
+    // 캔버스 상호작용 허용
+    if (canvas && canvas.upperCanvasEl) {
+        canvas.upperCanvasEl.style.pointerEvents = 'auto';
+    }
+
+    // 메시지 입력 영역
+    const messageTextarea = document.querySelector('textarea[name="message"]');
+    const fileInput = document.getElementById('file');
+    const sendFileBtn = document.getElementById('sendFileBtn');
+
+    if (messageTextarea) messageTextarea.disabled = false;
+    if (fileInput) fileInput.disabled = false;
+    if (sendFileBtn) sendFileBtn.disabled = false;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     // 접근 권한 체크. 권한이 있는 사용자만 캔버스, 메시지 이용가능
@@ -1215,20 +1301,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 캔버스 활성/비활성
     if (canUseCanvasAndMessage) {
-        canvas.upperCanvasEl.style.pointerEvents = 'auto';
+        enableCanvasAndMessage();
     } else {
-        canvas.upperCanvasEl.style.pointerEvents = 'none';
+        disableCanvasAndMessage();
     }
-
-    // 메시지 입력 영역
-    const messageTextarea = document.querySelector('textarea[name="message"]');
-    const fileInput = document.getElementById('file');
-    const sendFileBtn = document.getElementById('sendFileBtn');
-
-    messageTextarea.disabled = !canUseCanvasAndMessage;
-    fileInput.disabled = !canUseCanvasAndMessage;
-    sendFileBtn.disabled = !canUseCanvasAndMessage;
-
 
 
     // canvas 이벤트 바인딩

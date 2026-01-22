@@ -45,7 +45,7 @@ public class UsersDTO {
         this.name = user.getName();
         this.nickname = user.getNickname();
         this.username = user.getUsername();
-        this.role = user.getRole();
+        this.role = String.valueOf(user.getRole());
         this.emailVerified = user.getEmailVerified();
         this.isStudentVerified = user.getIsStudentVerified();
         this.isActive = user.getIsActive();

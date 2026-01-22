@@ -49,6 +49,8 @@ public class MyPageService {
             userInfo.put("profileImageUrl", user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "/img/default-profile.png");
             userInfo.put("isActive", true);
             userInfo.put("emailVerified", true);
+            // Role을 String으로 변환하여 추가
+            userInfo.put("role", user.getRole() != null ? user.getRole().toString() : "STUDENT");
         }
 
         return userInfo;
@@ -97,8 +99,9 @@ public class MyPageService {
     public String getUserRole(Long userId) {
         var user = userRepository.findById(userId).orElse(null);
         if (user != null && user.getRole() != null) {
-            return user.getRole();
+            // Role Enum을 String으로 변환
+            return user.getRole().toString();
         }
-        return "USER";
+        return "STUDENT";  // 기본값도 STUDENT로 변경
     }
 }

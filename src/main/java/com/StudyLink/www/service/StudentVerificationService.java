@@ -1,5 +1,6 @@
 package com.StudyLink.www.service;
 
+import com.StudyLink.www.entity.Role;
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -269,7 +270,7 @@ public class StudentVerificationService {
                 "            <div style=\"font-size: 18px; color: #1e3c72; font-weight: 600; margin-bottom: 20px;\">안녕하세요! 👋</div>\n" +
                 "            <p style=\"font-size: 15px; line-height: 1.8; color: #555555; margin: 0 0 15px 0;\">\n" +
                 "                StudyLink에 가입해주셔서 감사합니다!<br>\n" +
-                "                아래 버튼을 클릭하여 대학생 인증을 완료하시면 모든 프리미엄 기능을 이용하실 수 있습니다.\n" +
+                "                아래 버튼을 클릭하여 대학생 인증을 완료하시면 모든 멘토 기능을 이용하실 수 있습니다.\n" +
                 "            </p>\n" +
                 "            <table width=\"100%\" style=\"background: #f8f9fa; border-radius: 8px; border-collapse: collapse; margin: 30px 0; border-left: 4px solid #2c5aa0;\">\n" +
                 "                <tr>\n" +
@@ -414,7 +415,7 @@ public class StudentVerificationService {
             user.setSchoolEmailVerifiedAt(LocalDateTime.now());
 
             // 사용자 역할을 MENTOR로 변경 (대학생 인증 시)
-            user.setRole("MENTOR");
+            user.setRole(Role.MENTOR);
 
             // 원래 이메일을 학교 이메일로 업데이트
             // (선택사항: 원래 이메일을 보존하고 싶으면 주석 처리)
