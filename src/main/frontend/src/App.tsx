@@ -1,12 +1,20 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense, memo } from "react";
 import Hero from "./components/Hero";
-import MentorSection from "./components/MentorSection";
-import AdSection from "./components/AdSection";
-import CommunitySection from "./components/CommunitySection";
-import QuickActionGrid from "./components/QuickActionGrid";
-import AdmissionEssayPage from "./pages/AdmissionEssayPage";
-import PricingPage from "./pages/PricingPage";
 import { requestForToken, onMessageListener } from "./firebase-init";
+
+// Use Dynamic Imports for Heavy Components
+const AdmissionEssayPage = lazy(() => import("./pages/AdmissionEssayPage"));
+const PricingPage = lazy(() => import("./pages/PricingPage"));
+
+// Extract to Memoized Components to prevent unnecessary re-renders during scroll
+const MentorSection = memo(lazy(() => import("./components/MentorSection")));
+const AdSection = memo(lazy(() => import("./components/AdSection")));
+const CommunitySection = memo(
+  lazy(() => import("./components/CommunitySection")),
+);
+const QuickActionGrid = memo(
+  lazy(() => import("./components/QuickActionGrid")),
+);
 
 function App() {
   const [scrollY, setScrollY] = useState(0);
@@ -181,15 +189,25 @@ function App() {
   // AI 자소서 페이지일 경우 전체 화면 렌더링
   if (isCoverLetter) {
     return (
-      <div className="min-h-screen bg-white dark:bg-[#030014] relative z-[9999]">
-        <AdmissionEssayPage />
-      </div>
+      <Suspense
+        fallback={<div className="min-h-screen bg-white dark:bg-[#030014]" />}
+      >
+        <div className="min-h-screen bg-white dark:bg-[#030014] relative z-[9999]">
+          <AdmissionEssayPage />
+        </div>
+      </Suspense>
     );
   }
 
   // 요금제 페이지 렌더링
   if (isPricing) {
-    return <PricingPage />;
+    return (
+      <Suspense
+        fallback={<div className="min-h-screen bg-white dark:bg-[#0d1117]" />}
+      >
+        <PricingPage />
+      </Suspense>
+    );
   }
 
   // 배경색 보간 (BG Color Interpolation)
@@ -208,36 +226,44 @@ function App() {
     >
       <main className="relative">
         <Hero scrollProgress={progress} />
-        <QuickActionGrid />
 
-        {/* Infinite Ticker */}
-        <div className="bg-white/50 dark:bg-[#030014] border-y border-slate-200 dark:border-white/5 py-4 overflow-hidden whitespace-nowrap relative z-20 backdrop-blur-sm">
-          <div className="inline-block animate-shimmer bg-gradient-to-r from-transparent via-teal-500/5 dark:via-white/5 to-transparent bg-[length:200%_100%] w-full absolute inset-0 pointer-events-none" />
-          <div className="inline-block animate-marquee">
-            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-              ✨ 2024 SKY Admission Rate 94%
-            </span>
-            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-              ✨ Verified Mentors Only
-            </span>
-            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-              ✨ 15,000+ Matches
-            </span>
-            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-              ✨ 2024 SKY Admission Rate 94%
-            </span>
-            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-              ✨ Verified Mentors Only
-            </span>
-            <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-              ✨ 15,000+ Matches
-            </span>
+        {/* [Vercel Best Practice 1.5] Strategic Suspense Boundaries for independent sections */}
+        <Suspense
+          fallback={
+            <div className="h-40 animate-pulse bg-slate-100 dark:bg-white/5" />
+          }
+        >
+          <QuickActionGrid />
+
+          {/* Infinite Ticker */}
+          <div className="bg-white/50 dark:bg-[#030014] border-y border-slate-200 dark:border-white/5 py-4 overflow-hidden whitespace-nowrap relative z-20 backdrop-blur-sm">
+            <div className="inline-block animate-shimmer bg-gradient-to-r from-transparent via-teal-500/5 dark:via-white/5 to-transparent bg-[length:200%_100%] w-full absolute inset-0 pointer-events-none" />
+            <div className="inline-block animate-marquee">
+              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+                ✨ 2024 SKY Admission Rate 94%
+              </span>
+              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+                ✨ Verified Mentors Only
+              </span>
+              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+                ✨ 15,000+ Matches
+              </span>
+              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+                ✨ 2024 SKY Admission Rate 94%
+              </span>
+              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+                ✨ Verified Mentors Only
+              </span>
+              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+                ✨ 15,000+ Matches
+              </span>
+            </div>
           </div>
-        </div>
 
-        <MentorSection />
-        <AdSection />
-        <CommunitySection />
+          <MentorSection />
+          <AdSection />
+          <CommunitySection />
+        </Suspense>
 
         {/* 푸시 알림 테스트용 플로팅 버튼 */}
         <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-3">
