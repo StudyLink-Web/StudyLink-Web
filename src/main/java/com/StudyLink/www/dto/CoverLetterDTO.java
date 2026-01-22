@@ -58,4 +58,22 @@ public class CoverLetterDTO {
     public static class AIResponse {
         private String content;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExtractRequest {
+        private String rawText; // 사용자가 붙여넣은 생기부 텍스트
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExtractResponse {
+        private List<String> keywords; // 추출된 키워드
+        private String suggestedTitle; // 추천 자소서 제목
+        private String summary; // 활동 요약
+    }
 }
