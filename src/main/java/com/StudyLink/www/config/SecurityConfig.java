@@ -63,6 +63,7 @@ public class SecurityConfig {
                                 "/chatbot/**",            // 챗봇 관련 요청 허용
                                 "/api/chatbot/archive/**", // 추가: 챗봇 아카이브 API CSRF 제외
                                 "/room/**",               // 방 관련 요청 허용
+                                "/tossPayment/**",        // 결게 관련 허용
                                 "/map/**",                // 추가: 지도 관련 요청 CSRF 제외
                                 "/api/cover-letter/**"    // ✅ 추가: 자소서 API CSRF 제외
                         )
@@ -127,9 +128,13 @@ public class SecurityConfig {
                                 "/api/**",
                                 "/api/auth/**",
 
+                                // 문제 관련
                                 "/room/list",
                                 "/room/enterRoom",
                                 "/ws/**",
+
+                                // 결제 관련
+                                "/tossPayment/**",
 
                                 // ✅ board 전체 공개(단, register는 위에서 예외로 막음)
                                 "/board/**",
