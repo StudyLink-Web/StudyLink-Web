@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Hero from "./components/Hero";
 import MentorSection from "./components/MentorSection";
 import AdSection from "./components/AdSection";
@@ -11,16 +11,25 @@ import { requestForToken, onMessageListener } from "./firebase-init";
 function App() {
   const [scrollY, setScrollY] = useState(0);
   const [pushToken, setPushToken] = useState<string | null>(null);
+  const [isPushPanelOpen, setIsPushPanelOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // 푸시 알림 권한 요청 핸들러
   const handleRequestPermission = async () => {
+    // 📍 이미 열려있고 토큰이 있다면 토글(닫기)
+    if (isPushPanelOpen && pushToken) {
+      setIsPushPanelOpen(false);
+      return;
+    }
+
     try {
       const token = await requestForToken();
       if (token) {
         setPushToken(token);
-        // 📍 서버에 토큰 저장 호출 (빌드 에러 해결 및 기능 완결)
         await saveTokenToServer(token);
-        alert("✅ 푸시 알림 권한 승인 및 서버 등록 완료!");
+        setIsPushPanelOpen(true); // 📍 성공 시 패널 열기
+        if (!isPushPanelOpen)
+          alert("✅ 푸시 알림 권한 승인 및 서버 등록 완료!");
       } else {
         alert(
           "⚠️ 토큰을 가져오지 못했습니다. 브라우저 설정에서 알림 권한을 확인해 주세요.",
@@ -29,7 +38,18 @@ function App() {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      alert(`❌ 오류 발생: ${errorMessage}`);
+
+      if (errorMessage.includes("permission-blocked")) {
+        alert(
+          "🔒 브라우저에서 알림 권한이 차단되어 있습니다.\n\n" +
+            "해결 방법:\n" +
+            "1. 주소창 왼쪽의 [자물쇠] 또는 [설정] 아이콘 클릭\n" +
+            "2. [알림] 항목을 [허용]으로 변경\n" +
+            "3. 페이지를 새로고침(F5) 후 다시 [권한 요청] 클릭",
+        );
+      } else {
+        alert(`❌ 오류 발생: ${errorMessage}`);
+      }
     }
   };
 
@@ -118,11 +138,38 @@ function App() {
   }, []);
 
   useEffect(() => {
+    // 📍 자동 토큰 동기화: 이미 권한이 있다면 로그인 상태 변화 등에 대비해 서버에 토큰 갱신
+    const syncToken = async () => {
+      if (Notification.permission === "granted") {
+        const token = await requestForToken();
+        if (token) {
+          setPushToken(token);
+          await saveTokenToServer(token);
+          console.log("🔄 알림 토큰 자동 동기화 완료");
+        }
+      }
+    };
+    syncToken();
+
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // 📍 외부 클릭 시 패널 닫기 로직
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(event.target as Node)
+      ) {
+        setIsPushPanelOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const isCoverLetter =
@@ -194,52 +241,63 @@ function App() {
 
         {/* 푸시 알림 테스트용 플로팅 버튼 */}
         <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-3">
-          {pushToken && (
-            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-5 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20 dark:border-white/5 text-[10px] max-w-[240px] break-all animate-in zoom-in-95 fade-in duration-500">
+          {isPushPanelOpen && pushToken && (
+            <div
+              ref={panelRef}
+              className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-5 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20 dark:border-white/5 text-[10px] max-w-[240px] break-all animate-in slide-in-from-bottom-5 zoom-in-95 fade-in duration-300 mb-2"
+            >
               <div className="flex items-center justify-between mb-3">
                 <p className="font-black text-[#0969da] dark:text-blue-400 uppercase tracking-tighter">
                   Device Native PWA
                 </p>
-                <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <button
+                  onClick={() => setIsPushPanelOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  ✕
+                </button>
               </div>
 
-              <div className="bg-slate-100 dark:bg-white/5 p-3 rounded-xl mb-4 font-mono text-[9px] text-slate-500 dark:text-slate-400 leading-tight border border-slate-200 dark:border-white/5">
+              <div className="bg-slate-100 dark:bg-white/5 p-3 rounded-xl mb-4 font-mono text-[9px] text-slate-500 dark:text-slate-400 leading-tight border border-slate-200 dark:border-white/5 max-h-[100px] overflow-y-auto">
                 {pushToken}
               </div>
 
-              <div className="flex gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 <button
                   onClick={handleTestServerPush}
-                  className="flex-1 py-3 bg-gradient-to-br from-[#0969da] to-[#033d8b] hover:from-[#005cc5] hover:to-[#004a9f] text-white text-[10px] font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-1 group"
+                  className="w-full py-3 bg-gradient-to-br from-[#0969da] to-[#033d8b] hover:from-[#005cc5] hover:to-[#004a9f] text-white text-[10px] font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-1 group"
                 >
-                  <span>🚀</span>
-                  나에게
+                  <span>🚀</span> 나에게 쏘기
                 </button>
                 <button
                   onClick={handleTestMineDevicesPush}
-                  className="flex-1 py-3 bg-gradient-to-br from-[#12b886] to-[#087f5b] hover:from-[#099268] hover:to-[#055a44] text-white text-[10px] font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-1 group"
+                  className="w-full py-3 bg-gradient-to-br from-[#12b886] to-[#087f5b] hover:from-[#099268] hover:to-[#055a44] text-white text-[10px] font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-1 group"
                 >
-                  <span>🔗</span>
-                  내기기들
+                  <span>🔗</span> 내 기기들에게 쏘기
                 </button>
                 <button
                   onClick={handleTestAllDevicesPush}
-                  className="flex-1 py-3 bg-gradient-to-br from-[#868e96] to-[#495057] hover:from-[#abb2b9] hover:to-[#566573] text-white text-[10px] font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-1 group"
+                  className="w-full py-3 bg-gradient-to-br from-[#868e96] to-[#495057] hover:from-[#abb2b9] hover:to-[#566573] text-white text-[10px] font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-1 group"
                 >
-                  <span>📢</span>
-                  전체공지
+                  <span>📢</span> 전체 공지 (테스트용)
                 </button>
               </div>
             </div>
           )}
           <button
             onClick={handleRequestPermission}
-            className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-7 py-4 rounded-full shadow-2xl font-black transition-all flex items-center gap-3 hover:scale-105 active:scale-95 group border border-white/10"
+            className={`px-7 py-4 rounded-full shadow-2xl font-black transition-all flex items-center gap-3 hover:scale-105 active:scale-95 group border border-white/10 ${
+              isPushPanelOpen
+                ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
+                : "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+            }`}
           >
-            <span className="text-xl group-hover:rotate-12 transition-transform">
-              🔔
+            <span
+              className={`text-xl transition-transform ${isPushPanelOpen ? "rotate-90" : "group-hover:rotate-12"}`}
+            >
+              {isPushPanelOpen ? "✕" : "🔔"}
             </span>
-            알림 받기 설정
+            {isPushPanelOpen ? "닫기" : "알림 받기 설정"}
           </button>
         </div>
       </main>

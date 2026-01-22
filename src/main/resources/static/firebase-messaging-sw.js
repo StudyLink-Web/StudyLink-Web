@@ -21,13 +21,36 @@ const messaging = firebase.messaging();
 
 // 백그라운드 메시지 수신부
 messaging.onBackgroundMessage((payload) => {
-  console.log("🏢 백그라운드 메시지 수신:", payload);
+  console.log("🏢 백그라운드 메시지 수신 (Smart Filtering):", payload);
 
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: "/pwa-192x192.png", // PWA 아이콘 경로
+    icon: "/pwa-192x192.png",
+    tag: "chatbot-notification", // 중복 알림 방지
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  // 📍 스마트 필터링: 현재 사용자가 챗봇 페이지를 보고 있는지 확인
+  self.clients
+    .matchAll({ type: "window", includeUncontrolled: true })
+    .then((windowClients) => {
+      const isChatbotActive = windowClients.some((client) => {
+        // 챗봇 페이지이면서 포커싱(활성화)되어 있는지 확인
+        return (
+          client.url.includes("/chatbot") &&
+          client.visibilityState === "visible"
+        );
+      });
+
+      if (isChatbotActive) {
+        console.log("🤫 사용자가 챗봇을 보고 있으므로 무음 처리합니다.");
+        return;
+      }
+
+      // 챗봇을 보고 있지 않을 때만 시스템 알림 표시
+      return self.registration.showNotification(
+        notificationTitle,
+        notificationOptions,
+      );
+    });
 });

@@ -7,6 +7,8 @@ import com.StudyLink.www.repository.StudentScoreRepository;
 import com.StudyLink.www.repository.UserRepository;
 import com.StudyLink.www.service.ChatBotSessionService;
 import com.StudyLink.www.service.ChatbotService;
+import com.StudyLink.www.service.FCMService;
+import com.StudyLink.www.repository.PushTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +29,8 @@ public class ChatbotController {
     private final ChatBotSessionService sessionService; // 추가
     private final UserRepository userRepository;
     private final StudentScoreRepository studentScoreRepository;
+    private final FCMService fcmService; // 추가
+    private final PushTokenRepository pushTokenRepository; // 추가
 
     @GetMapping("/chatbot")
     public String chatbot() {
@@ -83,6 +87,19 @@ public class ChatbotController {
             if (response.getTitle() != null && !response.getTitle().isEmpty()) {
                 sessionService.updateSessionTitle(request.getSessionId(), response.getTitle());
             }
+        }
+
+        // 5. [추가] 실시간 알림 발송
+        if (principal != null && response != null) {
+            String username = principal.getName();
+            List<com.StudyLink.www.entity.PushToken> tokens = pushTokenRepository.findAllByUsername(username);
+            log.info("🔔 알림 발송 시도 - 사용자: {}, 등록된 기기 수: {}", username, tokens.size());
+            
+            tokens.forEach(tokenEntity -> {
+                fcmService.sendNotification(tokenEntity.getToken(), 
+                    "🤖 StudyLink AI 답변 도착", 
+                    "질문하신 내용에 대한 답변이 생성되었습니다!");
+            });
         }
 
         return response;

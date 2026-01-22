@@ -151,7 +151,11 @@ public class SecurityConfig {
                                 "/.well-known/**",      // ✅ Chrome DevTools 에러 무시
                                 "/chatbot/**",
                                 "/map/**",              // 추가: 지도 관련 요청 허용
-                                "/auth/student-verification/verify"  // ⭐ 추가: 이메일 인증 링크는 로그인 불필요 (토큰으로 인증)
+                                "/auth/student-verification/verify", // ⭐ 추가: 이메일 인증 링크는 로그인 불필요
+                                "/firebase-messaging-sw.js", // ✅ 추가: 서비스 워커 공개 접근 허용
+                                "/manifest.webmanifest",      // ✅ 추가: PWA 매니페스트 공개 접근 허용
+                                "/pwa-192x192.png",          // ✅ 추가: 아이콘 등
+                                "/pwa-512x512.png"
                         ).permitAll()
 
                         // ⭐ 학교 이메일 인증 페이지는 로그인 필수
