@@ -18,30 +18,30 @@
 		const amount = urlParams.get("amount");
 
 		async function confirm() {
-		  const requestData = {
-			paymentKey: paymentKey,
-			orderId: orderId,
-			amount: amount,
-		  };
+		    const requestData = {
+				paymentKey: paymentKey,
+				orderId: orderId,
+				amount: amount,
+		    };
 
-		  const response = await fetch("/tossPayment/confirm", {
-			method: "POST",
-			headers: {
-			  "Content-Type": "application/json",
-			},
-			body: JSON.stringify(requestData),
-		  });
+		    const response = await fetch("/payment/confirm", {
+				method: "POST",
+				headers: {
+			    	"Content-Type": "application/json",
+				},
+				body: JSON.stringify(requestData),
+		    });
 
-		  const json = await response.json();
+		    const json = await response.json();
 
-		  if (!response.ok) {
-			// 결제 실패 비즈니스 로직을 구현하세요.
-			console.log(json);
-			window.location.href = `/tossPayment/fail?message=${json.message}&code=${json.code}`;
-		  }
+		    if (!response.ok) {
+				// 결제 실패 비즈니스 로직을 구현하세요.
+				console.log(json);
+				window.location.href = `/payment/fail`;
+		    }
 
-		  // 결제 성공 비즈니스 로직을 구현하세요.
-		  console.log(json);
+		    // 결제 성공 비즈니스 로직을 구현하세요.
+		    console.log(json);
 		}
 		confirm();
 
