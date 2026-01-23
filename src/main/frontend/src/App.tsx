@@ -15,11 +15,16 @@ const CommunitySection = memo(
 const QuickActionGrid = memo(
   lazy(() => import("./components/QuickActionGrid")),
 );
+const NotificationCenter = memo(
+  lazy(() => import("./components/NotificationCenter")),
+);
 
 function App() {
   const [scrollY, setScrollY] = useState(0);
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [isPushPanelOpen, setIsPushPanelOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // 푸시 알림 권한 요청 핸들러
@@ -136,6 +141,10 @@ function App() {
       .then((payload) => {
         const messagePayload = payload as any;
         console.log("📩 포그라운드 알림 수신:", messagePayload);
+        
+        // 알림 개수 즉시 갱신을 위해 unreadCount 증가 (또는 사이드바가 열려있다면 새로고침 트리거 가능)
+        setUnreadCount(prev => prev + 1);
+
         if (messagePayload?.notification) {
           alert(
             `StudyLink 알림\n\n${messagePayload.notification.title}\n${messagePayload.notification.body}`,
@@ -327,6 +336,30 @@ function App() {
             {isPushPanelOpen ? "닫기" : "알림 받기 설정"}
           </button>
         </div>
+
+        {/* 알림 센터 */}
+        <NotificationCenter 
+          isOpen={isNotificationOpen} 
+          onClose={() => setIsNotificationOpen(false)}
+          onUnreadCountChange={setUnreadCount}
+        />
+
+        {/* 메인 상단 알림 버튼 (종 아이콘) */}
+        {!isNotificationOpen && (
+          <button
+            onClick={() => setIsNotificationOpen(true)}
+            className="fixed top-6 right-6 z-40 p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-white/5 hover:scale-110 active:scale-95 transition-all group"
+          >
+            <div className="relative">
+              <span className="text-xl">🔔</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-900 animate-bounce">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </div>
+          </button>
+        )}
       </main>
     </div>
   );

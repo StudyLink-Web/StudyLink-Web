@@ -32,15 +32,18 @@ public class TossPaymentController {
 
     // 페이지 이동
     @GetMapping("/exchange")
-    public void exchange(){};
+    public void exchange() {
+    };
 
     // 페이지 이동
     @GetMapping("/success")
-    public void success(){};
+    public void success() {
+    };
 
     // 페이지 이동
     @GetMapping("/fail")
-    public void fail(){};
+    public void fail() {
+    };
 
     @PostMapping("/confirm")
     public ResponseEntity<JSONObject> confirm(@RequestBody String jsonBody) throws Exception {
@@ -56,7 +59,8 @@ public class TossPaymentController {
             amount = (String) requestData.get("amount");
         } catch (ParseException e) {
             throw new RuntimeException(e);
-        };
+        }
+        ;
         JSONObject obj = new JSONObject();
         obj.put("orderId", orderId);
         obj.put("amount", amount);
