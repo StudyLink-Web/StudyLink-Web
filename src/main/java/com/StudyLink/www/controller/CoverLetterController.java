@@ -26,20 +26,28 @@ public class CoverLetterController {
     private final AuthService authService;
     private final UserRepository userRepository;
 
-    /**
-     * AI 자소서 초안 생성
-     */
     @PostMapping("/generate")
     public ResponseEntity<Map<String, String>> generateAI(@RequestBody CoverLetterDTO.Request request, Authentication authentication) {
         Optional<Users> userOpt = getCurrentUser(authentication);
         if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
-        
+
         Users user = userOpt.get();
         String aiContent = coverLetterService.generateAIContent(user, request);
-        
+
         Map<String, String> response = new HashMap<>();
         response.put("content", aiContent != null ? aiContent : "AI 생성에 실패했습니다 (결과 없음).");
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 생기부 텍스트에서 키워드 추출
+     */
+    @PostMapping("/extract")
+    public ResponseEntity<CoverLetterDTO.ExtractResponse> extractKeywords(@RequestBody CoverLetterDTO.ExtractRequest request, Authentication authentication) {
+        Optional<Users> userOpt = getCurrentUser(authentication);
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+        
+        return ResponseEntity.ok(coverLetterService.extractFromRecord(request));
     }
 
     /**

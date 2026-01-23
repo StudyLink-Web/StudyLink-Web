@@ -53,6 +53,28 @@ public class CoverLetterService {
     }
 
     /**
+     * 생기부 텍스트에서 키워드 및 추천 정보 추출
+     */
+    public CoverLetterDTO.ExtractResponse extractFromRecord(CoverLetterDTO.ExtractRequest request) {
+        try {
+            log.info("[AI Extraction] 생기부 데이터 추출 시작");
+            return restTemplate.postForObject(
+                    pythonApiUrl + "/extract-record",
+                    request,
+                    CoverLetterDTO.ExtractResponse.class
+            );
+        } catch (Exception e) {
+            log.error("[AI Extraction] AI 서버 연동 실패: {}", e.getMessage());
+            // 실패 시 빈 값 반환 (사용자가 직접 입력할 수 있도록)
+            return CoverLetterDTO.ExtractResponse.builder()
+                    .keywords(List.of())
+                    .suggestedTitle("")
+                    .summary("데이터 추출 중 오류가 발생했습니다.")
+                    .build();
+        }
+    }
+
+    /**
      * 자소서 저장
      */
     @Transactional
