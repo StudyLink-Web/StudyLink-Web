@@ -75,5 +75,12 @@ logs/
 
 # Agent Skills
 .agent/
+.agents/
+.cursor/
+.gemini/
 .github/skills/
+**/skills/
+.github/skills/**
+
+
 
