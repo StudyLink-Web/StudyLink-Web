@@ -160,11 +160,12 @@ function App() {
     syncToken();
 
     const handleScroll = () => {
+      // Throttle or just ensure passive is set
       setScrollY(window.scrollY);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, []); // Static dependency array is correct here
 
   // 📍 외부 클릭 시 패널 닫기 로직
   useEffect(() => {

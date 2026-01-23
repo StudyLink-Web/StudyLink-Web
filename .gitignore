@@ -72,3 +72,8 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Agent Skills
+.agent/
+.github/skills/
+
