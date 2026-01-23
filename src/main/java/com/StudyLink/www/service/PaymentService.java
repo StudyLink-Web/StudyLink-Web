@@ -6,7 +6,7 @@ import net.minidev.json.JSONObject;
 
 public interface PaymentService {
 
-    PaymentPendingResponse createPendingPayment(Long productId, Long userId);
+    PaymentPendingResponse createPendingPayment(int productId, Long userId);
 
-    JSONObject confirmPayment(String jsonBody);
+    JSONObject confirmPayment(String jsonBody, Long userId);
 }

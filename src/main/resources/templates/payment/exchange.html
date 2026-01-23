@@ -59,29 +59,13 @@
 
 	<script>
 		const productId = 1;
+		const productPrice = 19900;
 		const customerKey = "RxLB_0cVBCGaI_MeSA14N"; // 나중에 db에서 주는 유저 고유 id로 변경
 
 		main()
 
 		async function main() {
-			// 서버에 주문(결제) 생성 요청
-			const response = await fetch("/payment/pending", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify({
-					productId: productId // 선택한 상품 번호
-				})
-			});
-
-			if (!response.ok) {
-				console.log(response);
-				//window.location.href = `/payment/fail`;
-			}
-			const data = await response.json();
-
-	  	    const button = document.getElementById("payment-button");
+			const button = document.getElementById("payment-button");
 		    // const coupon = document.getElementById("coupon-box");
 
 		    // ------  결제위젯 초기화 ------
@@ -98,8 +82,8 @@
 
 			// ------ 주문의 결제 금액 설정 ------
 			await widgets.setAmount({
-				currency: data.currency,
-				value: data.productPrice,
+				currency: "KRW",
+				value: productPrice,
 			});
 
 		    await Promise.all([
@@ -114,6 +98,22 @@
 
 		    // ------ '결제하기' 버튼 누르면 결제창 띄우기 ------
 		    button.addEventListener("click", async function () {
+				// 서버에 주문(결제) 생성 요청
+				const response = await fetch("/payment/pending", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({
+						productId: productId // 선택한 상품 번호
+					})
+				});
+				if (!response.ok) {
+					console.log(response);
+					//window.location.href = `/payment/fail`;
+				}
+				const data = await response.json();
+
 			    await widgets.requestPayment({
 					orderId: data.orderId,
 					orderName: data.productName,

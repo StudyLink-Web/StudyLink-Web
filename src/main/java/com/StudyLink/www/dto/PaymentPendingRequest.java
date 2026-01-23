@@ -8,5 +8,5 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentPendingRequest {
-    private Long productId;
+    private int productId;
 }

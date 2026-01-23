@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
         }
 )
 @Getter
+@Setter
 @ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -61,6 +62,14 @@ public class Payment {
     /** 결제 승인 시각 */
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
+
+    /** 결제 실패 시각 */
+    @Column(name = "failed_at")
+    private LocalDateTime failedAt;
+
+    /** 결제 취소 시각 */
+    @Column(name = "canceled_at")
+    private LocalDateTime canceledAt;
 
     /** 통화 */
     @Column(name = "currency", length = 10)

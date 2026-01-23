@@ -87,17 +87,21 @@ public class PaymentController {
     // 실패시 PENDING -> FAIL
     // 결제 요청 금액이 DB 데이터와 같은지 확인하기 (금액 변조여부 탐지)
     @PostMapping("/confirm")
-    public ResponseEntity<JSONObject> confirm(@RequestBody String jsonBody) throws Exception {
+    public ResponseEntity<JSONObject> confirm(@RequestBody String jsonBody, Authentication authentication) throws Exception {
         try {
-            JSONObject response = paymentService.confirmPayment(jsonBody);
-            JSONObject jsonObject = (JSONObject) response.get("jsonObject");
-            boolean isSuccess = (Boolean) response.get("isSuccess");
-            int code = ((Number) response.get("code")).intValue();
-            if (isSuccess) {
-                return ResponseEntity.ok(jsonObject);
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(jsonObject);
+            Long userId = null;
+            if (authentication != null && authentication.isAuthenticated()
+                    && !(authentication instanceof AnonymousAuthenticationToken)) {
+                String username = authentication.getName();
+                userId = userService.findUserIdByUsername(username);
             }
+
+            JSONObject response = paymentService.confirmPayment(jsonBody, userId);
+            JSONObject jsonObject = (JSONObject) response.get("jsonObject");
+            int code = ((Number) response.get("code")).intValue();
+            return ResponseEntity
+                    .status(HttpStatus.valueOf(code))
+                    .body(jsonObject);
         } catch (Exception e) {
             // 로깅 및 에러 응답 처리
             JSONObject errorObj = new JSONObject();
