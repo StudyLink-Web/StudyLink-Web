@@ -228,7 +228,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다.")).getProductName();
         body.put("orderName", productName);
         body.put("orderId", payment.getOrderId());
-        body.put("amount", payment.getAmount());
+        body.put("totalAmount", payment.getAmount());
         body.put("approvedAt", payment.getApprovedAt().toString());
         body.put("method", payment.getMethod());
         body.put("status", payment.getStatus());
