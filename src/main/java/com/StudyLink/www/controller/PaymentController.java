@@ -1,5 +1,6 @@
 package com.StudyLink.www.controller;
 
+import com.StudyLink.www.dto.ExchangeRequestDTO;
 import com.StudyLink.www.dto.PaymentPendingRequest;
 import com.StudyLink.www.dto.PaymentPendingResponse;
 import com.StudyLink.www.entity.Payment;
@@ -41,9 +42,11 @@ public class PaymentController {
     private final UserService userService;
     private final ProductRepository productRepository;
 
+
+    // ================================================= 결제 =================================================
     // 페이지 이동
-    @GetMapping("/exchange")
-    public void exchange(){};
+    @GetMapping("/payment")
+    public void payment(){};
 
     // 페이지 이동
     @GetMapping("/success")
@@ -108,5 +111,31 @@ public class PaymentController {
             errorObj.put("error", "결제 처리 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorObj);
         }
+    }
+
+
+
+    // =============================================== 포인트 환전 =============================================
+    // 페이지 이동
+    @GetMapping("/exchange")
+    public void exchange(){};
+
+    @PostMapping("/exchange")
+    public ResponseEntity<String> exchange(@RequestBody ExchangeRequestDTO request, Authentication authentication) {
+        Long userId = null;
+        if (authentication != null && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken)) {
+            String username = authentication.getName();
+            userId = userService.findUserIdByUsername(username);
+        }
+
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        }
+
+        int isOk = paymentService.insertExchangeRequest(request, userId);
+
+
+        return ResponseEntity.ok("OK");
     }
 }

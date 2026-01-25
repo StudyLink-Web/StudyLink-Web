@@ -1,46 +1,78 @@
-.notice {
-  margin-top: 12px;
-  line-height: 1.6;
-  font-size: 12px;
-  color: #6c757d;
-  /* white-space 기본값 normal 유지 */
-}
-
-.link-span {
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.product-box {
-  border: 1px solid rgb(220, 220, 220);
-  border-radius: 50px;
-  padding: 44px;
-  background-color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.price-row {
-  display: flex;
-  justify-content: space-between; /* 양쪽 끝으로 */
-  align-items: center;
+.exchangeTitle {
+  font-size: 24px;
+  margin-top: 30px;
   margin-bottom: 8px;
 }
-
-.price-row.total {
-  font-weight: 700;
-  font-size: 1.05rem;
-  margin-top: 20px;
+.exchangeDesc {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 32px;
 }
-
-.subscribe-btn {
-  width: 100%;              /* 가로 100% */
-  margin-top: 30px;
+.exchangeSection {
+  margin-bottom: 28px;
+}
+.exchangeSection h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+.exchagneField {
+  margin-bottom: 16px;
+}
+.exchagneField label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #444;
+}
+.exchagneField input,
+.exchagneField select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+}
+.exchagneField small {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #777;
+}
+.point-box {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+.point-box strong {
+  color: #4f46e5;
+}
+.exchangeActions {
+  margin-top: 32px;
+}
+.exchangeActions button {
+  width: 100%;
   padding: 14px 0;
-  border-radius: 999px;     /* 완전 둥근 버튼 */
   border: none;
-  font-size: 1rem;
+  border-radius: 10px;
+  font-size: 16px;
   font-weight: 600;
-  background-color: black;
-  color: white;
+  background-color: #4f46e5;
+  color: #fff;
+  cursor: pointer;
 }
-
+.exchangeActions button:disabled {
+  background-color: #c7c7f3;
+  cursor: not-allowed;
+}
+.exchangeNotice {
+  margin-top: 24px;
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.6;
+}

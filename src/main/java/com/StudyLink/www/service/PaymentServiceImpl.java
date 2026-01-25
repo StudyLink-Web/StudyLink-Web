@@ -1,9 +1,8 @@
 package com.StudyLink.www.service;
 
+import com.StudyLink.www.dto.ExchangeRequestDTO;
 import com.StudyLink.www.dto.PaymentPendingResponse;
-import com.StudyLink.www.entity.Payment;
-import com.StudyLink.www.entity.PaymentStatus;
-import com.StudyLink.www.entity.Product;
+import com.StudyLink.www.entity.*;
 import com.StudyLink.www.repository.ExchangeRequestRepository;
 import com.StudyLink.www.repository.PaymentRepository;
 import com.StudyLink.www.repository.ProductRepository;
@@ -237,5 +236,34 @@ public class PaymentServiceImpl implements PaymentService {
         result.put("jsonObject", body);
         result.put("code", 200);
         return result;
+    }
+
+
+    @Override
+    public int insertExchangeRequest(ExchangeRequestDTO request, Long userId) {
+        // db에서 보유포인트와 비교해서 포인트 조작 검증하기
+
+        // 잔액 차감 (DB에 반영)
+
+
+        // 계좌번호, 예금주 검증. 사실상 지금 프로젝트에서 불가능
+
+        try {
+            ExchangeRequest exchangeRequest = ExchangeRequest.builder()
+                    .userId(userId)
+                    .point(request.getPoint())
+                    .status(ExchangeStatus.PENDING)
+                    .createdAt(LocalDateTime.now())
+                    .account(request.getAccount())
+                    .bankName(request.getBankName())
+                    .accountHolder(request.getAccountHolder())
+                    .build();
+            exchangeRequestRepository.save(exchangeRequest);
+            return 1;
+        } catch (Exception e) {
+            // 저장 실패 시 롤백
+            e.printStackTrace();
+            return 0;
+        }
     }
 }

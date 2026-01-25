@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content" class="container-md d-flex justify-content-between mt-5">
+	<!-- 받아야 할 데이터 -->
+	<!-- 상품명, 상품 가격, customerKey(userId 암호화한 고유 값, 그냥 userId도 가능) -->
+	<div class="w-50 h-75 mt-5">
+		<!-- 결제 UI -->
+		<div id="payment-method"></div>
+
+		<!-- 할인 쿠폰 -->
+		<!--<div>
+			<input type="checkbox" id="coupon-box" />
+			<label for="coupon-box"> 5,000원 쿠폰 적용 </label>
+		</div>-->
+
+		<!-- 이용약관 UI -->
+		<div id="agreement"></div>
+	</div>
+	<div class="w-50 h-75 mt-5">
+		<div class="product-box">
+			<!-- 상품명-->
+			<div class="productName">상품명</div>
+			<div class="desciption">설명 1</div>
+			<div class="desciption">설명 2</div>
+			<div class="desciption">설명 3</div>
+			<div class="desciption">설명 4</div>
+			<div class="desciption">설명 5</div>
+
+			<hr>
+
+			<div>
+				<div class="price-row">
+					<span>매월 구독</span>
+					<span>₩13,636</span>
+				</div>
+				<div class="price-row">
+					<span>VAT (10%)</span>
+					<span>₩1,364</span>
+				</div>
+				<div class="price-row total">
+					<span>결제 금액</span>
+					<span>₩15,000</span>
+				</div>
+			</div>
+
+			<!-- 구독하기 버튼 -->
+			<button class="button subscribe-btn" id="payment-button">구독</button>
+		</div>
+		<p class="paymentNotice">
+			구독은 취소할 때까지 매월 갱신됩니다. 매월 ₩15,000가 청구됩니다.
+			언제든지 구독을 취소할 수 있습니다. 구독하면 <span class="link-span">이용약관</span>에 동의하며,
+			StudyLink가 귀하의 결제 수단을 저장하고 청구하는 것을 승인하는 것으로 간주합니다.
+			<span class="link-span">환불</span>에 대해 자세히 알아보세요.
+		</p>
+	</div>
+
+	<script>
+		const productId = 1;
+		const productPrice = 19900;
+		const customerKey = "RxLB_0cVBCGaI_MeSA14N"; // 나중에 db에서 주는 유저 고유 id로 변경
+
+		main()
+
+		async function main() {
+			const button = document.getElementById("payment-button");
+		    // const coupon = document.getElementById("coupon-box");
+
+		    // ------  결제위젯 초기화 ------
+		    const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+		    const tossPayments = TossPayments(clientKey);
+
+		    // 회원 결제
+		    const widgets = tossPayments.widgets({
+				customerKey,
+		    });
+
+		    // 비회원 결제
+		    // const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
+
+			// ------ 주문의 결제 금액 설정 ------
+			await widgets.setAmount({
+				currency: "KRW",
+				value: productPrice,
+			});
+
+		    await Promise.all([
+				// ------  결제 UI 렌더링 ------
+				widgets.renderPaymentMethods({
+			  	    selector: "#payment-method",
+			  		variantKey: "DEFAULT",
+				}),
+				// ------  이용약관 UI 렌더링 ------
+				widgets.renderAgreement({ selector: "#agreement", variantKey: "AGREEMENT" }),
+		    ]);
+
+		    // ------ '결제하기' 버튼 누르면 결제창 띄우기 ------
+		    button.addEventListener("click", async function () {
+				// 서버에 주문(결제) 생성 요청
+				const response = await fetch("/payment/pending", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({
+						productId: productId // 선택한 상품 번호
+					})
+				});
+				if (!response.ok) {
+					console.log(response);
+					//window.location.href = `/payment/fail`;
+				}
+				const data = await response.json();
+
+			    await widgets.requestPayment({
+					orderId: data.orderId,
+					orderName: data.productName,
+					successUrl: window.location.origin + "/payment/success",
+					failUrl: window.location.origin + "/payment/fail"
+			    });
+		    });
+		}
+	</script>
+</div>
+
