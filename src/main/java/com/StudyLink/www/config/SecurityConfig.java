@@ -77,8 +77,8 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // 멘토 프로필 추가
-                        .requestMatchers("/mentor/edit-profile").permitAll()
-                        .requestMatchers("/mentor/**").permitAll()
+                        .requestMatchers("/mentor/edit-profile").authenticated()
+                        .requestMatchers("/mentor/**").authenticated()
                         .requestMatchers("/api/mentor-profiles/**").permitAll()
 
                         .requestMatchers("/**")
