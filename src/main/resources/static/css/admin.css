@@ -1,0 +1,26 @@
+.adminSidebar {
+height: 100vh;
+background-color: #212529;
+}
+
+
+.adminSidebar .adminSidebarMenu {
+color: #ffffff;
+text-decoration: none;
+display: block;
+padding: 12px 16px;
+font-weight: 500;
+}
+
+
+.adminSidebar .adminSidebarMenu:hover,
+.adminSidebar .adminSidebarMenu.active {
+background-color: #495057;
+color: #ffffff;
+}
+
+
+.card-title {
+font-size: 0.9rem;
+color: #6c757d;
+}
