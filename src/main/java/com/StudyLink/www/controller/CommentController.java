@@ -1,106 +1,61 @@
 package com.StudyLink.www.controller;
 
-import com.StudyLink.www.dto.CommentDTO;
-import com.StudyLink.www.handler.PageHandler;
-import com.StudyLink.www.service.CommentService;
+import com.StudyLink.www.dto.CommunityFileDTO;
+import com.StudyLink.www.service.CommunityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.*;
-import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-@RequiredArgsConstructor
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 @Slf4j
-@RestController
-@RequestMapping("/comment")
+@RequiredArgsConstructor
+@Controller
+@RequestMapping("/community")
 public class CommentController {
 
-    private final CommentService commentService;
+    private final CommunityService communityService;
 
-    @PostMapping(
-            value = "/post",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.TEXT_PLAIN_VALUE
-    )
-    public ResponseEntity<String> post(@RequestBody CommentDTO commentDTO,
-                                       Authentication authentication) {
-        log.info(">>> /comment/post dto = {}", commentDTO);
+    @Value("${app.upload.root:D:/upload}")
+    private String uploadRoot;
 
-        // ✅ 로그인 필수(작성)
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("0");
+    @GetMapping("/file/{uuid}")
+    @ResponseBody
+    public ResponseEntity<Resource> file(@PathVariable String uuid) {
+        CommunityFileDTO dto = communityService.getFileByUuid(uuid);
+        if (dto == null) return ResponseEntity.notFound().build();
+
+        // ✅ 실제 저장 위치: {uploadRoot}/community/{saveDir}/{uuid}
+        Path filePath = Paths.get(uploadRoot, "community", dto.getSaveDir(), dto.getUuid());
+        Resource resource = new FileSystemResource(filePath);
+
+        if (!resource.exists() || !resource.isReadable()) {
+            log.error("file not found. path={}", filePath);
+            return ResponseEntity.notFound().build();
         }
 
-        // ✅ writer는 서버에서 강제 세팅 (클라 조작 방지)
-        String loginUser = authentication.getName();
-        commentDTO.setWriter(loginUser);
+        String encodedName = URLEncoder.encode(dto.getFileName(), StandardCharsets.UTF_8).replace("+", "%20");
 
-        long cno = commentService.post(commentDTO);
-        log.info(">>> /comment/post result cno = {}", cno);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename*=UTF-8''" + encodedName);
 
-        return cno > 0
-                ? ResponseEntity.ok("1")
-                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");
-    }
-
-    @GetMapping(
-            value = "/list/{postId}/{page}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<PageHandler<CommentDTO>> list(@PathVariable("postId") Long postId,
-                                                        @PathVariable("page") int page) {
-
-        Page<CommentDTO> list = commentService.getList(postId, page);
-        PageHandler<CommentDTO> pageHandler = new PageHandler<>(list, page);
-
-        return ResponseEntity.ok(pageHandler);
-    }
-
-    @PutMapping(
-            value = "/modify",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.TEXT_PLAIN_VALUE
-    )
-    public ResponseEntity<String> modify(@RequestBody CommentDTO commentDTO,
-                                         Authentication authentication) {
-        log.info(">>> /comment/modify dto = {}", commentDTO);
-
-        // ✅ 로그인 필수(수정)
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("0");
+        // 이미지면 브라우저에 뜨게
+        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        if (dto.getFileType() == 1) {
+            mediaType = MediaTypeFactory.getMediaType(dto.getFileName()).orElse(MediaType.IMAGE_JPEG);
         }
 
-        // ✅ writer 강제 세팅(서비스에서 작성자 검증할 때 사용 가능)
-        String loginUser = authentication.getName();
-        commentDTO.setWriter(loginUser);
-
-        long result = commentService.modify(commentDTO);
-        log.info(">>> /comment/modify result = {}", result);
-
-        return result > 0
-                ? ResponseEntity.ok("1")
-                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");
-    }
-
-    @DeleteMapping(
-            value = "/remove/{cno}",
-            produces = MediaType.TEXT_PLAIN_VALUE
-    )
-    public ResponseEntity<String> remove(@PathVariable("cno") long cno,
-                                         Authentication authentication) {
-        log.info(">>> /comment/remove cno = {}", cno);
-
-        // ✅ 로그인 필수(삭제)
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("0");
-        }
-
-        long result = commentService.remove(cno);
-        log.info(">>> /comment/remove result = {}", result);
-
-        return result > 0
-                ? ResponseEntity.ok("1")
-                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("0");
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(mediaType)
+                .body(resource);
     }
 }

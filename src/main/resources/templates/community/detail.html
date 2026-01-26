@@ -7,69 +7,255 @@
 
 <div layout:fragment="content" class="content_box">
 
-    <h1>상세보기</h1>
+    <h1 th:text="${mode == 'modify' ? '수정하기' : '상세보기'}">상세보기</h1>
 
-    <!-- communityDTO 없으면 안전하게 -->
     <div th:if="${communityDTO == null}">
         <div class="alert alert-danger">존재하지 않는 게시글입니다.</div>
         <a th:href="@{/community/list}" class="btn btn-secondary">목록</a>
     </div>
 
-    <!-- communityDTO 있을 때만 렌더 -->
     <div th:if="${communityDTO != null}">
 
-        <div class="mb-3">
-            <label class="form-label">제목</label>
-            <input type="text" class="form-control" th:value="${communityDTO.title}" readonly>
-        </div>
+        <form th:if="${mode == 'modify'}"
+              th:action="@{/community/modify}"
+              method="post"
+              enctype="multipart/form-data">
 
-        <div class="mb-3">
-            <label class="form-label">작성자</label>
-            <input type="text" class="form-control" th:value="${communityDTO.writer}" readonly>
-        </div>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="bno" th:value="${communityDTO.bno}"/>
 
-        <div class="mb-3">
-            <label class="form-label">학과</label>
-            <input type="text" class="form-control" th:value="${communityDTO.department}" readonly>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">내용</label>
-            <textarea class="form-control" rows="8" readonly
-                      th:text="${communityDTO.content}"></textarea>
-        </div>
-
-        <div class="mb-3 d-flex gap-3">
-            <div>
-                <small class="text-muted">작성일</small><br>
-                <span th:text="${communityDTO.createdAt != null ? #temporals.format(communityDTO.createdAt, 'yyyy-MM-dd HH:mm') : ''}"></span>
+            <div class="mb-3">
+                <label class="form-label">제목</label>
+                <input type="text" class="form-control" name="title"
+                       th:value="${communityDTO.title}" required>
             </div>
-            <div>
-                <small class="text-muted">수정일</small><br>
-                <span th:text="${communityDTO.updatedAt != null ? #temporals.format(communityDTO.updatedAt, 'yyyy-MM-dd HH:mm') : ''}"></span>
+
+            <div class="mb-3">
+                <label class="form-label">작성자</label>
+                <input type="text" class="form-control" name="writer"
+                       th:value="${communityDTO.writer}" readonly>
             </div>
-            <div>
-                <small class="text-muted">조회수</small><br>
-                <span th:text="${communityDTO.readCount != null ? communityDTO.readCount : 0}"></span>
+
+            <div class="mb-3">
+                <label class="form-label">학과</label>
+                <input type="text" class="form-control" name="department"
+                       th:value="${communityDTO.department}">
             </div>
+
+            <div class="mb-3">
+                <label class="form-label">내용</label>
+                <textarea class="form-control" rows="8" name="content" required
+                          th:text="${communityDTO.content}"></textarea>
+            </div>
+
+            <div class="mb-3 d-flex gap-3">
+                <div>
+                    <small class="text-muted">작성일</small><br>
+                    <span th:text="${communityDTO.createdAt != null ? #temporals.format(communityDTO.createdAt, 'yyyy-MM-dd HH:mm') : ''}"></span>
+                </div>
+                <div>
+                    <small class="text-muted">수정일</small><br>
+                    <span th:text="${communityDTO.updatedAt != null ? #temporals.format(communityDTO.updatedAt, 'yyyy-MM-dd HH:mm') : ''}"></span>
+                </div>
+                <div>
+                    <small class="text-muted">조회수</small><br>
+                    <span th:text="${communityDTO.readCount != null ? communityDTO.readCount : 0}"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <h4>첨부파일</h4>
+                <input class="form-control" type="file" id="file" name="files" multiple style="display:none">
+                <button type="button" class="btn btn-outline-dark" id="trigger">file upload</button>
+            </div>
+
+            <div class="mb-3" id="fileZone"></div>
+
+            <div class="mt-4 d-flex gap-2">
+                <a th:href="@{/community/detail(bno=${communityDTO.bno})}"
+                   class="btn btn-secondary">취소</a>
+
+                <button type="submit" class="btn btn-primary" id="regBtn"
+                        onclick="return confirm('수정 내용을 저장할까요?');">
+                    저장
+                </button>
+            </div>
+
+            <script>
+                document.getElementById('trigger')?.addEventListener('click', () => {
+                    document.getElementById('file')?.click();
+                });
+
+                const regExp = new RegExp("\\.(exe|sh|bat|jar|dll|msi)$", "i");
+                const maxSize = 1024 * 1024 * 10;
+
+                function fileValid(fileName, fileSize) {
+                    if (regExp.test(fileName)) return 0;
+                    if (fileSize > maxSize) return 0;
+                    return 1;
+                }
+
+                document.getElementById('file')?.addEventListener('change', (e) => {
+                    const fileObject = e.target.files;
+                    const div = document.getElementById('fileZone');
+
+                    const regBtn = document.getElementById('regBtn');
+                    if (regBtn) regBtn.disabled = false;
+
+                    div.innerHTML = '';
+
+                    let ul = `<ul class="list-group">`;
+                    let isOk = 1;
+
+                    for (let file of fileObject) {
+                        let valid = fileValid(file.name, file.size);
+                        isOk *= valid;
+
+                        ul += `<li class="list-group-item">`;
+                        ul += `<div class="mb-2">`;
+                        ul += `${valid ? '<div class="fw-bold mb-1">업로드 가능</div>' : '<div class="fw-bold mb-1 text-danger">업로드 불가능</div>'}`;
+                        ul += `${file.name} `;
+                        ul += `<span class="badge text-bg-${valid ? 'success' : 'danger'}">${file.size}Bytes</span>`;
+                        ul += `</div></li>`;
+                    }
+                    ul += `</ul>`;
+                    div.innerHTML = ul;
+
+                    if (isOk === 0 && regBtn) regBtn.disabled = true;
+                });
+            </script>
+        </form>
+
+        <div th:if="${mode != 'modify'}">
+
+            <div class="mb-3">
+                <label class="form-label">제목</label>
+                <input type="text" class="form-control"
+                       th:value="${communityDTO.title}" readonly>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">작성자</label>
+                <input type="text" class="form-control"
+                       th:value="${communityDTO.writer}" readonly>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">내용</label>
+                <textarea class="form-control" rows="8" readonly
+                          th:text="${communityDTO.content}"></textarea>
+            </div>
+
+            <div class="mb-3 d-flex gap-3">
+                <div>
+                    <small class="text-muted">작성일</small><br>
+                    <span th:text="${communityDTO.createdAt != null ? #temporals.format(communityDTO.createdAt, 'yyyy-MM-dd HH:mm') : ''}"></span>
+                </div>
+                <div>
+                    <small class="text-muted">수정일</small><br>
+                    <span th:text="${communityDTO.updatedAt != null ? #temporals.format(communityDTO.updatedAt, 'yyyy-MM-dd HH:mm') : ''}"></span>
+                </div>
+                <div>
+                    <small class="text-muted">조회수</small><br>
+                    <span th:text="${communityDTO.readCount != null ? communityDTO.readCount : 0}"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <h4>첨부파일</h4>
+
+                <div th:if="${fileDTOList != null and !#lists.isEmpty(fileDTOList)}">
+                    <ul class="list-group">
+                        <li class="list-group-item" th:each="f : ${fileDTOList}">
+                            <div th:if="${f.fileType == 1}" class="mb-2">
+                                <img th:src="@{'/community/file/' + ${f.uuid}}"
+                                     alt="첨부 이미지"
+                                     style="max-width: 300px; height: auto; display:block;">
+                            </div>
+
+                            <a th:href="@{'/community/file/' + ${f.uuid}}"
+                               th:text="${f.fileName}"></a>
+
+                            <span class="text-muted"
+                                  th:text="${' (' + f.fileSize + ' bytes)'}"></span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div th:if="${fileDTOList == null or #lists.isEmpty(fileDTOList)}">
+                    <p class="text-muted">첨부파일이 없습니다.</p>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <a th:href="@{/community/list}" class="btn btn-secondary">목록</a>
+
+                <div class="d-flex gap-2"
+                     sec:authorize="isAuthenticated()"
+                     th:if="${communityDTO.writer == #authentication.name}">
+                    <a th:href="@{/community/detail(bno=${communityDTO.bno}, mode='modify')}"
+                       class="btn btn-primary">수정</a>
+
+                    <a th:href="@{/community/remove(bno=${communityDTO.bno})}"
+                       class="btn btn-danger"
+                       onclick="return confirm('정말 삭제할까요?');">삭제</a>
+                </div>
+            </div>
+
+            <!-- ✅ 댓글 영역 (전역값 + JS 로딩은 댓글 위에 있어야 함) -->
+            <script th:inline="javascript">
+                const bnoValue = /*[[${communityDTO.bno}]]*/ 0;
+                window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+                window.LOGIN_USER = /*[[${#authentication?.name}]]*/ null;
+
+                const csrfToken  = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || "";
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || "";
+            </script>
+
+            <div id="comment" class="mt-5">
+                <h4 class="mb-3">댓글</h4>
+
+                <div class="input-group my-3" sec:authorize="isAuthenticated()">
+                    <span class="input-group-text" id="cmtWriter">[[${#authentication.name}]]</span>
+                    <input type="text" id="cmtText" class="form-control" placeholder="댓글을 입력하세요.">
+                    <button type="button" id="cmtAddBtn" class="btn btn-primary">등록</button>
+                </div>
+
+                <div class="alert alert-secondary" sec:authorize="isAnonymous()">
+                    댓글을 작성하려면 로그인하세요.
+                </div>
+
+                <ul class="list-group list-group-flush" id="cmtListArea"></ul>
+
+                <div class="input-group my-3">
+                    <button type="button" class="btn btn-info" id="moreBtn" data-page="1" style="visibility:hidden">
+                        더보기
+                    </button>
+                </div>
+
+                <div class="modal" tabindex="-1" id="commentModal">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="cmtWriterMod">Writer</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="text" class="form-control" id="cmtTextMod">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                                <button type="button" class="btn btn-primary" id="cmtModBtn">변경</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script th:src="@{/js/communityDetail.js}"></script>
         </div>
-
-        <div class="mt-4 d-flex gap-2">
-            <a th:href="@{/community/list}" class="btn btn-secondary">목록</a>
-
-            <div class="d-flex gap-2"
-                 sec:authorize="isAuthenticated()"
-                 th:if="${communityDTO.writer == #authentication.name}">
-                <a th:href="@{/community/detail(bno=${communityDTO.bno}, mode='modify')}"
-                   class="btn btn-primary">수정</a>
-
-                <a th:href="@{/community/remove(bno=${communityDTO.bno})}"
-                   class="btn btn-danger"
-                   onclick="return confirm('정말 삭제할까요?');">삭제</a>
-            </div>
-        </div>
-
     </div>
+
 </div>
 
 </html>

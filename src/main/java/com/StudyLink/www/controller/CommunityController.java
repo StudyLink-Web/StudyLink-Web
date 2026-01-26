@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 @Slf4j
 @RequiredArgsConstructor
 @Controller
@@ -68,7 +70,6 @@ public class CommunityController {
         communityDTO.setEmail(email);
         if (communityDTO.getRole() == null || communityDTO.getRole().isBlank()) communityDTO.setRole("USER");
         if (communityDTO.getWriter() == null || communityDTO.getWriter().isBlank()) communityDTO.setWriter(email);
-
         if (communityDTO.getReadCount() == null) communityDTO.setReadCount(0);
         if (communityDTO.getCmtQty() == null) communityDTO.setCmtQty(0);
 
@@ -99,12 +100,8 @@ public class CommunityController {
                        @RequestParam(name = "keyword", required = false) String keyword) {
 
         int safePageNo = Math.max(pageNo, 1);
-
-        String safeType = (type == null) ? "" : type.trim();
-        String safeKeyword = (keyword == null) ? "" : keyword.trim();
-
         Page<CommunityDTO> page = communityService.getList(safePageNo);
-        PageHandler<CommunityDTO> ph = new PageHandler<>(page, safePageNo, safeType, safeKeyword);
+        PageHandler<CommunityDTO> ph = new PageHandler<>(page, safePageNo, type, keyword);
 
         model.addAttribute("ph", ph);
         return "community/list";
@@ -116,34 +113,29 @@ public class CommunityController {
                          Model model,
                          Authentication authentication) {
 
-        try {
-            if (bno == null) return "error/404";
+        if (bno == null) return "error/404";
 
-            CommunityDTO communityDTO = communityService.getDetail(bno);
-            if (communityDTO == null) return "error/404";
+        CommunityDTO communityDTO = communityService.getDetail(bno);
+        if (communityDTO == null) return "error/404";
 
-            String safeMode = (mode == null) ? "" : mode.trim();
-            boolean modifyMode = "modify".equalsIgnoreCase(safeMode);
-
-            if (modifyMode) {
-                if (!isLogin(authentication)) return "redirect:/login";
-                String loginEmail = loginEmail(authentication);
-                if (loginEmail == null || !loginEmail.equals(communityDTO.getWriter())) {
-                    return "redirect:/community/detail?bno=" + bno;
-                }
+        boolean modifyMode = "modify".equalsIgnoreCase(mode);
+        if (modifyMode) {
+            if (!isLogin(authentication)) return "redirect:/login";
+            String email = loginEmail(authentication);
+            if (!email.equals(communityDTO.getWriter())) {
+                return "redirect:/community/detail?bno=" + bno;
             }
-
-            model.addAttribute("communityDTO", communityDTO);
-            model.addAttribute("mode", modifyMode ? "modify" : "read");
-            return "community/detail";
-        } catch (Exception e) {
-            log.error("community detail error. bno={}", bno, e);
-            return "error/500";
         }
+
+        model.addAttribute("communityDTO", communityDTO);
+        model.addAttribute("mode", modifyMode ? "modify" : "read");
+        return "community/detail";
     }
 
     @PostMapping("/modify")
     public String modify(@ModelAttribute CommunityDTO communityDTO,
+                         @RequestParam(value = "files", required = false) MultipartFile[] files,
+                         @RequestParam(value = "delFiles", required = false) List<String> delFiles,
                          RedirectAttributes redirectAttributes,
                          Authentication authentication) {
 
@@ -165,15 +157,29 @@ public class CommunityController {
         communityDTO.setUserId(userId);
         communityDTO.setEmail(email);
         if (communityDTO.getRole() == null || communityDTO.getRole().isBlank()) communityDTO.setRole("USER");
-        if (communityDTO.getWriter() == null || communityDTO.getWriter().isBlank()) communityDTO.setWriter(origin.getWriter());
+        if (communityDTO.getWriter() == null || communityDTO.getWriter().isBlank())
+            communityDTO.setWriter(origin.getWriter());
 
-        if (communityDTO.getReadCount() == null) communityDTO.setReadCount(origin.getReadCount() == null ? 0 : origin.getReadCount());
-        if (communityDTO.getCmtQty() == null) communityDTO.setCmtQty(origin.getCmtQty() == null ? 0 : origin.getCmtQty());
-        if (communityDTO.getFileQty() == null) communityDTO.setFileQty(origin.getFileQty() == null ? 0 : origin.getFileQty());
+        if (communityDTO.getReadCount() == null)
+            communityDTO.setReadCount(origin.getReadCount() == null ? 0 : origin.getReadCount());
+        if (communityDTO.getCmtQty() == null)
+            communityDTO.setCmtQty(origin.getCmtQty() == null ? 0 : origin.getCmtQty());
+
+        int fileQty = origin.getFileQty() == null ? 0 : origin.getFileQty();
+        if (files != null) {
+            for (MultipartFile f : files) {
+                if (f != null && !f.isEmpty()) fileQty++;
+            }
+        }
+        if (delFiles != null) {
+            fileQty -= delFiles.size();
+            if (fileQty < 0) fileQty = 0;
+        }
+        communityDTO.setFileQty(fileQty);
 
         Long savedBno;
         try {
-            savedBno = communityService.modify(communityDTO);
+            savedBno = communityService.modify(communityDTO, files, delFiles);
         } catch (Exception e) {
             log.error("community modify error. dto={}", communityDTO, e);
             return "error/500";
@@ -194,7 +200,7 @@ public class CommunityController {
         CommunityDTO origin = communityService.getDetail(bno);
         if (origin == null) return "error/404";
 
-        if (email == null || !email.equals(origin.getWriter())) {
+        if (!email.equals(origin.getWriter())) {
             return "redirect:/community/detail?bno=" + bno;
         }
 
