@@ -2,7 +2,9 @@ package com.StudyLink.www.service;
 
 import com.StudyLink.www.entity.Role;
 import com.StudyLink.www.entity.Users;
+import com.StudyLink.www.entity.EmailVerificationToken;
 import com.StudyLink.www.repository.UserRepository;
+import com.StudyLink.www.repository.EmailVerificationTokenRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,9 @@ public class AuthService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private EmailVerificationTokenRepository emailVerificationTokenRepository;
 
     // 필드 주입에서 ObjectProvider로 변경 (순환 참조 방지)
     @Autowired
@@ -300,5 +305,136 @@ public class AuthService {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("역할은 STUDENT 또는 MENTOR이어야 합니다.");
         }
+    }
+
+    /**
+     * 이메일 인증 코드 발송
+     * @param email 인증받을 이메일
+     * @param requestedUsername 요청한 계정명
+     */
+    @Transactional
+    public void sendVerificationEmail(String email, String requestedUsername) {
+        log.info("📧 이메일 인증 코드 발송: {} (요청자: {})", email, requestedUsername);
+
+        // 1️⃣ 이미 인증된 이메일 확인
+        if (userRepository.findByEmail(email).isPresent()) {
+            Users existingUser = userRepository.findByEmail(email).get();
+            if (existingUser.getEmailVerified() != null && existingUser.getEmailVerified()) {
+                throw new IllegalArgumentException("이미 가입된 이메일입니다");
+            }
+        }
+
+        // 2️⃣ 기존 토큰 삭제 (같은 계정의 이전 요청만 삭제)
+        emailVerificationTokenRepository.deleteByRequestedUsername(requestedUsername);
+        log.info("✅ 기존 토큰 삭제 (계정: {})", requestedUsername);
+
+        // 3️⃣ 인증 코드 생성 (6자리 숫자)
+        String verificationCode = String.format("%06d", (int)(Math.random() * 1000000));
+        log.info("✅ 생성된 인증 코드: {}", verificationCode);
+
+        // 4️⃣ DB에 저장 (이메일 + 요청자 정보)
+        EmailVerificationToken token = EmailVerificationToken.builder()
+                .email(email)
+                .requestedUsername(requestedUsername)
+                .verificationCode(verificationCode)
+                .expiresAt(LocalDateTime.now().plusMinutes(10))
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        emailVerificationTokenRepository.save(token);
+        log.info("✅ DB에 저장: email={}, requestedUsername={}", email, requestedUsername);
+
+        // 5️⃣ 이메일 발송 (MailService 필요)
+        // mailService.sendVerificationEmail(email, verificationCode, requestedUsername);
+
+        log.info("✅ 인증 이메일 발송 완료: {}", email);
+    }
+
+    /**
+     * 이메일 인증 코드 확인
+     * @param email 받은 이메일
+     * @param code 입력한 코드
+     * @param requestedUsername 요청한 계정
+     * @return 인증 성공 여부
+     */
+    @Transactional
+    public boolean verifyEmail(String email, String code, String requestedUsername) {
+        log.info("🔍 이메일 인증 코드 확인: email={}, requestedUsername={}", email, requestedUsername);
+
+        if (code == null || code.isEmpty()) {
+            throw new IllegalArgumentException("인증 코드를 입력해주세요");
+        }
+
+        // ❌ 이미 다른 계정이 인증한 이메일인지 확인!
+        Optional<Users> existingVerifiedUser = userRepository.findByEmail(email);
+        if (existingVerifiedUser.isPresent()) {
+            Users verifiedUser = existingVerifiedUser.get();
+            if (verifiedUser.getEmailVerified() != null &&
+                    verifiedUser.getEmailVerified() &&
+                    !verifiedUser.getUsername().equals(requestedUsername)) {
+                log.warn("❌ 이미 다른 계정에서 인증된 이메일: email={}", email);
+                throw new IllegalArgumentException("이메일이 이미 다른 계정에서 인증되었습니다");
+            }
+        }
+
+        // DB에서 토큰 조회 (이메일 + 요청자 모두 확인!)
+        EmailVerificationToken token = emailVerificationTokenRepository
+                .findByEmailAndRequestedUsername(email, requestedUsername)
+                .orElseThrow(() -> {
+                    log.warn("❌ 저장된 인증 토큰이 없음: email={}, requestedUsername={}",
+                            email, requestedUsername);
+                    return new IllegalArgumentException(
+                            "인증 코드가 만료되었거나 일치하는 요청이 없습니다. 다시 요청해주세요");
+                });
+
+        // 만료 확인
+        if (token.isExpired()) {
+            emailVerificationTokenRepository.delete(token);
+            log.warn("❌ 인증 토큰 만료: email={}", email);
+            throw new IllegalArgumentException("인증 코드가 만료되었습니다. 다시 요청해주세요");
+        }
+
+        // 코드 확인
+        if (!token.getVerificationCode().equals(code)) {
+            log.warn("❌ 인증 코드 불일치: email={}", email);
+            throw new IllegalArgumentException("인증 코드가 일치하지 않습니다");
+        }
+
+        // ✅ 코드 확인 후 즉시 삭제
+        emailVerificationTokenRepository.delete(token);
+        log.info("✅ 인증 코드 확인 성공! email={}, requestedUsername={}", email, requestedUsername);
+
+        return true;
+    }
+
+    /**
+     * 사용자 이메일 인증 상태 업데이트
+     * @param email 인증할 이메일
+     * @param requestedUsername 요청한 계정
+     */
+    @Transactional
+    public void markEmailAsVerified(String email, String requestedUsername) {
+        log.info("📧 이메일 인증 완료 처리: email={}, requestedUsername={}", email, requestedUsername);
+
+        Users user = userRepository.findByUsername(requestedUsername)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        // ✅ 해당 이메일이 이미 다른 사람에게 인증되었는지 확인
+        Optional<Users> existingVerifiedUser = userRepository.findByEmail(email);
+        if (existingVerifiedUser.isPresent()) {
+            Users verifiedUser = existingVerifiedUser.get();
+            if (verifiedUser.getEmailVerified() != null &&
+                    verifiedUser.getEmailVerified() &&
+                    !verifiedUser.getUserId().equals(user.getUserId())) {
+                log.error("❌ 이메일이 이미 다른 계정에 인증됨: email={}", email);
+                throw new IllegalArgumentException("이메일이 이미 다른 계정에서 인증되었습니다");
+            }
+        }
+
+        user.setEmailVerified(true);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        log.info("✅ 이메일 인증 완료: email={}, userId={}", email, user.getUserId());
     }
 }

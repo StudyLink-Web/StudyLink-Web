@@ -5,6 +5,7 @@ import com.StudyLink.www.repository.UserRepository;
 import com.StudyLink.www.service.StudentVerificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -53,7 +54,7 @@ public class StudentVerificationController {
                 }
             }
 
-            // ⭐ 수정: 먼저 email로 조회 (Google OIDC는 auth.getName()이 이메일 반환)
+            // 먼저 email로 조회 (Google OIDC는 auth.getName()이 이메일 반환)
             Optional<Users> userOpt = userRepository.findByEmail(username);
 
             // email로 못 찾으면 username으로 재시도
@@ -70,12 +71,12 @@ public class StudentVerificationController {
                 model.addAttribute("schoolEmail", user.getSchoolEmail());
                 model.addAttribute("schoolEmailVerifiedAt", user.getSchoolEmailVerifiedAt());
 
-                // ⭐ 추가: 디버깅 로그
+                // 디버깅 로그
                 log.info("✅ 사용자 정보: name={}, username={}", displayName, user.getUsername());
                 log.info("✅ 학교이메일: schoolEmail={}", user.getSchoolEmail());
                 log.info("✅ 인증상태: schoolEmailVerifiedAt={}", user.getSchoolEmailVerifiedAt());
 
-                // ⭐ 추가: isVerifiedStudent도 함께 전달 (HTML에서 사용 가능)
+                // isVerifiedStudent도 함께 전달 (HTML에서 사용 가능)
                 model.addAttribute("isVerifiedStudent", user.getIsVerifiedStudent());
 
             } else {
@@ -120,12 +121,37 @@ public class StudentVerificationController {
             log.info("📧 인증 이메일 요청: {} (사용자: {})", email, auth.getName());
         }
 
-        Map<String, Object> response = verificationService.requestEmailVerification(email);
-        return ResponseEntity.ok(response);
+        try {
+            Map<String, Object> response = verificationService.requestEmailVerification(email);
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            // ✅ 중복 감지 또는 쿨다운 에러
+            log.warn("⚠️ 인증 요청 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+
+        } catch (RuntimeException e) {
+            // ✅ 이메일 전송 실패
+            log.error("❌ 런타임 에러: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+
+        } catch (Exception e) {
+            log.error("❌ 예기치 않은 오류: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "message", "인증 요청 중 오류가 발생했습니다"
+            ));
+        }
     }
 
     /**
-     * ⭐ 새로 추가됨: 이메일 재전송 쿨다운 상태 조회
+     * 이메일 재전송 쿨다운 상태 조회
      * 로그인 필수!
      */
     @GetMapping("/resend-cooldown")

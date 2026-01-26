@@ -41,5 +41,7 @@
 
 /* 취준생 */
 .community_table_wrap {width:100%; border-collapse: collapse;}
-.community_table {width:100%;}
+.community_table {width:100%; background: #fff;}
 .community_table th, td {text-align: center; padding:10px; border:1px solid #ededed;}
+.community_table tbody tr:hover {background: #dddbdb;}
+

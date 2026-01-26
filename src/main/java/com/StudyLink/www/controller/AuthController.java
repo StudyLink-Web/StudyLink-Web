@@ -15,7 +15,7 @@ import java.util.Map;
  * 회원가입, 로그인, 이메일/닉네임 중복 확인
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {
@@ -113,7 +113,7 @@ public class AuthController {
                     "name", user.getName(),
                     "nickname", user.getNickname(),
                     "role", user.getRole(),
-                    "message", "회원가입이 완료되었습니다."
+                    "message", "회원가입이 완료되었습니다. 이메일 인증을 진행해주세요."
             ));
 
         } catch (IllegalArgumentException e) {
@@ -250,11 +250,159 @@ public class AuthController {
         ));
     }
 
+    /**
+     * ⭐ POST /api/auth/send-verification-email - 이메일 인증 코드 발송 API (새로 추가됨)
+     *
+     * 요청 본문:
+     * {
+     *   "email": "user@example.com",
+     *   "username": "길동이"
+     * }
+     *
+     * @param request 이메일 인증 발송 요청
+     * @return 성공 시 200 OK
+     */
+    @PostMapping("/send-verification-email")
+    public ResponseEntity<Map<String, Object>> sendVerificationEmail(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String username = request.get("username");
+
+        log.info("📧 이메일 인증 코드 발송 요청: email={}, username={}", email, username);
+
+        try {
+            // 이메일 유효성 검사
+            if (email == null || !isValidEmail(email)) {
+                log.warn("❌ 유효하지 않은 이메일: {}", email);
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "유효한 이메일을 입력하세요."
+                ));
+            }
+
+            // username 검증
+            if (username == null || username.isEmpty()) {
+                log.warn("❌ username이 없습니다");
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "계정명을 입력하세요."
+                ));
+            }
+
+            // AuthService에서 인증 코드 발송
+            authService.sendVerificationEmail(email, username);
+
+            log.info("✅ 이메일 인증 코드 발송 완료: {}", email);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "인증 코드가 이메일로 발송되었습니다. (10분 유효)"
+            ));
+
+        } catch (IllegalArgumentException e) {
+            log.warn("❌ 인증 코드 발송 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+
+        } catch (Exception e) {
+            log.error("❌ 인증 코드 발송 중 서버 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "message", "인증 코드 발송 중 오류가 발생했습니다."
+            ));
+        }
+    }
+
+    /**
+     * ⭐ POST /api/auth/verify-email - 이메일 인증 코드 검증 API (새로 추가됨)
+     *
+     * 요청 본문:
+     * {
+     *   "email": "user@example.com",
+     *   "code": "123456",
+     *   "username": "길동이"
+     * }
+     *
+     * @param request 이메일 인증 검증 요청
+     * @return 성공 시 200 OK
+     */
+    @PostMapping("/verify-email")
+    public ResponseEntity<Map<String, Object>> verifyEmail(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String code = request.get("code");
+        String username = request.get("username");
+
+        log.info("🔍 이메일 인증 코드 검증: email={}, username={}", email, username);
+
+        try {
+            // 입력값 검증
+            if (email == null || !isValidEmail(email)) {
+                log.warn("❌ 유효하지 않은 이메일: {}", email);
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "유효한 이메일을 입력하세요."
+                ));
+            }
+
+            if (code == null || code.isEmpty()) {
+                log.warn("❌ 인증 코드가 없습니다");
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "인증 코드를 입력하세요."
+                ));
+            }
+
+            if (username == null || username.isEmpty()) {
+                log.warn("❌ username이 없습니다");
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "계정명을 입력하세요."
+                ));
+            }
+
+            // AuthService에서 인증 코드 검증
+            boolean verified = authService.verifyEmail(email, code, username);
+
+            if (verified) {
+                // ✅ 인증 성공 후 emailVerified 플래그 업데이트
+                authService.markEmailAsVerified(email, username);
+
+                log.info("✅ 이메일 인증 완료: {}", email);
+
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "이메일 인증이 완료되었습니다!"
+                ));
+            } else {
+                log.warn("❌ 이메일 인증 실패");
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "이메일 인증에 실패했습니다."
+                ));
+            }
+
+        } catch (IllegalArgumentException e) {
+            log.warn("❌ 인증 코드 검증 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+
+        } catch (Exception e) {
+            log.error("❌ 인증 코드 검증 중 서버 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "message", "이메일 인증 중 오류가 발생했습니다."
+            ));
+        }
+    }
+
     // ========== Validation 메서드 ==========
 
     /**
      * 이메일 유효성 검증
-     * 정규식: email@domain.com 형태
+     * 정규식: [email@domain.com](mailto:email@domain.com) 형태
      *
      * @param email 검증할 이메일
      * @return 유효성 검사 결과
