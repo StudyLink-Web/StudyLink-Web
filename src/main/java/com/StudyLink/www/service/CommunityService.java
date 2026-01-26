@@ -1,12 +1,9 @@
 package com.StudyLink.www.service;
 
 import com.StudyLink.www.dto.CommunityDTO;
-import com.StudyLink.www.dto.CommunityFileDTO;
 import com.StudyLink.www.entity.Community;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 public interface CommunityService {
 
@@ -48,15 +45,7 @@ public interface CommunityService {
 
     CommunityDTO getDetail(Long bno);
 
-    Long modify(CommunityDTO communityDTO, MultipartFile[] files, List<String> removeUuids);
-
-    default Long modify(CommunityDTO communityDTO, MultipartFile[] files) {
-        return modify(communityDTO, files, List.of());
-    }
+    Long modify(CommunityDTO communityDTO);
 
     void remove(Long bno);
-
-    List<CommunityFileDTO> getFileList(Long bno);
-
-    CommunityFileDTO getFileByUuid(String uuid);
 }

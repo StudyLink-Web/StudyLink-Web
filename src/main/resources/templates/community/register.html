@@ -36,9 +36,8 @@
                       placeholder="내용을 입력하세요." required></textarea>
         </div>
 
-        <!-- ✅ input은 숨기고, 버튼만 노출 -->
         <div class="mb-3">
-            <input type="file" name="files" id="file" multiple style="display:none">
+            <input type="file" name="files" class="form-control" id="file" multiple style="display:none">
             <button type="button" class="btn btn-outline-dark" id="trigger">file upload</button>
         </div>
 
@@ -48,13 +47,12 @@
         <a th:href="@{/community/list}" class="btn btn-secondary">cancel</a>
     </form>
 
-    <!-- ✅ 여기서는 "미리보기만" 처리 (중복 리스너 방지) -->
-    <script th:inline="javascript">
+    <script>
         const fileInput = document.getElementById('file');
         const trigger = document.getElementById('trigger');
         const fileZone = document.getElementById('fileZone');
 
-        trigger?.addEventListener('click', () => fileInput?.click());
+        trigger?.addEventListener('click', () => fileInput.click());
 
         fileInput?.addEventListener('change', () => {
             fileZone.innerHTML = '';
@@ -62,10 +60,8 @@
             if (!files.length) return;
 
             const ul = document.createElement('ul');
-            ul.className = "list-group";
             files.forEach(f => {
                 const li = document.createElement('li');
-                li.className = "list-group-item";
                 li.textContent = `${f.name} (${Math.round(f.size / 1024)}KB)`;
                 ul.appendChild(li);
             });
@@ -73,9 +69,7 @@
         });
     </script>
 
-    <!-- ✅ communityRegister.js 안에서 trigger/file 이벤트를 또 걸고 있으면 2번 뜸.
-         아래 한 줄을 제거하거나, communityRegister.js에서 trigger/file 관련 코드를 삭제해야 함. -->
-    <!-- <script th:src="@{/js/communityRegister.js}"></script> -->
+    <script th:src="@{/js/communityRegister.js}"></script>
 </div>
 
 </html>
