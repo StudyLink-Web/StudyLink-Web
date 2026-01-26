@@ -1,5 +1,6 @@
 package com.StudyLink.www.config;
 
+import com.StudyLink.www.handler.RoleBasedLoginSuccessHandler;
 import com.StudyLink.www.repository.UserRepository;
 import com.StudyLink.www.service.CustomOAuth2UserService;
 import com.StudyLink.www.service.CustomOidcUserService;
@@ -72,6 +73,9 @@ public class SecurityConfig {
 
                 // 권한 설정
                 .authorizeHttpRequests(authz -> authz
+                        // 관리자 페이지
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
                         // 멘토 프로필 추가
                         .requestMatchers("/mentor/edit-profile").permitAll()
                         .requestMatchers("/mentor/**").permitAll()
@@ -178,16 +182,38 @@ public class SecurityConfig {
                         .accessDeniedPage("/error")
                 )
 
+//                // ✅ Form Login (폼 기반 로그인)
+//                .formLogin(form -> form
+//                        .loginPage("/login")
+//                        .loginProcessingUrl("/api/auth/login")
+//                        .usernameParameter("email")
+//                        .passwordParameter("password")
+//                        .defaultSuccessUrl("/", true)
+//                        .failureUrl("/login?error=true")
+//                        .permitAll()
+//                )
+
                 // ✅ Form Login (폼 기반 로그인)
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/api/auth/login")
                         .usernameParameter("email")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/", true)
+                        .successHandler(new RoleBasedLoginSuccessHandler())
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )
+
+//                // OAuth2 설정
+//                .oauth2Login(oauth2 -> oauth2
+//                        .loginPage("/login")
+//                        .userInfoEndpoint(userInfo -> userInfo
+//                                .userService(customOAuth2UserService)      // 카카오 / 네이버
+//                                .oidcUserService(customOidcUserService)    // ✅ 구글 OIDC
+//                        )
+//                        .defaultSuccessUrl("/", true)
+//                        .failureUrl("/login?error=true")
+//                )
 
                 // OAuth2 설정
                 .oauth2Login(oauth2 -> oauth2
@@ -196,7 +222,7 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService)      // 카카오 / 네이버
                                 .oidcUserService(customOidcUserService)    // ✅ 구글 OIDC
                         )
-                        .defaultSuccessUrl("/", true)
+                        .successHandler(new RoleBasedLoginSuccessHandler())
                         .failureUrl("/login?error=true")
                 )
 
