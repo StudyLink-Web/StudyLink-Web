@@ -99,6 +99,8 @@ public class SecurityConfig {
                         // ✅ 등록(폼/처리): MENTOR만 허용 ( /board/** permitAll 보다 위에 있어야 함 )
                         .requestMatchers("/board/register", "/board/register/**").hasRole("MENTOR")
 
+                        .requestMatchers("/community/register", "/community/register/**").hasRole("STUDENT")
+
                         // 나의 질문, 답변 내역 비로그인시 접근 불가
                         .requestMatchers("/room/myQuiz").authenticated()
 
@@ -140,7 +142,7 @@ public class SecurityConfig {
 
                                 // ✅ board 전체 공개(단, register는 위에서 예외로 막음)
                                 "/board/**",
-
+                                "/community/**",
                                 "/api/auth/**",
                                 "/.well-known/**",      // Chrome DevTools 에러 무시
                                 "/oauth2/**",           // OAuth2 요청
