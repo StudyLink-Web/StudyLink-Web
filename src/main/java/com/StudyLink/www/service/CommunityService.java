@@ -1,9 +1,11 @@
+// src/main/java/com/StudyLink/www/service/CommunityService.java
 package com.StudyLink.www.service;
 
 import com.StudyLink.www.dto.CommunityDTO;
+import com.StudyLink.www.dto.CommunityFileDTO;
+import com.StudyLink.www.dto.FileDTO;
 import com.StudyLink.www.entity.Community;
 import org.springframework.data.domain.Page;
-import org.springframework.web.multipart.MultipartFile;
 
 public interface CommunityService {
 
@@ -14,7 +16,7 @@ public interface CommunityService {
                 .bno(dto.getBno())
                 .userId(dto.getUserId())
                 .email(dto.getEmail())
-                .role(dto.getRole())
+                .role((dto.getRole() == null || dto.getRole().isBlank()) ? "USER" : dto.getRole())
                 .title(dto.getTitle())
                 .writer(dto.getWriter())
                 .department(dto.getDepartment())
@@ -45,13 +47,21 @@ public interface CommunityService {
                 .build();
     }
 
-    Long insert(CommunityDTO communityDTO, MultipartFile[] files);
+    Long insert(CommunityFileDTO communityFileDTO);
 
+    // ✅ 기존(그대로 유지)
     Page<CommunityDTO> getList(int pageNo);
 
-    CommunityDTO getDetail(Long bno);
+    // ✅ 추가: 검색/정렬 지원
+    Page<CommunityDTO> getList(int pageNo, String type, String keyword);
 
-    Long modify(CommunityDTO communityDTO);
+    CommunityFileDTO getDetail(Long bno);
+
+    Long modify(CommunityFileDTO communityFileDTO);
 
     void remove(Long bno);
+
+    FileDTO getFile(String uuid);
+
+    void increaseReadCount(Long bno);
 }
