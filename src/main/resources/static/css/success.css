@@ -1,0 +1,77 @@
+.successTitle {
+    text-align: center;
+    margin-top: 32px;
+    margin-bottom: 32px;
+}
+.successTitle h1 {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+.successTitle p {
+    color: #666;
+    font-size: 15px;
+}
+.successSection {
+    margin-top: 28px;
+    margin-bottom: 28px;
+}
+.successSection h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+.info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.info-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 15px;
+}
+.info-list li span {
+    color: #555;
+}
+.features {
+    margin-top: 8px;
+    padding-left: 16px;
+}
+.features li {
+    margin-bottom: 6px;
+    color: #555;
+    font-size: 14px;
+}
+.successActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+.successActions a {
+    flex: 1;
+    text-align: center;
+    padding: 14px 0;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+}
+.btn-primary {
+    background-color: #4f46e5;
+    color: #fff;
+}
+.btn-secondary {
+    background-color: #eef2ff;
+    color: #4f46e5;
+}
+.successNotice {
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.6;
+}

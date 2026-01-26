@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content" class="container-md">
+    <h1 class="exchangeTitle">환전하기</h1>
+    <p class="exchangeDesc">
+        보유한 포인트를 현금으로 환전할 수 있습니다.<br />
+        입력한 계좌 정보로 송금됩니다.
+    </p>
+
+    <!-- 보유 포인트 -->
+    <div class="exchangeSection">
+        <h2>보유 포인트</h2>
+        <div class="point-box">
+            현재 보유 포인트: <strong>[123,456 P]</strong>
+        </div>
+    </div>
+
+    <!-- 환전 정보 -->
+    <div class="exchangeSection">
+        <h2>환전 정보 입력</h2>
+
+        <div class="exchagneField">
+            <label for="exchangePoint">환전할 포인트</label>
+            <input
+                    id="exchangePoint"
+                    placeholder="환전할 포인트를 입력하세요"
+            />
+            <small>최소 환전 포인트: [10,000P]</small>
+            <p id="validMessage"></p>
+        </div>
+
+        <div class="exchagneField">
+            <label for="bank">은행명</label>
+            <select id="bank">
+                <option value="">은행을 선택하세요</option>
+                <option>국민은행</option>
+                <option>기업은행</option>
+                <option>신한은행</option>
+                <option>우리은행</option>
+                <option>하나은행</option>
+                <option>카카오뱅크</option>
+                <option>토스뱅크</option>
+            </select>
+        </div>
+
+        <div class="exchagneField">
+            <label for="accountNumber">계좌번호</label>
+            <input
+                    type="text"
+                    id="accountNumber"
+                    placeholder="계좌번호를 입력하세요"
+            />
+            <small>'-'없이 숫자만 입력하세요</small>
+            <p id="accountValidMessage"></p>
+        </div>
+
+        <div class="exchagneField">
+            <label for="accountHolder">예금주명</label>
+            <input
+                    type="text"
+                    id="accountHolder"
+                    placeholder="예금주명을 입력하세요"
+            />
+        </div>
+    </div>
+
+    <!-- 버튼 -->
+    <div class="exchangeActions">
+        <button type="button" id="exchangeSubmitBtn">환전 신청하기</button>
+    </div>
+
+    <!-- 안내 -->
+    <div class="exchangeNotice">
+        · 환전 신청은 영업일 기준 [1~3일] 내 처리됩니다.<br />
+        · 입력한 계좌 정보가 올바르지 않을 경우 환전이 지연될 수 있습니다.<br />
+        · 환전 신청 후에는 취소가 불가능합니다.
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const exchangePointInput = document.getElementById("exchangePoint");
+            const validMessage = document.getElementById("validMessage");
+
+            const MIN_POINT = 10000;
+            const AVAILABLE_POINT = 123456;
+
+            exchangePointInput.addEventListener("input", () => {
+                const rawValue = exchangePointInput.value.trim();
+
+                // 입력이 비었으면 초기 상태로
+                if (rawValue === "") {
+                    validMessage.innerText = "";
+                    validMessage.style.color = "#ddd";
+                    return;
+                }
+
+                const value = Number(rawValue);
+
+                const result = validateExchangePoint(
+                    value,
+                    MIN_POINT,
+                    AVAILABLE_POINT
+                );
+
+                if (!result.valid) {
+                    validMessage.innerText = result.message;
+                    validMessage.style.color = "red";
+                } else {
+                    validMessage.innerText = result.message;
+                    validMessage.style.color = "#22c55e";
+                }
+            });
+
+            function validateExchangePoint(inputPoint, minPoint, availablePoint) {
+                if (inputPoint === null || inputPoint === undefined) {
+                    return { valid: false, message: "환전할 포인트를 입력해주세요." };
+                }
+
+                if (isNaN(inputPoint)) {
+                    return { valid: false, message: "숫자만 입력할 수 있습니다." };
+                }
+
+                if (inputPoint <= 0) {
+                    return { valid: false, message: "환전할 포인트는 0보다 커야 합니다." };
+                }
+
+                if (inputPoint < minPoint) {
+                    return {
+                        valid: false,
+                        message: `최소 환전 포인트는 ${minPoint.toLocaleString()}P 입니다.`,
+                    };
+                }
+
+                if (inputPoint > availablePoint) {
+                    return {
+                        valid: false,
+                        message: "보유 포인트를 초과할 수 없습니다.",
+                    };
+                }
+
+                return { valid: true, message: "환전 가능한 포인트입니다." };
+            }
+
+            const bankSelect = document.getElementById("bank");
+            const accountInput = document.getElementById("accountNumber");
+            const message = document.getElementById("accountValidMessage");
+
+            accountInput.addEventListener("input", () => {
+                const bank = bankSelect.value;
+                const rawValue = accountInput.value;
+
+                // 숫자만 남기기
+                const accountNumber = rawValue.replace(/\D/g, "");
+                accountInput.value = accountNumber;
+
+                if (!bank) {
+                    message.innerText = "은행을 먼저 선택해주세요.";
+                    message.style.color = "red";
+                    return;
+                }
+
+                if (accountNumber === "") {
+                    message.innerText = "";
+                    return;
+                }
+
+                // 숫자 길이만 검증 (8~16자리)
+                if (accountNumber.length < 8 || accountNumber.length > 16) {
+                    message.innerText = "계좌번호를 다시 확인해주세요.";
+                    message.style.color = "red";
+                } else {
+                    message.innerText = ""; // 정상 입력 시 안내문 제거
+                }
+            });
+
+
+            const submitBtn = document.getElementById("exchangeSubmitBtn");
+            const accountHolderInput = document.getElementById("accountHolder");
+
+            submitBtn.addEventListener("click", async () => {
+                // 1. 환전 포인트 검증
+                const pointValue = Number(exchangePointInput.value.trim());
+                const pointResult = validateExchangePoint(
+                    pointValue,
+                    MIN_POINT,
+                    AVAILABLE_POINT
+                );
+
+                if (!pointResult.valid) {
+                    alert("환전할 포인트를 확인해주세요");
+                    exchangePointInput.focus();
+                    return;
+                }
+
+                // 2. 은행 선택 여부
+                if (!bankSelect.value) {
+                    alert("은행을 선택해주세요.");
+                    bankSelect.focus();
+                    return;
+                }
+
+                // 3. 계좌번호 검증 (숫자 8~16자리)
+                const accountNumber = accountInput.value.replace(/\D/g, "");
+                if (accountNumber.length < 8 || accountNumber.length > 16) {
+                    alert("계좌번호를 다시 확인해주세요.");
+                    accountInput.focus();
+                    return;
+                }
+
+                // 4. 예금주명 검증 (비어 있는지만)
+                const accountHolder = accountHolderInput.value.trim();
+                if (!accountHolder) {
+                    alert("예금주명을 입력해주세요.");
+                    accountHolderInput.focus();
+                    return;
+                }
+
+                // 모든 검증 통과
+                // 서버로 보내기
+                const url = "/payment/exchange";
+
+                const payload = {
+                    point: Number(exchangePointInput.value.trim()),
+                    bankName: bankSelect.value,
+                    account: accountInput.value,
+                    accountHolder: accountHolderInput.value.trim()
+                };
+
+                const config = {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                };
+
+                const res = await fetch(url, config);
+
+                if (!res.ok) {
+                    alert("환전 신청에 실패했습니다. 관리자에게 문의해주세요.");
+                } else {
+                    alert("환전 신청이 완료되었습니다.");
+                }
+                location.href = "/";
+            });
+        });
+    </script>
+</div>

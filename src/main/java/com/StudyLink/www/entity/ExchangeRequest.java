@@ -42,6 +42,9 @@ public class ExchangeRequest {
     @Column(nullable = false, length = 20)
     private String bankName; // 은행명
 
+    @Column(nullable = false, length = 50)
+    private String accountHolder; // 예금주
+
     @Column(length = 200)
     private String rejectedReason;
 
