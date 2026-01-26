@@ -4,7 +4,6 @@ import com.StudyLink.www.dto.CommunityDTO;
 import com.StudyLink.www.handler.PageHandler;
 import com.StudyLink.www.service.CommunityService;
 import com.StudyLink.www.service.UserService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -13,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Slf4j
@@ -30,99 +30,121 @@ public class CommunityController {
                 && !(authentication instanceof AnonymousAuthenticationToken);
     }
 
+    private String loginEmail(Authentication authentication) {
+        return authentication == null ? null : authentication.getName();
+    }
+
+    private Long loginUserId(Authentication authentication) {
+        String email = loginEmail(authentication);
+        if (email == null || email.isBlank()) return null;
+        return userService.findUserIdByUsername(email);
+    }
+
     @GetMapping("/register")
     public String register(Authentication authentication, Model model) {
-        if (!isLogin(authentication)) {
-            return "redirect:/login";
-        }
+        if (!isLogin(authentication)) return "redirect:/login";
         model.addAttribute("loginEmail", authentication.getName());
         return "community/register";
     }
 
     @PostMapping("/register")
-    public String register(CommunityDTO communityDTO, Authentication authentication) {
-        if (!isLogin(authentication)) {
-            return "redirect:/login";
-        }
+    public String register(@ModelAttribute CommunityDTO communityDTO,
+                           @RequestParam(value = "files", required = false) MultipartFile[] files,
+                           Authentication authentication,
+                           RedirectAttributes redirectAttributes) {
 
-        String email = authentication.getName();
-        Long userId = userService.findUserIdByUsername(email);
-        if (userId == null) {
-            log.error("register: userId 조회 실패. email={}", email);
-            return "redirect:/error/500";
-        }
+        if (!isLogin(authentication)) return "redirect:/login";
+
+        String email = loginEmail(authentication);
+        Long userId = loginUserId(authentication);
+        if (userId == null) return "redirect:/login";
 
         communityDTO.setUserId(userId);
         communityDTO.setEmail(email);
+        communityDTO.setWriter(email);
+        communityDTO.setRole("USER");
+        communityDTO.setReadCount(0);
+        communityDTO.setCmtQty(0);
 
-        if (communityDTO.getRole() == null || communityDTO.getRole().isBlank()) {
-            communityDTO.setRole("USER");
+        int fileQty = 0;
+        if (files != null) {
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) fileQty++;
+            }
         }
+        communityDTO.setFileQty(fileQty);
 
-        Long savedBno = communityService.insert(communityDTO);
-        return "redirect:/community/detail?bno=" + savedBno;
+        Long savedBno = communityService.insert(communityDTO, files);
+
+        redirectAttributes.addAttribute("bno", savedBno);
+        return "redirect:/community/list";
     }
 
     @GetMapping("/list")
     public String list(Model model,
-                       @RequestParam(name = "pageNo", defaultValue = "1") int pageNo,
-                       @RequestParam(name = "type", required = false) String type,
-                       @RequestParam(name = "keyword", required = false) String keyword) {
+                       @RequestParam(defaultValue = "1") int pageNo,
+                       @RequestParam(required = false) String type,
+                       @RequestParam(required = false) String keyword) {
 
-        if (pageNo < 1) pageNo = 1;
+        int safePageNo = Math.max(pageNo, 1);
+        Page<CommunityDTO> page = communityService.getList(safePageNo);
+        PageHandler<CommunityDTO> ph = new PageHandler<>(page, safePageNo, type, keyword);
 
-        type = (type == null || type.isBlank()) ? "" : type.trim();
-        keyword = (keyword == null || keyword.isBlank()) ? "" : keyword.trim();
-
-        try {
-            Page<CommunityDTO> page = communityService.getList(pageNo);
-
-            PageHandler<CommunityDTO> ph = new PageHandler<>(page, pageNo, type, keyword);
-
-            model.addAttribute("ph", ph);
-            return "community/list";
-
-        } catch (Exception e) {
-            log.error("community/list 500. pageNo={}, type='{}', keyword='{}'", pageNo, type, keyword, e);
-            return "error/500";
-        }
+        model.addAttribute("ph", ph);
+        return "community/list";
     }
 
     @GetMapping("/detail")
-    public String detail(@RequestParam("bno") Long bno, Model model) {
-        try {
-            CommunityDTO communityDTO = communityService.getDetail(bno);
-            if (communityDTO == null) return "error/404";
+    public String detail(@RequestParam Long bno,
+                         @RequestParam(required = false) String mode,
+                         Model model,
+                         Authentication authentication) {
 
-            model.addAttribute("communityDTO", communityDTO);
-            return "community/detail";
-        } catch (EntityNotFoundException e) {
-            return "error/404";
+        CommunityDTO communityDTO = communityService.getDetail(bno);
+        if (communityDTO == null) return "error/404";
+
+        boolean modifyMode = "modify".equals(mode);
+        if (modifyMode) {
+            if (!isLogin(authentication)) return "redirect:/login";
+            if (!loginEmail(authentication).equals(communityDTO.getWriter())) {
+                return "redirect:/community/detail?bno=" + bno;
+            }
         }
+
+        model.addAttribute("communityDTO", communityDTO);
+        model.addAttribute("mode", modifyMode ? "modify" : "read");
+        return "community/detail";
     }
 
     @PostMapping("/modify")
-    public String modify(CommunityDTO communityDTO,
-                         RedirectAttributes redirectAttributes,
-                         Authentication authentication) {
+    public String modify(@ModelAttribute CommunityDTO communityDTO,
+                         @RequestParam(value = "files", required = false) MultipartFile[] files,
+                         Authentication authentication,
+                         RedirectAttributes redirectAttributes) {
 
-        if (!isLogin(authentication)) {
-            return "redirect:/login";
+        if (!isLogin(authentication)) return "redirect:/login";
+
+        CommunityDTO origin = communityService.getDetail(communityDTO.getBno());
+        if (origin == null) return "error/404";
+
+        if (!loginEmail(authentication).equals(origin.getWriter())) {
+            return "redirect:/community/detail?bno=" + communityDTO.getBno();
         }
 
-        String email = authentication.getName();
-        Long loginUserId = userService.findUserIdByUsername(email);
-        if (loginUserId == null) {
-            log.error("modify: userId 조회 실패. email={}", email);
-            return "redirect:/error/500";
-        }
+        communityDTO.setUserId(origin.getUserId());
+        communityDTO.setEmail(origin.getEmail());
+        communityDTO.setWriter(origin.getWriter());
+        communityDTO.setRole(origin.getRole());
+        communityDTO.setReadCount(origin.getReadCount());
+        communityDTO.setCmtQty(origin.getCmtQty());
 
-        communityDTO.setUserId(loginUserId);
-        communityDTO.setEmail(email);
-
-        if (communityDTO.getRole() == null || communityDTO.getRole().isBlank()) {
-            communityDTO.setRole("USER");
+        int fileQty = 0;
+        if (files != null) {
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) fileQty++;
+            }
         }
+        communityDTO.setFileQty(fileQty > 0 ? fileQty : origin.getFileQty());
 
         Long savedBno = communityService.modify(communityDTO);
         redirectAttributes.addAttribute("bno", savedBno);
@@ -130,11 +152,16 @@ public class CommunityController {
     }
 
     @GetMapping("/remove")
-    public String remove(@RequestParam("bno") Long bno,
+    public String remove(@RequestParam Long bno,
                          Authentication authentication) {
 
-        if (!isLogin(authentication)) {
-            return "redirect:/login";
+        if (!isLogin(authentication)) return "redirect:/login";
+
+        CommunityDTO origin = communityService.getDetail(bno);
+        if (origin == null) return "error/404";
+
+        if (!loginEmail(authentication).equals(origin.getWriter())) {
+            return "redirect:/community/detail?bno=" + bno;
         }
 
         communityService.remove(bno);
