@@ -68,19 +68,50 @@ public class CommunityServiceImpl implements CommunityService {
         return bno;
     }
 
+    // ✅ 기존 호출부 호환 유지: 기본은 "최신글"
     @Transactional(readOnly = true)
     @Override
     public Page<CommunityDTO> getList(int pageNo) {
+        return getList(pageNo, null, null);
+    }
+
+    // ✅✅✅ 추가: 검색/정렬 반영
+    @Transactional(readOnly = true)
+    @Override
+    public Page<CommunityDTO> getList(int pageNo, String type, String keyword) {
+
         int safePageNo = Math.max(pageNo, 1);
 
         Pageable pageable = PageRequest.of(
                 safePageNo - 1,
                 PAGE_SIZE,
-                Sort.by(Sort.Direction.DESC, "bno")
+                getSort(type)
         );
+
+        String kw = (keyword == null) ? "" : keyword.trim();
+
+        // 🔍 keyword 있으면 검색, 없으면 전체
+        if (!kw.isEmpty()) {
+            return communityRepository.search(kw, pageable)
+                    .map(this::convertEntityToDto);
+        }
 
         return communityRepository.findAll(pageable)
                 .map(this::convertEntityToDto);
+    }
+
+    // ✅ 너의 select 옵션 의미대로 정렬
+    // new  = 제목 순
+    // view = 내용 순
+    // default = 최신글(bno DESC)
+    private Sort getSort(String type) {
+        if ("new".equals(type)) {
+            return Sort.by(Sort.Direction.ASC, "title");
+        }
+        if ("view".equals(type)) {
+            return Sort.by(Sort.Direction.ASC, "content");
+        }
+        return Sort.by(Sort.Direction.DESC, "bno");
     }
 
     @Transactional(readOnly = true)

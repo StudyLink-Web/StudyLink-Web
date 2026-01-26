@@ -26,10 +26,8 @@
       <div class="form_board_box">
         <select class="form-select" name="type" aria-label="정렬 기준">
           <option value="" th:selected="${ph != null and (ph.type == null or ph.type == '')}">전체</option>
-          <option value="new" th:selected="${ph != null and ph.type == 'new'}">최신 순</option>
-          <option value="view" th:selected="${ph != null and ph.type == 'view'}">조회수 순</option>
-          <option value="like" th:selected="${ph != null and ph.type == 'like'}" disabled>좋아요 순(준비중)</option>
-          <option value="cmt" th:selected="${ph != null and ph.type == 'cmt'}" disabled>댓글 순(준비중)</option>
+          <option value="new" th:selected="${ph != null and ph.type == 'new'}">제목 순</option>
+          <option value="view" th:selected="${ph != null and ph.type == 'view'}">내용 순</option>
         </select>
 
         <input class="form-control" type="search" name="keyword"
