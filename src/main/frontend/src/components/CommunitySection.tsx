@@ -3,7 +3,7 @@ import type { FC } from "react";
 
 const CommunitySection: FC = () => {
   return (
-    <section className="py-32 bg-white dark:bg-[#030014] transition-colors duration-300">
+    <section className="py-32 bg-transparent dark:bg-transparent transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
@@ -18,14 +18,14 @@ const CommunitySection: FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* Card 1 */}
-          <div className="group p-8 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-teal-400 dark:hover:border-purple-500/30 transition-all hover:shadow-xl">
+          <div className="group p-8 rounded-3xl bg-white/40 dark:bg-white/[0.02] backdrop-blur-xl border border-slate-200 dark:border-white/10 hover:border-teal-400 dark:hover:border-purple-500/30 transition-all hover:shadow-xl">
             <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center mb-6">
               <MessageSquare className="text-teal-600 dark:text-purple-400" />
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
               실시간 질문 답변
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
+            <p className="text-slate-600 dark:text-slate-200 text-sm leading-relaxed mb-6">
               모르는 문제는 바로 물어보세요. 평균 15분 이내에 명쾌한 답변이
               달립니다.
             </p>
@@ -43,14 +43,14 @@ const CommunitySection: FC = () => {
           </div>
 
           {/* Card 2 */}
-          <div className="group p-8 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-teal-400 dark:hover:border-purple-500/30 transition-all hover:shadow-xl">
+          <div className="group p-8 rounded-3xl bg-white/40 dark:bg-white/[0.02] backdrop-blur-xl border border-slate-200 dark:border-white/10 hover:border-teal-400 dark:hover:border-purple-500/30 transition-all hover:shadow-xl">
             <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center mb-6">
               <Users className="text-teal-600 dark:text-purple-400" />
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
               입시 메이트 찾기
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
+            <p className="text-slate-600 dark:text-slate-200 text-sm leading-relaxed mb-6">
               같은 목표를 가진 친구들과 스터디 그룹을 만들고 서로 응원하며
               공부하세요.
             </p>
@@ -60,14 +60,14 @@ const CommunitySection: FC = () => {
           </div>
 
           {/* Card 3 */}
-          <div className="group p-8 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-teal-400 dark:hover:border-purple-500/30 transition-all hover:shadow-xl">
+          <div className="group p-8 rounded-3xl bg-white/40 dark:bg-white/[0.02] backdrop-blur-xl border border-slate-200 dark:border-white/10 hover:border-teal-400 dark:hover:border-purple-500/30 transition-all hover:shadow-xl">
             <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center mb-6">
               <Zap className="text-teal-600 dark:text-purple-400" />
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
               합격 꿀팁 매거진
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
+            <p className="text-slate-600 dark:text-slate-200 text-sm leading-relaxed mb-6">
               매주 업데이트되는 최신 입시 전형 분석과 멘토들의 합격 수기를
               만나보세요.
             </p>

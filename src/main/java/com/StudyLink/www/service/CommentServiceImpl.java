@@ -19,9 +19,12 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     @Override
     public int post(CommentDTO dto) {
-        if (dto == null || dto.getPostId() == null) return 0;
-        if (dto.getWriter() == null || dto.getWriter().trim().isEmpty()) return 0;
-        if (dto.getContent() == null || dto.getContent().trim().isEmpty()) return 0;
+        if (dto == null || dto.getPostId() == null)
+            return 0;
+        if (dto.getWriter() == null || dto.getWriter().trim().isEmpty())
+            return 0;
+        if (dto.getContent() == null || dto.getContent().trim().isEmpty())
+            return 0;
 
         Comment saved = commentRepository.save(convertDtoToEntity(dto));
         return (saved.getCno() != null && saved.getCno() > 0) ? 1 : 0;
@@ -30,14 +33,18 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     @Override
     public int modify(CommentDTO dto) {
-        if (dto == null || dto.getCno() == null || dto.getCno() <= 0) return 0;
-        if (dto.getContent() == null || dto.getContent().trim().isEmpty()) return 0;
+        if (dto == null || dto.getCno() == null || dto.getCno() <= 0)
+            return 0;
+        if (dto.getContent() == null || dto.getContent().trim().isEmpty())
+            return 0;
 
         Comment origin = commentRepository.findById(dto.getCno()).orElse(null);
-        if (origin == null) return 0;
+        if (origin == null)
+            return 0;
 
         // ✅ 작성자 검증 (Controller에서 writer 주입됨)
-        if (!origin.getWriter().equals(dto.getWriter())) return 0;
+        if (!origin.getWriter().equals(dto.getWriter()))
+            return 0;
 
         origin.setContent(dto.getContent());
         commentRepository.save(origin);
@@ -47,10 +54,12 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     @Override
     public int remove(long cno) {
-        if (cno <= 0) return 0;
+        if (cno <= 0)
+            return 0;
 
         Comment origin = commentRepository.findById(cno).orElse(null);
-        if (origin == null) return 0;
+        if (origin == null)
+            return 0;
 
         commentRepository.delete(origin);
         return 1;
@@ -59,13 +68,13 @@ public class CommentServiceImpl implements CommentService {
     @Transactional(readOnly = true)
     @Override
     public Page<CommentDTO> getList(Long postId, int page) {
-        if (postId == null) return Page.empty();
+        if (postId == null)
+            return Page.empty();
 
         Pageable pageable = PageRequest.of(
                 Math.max(page - 1, 0),
                 10,
-                Sort.by(Sort.Direction.DESC, "cno")
-        );
+                Sort.by(Sort.Direction.DESC, "cno"));
 
         return commentRepository.findByPostId(postId, pageable)
                 .map(this::convertEntityToDto);

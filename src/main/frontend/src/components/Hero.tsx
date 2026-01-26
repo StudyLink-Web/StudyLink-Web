@@ -85,20 +85,20 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
         {/* Main Heading */}
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-slate-900 dark:text-white tracking-tight leading-[1.1] mb-8 animate-fade-in-up [animation-delay:200ms]">
           입시의{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-b from-slate-400 to-slate-200 dark:from-white dark:to-white/50">
+          <span className="text-transparent bg-clip-text bg-gradient-to-b from-slate-600 to-slate-400 dark:from-white dark:to-slate-300">
             모든 것
           </span>
           ,<br />
           <span className="relative inline-block">
             <span className="absolute -inset-2 bg-teal-500/10 dark:bg-purple-500/20 blur-2xl rounded-full" />
-            <span className="relative text-transparent bg-clip-text bg-gradient-to-r from-teal-600 via-teal-400 to-teal-600 dark:from-purple-600 dark:via-indigo-500 dark:to-purple-600 animate-shimmer bg-[length:200%_100%]">
+            <span className="relative text-transparent bg-clip-text bg-gradient-to-r from-teal-600 via-teal-400 to-teal-600 dark:from-cyan-300 dark:via-white dark:to-cyan-300 animate-shimmer bg-[length:200%_100%]">
               StudyLink
             </span>
           </span>
           <span className="text-slate-900 dark:text-white">에서</span>
         </h1>
 
-        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed animate-fade-in-up [animation-delay:400ms]">
+        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-200 max-w-2xl mx-auto mb-12 leading-relaxed animate-fade-in-up [animation-delay:400ms]">
           SKY 재학생 멘토링부터 AI 생활기록부 분석까지.
           <br className="hidden md:block" />
           가장 확실한 합격 데이터를 지금 바로 경험하세요.
@@ -108,9 +108,9 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up [animation-delay:600ms]">
           <a
             href="/room/list"
-            className="group relative w-full sm:w-auto overflow-hidden rounded-full bg-slate-900 dark:bg-white px-8 py-4 text-base font-bold text-white dark:text-black transition-all hover:bg-teal-800 dark:hover:bg-slate-200 shadow-lg shadow-teal-500/20 dark:shadow-purple-500/20 no-underline hover:no-underline"
+            className="group relative w-full sm:w-auto overflow-hidden rounded-full bg-slate-900 dark:bg-indigo-600 px-8 py-4 text-base font-bold text-white transition-all transform hover:scale-105 active:scale-95 shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(79,70,229,0.2)] no-underline hover:no-underline flex items-center justify-center gap-2"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-teal-500/20 to-teal-400/20 dark:from-indigo-500/20 dark:to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-r from-teal-500/20 to-teal-400/20 dark:from-white/10 dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center justify-center gap-2">
               <span>문제 풀러가기</span>
               <ArrowRight

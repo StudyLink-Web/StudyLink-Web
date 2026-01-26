@@ -13,9 +13,15 @@ interface Mentor {
 
 const mockMentors: Mentor[] = [];
 
+interface CustomWindow extends Window {
+  __INITIAL_DATA__?: {
+    topMentors?: any[];
+  };
+}
+
 const MentorSection: FC = () => {
   // window.__INITIAL_DATA__에 데이터가 있으면 사용
-  const initialData = (window as any).__INITIAL_DATA__;
+  const initialData = (window as unknown as CustomWindow).__INITIAL_DATA__;
   const mentors: Mentor[] =
     initialData && initialData.topMentors && initialData.topMentors.length > 0
       ? initialData.topMentors
@@ -23,7 +29,7 @@ const MentorSection: FC = () => {
   return (
     <section
       id="mentors"
-      className="py-32 bg-slate-50 dark:bg-[#030014] relative border-t border-slate-200 dark:border-white/5 transition-colors duration-300"
+      className="py-32 bg-transparent dark:bg-transparent relative border-t border-slate-200 dark:border-white/5 transition-colors duration-300"
     >
       <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-teal-200/50 dark:bg-purple-900/10 blur-[100px] rounded-full pointer-events-none" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -56,7 +62,7 @@ const MentorSection: FC = () => {
             mentors.map((mentor) => (
               <div
                 key={mentor.id}
-                className="group relative bg-white dark:bg-[#0F0C29]/40 border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden hover:border-teal-400 dark:hover:border-purple-500/30 hover:shadow-xl hover:shadow-teal-500/10 dark:hover:shadow-purple-500/10 transition-all duration-500 cursor-pointer"
+                className="group relative bg-white/40 dark:bg-white/[0.02] backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden hover:border-teal-400 dark:hover:border-purple-500/30 hover:shadow-xl hover:shadow-teal-500/10 dark:hover:shadow-purple-500/10 transition-all duration-500 cursor-pointer"
               >
                 <div className="absolute inset-0 z-10 bg-gradient-to-t from-slate-900/90 dark:from-[#030014] via-transparent to-transparent opacity-80 dark:opacity-90 transition-opacity duration-300" />
                 <div className="relative h-96 w-full overflow-hidden">

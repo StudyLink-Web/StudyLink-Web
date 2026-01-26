@@ -52,8 +52,10 @@ const AdmissionEssayPage: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
-    fetchEssays();
-    fetchProfile();
+    const initData = async () => {
+      await Promise.all([fetchEssays(), fetchProfile()]);
+    };
+    initData();
   }, []);
 
   const fetchEssays = async () => {
@@ -583,29 +585,28 @@ const AdmissionEssayPage: React.FC = () => {
   );
 };
 
-const Bot: React.FC<{ className?: string; size?: number }> = ({
-  className,
-  size = 24,
-}) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M12 8V4H8" />
-    <rect width="16" height="12" x="4" y="8" rx="2" />
-    <path d="M2 14h2" />
-    <path d="M20 14h2" />
-    <path d="M15 13v2" />
-    <path d="M9 13v2" />
-  </svg>
+const Bot: React.FC<{ className?: string; size?: number }> = React.memo(
+  ({ className, size = 24 }) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M12 8V4H8" />
+      <rect width="16" height="12" x="4" y="8" rx="2" />
+      <path d="M2 14h2" />
+      <path d="M20 14h2" />
+      <path d="M15 13v2" />
+      <path d="M9 13v2" />
+    </svg>
+  ),
 );
 
 export default AdmissionEssayPage;

@@ -4,10 +4,6 @@ plugins {
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
-// 기존 plugins 섹션 아래에 추가
-springBoot {
-	mainClass = 'com.StudyLink.www.WwwApplication'
-}
 
 
 group = 'com.StudyLink'
@@ -128,7 +124,7 @@ task buildFrontend(type: Exec) {
 }
 
 // Spring Boot 리소스 처리 시 리액트 빌드를 먼저 수행하도록 함
-processResources.dependsOn buildFrontend
+// processResources.dependsOn buildFrontend
 
 // ===== Spring Boot Main Class Configuration =====
 springBoot {
