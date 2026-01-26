@@ -40,6 +40,8 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final BooleanPath isVerifiedStudent = createBoolean("isVerifiedStudent");
 
+    public final DateTimePath<java.time.LocalDateTime> lastEmailSentAt = createDateTime("lastEmailSentAt", java.time.LocalDateTime.class);
+
     public final ListPath<MentorAvailability, QMentorAvailability> mentorAvailabilities = this.<MentorAvailability, QMentorAvailability>createList("mentorAvailabilities", MentorAvailability.class, QMentorAvailability.class, PathInits.DIRECT2);
 
     public final QMentorProfile mentorProfile;

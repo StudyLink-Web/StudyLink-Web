@@ -125,6 +125,56 @@ public class StudentVerificationController {
     }
 
     /**
+     * ⭐ 새로 추가됨: 이메일 재전송 쿨다운 상태 조회
+     * 로그인 필수!
+     */
+    @GetMapping("/resend-cooldown")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getResendCooldown() {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // 현재 로그인 사용자 정보 조회
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) {
+                response.put("canResend", true);
+                response.put("remainingSeconds", 0);
+                response.put("message", "로그인이 필요합니다");
+                response.put("code", "NOT_AUTHENTICATED");
+                return ResponseEntity.ok(response);
+            }
+
+            // Repository를 통해 안전하게 조회
+            String username = auth.getName();
+            Optional<Users> userOpt = userRepository.findByUsername(username)
+                    .or(() -> userRepository.findByEmail(username));
+
+            if (userOpt.isEmpty()) {
+                response.put("canResend", true);
+                response.put("remainingSeconds", 0);
+                response.put("message", "사용자 정보를 조회할 수 없습니다");
+                response.put("code", "USER_NOT_FOUND");
+                return ResponseEntity.ok(response);
+            }
+
+            Users user = userOpt.get();
+            response = verificationService.getResendCooldown(user);
+            response.put("code", "SUCCESS");
+            log.info("⏳ 쿨다운 조회: {} - canResend={}", user.getEmail(), response.get("canResend"));
+
+        } catch (Exception e) {
+            log.error("❌ 쿨다운 조회 중 오류", e);
+            response.put("canResend", true);
+            response.put("remainingSeconds", 0);
+            response.put("message", "쿨다운 조회 중 오류가 발생했습니다");
+            response.put("code", "SERVER_ERROR");
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * 이메일 인증 링크 클릭 (GET)
      * 이 부분은 로그인 불필요! (토큰으로 인증)
      */

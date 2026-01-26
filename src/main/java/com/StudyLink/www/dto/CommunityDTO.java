@@ -3,6 +3,7 @@ package com.StudyLink.www.dto;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,7 +15,6 @@ public class CommunityDTO {
 
     private Long bno;
 
-    // ✅ CommunityController에서 사용 중
     private Long userId;
     private String email;
     private String role;
@@ -22,10 +22,15 @@ public class CommunityDTO {
     private String title;
     private String writer;
 
-    private int readCount;
-    private int cmtQty;
-    private int fileQty;
+    private String department;
+    private String content;
+
+    private Integer readCount;
+    private Integer cmtQty;
+    private Integer fileQty;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private List<String> filePaths;
 }

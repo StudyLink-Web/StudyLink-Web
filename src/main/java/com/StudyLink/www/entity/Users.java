@@ -80,6 +80,10 @@ public class Users {
     @Column(name = "school_email_verified_at", nullable = true)
     private LocalDateTime schoolEmailVerifiedAt;  // 학교 이메일 인증 완료 시간
 
+    // 마지막 이메일 전송 시간 (재전송 쿨다운용)
+    @Column(name = "last_email_sent_at", nullable = true)
+    private LocalDateTime lastEmailSentAt;  // 마지막 이메일 전송 시간
+
     /**
      * 가입일 (코호트 분석용)
      * 가입 시점을 기준으로 공통 특성 분석

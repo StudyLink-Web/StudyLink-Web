@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
         setupEmailCheckButton();
         setupFormSubmit();
         setupEmailInput();
+        // ⭐⭐⭐ 새로 추가됨: 페이지 로드 시 쿨다운 확인
+        checkResendCooldown();
     }
 });
 
@@ -105,7 +107,17 @@ function setupFormSubmit() {
                 // ✅ 성공
                 hideForm();
                 showSuccess();
+                // ⭐⭐⭐ 새로 추가됨: 성공 후 쿨다운 정보 표시
+                if (data.remainingSeconds) {
+                    startCooldownTimer(data.remainingSeconds);
+                }
                 console.log('✅ 인증 이메일 전송 성공');
+            } else if (data.code === 'COOLDOWN_ACTIVE') {
+                // ⭐⭐⭐ 새로 추가됨: 쿨다운 중인 경우 처리
+                showCooldownWarning(data.remainingMinutes, data.remainingSeconds);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                console.log('⏳ 이메일 재전송 쿨다운 진행 중:', data.message);
             } else {
                 // ❌ 실패
                 showError(data.message || '인증 요청에 실패했습니다');
@@ -177,4 +189,99 @@ function showError(message) {
     document.getElementById('successMessage').style.display = 'none';
     document.getElementById('errorMessage').style.display = 'block';
     document.getElementById('errorText').textContent = message;
+}
+
+/**
+ * 페이지 로드 시 쿨다운 상태 확인
+ */
+function checkResendCooldown() {
+    fetch('/auth/student-verification/resend-cooldown')
+        .then(res => res.json())
+        .then(data => {
+            if (!data.canResend) {
+                // 쿨다운 진행 중
+                showCooldownWarning(data.remainingMinutes, data.remainingSeconds);
+                startCooldownTimer(data.remainingSeconds);
+            } else {
+                // 쿨다운 종료
+                hideCooldownWarning();
+            }
+        })
+        .catch(error => console.error('❌ 쿨다운 확인 오류:', error));
+}
+
+/**
+ * 쿨다운 경고 메시지 표시
+ */
+function showCooldownWarning(minutes, seconds) {
+    const cooldownWarning = document.getElementById('cooldownWarning');
+    const cooldownMinutes = document.getElementById('cooldownMinutes');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (cooldownWarning && cooldownMinutes) {
+        cooldownMinutes.textContent = minutes;
+        cooldownWarning.style.display = 'block';
+        submitBtn.disabled = true;
+    }
+}
+
+/**
+ * 쿨다운 경고 메시지 숨기기
+ */
+function hideCooldownWarning() {
+    const cooldownWarning = document.getElementById('cooldownWarning');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (cooldownWarning) {
+        cooldownWarning.style.display = 'none';
+    }
+    if (submitBtn) {
+        submitBtn.disabled = false;
+    }
+}
+
+/**
+ * 실시간 쿨다운 타이머 시작
+ */
+function startCooldownTimer(remainingSeconds) {
+    const cooldownTimer = document.getElementById('cooldownTimer');
+    const cooldownWarning = document.getElementById('cooldownWarning');
+    const submitBtn = document.getElementById('submitBtn');
+    let remaining = remainingSeconds;
+
+    if (!cooldownTimer) return;
+
+    // 타이머 업데이트 함수
+    const updateTimer = () => {
+        if (remaining <= 0) {
+            // 쿨다운 종료
+            hideCooldownWarning();
+            if (cooldownTimer) {
+                cooldownTimer.textContent = '';
+            }
+            return;
+        }
+
+        // 시간:분:초 계산
+        const hours = Math.floor(remaining / 3600);
+        const minutes = Math.floor((remaining % 3600) / 60);
+        const seconds = remaining % 60;
+
+        // 포맷팅 (MM:SS 또는 HH:MM:SS)
+        let timeString;
+        if (hours > 0) {
+            timeString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else {
+            timeString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        cooldownTimer.textContent = `⏳ ${timeString} 후에 다시 시도하세요`;
+        remaining--;
+
+        // 1초마다 업데이트
+        setTimeout(updateTimer, 1000);
+    };
+
+    // 첫 번째 업데이트
+    updateTimer();
 }

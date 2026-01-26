@@ -18,18 +18,37 @@ public class Community extends TimeBase {
     @Column(name = "bno")
     private Long bno;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    @Column(length = 150, nullable = false)
+    private String email;
+
+    @Column(length = 20, nullable = false)
+    private String role;
+
     @Column(length = 255, nullable = false)
     private String title;
 
     @Column(length = 100, nullable = false)
     private String writer;
 
+    @Column(length = 100)
+    private String department;
+
+    @Lob
+    @Column
+    private String content;
+
+    @Builder.Default
     @Column(name = "read_count", nullable = false)
-    private int readCount;
+    private Integer readCount = 0;
 
+    @Builder.Default
     @Column(name = "cmt_qty", nullable = false)
-    private int cmtQty;
+    private Integer cmtQty = 0;
 
+    @Builder.Default
     @Column(name = "file_qty", nullable = false)
-    private int fileQty;
+    private Integer fileQty = 0;
 }

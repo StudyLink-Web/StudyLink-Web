@@ -67,6 +67,17 @@
                 <!-- ⭐ CSRF 토큰 추가 -->
                 <input type="hidden" name="_csrf" th:value="${_csrf.token}">
 
+                <!-- ⭐⭐⭐ 새로 추가됨: 쿨다운 안내 메시지 -->
+                <div id="cooldownWarning" class="alert alert-warning" style="display: none;">
+                    <div class="cooldown-message">
+                        <span class="cooldown-icon">⏳</span>
+                        <div class="cooldown-text">
+                            <strong>잠깐!</strong> <span id="cooldownMinutes"></span>분 후에 다시 시도하세요
+                        </div>
+                    </div>
+                    <small id="cooldownTimer" class="cooldown-timer"></small>
+                </div>
+
                 <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
                     인증 이메일 전송
                 </button>
@@ -76,6 +87,10 @@
                 <h4>✅ 인증 이메일이 전송되었습니다!</h4>
                 <p>이메일을 확인하여 인증 링크를 클릭하세요.</p>
                 <p class="text-muted">⏰ 유효시간: 24시간</p>
+                <!-- ⭐ 재전송 쿨다운 안내 추가 -->
+                <p class="text-muted" style="margin-top: var(--space-16);">
+                    📧 이메일을 받지 못했다면 <span id="resendInfo">5분 후</span>에 다시 전송할 수 있습니다.
+                </p>
             </div>
 
             <div id="errorMessage" class="alert alert-danger" style="display: none;">
