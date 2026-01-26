@@ -17,18 +17,49 @@ document.addEventListener('DOMContentLoaded', function () {
         setupProfileDropdown();
         updateDday();
         initializeMyPageTabs();
+        initNotificationCenter();
+        initThemeToggle();
     }, 100);
-}); // ← DOMContentLoated 닫기
+}); 
 
 /**
- * 로그아웃 폼 설정
+ * 로그아웃 폼 설정 (푸시 토큰 삭제 포함)
  */
 function setupLogoutForm() {
     const logoutForms = document.querySelectorAll('form[action*="logout"]');
 
     logoutForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            console.log('🔓 로그아웃 폼 제출');
+        form.addEventListener('submit', async function(e) {
+            const pushToken = localStorage.getItem('pushToken');
+            
+            if (pushToken) {
+                // 🛑 토큰이 있으면 삭제될 때까지 폼 제출을 잠시 중단
+                e.preventDefault();
+                console.log('🔄 로그아웃 전 푸시 토큰 삭제 시도...');
+
+                try {
+                    const response = await fetch('/api/fcm/token', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ token: pushToken })
+                    });
+                    
+                    if (response.ok) {
+                        console.log('✅ 기기 토큰 삭제 완료');
+                    }
+                } catch (err) {
+                    console.error('❌ 토큰 삭제 중 오류 발생:', err);
+                } finally {
+                    // 성공 여부와 관계없이 로컬 정보 지우고 실제 로그아웃 진행
+                    localStorage.removeItem('pushToken');
+                    console.log('🔓 로그아웃 세션 처리 진행');
+                    form.submit(); 
+                }
+            } else {
+                console.log('🔓 등록된 토큰 없음, 일반 로그아웃 진행');
+            }
         });
     });
 }
@@ -316,5 +347,162 @@ window.addEventListener('scroll', function () {
 
     lastScrollTop = Math.max(currentScroll, 0);
 });
+
+/**
+ * 알림 센터 초기화
+ */
+async function initNotificationCenter() {
+    const notiBell = document.getElementById('notiBell');
+    const notiPanel = document.getElementById('notiPanel');
+    const notiBadge = document.getElementById('notiBadge');
+    const notiList = document.getElementById('notiList');
+    const markAllRead = document.getElementById('markAllRead');
+
+    if (!notiBell) return;
+
+    // 1. 읽지 않은 알림 개수 로드
+    updateUnreadCount();
+
+    // 2. 종 클릭 시 패널 토글
+    notiBell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isShowing = notiPanel.classList.toggle('show');
+        if (isShowing) {
+            fetchNotifications();
+        }
+    });
+
+    // 3. 패널 내부 클릭 시 닫히지 않게
+    notiPanel.addEventListener('click', (e) => e.stopPropagation());
+
+    // 4. 외부 클릭 시 패널 닫기
+    document.addEventListener('click', () => {
+        notiPanel.classList.remove('show');
+    });
+
+    // 5. 모두 읽음 처리
+    markAllRead.addEventListener('click', async () => {
+        try {
+            await fetch('/api/notifications/read-all', { method: 'PUT' });
+            updateUnreadCount();
+            fetchNotifications();
+        } catch (err) {
+            console.error('Failed to mark all as read', err);
+        }
+    });
+
+    /**
+     * 안 읽은 알림 개수 업데이트
+     */
+    async function updateUnreadCount() {
+        try {
+            const res = await fetch('/api/notifications/unread-count');
+            const count = await res.json();
+            if (count > 0) {
+                notiBadge.textContent = count > 99 ? '99+' : count;
+                notiBadge.style.display = 'flex';
+            } else {
+                notiBadge.style.display = 'none';
+            }
+        } catch (err) {
+            console.error('Failed to fetch unread count', err);
+        }
+    }
+
+    /**
+     * 알림 목록 가져오기 및 렌더링
+     */
+    async function fetchNotifications() {
+        try {
+            notiList.innerHTML = '<div class="noti-empty">불러오는 중...</div>';
+            const res = await fetch('/api/notifications');
+            const data = await res.json();
+
+            if (!data || data.length === 0) {
+                notiList.innerHTML = '<div class="noti-empty">알림이 없습니다.</div>';
+                return;
+            }
+
+            notiList.innerHTML = '';
+            data.forEach(noti => {
+                const item = document.createElement('div');
+                item.className = `noti-item ${noti.isRead ? '' : 'unread'}`;
+                
+                const timeStr = new Date(noti.createdAt).toLocaleString('ko-KR', {
+                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+
+                item.innerHTML = `
+                    <div class="noti-title">${noti.message}</div>
+                    <div class="noti-time">${timeStr}</div>
+                `;
+
+                item.addEventListener('click', async () => {
+                    if (!noti.isRead) {
+                        await fetch(`/api/notifications/${noti.id}/read`, { method: 'PUT' });
+                        updateUnreadCount();
+                    }
+                    // 클릭 시 관련 링크로 이동 로직 추가 가능 (현재는 내역 확인이 목적)
+                    item.classList.remove('unread');
+                });
+
+                notiList.appendChild(item);
+            });
+
+            // ⭐ 추가: "전체 보기" 버튼 클릭 시 리액트 알림 센터 열기
+            const viewAllBtn = document.querySelector('.noti-footer a');
+            if (viewAllBtn) {
+                viewAllBtn.addEventListener('click', (e) => {
+                    if (window.openNotificationCenter) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.openNotificationCenter();
+                        notiPanel.classList.remove('show'); // 기존 드롭다운은 닫기
+                    }
+                });
+            }
+        } catch (err) {
+            notiList.innerHTML = '<div class="noti-empty">알림을 불러오지 못했습니다.</div>';
+            console.error('Failed to fetch notifications', err);
+        }
+    }
+}
+
+/**
+ * 테마 토글 초기화 (다크모드/라이트모드)
+ */
+function initThemeToggle() {
+    const themeToggle = document.getElementById('themeToggle');
+    const sunIcon = themeToggle?.querySelector('.sun-icon');
+    const moonIcon = themeToggle?.querySelector('.moon-icon');
+
+    if (!themeToggle) return;
+
+    // 1. 저장된 테마 확인
+    const savedTheme = localStorage.getItem('theme');
+    const isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    if (isDark) {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('dark');
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'inline-block';
+    }
+
+    // 2. 클릭 이벤트
+    themeToggle.addEventListener('click', () => {
+        const currentlyDark = document.documentElement.classList.toggle('dark');
+        document.body.classList.toggle('dark', currentlyDark);
+        localStorage.setItem('theme', currentlyDark ? 'dark' : 'light');
+
+        if (currentlyDark) {
+            sunIcon.style.display = 'none';
+            moonIcon.style.display = 'inline-block';
+        } else {
+            sunIcon.style.display = 'inline-block';
+            moonIcon.style.display = 'none';
+        }
+    });
+}
 
 console.log('%c🎓 StudyLink - Header Loaded', 'font-size:14px;color:#667eea;font-weight:bold');

@@ -78,14 +78,14 @@ const actions = [
 
 const QuickActionGrid: FC = () => {
   return (
-    <section className="py-20 relative overflow-hidden bg-white dark:bg-[#030014] transition-colors duration-300">
+    <section className="py-20 relative overflow-hidden bg-transparent dark:bg-transparent transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {actions.map((action, index) => (
             <a
               key={index}
               href={action.href}
-              className="group relative p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 hover:border-teal-500/30 dark:hover:border-purple-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-teal-500/5 dark:hover:shadow-purple-500/10 no-underline hover:underline"
+              className="group relative p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 bg-white/40 dark:bg-white/[0.02] backdrop-blur-xl hover:bg-white/60 dark:hover:bg-white/[0.05] hover:border-teal-500/30 dark:hover:border-purple-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-teal-500/5 dark:hover:shadow-purple-500/10 no-underline hover:underline"
             >
               <div className="flex items-start justify-between mb-8">
                 <div

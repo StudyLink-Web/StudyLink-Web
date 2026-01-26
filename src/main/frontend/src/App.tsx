@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, lazy, Suspense, memo } from "react";
 import Hero from "./components/Hero";
 import { requestForToken, onMessageListener } from "./firebase-init";
+import NotificationCenter from "./components/NotificationCenter";
+
 
 // Use Dynamic Imports for Heavy Components
 const AdmissionEssayPage = lazy(() => import("./pages/AdmissionEssayPage"));
@@ -15,17 +17,31 @@ const CommunitySection = memo(
 const QuickActionGrid = memo(
   lazy(() => import("./components/QuickActionGrid")),
 );
-const NotificationCenter = memo(
-  lazy(() => import("./components/NotificationCenter")),
-);
+
+const isDarkInitial = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
 
 function App() {
   const [scrollY, setScrollY] = useState(0);
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [isPushPanelOpen, setIsPushPanelOpen] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0); // 📍 상단으로 이동
+  const [theme, setTheme] = useState<'light' | 'dark'>(isDarkInitial ? 'dark' : 'light'); // 📍 초기값 설정
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // 📍 테마 감지 로직 (MutationObserver)
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          setTheme(isDark ? 'dark' : 'light');
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
 
   // 푸시 알림 권한 요청 핸들러
   const handleRequestPermission = async () => {
@@ -39,6 +55,7 @@ function App() {
       const token = await requestForToken();
       if (token) {
         setPushToken(token);
+        localStorage.setItem("pushToken", token); // 📍 로그아웃 전처리를 위해 저장
         await saveTokenToServer(token);
         setIsPushPanelOpen(true); // 📍 성공 시 패널 열기
         if (!isPushPanelOpen)
@@ -101,9 +118,14 @@ function App() {
 
   // 📍 모든 기기 대상 통합 알림 테스트
   const handleTestAllDevicesPush = async () => {
+    const message = window.prompt("전체 공지 메시지를 입력하세요:", "서비스를 이용 중인 모든 기기에 발송된 알림입니다! 📢");
+    if (message === null) return; // 취소 시 중단
+
     try {
       const response = await fetch("/api/fcm/test-all", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
       });
       const result = await response.text();
       alert(
@@ -142,8 +164,7 @@ function App() {
         const messagePayload = payload as any;
         console.log("📩 포그라운드 알림 수신:", messagePayload);
         
-        // 알림 개수 즉시 갱신을 위해 unreadCount 증가 (또는 사이드바가 열려있다면 새로고침 트리거 가능)
-        setUnreadCount(prev => prev + 1);
+        // 알림 개수 즉시 갱신 (헤더에서 관리되므로 여기서는 생략)
 
         if (messagePayload?.notification) {
           alert(
@@ -161,6 +182,7 @@ function App() {
         const token = await requestForToken();
         if (token) {
           setPushToken(token);
+          localStorage.setItem("pushToken", token); // 📍 동기화 시에도 저장
           await saveTokenToServer(token);
           console.log("🔄 알림 토큰 자동 동기화 완료");
         }
@@ -176,19 +198,26 @@ function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []); // Static dependency array is correct here
 
-  // 📍 외부 클릭 시 패널 닫기 로직
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        panelRef.current &&
-        !panelRef.current.contains(event.target as Node)
-      ) {
-        setIsPushPanelOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    // 📍 전역 객체(window)에 알림 센터 제어 함수 등록 (헤더 연동용)
+    useEffect(() => {
+      (window as any).openNotificationCenter = () => {
+        setIsPushPanelOpen(true);
+      };
+      
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          panelRef.current &&
+          !panelRef.current.contains(event.target as Node)
+        ) {
+          setIsPushPanelOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        delete (window as any).openNotificationCenter;
+      };
+    }, []);
 
   const isCoverLetter =
     window.location.pathname === "/cover-letter" ||
@@ -221,20 +250,30 @@ function App() {
   }
 
   // 배경색 보간 (BG Color Interpolation)
-  // slate-50: rgb(248, 250, 252) -> white: rgb(255, 255, 255)
-  // 임계값을 200으로 줄여 더 빠른 반응성 제공
   const progress = Math.min(scrollY / 200, 1);
   const bgColor = `rgb(${248 + (255 - 248) * progress}, ${
     250 + (255 - 250) * progress
   }, ${252 + (255 - 252) * progress})`;
 
+
   // 메인 페이지 렌더링
   return (
     <div
-      className="min-h-screen w-full dark:bg-[#030014] transition-colors duration-300 overflow-x-hidden"
-      style={{ backgroundColor: bgColor }}
+      className={`min-h-screen w-full transition-colors duration-300 overflow-x-hidden dynamic-bg ${theme}`}
+      style={{ "--scroll-bg": bgColor } as React.CSSProperties}
     >
       <main className="relative">
+        {/* 알림 센터 패널 */}
+        <NotificationCenter 
+          ref={panelRef}
+          isOpen={isPushPanelOpen} 
+          onClose={() => setIsPushPanelOpen(false)} 
+          onUnreadCountChange={setUnreadCount}
+          pushToken={pushToken}
+          onTestPush={handleTestServerPush}
+          onTestMine={handleTestMineDevicesPush}
+          onTestAll={handleTestAllDevicesPush}
+        />
         <Hero scrollProgress={progress} />
 
         {/* [Vercel Best Practice 1.5] Strategic Suspense Boundaries for independent sections */}
@@ -277,89 +316,25 @@ function App() {
 
         {/* 푸시 알림 테스트용 플로팅 버튼 */}
         <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-3">
-          {isPushPanelOpen && pushToken && (
-            <div
-              ref={panelRef}
-              className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-5 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20 dark:border-white/5 text-[10px] max-w-[240px] break-all animate-in slide-in-from-bottom-5 zoom-in-95 fade-in duration-300 mb-2"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <p className="font-black text-[#0969da] dark:text-blue-400 uppercase tracking-tighter">
-                  Device Native PWA
-                </p>
-                <button
-                  onClick={() => setIsPushPanelOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="bg-slate-100 dark:bg-white/5 p-3 rounded-xl mb-4 font-mono text-[9px] text-slate-500 dark:text-slate-400 leading-tight border border-slate-200 dark:border-white/5 max-h-[100px] overflow-y-auto">
-                {pushToken}
-              </div>
-
-              <div className="grid grid-cols-1 gap-2">
-                <button
-                  onClick={handleTestServerPush}
-                  className="w-full py-3 bg-gradient-to-br from-[#0969da] to-[#033d8b] hover:from-[#005cc5] hover:to-[#004a9f] text-white text-[10px] font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-1 group"
-                >
-                  <span>🚀</span> 나에게 쏘기
-                </button>
-                <button
-                  onClick={handleTestMineDevicesPush}
-                  className="w-full py-3 bg-gradient-to-br from-[#12b886] to-[#087f5b] hover:from-[#099268] hover:to-[#055a44] text-white text-[10px] font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-1 group"
-                >
-                  <span>🔗</span> 내 기기들에게 쏘기
-                </button>
-                <button
-                  onClick={handleTestAllDevicesPush}
-                  className="w-full py-3 bg-gradient-to-br from-[#868e96] to-[#495057] hover:from-[#abb2b9] hover:to-[#566573] text-white text-[10px] font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-1 group"
-                >
-                  <span>📢</span> 전체 공지 (테스트용)
-                </button>
-              </div>
-            </div>
-          )}
           <button
             onClick={handleRequestPermission}
-            className={`px-7 py-4 rounded-full shadow-2xl font-black transition-all flex items-center gap-3 hover:scale-105 active:scale-95 group border border-white/10 ${
+            className={`px-8 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(79,70,229,0.2)] font-black transition-all flex items-center gap-3 hover:scale-105 active:scale-95 group backdrop-blur-xl border ${
               isPushPanelOpen
-                ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
-                : "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                ? "bg-white/90 dark:bg-slate-800/90 text-slate-900 dark:text-white border-slate-200 dark:border-white/10"
+                : "bg-slate-900/90 dark:bg-indigo-600/20 text-white dark:text-indigo-300 border-white/10 dark:border-indigo-500/30 hover:dark:bg-indigo-600/30"
             }`}
           >
-            <span
-              className={`text-xl transition-transform ${isPushPanelOpen ? "rotate-90" : "group-hover:rotate-12"}`}
-            >
-              {isPushPanelOpen ? "✕" : "🔔"}
-            </span>
-            {isPushPanelOpen ? "닫기" : "알림 받기 설정"}
-          </button>
-        </div>
-
-        {/* 알림 센터 */}
-        <NotificationCenter 
-          isOpen={isNotificationOpen} 
-          onClose={() => setIsNotificationOpen(false)}
-          onUnreadCountChange={setUnreadCount}
-        />
-
-        {/* 메인 상단 알림 버튼 (종 아이콘) */}
-        {!isNotificationOpen && (
-          <button
-            onClick={() => setIsNotificationOpen(true)}
-            className="fixed top-6 right-6 z-40 p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-white/5 hover:scale-110 active:scale-95 transition-all group"
-          >
-            <div className="relative">
-              <span className="text-xl">🔔</span>
-              {unreadCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-900 animate-bounce">
+            <div className={`relative ${!isPushPanelOpen && unreadCount > 0 && "animate-bounce"}`}>
+              <span className="text-xl">{isPushPanelOpen ? "✕" : "🔔"}</span>
+              {!isPushPanelOpen && unreadCount > 0 && (
+                <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-slate-900 dark:border-indigo-900 px-1 px-1">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
             </div>
+            <span>{isPushPanelOpen ? "닫기" : "알림 설정"}</span>
           </button>
-        )}
+        </div>
       </main>
     </div>
   );

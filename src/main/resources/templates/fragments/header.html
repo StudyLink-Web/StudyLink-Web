@@ -126,23 +126,44 @@
 
 
 
-			<!-- D-Day -->
-			<!-- header.html 마지막 부분에 추가/수정 -->
-			<div class="header-buttons">
-				<!-- 로그인 상태일 때 -->
-				<th:block th:if="${user != null}">
-					<div class="dday">
-						<p>수능까지 </p>
-						<span th:attr="data-dday=${dday}" th:text="${dday}"></span>
-					</div>
-				</th:block>
+			<!-- 알림 및 테마 도구 -->
+			<div class="header-tools">
+				<!-- 테마 토글 (모든 유저) -->
+				<button id="themeToggle" class="tool-btn" title="테마 변경">
+					<span class="theme-icon sun-icon">☀️</span>
+					<span class="theme-icon moon-icon" style="display: none;">🌙</span>
+				</button>
 
-				<th:block th:if="${user == null}">
-					<div class="dday">
-						<p>수능까지 </p>
-						<span th:attr="data-dday=${dday}" th:text="${dday}"></span>
+				<!-- 알림 (로그인 유저만) -->
+				<div class="notification-wrapper" sec:authorize="isAuthenticated()">
+					<button id="notiBell" class="tool-btn" title="알림 확인">
+						<span class="bell-icon">🔔</span>
+						<span id="notiBadge" class="noti-badge" style="display: none;">0</span>
+					</button>
+					
+					<!-- 알림 드롭다운 패널 -->
+					<div id="notiPanel" class="noti-panel">
+						<div class="noti-header">
+							<h3>알림</h3>
+							<button id="markAllRead" class="btn-text">모두 읽음</button>
+						</div>
+						<div id="notiList" class="noti-list">
+							<!-- 알림 항목이 여기에 동적으로 추가됨 -->
+							<div class="noti-empty">알림이 없습니다.</div>
+						</div>
+						<div class="noti-footer">
+							<a href="/my-page" class="btn-text">전체 보기</a>
+						</div>
 					</div>
-				</th:block>
+				</div>
+			</div>
+
+			<!-- D-Day -->
+			<div class="header-buttons">
+				<div class="dday">
+					<p>수능까지 </p>
+					<span th:attr="data-dday=${dday}" th:text="${dday}"></span>
+				</div>
 			</div>
 
 		</div>

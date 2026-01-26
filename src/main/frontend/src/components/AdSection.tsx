@@ -1,15 +1,15 @@
-import { Crown, Check } from "lucide-react";
+import { Crown, Check, ArrowUpRight, Sparkles } from "lucide-react";
 import type { FC } from "react";
 
 const AdSection: FC = () => {
   return (
-    <section className="py-32 bg-slate-50 dark:bg-[#030014] relative transition-colors duration-300">
+    <section className="py-32 bg-transparent dark:bg-transparent relative transition-colors duration-300">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-32 bg-gradient-to-b from-slate-200 dark:from-white/10 to-transparent" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-[3rem] overflow-hidden border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] shadow-2xl dark:shadow-none group transition-colors duration-300">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-200/50 dark:bg-purple-600/20 blur-[150px] rounded-full pointer-events-none opacity-50 group-hover:opacity-70 transition-opacity duration-1000" />
-          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-teal-100/50 dark:bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none" />
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay" />
+        <div className="relative rounded-[3rem] overflow-hidden border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/[0.02] backdrop-blur-3xl shadow-2xl dark:shadow-none group transition-all duration-500">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-200/40 dark:bg-purple-600/10 blur-[150px] rounded-full pointer-events-none opacity-50 group-hover:opacity-70 transition-opacity duration-1000" />
+          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-teal-100/30 dark:bg-indigo-600/5 blur-[150px] rounded-full pointer-events-none" />
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] dark:opacity-[0.05] mix-blend-overlay" />
 
           <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between p-10 md:p-24 gap-16">
             <div className="flex-1 space-y-8 max-w-xl">
@@ -24,7 +24,7 @@ const AdSection: FC = () => {
                   스터디링크 PASS
                 </span>
               </h2>
-              <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
+              <p className="text-slate-600 dark:text-slate-200 text-lg leading-relaxed">
                 더 이상 정보 격차로 고민하지 마세요.
                 <br />
                 오직 패스 회원에게만 제공되는 시크릿 리포트.
@@ -37,7 +37,7 @@ const AdSection: FC = () => {
                 ].map((item, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-4 text-slate-700 dark:text-slate-300"
+                    className="flex items-center gap-4 text-slate-700 dark:text-slate-100"
                   >
                     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
                       <Check
@@ -53,10 +53,19 @@ const AdSection: FC = () => {
               <div className="pt-8 flex gap-4">
                 <a
                   href="/pricing"
-                  className="bg-slate-900 dark:bg-white text-white dark:text-black hover:bg-slate-800 dark:hover:bg-slate-200 px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/10 dark:shadow-purple-500/10 no-underline hover:no-underline"
+                  className="relative group/btn overflow-hidden bg-slate-900 text-white px-10 py-5 rounded-full font-black transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(234,179,8,0.1)] no-underline hover:no-underline flex items-center justify-center gap-2"
                 >
-                  30일 무료 체험하기
+                  {/* Premium Gold Shine Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600 translate-y-[101%] group-hover/btn:translate-y-0 transition-transform duration-500 ease-out" />
+                  <span className="relative z-10 flex items-center gap-2 group-hover/btn:text-slate-950 transition-colors duration-300">
+                    30일 무료 체험하기
+                    <ArrowUpRight width={20} height={20} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                  </span>
                 </a>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-yellow-600 dark:text-yellow-500/80 tracking-widest uppercase mt-4 ml-4">
+                  <Sparkles width={12} height={12} />
+                  <span>Limited Time Offer</span>
+                </div>
               </div>
             </div>
             {/* Visual element on the right */}
