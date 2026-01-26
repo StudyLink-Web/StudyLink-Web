@@ -114,6 +114,10 @@ public class MyPageController {
             model.addAttribute("myPageData", myPageData);
             model.addAttribute("activeTab", "profile");
 
+            // ⭐ 추가: header.html에서 사용할 변수들
+            model.addAttribute("userName", user.getName());
+            model.addAttribute("userRole", user.getRole().toString());
+
             log.info("════════════════════════════════════════════════════════════");
             log.info("✅ 마이페이지 접속 성공: userId={}, email={}", user.getUserId(), user.getEmail());
             log.info("════════════════════════════════════════════════════════════");
@@ -147,6 +151,10 @@ public class MyPageController {
             model.addAttribute("myPageData", myPageData);
             model.addAttribute("activeTab", "profile");
 
+            // ⭐ 추가: header.html에서 사용할 변수들
+            model.addAttribute("userName", user.getName());
+            model.addAttribute("userRole", user.getRole().toString());
+
             log.info("✅ 프로필 탭 접속: userId={}", user.getUserId());
             return "mypage/my-page";
 
@@ -174,6 +182,10 @@ public class MyPageController {
             model.addAttribute("user", user);
             model.addAttribute("myPageData", myPageData);
             model.addAttribute("activeTab", "account");
+
+            // ⭐ 추가: header.html에서 사용할 변수들
+            model.addAttribute("userName", user.getName());
+            model.addAttribute("userRole", user.getRole().toString());
 
             log.info("✅ 계정 탭 접속: userId={}", user.getUserId());
             return "mypage/my-page";
@@ -203,6 +215,10 @@ public class MyPageController {
             model.addAttribute("myPageData", myPageData);
             model.addAttribute("activeTab", "notifications");
 
+            // ⭐ 추가: header.html에서 사용할 변수들
+            model.addAttribute("userName", user.getName());
+            model.addAttribute("userRole", user.getRole().toString());
+
             log.info("✅ 알림 설정 탭 접속: userId={}", user.getUserId());
             return "mypage/my-page";
 
@@ -231,6 +247,10 @@ public class MyPageController {
             model.addAttribute("myPageData", myPageData);
             model.addAttribute("activeTab", "settings");
 
+            // ⭐ 추가: header.html에서 사용할 변수들
+            model.addAttribute("userName", user.getName());
+            model.addAttribute("userRole", user.getRole().toString());
+
             log.info("✅ 설정 탭 접속: userId={}", user.getUserId());
             return "mypage/my-page";
 
@@ -255,6 +275,10 @@ public class MyPageController {
 
             // ⭐ 추가: myPageData에 실제 Users 엔티티 객체 저장
             myPageData.put("user", user);
+
+            // ⭐ 추가: header용 변수들
+            myPageData.put("userName", user.getName());
+            myPageData.put("userRole", user.getRole().toString());
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

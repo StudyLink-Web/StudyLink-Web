@@ -154,6 +154,14 @@ public class MentorProfileService {
     }
 
     /**
+     * ⭐ 멘토 프로필 저장 (새로 생성할 때 사용)
+     */
+    @Transactional
+    public MentorProfile saveMentorProfile(MentorProfile mentorProfile) {
+        return mentorProfileRepository.save(mentorProfile);
+    }
+
+    /**
      * username으로 프로필 조회
      */
     @Transactional(readOnly = true)
@@ -322,13 +330,20 @@ public class MentorProfileService {
     /**
      * 멘토 프로필 조회 (통계 포함)
      * 수업 횟수와 리뷰 개수를 동적으로 계산
+     * ⭐ Optional<MentorProfile> 타입으로 변경 (MentorProfileController에서 사용)
      */
     @Transactional(readOnly = true)
-    public MentorProfile getMentorProfileWithStats(Long userId) {
+    public Optional<MentorProfile> getMentorProfileWithStats(Long userId) {
         log.info("📊 멘토 프로필 조회 (통계 포함): userId={}", userId);
 
-        MentorProfile mentor = mentorProfileRepository.findByUser_UserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("멘토 프로필을 찾을 수 없습니다"));
+        Optional<MentorProfile> mentorOpt = mentorProfileRepository.findByUser_UserId(userId);
+
+        if (mentorOpt.isEmpty()) {
+            log.warn("⚠️ 멘토 프로필을 찾을 수 없습니다: userId={}", userId);
+            return Optional.empty();
+        }
+
+        MentorProfile mentor = mentorOpt.get();
 
         // 수업 횟수 계산 (완료된 수업만)
         long lessonCount = mentorProfileRepository.countLessonsByMentorId(userId);
@@ -340,7 +355,7 @@ public class MentorProfileService {
 
         log.debug("✅ 통계: lessonCount={}, reviewCount={}", lessonCount, reviewCount);
 
-        return mentor;
+        return Optional.of(mentor);
     }
 
     /**
@@ -350,6 +365,6 @@ public class MentorProfileService {
     public Optional<MentorProfile> getMentorProfileWithStatsByUsername(String username) {
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
-        return Optional.of(getMentorProfileWithStats(user.getUserId()));
+        return getMentorProfileWithStats(user.getUserId());
     }
 }

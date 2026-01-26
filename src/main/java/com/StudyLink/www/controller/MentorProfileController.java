@@ -54,11 +54,21 @@ public class MentorProfileController {
                 Users currentUser = extractUser(authentication);
                 log.info("사용자 조회 성공 - userId: {}, email: {}", currentUser.getUserId(), currentUser.getEmail());
 
-                // ✅ 통계 포함해서 조회
-                MentorProfile mentor = mentorProfileService.getMentorProfileWithStats(currentUser.getUserId());
+                // ⭐ 수정: Optional 처리 + 없으면 자동 생성
+                MentorProfile mentor = mentorProfileService.getMentorProfileWithStats(currentUser.getUserId())
+                        .orElseGet(() -> {
+                            log.info("⚠️ 멘토 프로필이 없어서 새로 생성합니다. userId: {}", currentUser.getUserId());
+                            MentorProfile newMentor = new MentorProfile();
+                            newMentor.setUser(currentUser);
+                            newMentor.setLessonCount(0L);
+                            newMentor.setReviewCount(0L);
+                            newMentor.setAverageRating(0.0);
+                            return mentorProfileService.saveMentorProfile(newMentor);
+                        });
+
                 model.addAttribute("mentor", mentor);
                 model.addAttribute("user", currentUser);
-                log.info("✅ 멘토 프로필 조회 완료 - lessonCount: {}, reviewCount: {}",
+                log.info("✅ 멘토 프로필 조회/생성 완료 - lessonCount: {}, reviewCount: {}",
                         mentor.getLessonCount(), mentor.getReviewCount());
             } catch (Exception e) {
                 log.error("❌ 프로필 조회 실패: {}", e.getMessage(), e);
@@ -67,6 +77,7 @@ public class MentorProfileController {
         }
         return "mentor/mentor-profile";
     }
+
 
     /**
      * 다른 멘토 프로필 조회 (옵션)
