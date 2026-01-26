@@ -38,13 +38,13 @@ export default defineConfig({
   build: {
     outDir: "../resources/static/js",
     emptyOutDir: false, 
-    cssCodeSplit: false, // CSS도 하나로 통합
+    cssCodeSplit: false,
     rollupOptions: {
       output: {
-        // 단일 파일로 합치기 위한 설정 (manualChunks 비활성화 효과)
+        // 📍 모든 동적 임포트를 인라인으로 합쳐서 진짜 '파일 1개'로 만듦
+        inlineDynamicImports: true, 
         manualChunks: undefined,
         entryFileNames: "react-main.js",
-        chunkFileNames: "react-main-chunk.js", // 혹시 조각이 생겨도 이름을 고정
         assetFileNames: (assetInfo) => {
           if (assetInfo.name && assetInfo.name.endsWith('.css')) return 'react-main.css';
           return '[name].[ext]';
