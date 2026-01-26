@@ -9,115 +9,116 @@
   <link rel="stylesheet" th:href="@{/css/board.css}">
   <script th:src="@{/js/board.js}"></script>
 
-  <p class="life_campus">취준생 커뮤나티 게시판</p>
+  <ul class="community_tab">
+    <li class="active" data-url="/community/list"><span>취업 준비생</span></li>
+    <li data-url="/board/list"><span>대학 캠퍼스</span></li>
+  </ul>
+
+  <p class="life_campus">취준생 커뮤니티 게시판</p>
 
   <div class="search_campus">
 
     <div class="register_campus_link">
-      <span onclick="goRegister();"> 커뮤니티 등록하기</span>
+      <a href="/community/register"> 커뮤니티 등록하기</a>
     </div>
 
     <!-- 검색/정렬 -->
-    <form class="form_board" role="search" th:action="@{/board/list}" method="get">
+    <form class="form_board" role="search" th:action="@{/community/list}" method="get">
       <div class="form_board_box">
         <select class="form-select" name="type" aria-label="정렬 기준">
-          <option value="" th:selected="${ph.type == null or ph.type == ''}">전체</option>
-          <option value="new" th:selected="${ph.type == 'new'}">최신 순</option>
-          <option value="view" th:selected="${ph.type == 'view'}">조회수 순</option>
-          <option value="like" th:selected="${ph.type == 'like'}" disabled>좋아요 순(준비중)</option>
-          <option value="cmt" th:selected="${ph.type == 'cmt'}" disabled>댓글 순(준비중)</option>
+          <option value="" th:selected="${ph != null and (ph.type == null or ph.type == '')}">전체</option>
+          <option value="new" th:selected="${ph != null and ph.type == 'new'}">최신 순</option>
+          <option value="view" th:selected="${ph != null and ph.type == 'view'}">조회수 순</option>
+          <option value="like" th:selected="${ph != null and ph.type == 'like'}" disabled>좋아요 순(준비중)</option>
+          <option value="cmt" th:selected="${ph != null and ph.type == 'cmt'}" disabled>댓글 순(준비중)</option>
         </select>
 
         <input class="form-control" type="search" name="keyword"
-               th:value="${ph.keyword}" placeholder="검색" aria-label="검색어를 입력하세요." />
+               th:value="${ph != null ? ph.keyword : ''}" placeholder="검색" aria-label="검색어를 입력하세요." />
 
         <input type="hidden" name="pageNo" value="1">
       </div>
 
       <button type="submit" class="btn search_button">
         검색
-        <span class="g">[[${ph.totalElement}]]</span>
+        <span class="g" th:text="${ph != null ? ph.totalElement : 0}">0</span>
       </button>
     </form>
 
-    <!-- 데이터 없을 때 -->
-    <div th:if="${ph.list == null or #lists.isEmpty(ph.list)}">
-      <div class="board_title_not">등록된 게시글이 없습니다.</div>
-    </div>
-
     <!-- 목록 -->
-    <div class="board_list_view">
-      <div th:if="${ph.list != null and !#lists.isEmpty(ph.list)}"
-           th:each="b : ${ph.list}"
-           class="board_infobox">
+    <div class="community_table_wrap table-hover">
+      <table class="community_table">
+        <thead>
+        <tr>
+          <th>No</th>
+          <th>이메일</th>
+          <th>이름</th>
+          <th>닉네임</th>
+          <th>권한</th>
+          <th>수정일</th>
+        </tr>
+        </thead>
 
-        <div class="board_img">
-          <img th:if="${b.thumbPath != null}"
-               th:src="${b.thumbPath}"
-               alt="게시글 이미지">
+        <tbody>
+        <tr th:if="${ph == null or ph.list == null or #lists.isEmpty(ph.list)}">
+          <td colspan="6" class="text-center">데이터가 없습니다.</td>
+        </tr>
 
-          <img th:unless="${b.thumbPath != null}"
-               th:src="@{/img/logo_img.png}"
-               alt="기본 이미지">
-        </div>
+        <tr th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list)}"
+            th:each="c, stat : ${ph.list}">
+          <td th:text="${ph.totalCount != null ? (ph.totalCount - (ph.pgno - 1) * ph.qty - stat.index) : stat.count}"></td>
 
-        <div class="board_info">
-          <div class="board_title_class">
-            <a th:href="@{/board/detail(postId=${b.postId})}"
-               th:text="${b.title}"></a>
-          </div>
+          <td>
+            <a th:href="@{/community/detail(userId=${c.userId})}"
+               th:text="${c.email}"></a>
+          </td>
 
-          <div class="board_writer">
-            <span>작성자 : </span><span th:text="${b.writer}"></span>
-            <p th:if="${b.department != null}">
-              <span th:text="${b.department}"></span>
-            </p>
-          </div>
+          <td th:text="${c.name}"></td>
 
-          <div class="date_flex">
-            <p th:text="${b.createdAt != null ? #temporals.format(b.createdAt, 'yyyy-MM-dd') : '-'}"></p>
-            <p th:text="${b.viewCount}"></p>
-          </div>
-        </div>
-      </div>
+          <td th:text="${c.nickname}"></td>
+
+          <td th:text="${c.role}"></td>
+
+          <td th:text="${c.updatedAt != null ? #temporals.format(c.updatedAt, 'yyyy-MM-dd') : '-'}"></td>
+        </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- ✅ 페이징: 게시글 있을 때만 + (선택) 2페이지 이상일 때만 -->
+    <!-- 페이징 -->
     <nav aria-label="Page navigation"
          th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list) and ph.totalPage > 1}">
       <ul class="pagination justify-content-center">
 
-        <!-- 이전 -->
-        <li class="page-item" th:classappend="${!ph.prev} ? 'disabled'">
+        <li class="page-item" th:classappend="${ph.prev == false} ? 'disabled'">
           <a class="page-link"
-             th:href="@{/board/list(pageNo=${ph.startPage-1}, type=${ph.type}, keyword=${ph.keyword})}"
+             th:href="@{/community/list(pageNo=${ph.startPage-1}, type=${ph.type}, keyword=${ph.keyword})}"
              aria-label="Previous">
             <span aria-hidden="true">&laquo;</span>
           </a>
         </li>
 
-        <!-- 페이지 번호 -->
         <li class="page-item"
             th:each="i : ${#numbers.sequence(ph.startPage, ph.endPage)}"
             th:classappend="${i == ph.pageNo} ? 'active'">
           <a class="page-link"
-             th:href="@{/board/list(pageNo=${i}, type=${ph.type}, keyword=${ph.keyword})}"
+             th:href="@{/community/list(pageNo=${i}, type=${ph.type}, keyword=${ph.keyword})}"
              th:text="${i}"></a>
         </li>
 
-        <!-- 다음 -->
-        <li class="page-item" th:classappend="${!ph.next} ? 'disabled'">
+        <li class="page-item" th:classappend="${ph.next == false} ? 'disabled'">
           <a class="page-link"
-             th:href="@{/board/list(pageNo=${ph.endPage+1}, type=${ph.type}, keyword=${ph.keyword})}"
+             th:href="@{/community/list(pageNo=${ph.endPage+1}, type=${ph.type}, keyword=${ph.keyword})}"
              aria-label="Next">
             <span aria-hidden="true">&raquo;</span>
           </a>
         </li>
-
       </ul>
     </nav>
 
   </div>
+
+  <script th:src="@{/js/community.js}"></script>
 </div>
 
 </html>

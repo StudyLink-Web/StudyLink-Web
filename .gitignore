@@ -2,6 +2,7 @@ HELP.md
 src/main/resources/application.properties
 src/main/resources/application-local.yml
 src/main/resources/log4jdbc.log4j2.properties
+src/main/resources/service-account.json
 
 uploads
 
@@ -11,6 +12,9 @@ target/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+
+### QType ###
+/src/main/generated
 
 ### STS ###
 .apt_generated

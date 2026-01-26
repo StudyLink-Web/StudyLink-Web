@@ -63,8 +63,10 @@ public class SecurityConfig {
                                 "/chatbot/**",            // 챗봇 관련 요청 허용
                                 "/api/chatbot/archive/**", // 추가: 챗봇 아카이브 API CSRF 제외
                                 "/room/**",               // 방 관련 요청 허용
+                                "/tossPayment/**",        // 결게 관련 허용
                                 "/map/**",                // 추가: 지도 관련 요청 CSRF 제외
-                                "/api/cover-letter/**"    // ✅ 추가: 자소서 API CSRF 제외
+                                "/api/cover-letter/**",   // 추가: 자소서 API CSRF 제외
+                                "/api/fcm/**"             // 추가: FCM 푸시 알림 API CSRF 제외
                         )
                 )
 
@@ -126,10 +128,15 @@ public class SecurityConfig {
                                 // ✅ API는 모두 공개 (테스트용)
                                 "/api/**",
                                 "/api/auth/**",
+                                "/api/fcm/**",          // ✅ 추가: FCM 푸시 알림 API 공개
 
+                                // 문제 관련
                                 "/room/list",
                                 "/room/enterRoom",
                                 "/ws/**",
+
+                                // 결제 관련
+                                "/tossPayment/**",
 
                                 // ✅ board 전체 공개(단, register는 위에서 예외로 막음)
                                 "/board/**",
@@ -141,7 +148,11 @@ public class SecurityConfig {
                                 "/.well-known/**",      // ✅ Chrome DevTools 에러 무시
                                 "/chatbot/**",
                                 "/map/**",              // 추가: 지도 관련 요청 허용
-                                "/auth/student-verification/verify"  // ⭐ 추가: 이메일 인증 링크는 로그인 불필요 (토큰으로 인증)
+                                "/auth/student-verification/verify", // ⭐ 추가: 이메일 인증 링크는 로그인 불필요
+                                "/firebase-messaging-sw.js", // ✅ 추가: 서비스 워커 공개 접근 허용
+                                "/manifest.webmanifest",      // ✅ 추가: PWA 매니페스트 공개 접근 허용
+                                "/pwa-192x192.png",          // ✅ 추가: 아이콘 등
+                                "/pwa-512x512.png"
                         ).permitAll()
 
                         // ⭐ 학교 이메일 인증 페이지는 로그인 필수

@@ -78,6 +78,9 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.springframework.security:spring-security-test'
+
+	// ===== Firebase Admin SDK =====
+	implementation 'com.google.firebase:firebase-admin:9.2.0'
 }
 
 tasks.named('test') {
@@ -98,30 +101,30 @@ tasks.withType(JavaCompile) {
 def frontendDir = "$projectDir/src/main/frontend"
 
 task installFrontend(type: Exec) {
-    workingDir "$frontendDir"
-    inputs.file("$frontendDir/package.json")
-    outputs.dir("$frontendDir/node_modules")
-    group = 'frontend'
+	workingDir "$frontendDir"
+	inputs.file("$frontendDir/package.json")
+	outputs.dir("$frontendDir/node_modules")
+	group = 'frontend'
 
-    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
-        commandLine 'npm.cmd', 'install'
-    } else {
-        commandLine 'npm', 'install'
-    }
+	if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+		commandLine 'npm.cmd', 'install'
+	} else {
+		commandLine 'npm', 'install'
+	}
 }
 
 task buildFrontend(type: Exec) {
-    dependsOn installFrontend
-    workingDir "$frontendDir"
-    inputs.dir("$frontendDir/src")
-    outputs.dir("$projectDir/src/main/resources/static/js")
-    group = 'frontend'
+	dependsOn installFrontend
+	workingDir "$frontendDir"
+	inputs.dir("$frontendDir/src")
+	outputs.dir("$projectDir/src/main/resources/static/js")
+	group = 'frontend'
 
-    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
-        commandLine 'npm.cmd', 'run', 'build'
-    } else {
-        commandLine 'npm', 'run', 'build'
-    }
+	if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+		commandLine 'npm.cmd', 'run', 'build'
+	} else {
+		commandLine 'npm', 'run', 'build'
+	}
 }
 
 // Spring Boot 리소스 처리 시 리액트 빌드를 먼저 수행하도록 함

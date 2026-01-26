@@ -41,6 +41,16 @@ const AdmissionEssayPage: React.FC = () => {
 
   const [generatedContent, setGeneratedContent] = useState("");
 
+  // Student Record Extraction State
+  const [isExtractModalOpen, setIsExtractModalOpen] = useState(false);
+  const [recordText, setRecordText] = useState("");
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractedResult, setExtractedResult] = useState<{
+    keywords: string[];
+    suggestedTitle: string;
+    summary: string;
+  } | null>(null);
+
   useEffect(() => {
     fetchEssays();
     fetchProfile();
@@ -136,6 +146,41 @@ const AdmissionEssayPage: React.FC = () => {
     } catch {
       alert("저장 중 오류가 발생했습니다.");
     }
+  };
+
+  const handleExtractRecord = async () => {
+    if (!recordText.trim()) return alert("생기부 내용을 입력해주세요.");
+    setIsExtracting(true);
+    try {
+      const resp = await fetch("/api/cover-letter/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawText: recordText }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setExtractedResult(data);
+      }
+    } catch {
+      alert("데이터 추출 중 오류가 발생했습니다.");
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const applyExtractedData = () => {
+    if (!extractedResult) return;
+    setFormData({
+      ...formData,
+      keywords: [
+        ...new Set([...formData.keywords, ...extractedResult.keywords]),
+      ],
+      title: formData.title || extractedResult.suggestedTitle,
+    });
+    setIsExtractModalOpen(false);
+    setRecordText("");
+    setExtractedResult(null);
+    alert("키워드와 제목이 적용되었습니다.");
   };
 
   const deleteEssay = async (id: number) => {
@@ -249,9 +294,17 @@ const AdmissionEssayPage: React.FC = () => {
             {/* Input Section */}
             <div className="space-y-6">
               <div className="p-6 bg-white dark:bg-white/5 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                  1. 정보 및 키워드 입력
-                </h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    1. 정보 및 키워드 입력
+                  </h2>
+                  <button
+                    onClick={() => setIsExtractModalOpen(true)}
+                    className="text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-200 dark:border-purple-500/20 hover:bg-purple-100 transition-all"
+                  >
+                    ✨ 생기부로 키워드 생성
+                  </button>
+                </div>
 
                 <div className="space-y-4">
                   <div>
@@ -424,6 +477,103 @@ const AdmissionEssayPage: React.FC = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Extraction Modal */}
+        {isExtractModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-[#0d1117] w-full max-w-2xl rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="p-8 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Sparkles className="text-purple-500" size={24} />
+                    생기부 키워드 추출기
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-1">
+                    생기부 원문을 붙여넣으시면 AI가 핵심 경험을 찾아드립니다.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsExtractModalOpen(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-8 flex-1 overflow-y-auto space-y-6">
+                {!extractedResult ? (
+                  <div className="space-y-4">
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">
+                      생기부 원문(세특/창체 등) 입력
+                    </label>
+                    <textarea
+                      className="w-full h-64 p-4 rounded-3xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none resize-none transition-all"
+                      placeholder="나이스(NEIS) 등에서 복사한 내용을 여기에 붙여넣으세요..."
+                      value={recordText}
+                      onChange={(e) => setRecordText(e.target.value)}
+                    />
+                    <button
+                      disabled={isExtracting}
+                      onClick={handleExtractRecord}
+                      className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all hover:scale-[1.01]"
+                    >
+                      {isExtracting ? (
+                        <>
+                          <Loader2 className="animate-spin" size={20} />
+                          분석 중...
+                        </>
+                      ) : (
+                        "키워드 추출 시작하기"
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-purple-50 dark:bg-purple-500/5 p-6 rounded-3xl border border-purple-100 dark:border-purple-500/10">
+                      <h3 className="text-sm font-bold text-purple-700 dark:text-purple-300 mb-2">
+                        활동 요약
+                      </h3>
+                      <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                        "{extractedResult.summary}"
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
+                        추출된 키워드
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {extractedResult.keywords.map((kw, i) => (
+                          <span
+                            key={i}
+                            className="px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold shadow-sm"
+                          >
+                            #{kw}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-4 flex gap-3">
+                      <button
+                        onClick={() => setExtractedResult(null)}
+                        className="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+                      >
+                        다시 입력
+                      </button>
+                      <button
+                        onClick={applyExtractedData}
+                        className="flex-1 py-4 bg-[#4f46e5] text-white rounded-2xl font-bold shadow-lg shadow-indigo-500/20 hover:opacity-90 transition-all"
+                      >
+                        키워드 적용하기
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

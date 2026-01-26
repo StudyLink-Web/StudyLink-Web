@@ -8,6 +8,12 @@
 
     <link rel="stylesheet" th:href="@{/css/board.css}">
 
+    <ul class="community_tab">
+        <li data-url="/community/list"><span>취업 준비생</span></li>
+        <li class="active" data-url="/board/list"><span>대학 캠퍼스</span></li>
+    </ul>
+
+
     <p class="life_campus">즐거운 대학캠퍼스 생활</p>
 
     <div class="search_campus">
@@ -147,6 +153,7 @@
         window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
         window.USER_ROLE = /*[[${#authentication?.authorities[0]?.authority}]]*/ null;
     </script>
+    <script src="/js/community.js"></script>
     <script src="/js/board_list.js"></script>
 </div>
 
