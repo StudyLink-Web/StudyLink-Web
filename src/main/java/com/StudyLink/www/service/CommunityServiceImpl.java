@@ -15,14 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CommunityServiceImpl implements CommunityService {
 
+    private static final int PAGE_SIZE = 10;
+
     private final CommunityRepository communityRepository;
 
     @Transactional
     @Override
     public Long insert(CommunityDTO communityDTO) {
-        if (communityDTO == null) {
-            throw new IllegalArgumentException("communityDTO is null");
-        }
+        if (communityDTO == null) throw new IllegalArgumentException("communityDTO is null");
 
         Community community = convertDtoToEntity(communityDTO);
         return communityRepository.save(community).getBno();
@@ -32,11 +32,14 @@ public class CommunityServiceImpl implements CommunityService {
     @Override
     public Page<CommunityDTO> getList(int pageNo) {
         int safePageNo = Math.max(pageNo, 1);
-        Pageable pageable =
-                PageRequest.of(safePageNo - 1, 10, Sort.by(Sort.Direction.DESC, "bno"));
 
-        return communityRepository.findAll(pageable)
-                .map(this::convertEntityToDto);
+        Pageable pageable = PageRequest.of(
+                safePageNo - 1,
+                PAGE_SIZE,
+                Sort.by(Sort.Direction.DESC, "bno")
+        );
+
+        return communityRepository.findAll(pageable).map(this::convertEntityToDto);
     }
 
     @Transactional(readOnly = true)
@@ -52,12 +55,8 @@ public class CommunityServiceImpl implements CommunityService {
     @Transactional
     @Override
     public Long modify(CommunityDTO communityDTO) {
-        if (communityDTO == null) {
-            throw new IllegalArgumentException("communityDTO is null");
-        }
-        if (communityDTO.getBno() == null) {
-            throw new IllegalArgumentException("bno is null");
-        }
+        if (communityDTO == null) throw new IllegalArgumentException("communityDTO is null");
+        if (communityDTO.getBno() == null) throw new IllegalArgumentException("bno is null");
 
         Community community = communityRepository.findById(communityDTO.getBno())
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 커뮤니티 글"));

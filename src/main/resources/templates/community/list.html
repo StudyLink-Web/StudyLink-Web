@@ -22,7 +22,6 @@
       <a href="/community/register"> 커뮤니티 등록하기</a>
     </div>
 
-    <!-- 검색/정렬 -->
     <form class="form_board" role="search" th:action="@{/community/list}" method="get">
       <div class="form_board_box">
         <select class="form-select" name="type" aria-label="정렬 기준">
@@ -34,7 +33,8 @@
         </select>
 
         <input class="form-control" type="search" name="keyword"
-               th:value="${ph != null ? ph.keyword : ''}" placeholder="검색" aria-label="검색어를 입력하세요." />
+               th:value="${ph != null ? ph.keyword : ''}"
+               placeholder="검색" aria-label="검색어를 입력하세요." />
 
         <input type="hidden" name="pageNo" value="1">
       </div>
@@ -45,47 +45,43 @@
       </button>
     </form>
 
-    <!-- 목록 -->
     <div class="community_table_wrap table-hover">
       <table class="community_table">
         <thead>
         <tr>
           <th>No</th>
-          <th>이메일</th>
-          <th>이름</th>
-          <th>닉네임</th>
-          <th>권한</th>
-          <th>수정일</th>
+          <th>제목</th>
+          <th>작성자</th>
+          <th>조회수</th>
+          <th>등록일</th>
         </tr>
         </thead>
 
         <tbody>
         <tr th:if="${ph == null or ph.list == null or #lists.isEmpty(ph.list)}">
-          <td colspan="6" class="text-center">데이터가 없습니다.</td>
+          <td colspan="5" class="text-center">데이터가 없습니다.</td>
         </tr>
 
-        <tr th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list)}"
-            th:each="c, stat : ${ph.list}">
-          <td th:text="${ph.totalCount != null ? (ph.totalCount - (ph.pgno - 1) * ph.qty - stat.index) : stat.count}"></td>
+        <th:block th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list)}">
+          <tr th:each="c, stat : ${ph.list}">
+            <td th:text="${ph.totalElement - (ph.pageNo - 1) * 10 - stat.index}"></td>
 
-          <td>
-            <a th:href="@{/community/detail(userId=${c.userId})}"
-               th:text="${c.email}"></a>
-          </td>
+            <td>
+              <a th:href="@{/community/detail(bno=${c.bno})}"
+                 th:text="${c.title}"></a>
+            </td>
 
-          <td th:text="${c.name}"></td>
+            <td th:text="${c.writer}"></td>
 
-          <td th:text="${c.nickname}"></td>
+            <td th:text="${c.readCount}"></td>
 
-          <td th:text="${c.role}"></td>
-
-          <td th:text="${c.updatedAt != null ? #temporals.format(c.updatedAt, 'yyyy-MM-dd') : '-'}"></td>
-        </tr>
+            <td th:text="${c.updatedAt != null ? #temporals.format(c.updatedAt, 'yyyy-MM-dd') : '-'}"></td>
+          </tr>
+        </th:block>
         </tbody>
       </table>
     </div>
 
-    <!-- 페이징 -->
     <nav aria-label="Page navigation"
          th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list) and ph.totalPage > 1}">
       <ul class="pagination justify-content-center">
