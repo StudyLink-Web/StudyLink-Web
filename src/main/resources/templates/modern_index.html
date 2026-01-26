@@ -8,8 +8,20 @@
 >
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StudyLink Modern - AI 입시 컨설팅</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>StudyLink - AI 입시 컨설팅</title>
+
+    <!-- 🍏 iOS PWA 전용 메타 태그 (패드에서 앱처럼 작동하게 함) -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="StudyLink" />
+    <link rel="apple-touch-icon" th:href="@{/pwa-192x192.png}" />
 
     <!-- Pretendard 폰트 -->
     <link
@@ -17,44 +29,90 @@
       rel="stylesheet"
     />
 
-    <!-- CSRF 토큰 (리액트 API 통신용) -->
+    <!-- CSRF 토큰 -->
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 
-    <!-- 리액트 스타일 (Vite 빌드 후 생성됨) -->
+    <!-- 리액트 스타일 -->
     <link rel="stylesheet" th:href="@{/js/react-main.css}" />
 
+    <!-- 📍 PWA manifest (도메인 루트 위치 반영) -->
+    <link rel="manifest" th:href="@{/manifest.webmanifest}" />
+
     <style>
-      /* 📍 레이아웃의 박스 제한을 강제로 해제하여 전체 너비 확보 */
+      /* 📍 팀원 소스 보호 및 레이아웃 최적화 */
       .content_box {
         max-width: none !important;
         margin: 0 !important;
         padding: 0 !important;
-        border-radius: 0 !important;
-        background: transparent !important;
-        box-shadow: none !important;
+        background: #f8f9fa !important;
+        min-height: 80vh !important;
+        display: block !important;
       }
-      body {
-        background-color: #f8f9fa; /* 기본 배경색 */
+
+      #root {
+        min-height: 100vh;
+        background-color: #f8f9fa;
+        position: relative;
+        z-index: 10;
+      }
+
+      @media (max-width: 1024px) {
+        .header {
+          height: auto !important;
+          min-height: 70px !important;
+        }
+        .header-inner {
+          height: auto !important;
+          flex-wrap: wrap !important;
+          padding: 10px !important;
+        }
+        .header-nav {
+          display: flex !important;
+          padding: 5px 0 !important;
+          overflow-x: auto !important;
+          width: 100% !important;
+        }
       }
     </style>
+
+    <script>
+      // 🛡️ [Service Worker Polyfill] - 패드 및 일부 브라우저 크래시 방지
+      // 실제 지원 여부와 상관없이 객체가 존재하게 하여 라이브러리 초기 로딩 에러를 막음
+      if (typeof navigator !== "undefined" && !navigator.serviceWorker) {
+        Object.defineProperty(navigator, "serviceWorker", {
+          get: function () {
+            return {
+              register: function () {
+                return Promise.reject("Not supported");
+              },
+              addEventListener: function () {},
+              removeEventListener: function () {},
+              getRegistrations: function () {
+                return Promise.resolve([]);
+              },
+              ready: new Promise(function () {}),
+            };
+          },
+        });
+      }
+    </script>
   </head>
 
-  <div layout:fragment="content">
-    <!-- 📍 React "Island" 마운트 포인트 -->
+  <div layout:fragment="content" class="content_box">
+    <!-- 리액트 앱 마운트 포인트 -->
     <div id="root"></div>
 
-    <!-- 📍 리액트 빌드 파일 (Vite 빌드 후 생성될 파일) -->
-    <!-- 개발 모드에서는 빈 태그로 두거나, 나중에 Gradle 자동화 시 경로를 동적으로 처리할 예정입니다. -->
-    <script type="module" th:src="@{/js/react-main.js}"></script>
-
-    <!-- 초기 데이터 전달 (Thymeleaf -> React) -->
+    <!-- 초기 데이터 전달 -->
     <script th:inline="javascript">
       window.__INITIAL_DATA__ = {
         user: /*[[${user}]]*/ null,
         isAuthenticated: /*[[${isAuthenticated}]]*/ false,
-        topMentors: /*[[${topMentors}]]*/ [], // 👈 백엔드에서인기 멘토 데이터 넘겨줄 곳
+        topMentors: /*[[${topMentors}]]*/ [],
       };
     </script>
+
+    <!-- 리액트 빌드 파일 로드 -->
+    <script type="module" th:src="@{/js/react-main.js}"></script>
   </div>
 </html>
