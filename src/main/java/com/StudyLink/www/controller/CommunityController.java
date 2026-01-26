@@ -59,8 +59,8 @@ public class CommunityController {
             communityDTO.setRole("USER");
         }
 
-        Long savedId = communityService.insert(communityDTO);
-        return "redirect:/community/detail?userId=" + savedId;
+        Long savedBno = communityService.insert(communityDTO);
+        return "redirect:/community/detail?bno=" + savedBno;
     }
 
     @GetMapping("/list")
@@ -69,37 +69,31 @@ public class CommunityController {
                        @RequestParam(name = "type", required = false) String type,
                        @RequestParam(name = "keyword", required = false) String keyword) {
 
-        // ✅ pageNo 방어 (0/음수 들어오면 PageRequest에서 터질 수 있음)
         if (pageNo < 1) pageNo = 1;
 
-        // ✅ null/공백 정리 (템플릿/링크 생성 시 "null" 문자열 방지)
         type = (type == null || type.isBlank()) ? "" : type.trim();
         keyword = (keyword == null || keyword.isBlank()) ? "" : keyword.trim();
 
         try {
-            // ✅ 가능하면 서비스도 type/keyword 반영하는 메서드로 연결하는 게 정상
-            //    (없으면 우선 기존 getList(pageNo) 유지)
             Page<CommunityDTO> page = communityService.getList(pageNo);
 
-            // ✅ PageHandler 생성
             PageHandler<CommunityDTO> ph = new PageHandler<>(page, pageNo, type, keyword);
 
             model.addAttribute("ph", ph);
             return "community/list";
 
         } catch (Exception e) {
-            // ✅ 500 원인 로그를 확실히 남기기
             log.error("community/list 500. pageNo={}, type='{}', keyword='{}'", pageNo, type, keyword, e);
-
-            // 화면에서 확인 가능한 에러 페이지로 보내기(원하면 community/list에 빈 ph 주고 보여줘도 됨)
             return "error/500";
         }
     }
 
     @GetMapping("/detail")
-    public String detail(@RequestParam("userId") Long userId, Model model) {
+    public String detail(@RequestParam("bno") Long bno, Model model) {
         try {
-            CommunityDTO communityDTO = communityService.getDetail(userId);
+            CommunityDTO communityDTO = communityService.getDetail(bno);
+            if (communityDTO == null) return "error/404";
+
             model.addAttribute("communityDTO", communityDTO);
             return "community/detail";
         } catch (EntityNotFoundException e) {
@@ -130,32 +124,20 @@ public class CommunityController {
             communityDTO.setRole("USER");
         }
 
-        Long savedId = communityService.modify(communityDTO);
-        redirectAttributes.addAttribute("userId", savedId);
+        Long savedBno = communityService.modify(communityDTO);
+        redirectAttributes.addAttribute("bno", savedBno);
         return "redirect:/community/detail";
     }
 
     @GetMapping("/remove")
-    public String remove(@RequestParam("userId") Long userId,
+    public String remove(@RequestParam("bno") Long bno,
                          Authentication authentication) {
 
         if (!isLogin(authentication)) {
             return "redirect:/login";
         }
 
-        String email = authentication.getName();
-        Long loginUserId = userService.findUserIdByUsername(email);
-
-        if (loginUserId == null) {
-            log.error("remove: userId 조회 실패. email={}", email);
-            return "redirect:/error/500";
-        }
-
-        if (!userId.equals(loginUserId)) {
-            return "redirect:/error/403";
-        }
-
-        communityService.remove(userId);
+        communityService.remove(bno);
         return "redirect:/community/list";
     }
 }
