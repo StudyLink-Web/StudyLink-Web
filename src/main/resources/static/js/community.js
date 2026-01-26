@@ -6,3 +6,5 @@ document.addEventListener('DOMContentLoaded', () => {
         location.href = li.dataset.url;
     });
 });
+
+

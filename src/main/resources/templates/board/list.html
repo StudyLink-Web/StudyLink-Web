@@ -19,7 +19,7 @@
     <div class="search_campus">
 
         <div class="register_campus_link">
-            <span onclick="goRegister();"> 대학생활 등록하기</span>
+            <span onclick="goRegister();"> 대학생활 작성</span>
         </div>
 
 
@@ -147,10 +147,7 @@
         </nav>
     </div>
 
-    <script th:inline="javascript">
-        window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
-        window.USER_ROLE = /*[[${#authentication?.authorities[0]?.authority}]]*/ null;
-    </script>
+
     <script src="/js/community.js"></script>
     <script src="/js/board_list.js"></script>
 </div>

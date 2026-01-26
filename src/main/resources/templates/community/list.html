@@ -19,7 +19,7 @@
   <div class="search_campus">
 
     <div class="register_campus_link">
-      <a href="/community/register"> 커뮤니티 등록하기</a>
+      <span onclick="goRegister();"> 커뮤니티 작성</span>
     </div>
 
     <form class="form_board" role="search" th:action="@{/community/list}" method="get">
@@ -39,7 +39,7 @@
 
       <button type="submit" class="btn search_button">
         검색
-        <span class="g" th:text="${ph != null ? ph.totalElement : 0}">0</span>
+<!--        <span class="g" th:text="${ph != null ? ph.totalElement : 0}">0</span>-->
       </button>
     </form>
 
@@ -111,8 +111,12 @@
     </nav>
 
   </div>
-
+  <script th:inline="javascript">
+    window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+    window.USER_ROLE = /*[[${#authentication?.authorities[0]?.authority}]]*/ null;
+  </script>
   <script th:src="@{/js/community.js}"></script>
+  <script th:src="@{/js/communityList.js}"></script>
 </div>
 
 </html>
