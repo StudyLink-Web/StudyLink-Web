@@ -19,7 +19,7 @@
   <div class="search_campus">
 
     <div class="register_campus_link">
-      <span onclick="goRegister();"> 커뮤니티 작성</span>
+      <a href="/community/register"> 커뮤니티 등록하기</a>
     </div>
 
     <form class="form_board" role="search" th:action="@{/community/list}" method="get">
@@ -111,12 +111,8 @@
     </nav>
 
   </div>
-  <script th:inline="javascript">
-    window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
-    window.USER_ROLE = /*[[${#authentication?.authorities[0]?.authority}]]*/ null;
-  </script>
+
   <script th:src="@{/js/community.js}"></script>
-  <script th:src="@{/js/communityList.js}"></script>
 </div>
 
 </html>
