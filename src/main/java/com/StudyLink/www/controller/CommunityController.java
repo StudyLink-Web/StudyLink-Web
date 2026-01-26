@@ -99,6 +99,7 @@ public class CommunityController {
         return "redirect:/community/detail";
     }
 
+    // ✅✅✅ 여기(list)만 수정: type/keyword 반영
     @GetMapping("/list")
     public String list(Model model,
                        @RequestParam(defaultValue = "1") int pageNo,
@@ -106,10 +107,17 @@ public class CommunityController {
                        @RequestParam(required = false) String keyword) {
 
         int safePageNo = Math.max(pageNo, 1);
-        Page<CommunityDTO> page = communityService.getList(safePageNo);
+
+        // ✅ 검색/정렬 반영된 서비스 메서드 호출
+        Page<CommunityDTO> page = communityService.getList(safePageNo, type, keyword);
+
         PageHandler<CommunityDTO> ph = new PageHandler<>(page, safePageNo, type, keyword);
 
         model.addAttribute("ph", ph);
+
+        // ✅ 템플릿에서 list를 직접 쓰는 경우를 대비(있어도 문제 없음)
+        model.addAttribute("list", ph.getList());
+
         return "community/list";
     }
 

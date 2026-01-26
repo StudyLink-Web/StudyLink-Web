@@ -49,7 +49,11 @@ public interface CommunityService {
 
     Long insert(CommunityFileDTO communityFileDTO);
 
+    // ✅ 기존(그대로 유지)
     Page<CommunityDTO> getList(int pageNo);
+
+    // ✅ 추가: 검색/정렬 지원
+    Page<CommunityDTO> getList(int pageNo, String type, String keyword);
 
     CommunityFileDTO getDetail(Long bno);
 
