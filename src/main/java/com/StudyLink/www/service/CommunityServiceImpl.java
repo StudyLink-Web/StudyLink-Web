@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -16,16 +17,26 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommunityServiceImpl implements CommunityService {
 
     private static final int PAGE_SIZE = 10;
-
     private final CommunityRepository communityRepository;
 
     @Transactional
     @Override
-    public Long insert(CommunityDTO communityDTO) {
+    public Long insert(CommunityDTO communityDTO, MultipartFile[] files) {
         if (communityDTO == null) throw new IllegalArgumentException("communityDTO is null");
 
-        Community community = convertDtoToEntity(communityDTO);
-        return communityRepository.save(community).getBno();
+        int fileCount = 0;
+        if (files != null) {
+            for (MultipartFile f : files) {
+                if (f != null && !f.isEmpty()) fileCount++;
+            }
+        }
+
+        if (communityDTO.getReadCount() == null) communityDTO.setReadCount(0);
+        if (communityDTO.getCmtQty() == null) communityDTO.setCmtQty(0);
+        communityDTO.setFileQty(fileCount);
+
+        Community saved = communityRepository.save(convertDtoToEntity(communityDTO));
+        return saved.getBno();
     }
 
     @Transactional(readOnly = true)
@@ -63,9 +74,11 @@ public class CommunityServiceImpl implements CommunityService {
 
         community.setTitle(communityDTO.getTitle());
         community.setWriter(communityDTO.getWriter());
-        community.setReadCount(communityDTO.getReadCount());
-        community.setCmtQty(communityDTO.getCmtQty());
-        community.setFileQty(communityDTO.getFileQty());
+        community.setDepartment(communityDTO.getDepartment());
+        community.setContent(communityDTO.getContent());
+        community.setReadCount(communityDTO.getReadCount() == null ? 0 : communityDTO.getReadCount());
+        community.setCmtQty(communityDTO.getCmtQty() == null ? 0 : communityDTO.getCmtQty());
+        community.setFileQty(communityDTO.getFileQty() == null ? 0 : communityDTO.getFileQty());
 
         return community.getBno();
     }

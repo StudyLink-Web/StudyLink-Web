@@ -24,12 +24,22 @@ public class Community extends TimeBase {
     @Column(length = 100, nullable = false)
     private String writer;
 
+    @Column(length = 100)
+    private String department;
+
+    @Lob
+    @Column
+    private String content;
+
+    @Builder.Default
     @Column(name = "read_count", nullable = false)
-    private int readCount;
+    private Integer readCount = 0;
 
+    @Builder.Default
     @Column(name = "cmt_qty", nullable = false)
-    private int cmtQty;
+    private Integer cmtQty = 0;
 
+    @Builder.Default
     @Column(name = "file_qty", nullable = false)
-    private int fileQty;
+    private Integer fileQty = 0;
 }

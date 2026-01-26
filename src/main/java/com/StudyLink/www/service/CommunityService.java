@@ -3,6 +3,7 @@ package com.StudyLink.www.service;
 import com.StudyLink.www.dto.CommunityDTO;
 import com.StudyLink.www.entity.Community;
 import org.springframework.data.domain.Page;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface CommunityService {
 
@@ -13,9 +14,11 @@ public interface CommunityService {
                 .bno(dto.getBno())
                 .title(dto.getTitle())
                 .writer(dto.getWriter())
-                .readCount(dto.getReadCount())
-                .cmtQty(dto.getCmtQty())
-                .fileQty(dto.getFileQty())
+                .department(dto.getDepartment())
+                .content(dto.getContent())
+                .readCount(dto.getReadCount() == null ? 0 : dto.getReadCount())
+                .cmtQty(dto.getCmtQty() == null ? 0 : dto.getCmtQty())
+                .fileQty(dto.getFileQty() == null ? 0 : dto.getFileQty())
                 .build();
     }
 
@@ -26,6 +29,8 @@ public interface CommunityService {
                 .bno(entity.getBno())
                 .title(entity.getTitle())
                 .writer(entity.getWriter())
+                .department(entity.getDepartment())
+                .content(entity.getContent())
                 .readCount(entity.getReadCount())
                 .cmtQty(entity.getCmtQty())
                 .fileQty(entity.getFileQty())
@@ -34,7 +39,7 @@ public interface CommunityService {
                 .build();
     }
 
-    Long insert(CommunityDTO communityDTO);
+    Long insert(CommunityDTO communityDTO, MultipartFile[] files);
 
     Page<CommunityDTO> getList(int pageNo);
 
