@@ -29,6 +29,8 @@ public class ExchangeRequestDTO {
 
     private String bankName; // 은행명
 
+    private String accountHolder; // 예금주
+
     private String rejectedReason; // 거부 사유
 
     private String transactionId; // PG사 거래 ID
