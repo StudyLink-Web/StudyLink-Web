@@ -12,6 +12,9 @@ public interface CommunityService {
 
         return Community.builder()
                 .bno(dto.getBno())
+                .userId(dto.getUserId())
+                .email(dto.getEmail())
+                .role(dto.getRole())
                 .title(dto.getTitle())
                 .writer(dto.getWriter())
                 .department(dto.getDepartment())
@@ -27,6 +30,9 @@ public interface CommunityService {
 
         return CommunityDTO.builder()
                 .bno(entity.getBno())
+                .userId(entity.getUserId())
+                .email(entity.getEmail())
+                .role(entity.getRole())
                 .title(entity.getTitle())
                 .writer(entity.getWriter())
                 .department(entity.getDepartment())

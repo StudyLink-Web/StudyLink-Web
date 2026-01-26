@@ -5,71 +5,251 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layout/layout}">
 
+<body>
 <div layout:fragment="content" class="content_box">
+    <h1 th:text="${mode == 'modify' ? '수정하기' : '상세보기'}">상세보기</h1>
 
-    <h1>상세보기</h1>
+    <!-- ===================== 수정 모드 ===================== -->
+    <form th:if="${mode == 'modify'}"
+          th:action="@{/board/modify}"
+          method="post"
+          enctype="multipart/form-data">
 
-    <!-- communityDTO 없으면 안전하게 -->
-    <div th:if="${communityDTO == null}">
-        <div class="alert alert-danger">존재하지 않는 게시글입니다.</div>
-        <a th:href="@{/community/list}" class="btn btn-secondary">목록</a>
-    </div>
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-    <!-- communityDTO 있을 때만 렌더 -->
-    <div th:if="${communityDTO != null}">
+        <input type="hidden" name="postId" th:value="${boardFileDTO.boardDTO.postId}"/>
 
         <div class="mb-3">
             <label class="form-label">제목</label>
-            <input type="text" class="form-control" th:value="${communityDTO.title}" readonly>
+            <input type="text" class="form-control" name="title"
+                   th:value="${boardFileDTO.boardDTO.title}">
         </div>
 
         <div class="mb-3">
             <label class="form-label">작성자</label>
-            <input type="text" class="form-control" th:value="${communityDTO.writer}" readonly>
+            <input type="text" class="form-control"
+                   th:value="${boardFileDTO.boardDTO.writer}" readonly>
         </div>
 
         <div class="mb-3">
             <label class="form-label">학과</label>
-            <input type="text" class="form-control" th:value="${communityDTO.department}" readonly>
+            <input type="text" class="form-control" name="department"
+                   th:value="${boardFileDTO.boardDTO.department}">
         </div>
 
         <div class="mb-3">
             <label class="form-label">내용</label>
-            <textarea class="form-control" rows="8" readonly
-                      th:text="${communityDTO.content}"></textarea>
+            <textarea class="form-control" rows="8" name="content"
+                      th:text="${boardFileDTO.boardDTO.content}"></textarea>
         </div>
 
         <div class="mb-3 d-flex gap-3">
             <div>
                 <small class="text-muted">작성일</small><br>
-                <span th:text="${communityDTO.createdAt != null ? #temporals.format(communityDTO.createdAt, 'yyyy-MM-dd HH:mm') : ''}"></span>
+                <span th:text="${#temporals.format(boardFileDTO.boardDTO.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
             </div>
             <div>
                 <small class="text-muted">수정일</small><br>
-                <span th:text="${communityDTO.updatedAt != null ? #temporals.format(communityDTO.updatedAt, 'yyyy-MM-dd HH:mm') : ''}"></span>
+                <span th:text="${#temporals.format(boardFileDTO.boardDTO.updatedAt, 'yyyy-MM-dd HH:mm')}"></span>
             </div>
             <div>
                 <small class="text-muted">조회수</small><br>
-                <span th:text="${communityDTO.readCount != null ? communityDTO.readCount : 0}"></span>
+                <span th:text="${boardFileDTO.boardDTO.viewCount}"></span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <h4>첨부파일</h4>
+
+            <div class="mb-2">
+                <label class="form-label">파일 추가</label>
+                <input class="form-control" type="file" name="files" multiple>
+                <small class="text-muted">
+                    저장하면 기존 첨부파일은 모두 삭제되고, 새로 선택한 파일로 교체됩니다.
+                    (파일 선택 없이 저장하면 첨부파일이 모두 삭제됩니다)
+                </small>
+            </div>
+
+            <div th:if="${boardFileDTO.fileDTOList == null or #lists.isEmpty(boardFileDTO.fileDTOList)}">
+                <p class="text-muted">첨부파일이 없습니다.</p>
+            </div>
+
+            <div th:unless="${boardFileDTO.fileDTOList == null or #lists.isEmpty(boardFileDTO.fileDTOList)}">
+                <ul class="list-group" id="fileListArea">
+                    <li class="list-group-item d-flex justify-content-between align-items-start"
+                        th:each="f : ${boardFileDTO.fileDTOList}"
+                        th:attr="data-uuid=${f.uuid}">
+                        <div style="flex:1;">
+                            <div th:if="${f.fileType == 1}" class="mb-2">
+                                <img th:src="@{'/board/file/' + ${f.uuid}}"
+                                     alt="첨부 이미지"
+                                     style="max-width: 300px; height: auto; display:block;">
+                            </div>
+
+                            <a th:href="@{'/board/file/' + ${f.uuid}}"
+                               th:text="${f.fileName}"></a>
+
+                            <span class="text-muted"
+                                  th:text="${' (' + f.fileSize + ' bytes)'}"></span>
+                        </div>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger ms-2"
+                                th:attr="data-uuid=${f.uuid}"
+                                onclick="removeFile(this)">
+                            삭제
+                        </button>
+                    </li>
+                </ul>
             </div>
         </div>
 
         <div class="mt-4 d-flex gap-2">
-            <a th:href="@{/community/list}" class="btn btn-secondary">목록</a>
+            <a th:href="@{/board/detail(postId=${boardFileDTO.boardDTO.postId})}"
+               class="btn btn-secondary">취소</a>
+
+            <button type="submit" class="btn btn-primary"
+                    onclick="return confirm('수정 내용을 저장할까요?');">
+                저장
+            </button>
+        </div>
+    </form>
+
+    <!-- ===================== 읽기 모드 ===================== -->
+    <div th:if="${mode != 'modify'}">
+        <div class="mb-3">
+            <label class="form-label">제목</label>
+            <input type="text" class="form-control"
+                   th:value="${boardFileDTO.boardDTO.title}" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">작성자</label>
+            <input type="text" class="form-control"
+                   th:value="${boardFileDTO.boardDTO.writer}" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">학과</label>
+            <input type="text" class="form-control"
+                   th:value="${boardFileDTO.boardDTO.department}" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">내용</label>
+            <textarea class="form-control" rows="8" readonly
+                      th:text="${boardFileDTO.boardDTO.content}"></textarea>
+        </div>
+
+        <div class="mb-3 d-flex gap-3">
+            <div>
+                <small class="text-muted">작성일</small><br>
+                <span th:text="${#temporals.format(boardFileDTO.boardDTO.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
+            </div>
+            <div>
+                <small class="text-muted">수정일</small><br>
+                <span th:text="${#temporals.format(boardFileDTO.boardDTO.updatedAt, 'yyyy-MM-dd HH:mm')}"></span>
+            </div>
+            <div>
+                <small class="text-muted">조회수</small><br>
+                <span th:text="${boardFileDTO.boardDTO.viewCount}"></span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <h4>첨부파일</h4>
+
+            <div th:if="${boardFileDTO.fileDTOList == null or #lists.isEmpty(boardFileDTO.fileDTOList)}">
+                <p class="text-muted">첨부파일이 없습니다.</p>
+            </div>
+
+            <div th:unless="${boardFileDTO.fileDTOList == null or #lists.isEmpty(boardFileDTO.fileDTOList)}">
+                <ul class="list-group">
+                    <li class="list-group-item" th:each="f : ${boardFileDTO.fileDTOList}">
+                        <div th:if="${f.fileType == 1}" class="mb-2">
+                            <img th:src="@{'/board/file/' + ${f.uuid}}"
+                                 alt="첨부 이미지"
+                                 style="max-width: 300px; height: auto; display:block;">
+                        </div>
+
+                        <a th:href="@{'/board/file/' + ${f.uuid}}"
+                           th:text="${f.fileName}"></a>
+
+                        <span class="text-muted"
+                              th:text="${' (' + f.fileSize + ' bytes)'}"></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+            <a th:href="@{/board/list}" class="btn btn-secondary">목록</a>
 
             <div class="d-flex gap-2"
                  sec:authorize="isAuthenticated()"
-                 th:if="${communityDTO.writer == #authentication.name}">
-                <a th:href="@{/community/detail(bno=${communityDTO.bno}, mode='modify')}"
+                 th:if="${boardFileDTO.boardDTO.writer == #authentication.name}">
+                <a th:href="@{/board/detail(postId=${boardFileDTO.boardDTO.postId}, mode='modify')}"
                    class="btn btn-primary">수정</a>
 
-                <a th:href="@{/community/remove(bno=${communityDTO.bno})}"
+                <a th:href="@{/board/remove(postId=${boardFileDTO.boardDTO.postId})}"
                    class="btn btn-danger"
                    onclick="return confirm('정말 삭제할까요?');">삭제</a>
             </div>
         </div>
 
+        <!-- ===================== 댓글 ===================== -->
+        <div id="comment" class="mt-4">
+            <!-- 작성: 로그인만 -->
+            <div class="input-group my-3" sec:authorize="isAuthenticated()">
+                <span class="input-group-text" id="cmtWriter">[[${#authentication.name}]]</span>
+                <input type="text" id="cmtText" class="form-control" placeholder="Add Comment...">
+                <button type="button" id="cmtAddBtn" class="btn btn-primary">post</button>
+            </div>
+
+            <!-- 비로그인 안내 -->
+            <div class="alert alert-secondary" sec:authorize="isAnonymous()">
+                댓글을 작성하려면 로그인하세요.
+            </div>
+
+            <!-- 목록: 항상 보임 -->
+            <ul class="list-group list-group-flush" id="cmtListArea"></ul>
+
+            <div class="input-group my-3">
+                <button type="button" class="btn btn-info" id="moreBtn" data-page="1" style="visibility:hidden">더보기</button>
+            </div>
+
+            <div class="modal" tabindex="-1" id="commentModal">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="cmtWriterMod">Tester</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="text" class="form-control" id="cmtTextMod">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                            <button type="button" class="btn btn-primary" id="cmtModBtn">변경</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ✅ 댓글 JS보다 먼저: 전역 변수 주입 -->
+        <script th:inline="javascript">
+            const bnoValue = /*[[${boardFileDTO.boardDTO.postId}]]*/ 0;
+
+            window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+            window.LOGIN_USER = /*[[${#authentication?.name}]]*/ null;
+
+            const csrfToken  = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || "";
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || "";
+        </script>
+
+        <script th:src="@{/js/boardComment.js}"></script>
     </div>
 </div>
-
+</body>
 </html>

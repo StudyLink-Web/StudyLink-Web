@@ -18,6 +18,15 @@ public class Community extends TimeBase {
     @Column(name = "bno")
     private Long bno;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    @Column(length = 150, nullable = false)
+    private String email;
+
+    @Column(length = 20, nullable = false)
+    private String role;
+
     @Column(length = 255, nullable = false)
     private String title;
 

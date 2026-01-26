@@ -50,7 +50,8 @@ public class CommunityServiceImpl implements CommunityService {
                 Sort.by(Sort.Direction.DESC, "bno")
         );
 
-        return communityRepository.findAll(pageable).map(this::convertEntityToDto);
+        return communityRepository.findAll(pageable)
+                .map(this::convertEntityToDto);
     }
 
     @Transactional(readOnly = true)
@@ -73,12 +74,17 @@ public class CommunityServiceImpl implements CommunityService {
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 커뮤니티 글"));
 
         community.setTitle(communityDTO.getTitle());
-        community.setWriter(communityDTO.getWriter());
         community.setDepartment(communityDTO.getDepartment());
         community.setContent(communityDTO.getContent());
-        community.setReadCount(communityDTO.getReadCount() == null ? 0 : communityDTO.getReadCount());
-        community.setCmtQty(communityDTO.getCmtQty() == null ? 0 : communityDTO.getCmtQty());
-        community.setFileQty(communityDTO.getFileQty() == null ? 0 : communityDTO.getFileQty());
+        community.setReadCount(
+                communityDTO.getReadCount() == null ? community.getReadCount() : communityDTO.getReadCount()
+        );
+        community.setCmtQty(
+                communityDTO.getCmtQty() == null ? community.getCmtQty() : communityDTO.getCmtQty()
+        );
+        community.setFileQty(
+                communityDTO.getFileQty() == null ? community.getFileQty() : communityDTO.getFileQty()
+        );
 
         return community.getBno();
     }
