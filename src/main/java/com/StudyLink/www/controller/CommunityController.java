@@ -4,6 +4,7 @@ import com.StudyLink.www.dto.CommunityDTO;
 import com.StudyLink.www.handler.PageHandler;
 import com.StudyLink.www.service.CommunityService;
 import com.StudyLink.www.service.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -34,35 +35,32 @@ public class CommunityController {
         if (!isLogin(authentication)) {
             return "redirect:/login";
         }
-
-        // 화면에 보여줄 값(원하면 사용)
         model.addAttribute("loginEmail", authentication.getName());
-
         return "community/register";
     }
 
     @PostMapping("/register")
-    public String register(CommunityDTO communityDTO,
-                           Authentication authentication) {
-
+    public String register(CommunityDTO communityDTO, Authentication authentication) {
         if (!isLogin(authentication)) {
             return "redirect:/login";
         }
 
-        // ✅ 서버에서 필수값 세팅 (NOT NULL 방지)
         String email = authentication.getName();
         Long userId = userService.findUserIdByUsername(email);
+        if (userId == null) {
+            log.error("register: userId 조회 실패. email={}", email);
+            return "redirect:/error/500";
+        }
 
         communityDTO.setUserId(userId);
         communityDTO.setEmail(email);
 
-        // 폼에서 role을 안 받는다면 기본값 세팅
         if (communityDTO.getRole() == null || communityDTO.getRole().isBlank()) {
             communityDTO.setRole("USER");
         }
 
-        Long savedId = communityService.insert(communityDTO);
-        return "redirect:/community/detail?userId=" + savedId;
+        Long savedBno = communityService.insert(communityDTO);
+        return "redirect:/community/detail?bno=" + savedBno;
     }
 
     @GetMapping("/list")
@@ -71,21 +69,36 @@ public class CommunityController {
                        @RequestParam(name = "type", required = false) String type,
                        @RequestParam(name = "keyword", required = false) String keyword) {
 
-        Page<CommunityDTO> page = communityService.getList(pageNo);
-        PageHandler<CommunityDTO> ph = new PageHandler<>(page, pageNo, type, keyword);
-        model.addAttribute("ph", ph);
+        if (pageNo < 1) pageNo = 1;
 
-        return "community/list";
+        type = (type == null || type.isBlank()) ? "" : type.trim();
+        keyword = (keyword == null || keyword.isBlank()) ? "" : keyword.trim();
+
+        try {
+            Page<CommunityDTO> page = communityService.getList(pageNo);
+
+            PageHandler<CommunityDTO> ph = new PageHandler<>(page, pageNo, type, keyword);
+
+            model.addAttribute("ph", ph);
+            return "community/list";
+
+        } catch (Exception e) {
+            log.error("community/list 500. pageNo={}, type='{}', keyword='{}'", pageNo, type, keyword, e);
+            return "error/500";
+        }
     }
 
     @GetMapping("/detail")
-    public String detail(@RequestParam("userId") Long userId,
-                         Model model) {
+    public String detail(@RequestParam("bno") Long bno, Model model) {
+        try {
+            CommunityDTO communityDTO = communityService.getDetail(bno);
+            if (communityDTO == null) return "error/404";
 
-        CommunityDTO communityDTO = communityService.getDetail(userId);
-        model.addAttribute("communityDTO", communityDTO);
-
-        return "community/detail";
+            model.addAttribute("communityDTO", communityDTO);
+            return "community/detail";
+        } catch (EntityNotFoundException e) {
+            return "error/404";
+        }
     }
 
     @PostMapping("/modify")
@@ -97,9 +110,12 @@ public class CommunityController {
             return "redirect:/login";
         }
 
-        // ✅ 서버에서 email/userId 재세팅 (위변조 방지 + NOT NULL 방지)
         String email = authentication.getName();
         Long loginUserId = userService.findUserIdByUsername(email);
+        if (loginUserId == null) {
+            log.error("modify: userId 조회 실패. email={}", email);
+            return "redirect:/error/500";
+        }
 
         communityDTO.setUserId(loginUserId);
         communityDTO.setEmail(email);
@@ -108,28 +124,20 @@ public class CommunityController {
             communityDTO.setRole("USER");
         }
 
-        Long savedId = communityService.modify(communityDTO);
-        redirectAttributes.addAttribute("userId", savedId);
+        Long savedBno = communityService.modify(communityDTO);
+        redirectAttributes.addAttribute("bno", savedBno);
         return "redirect:/community/detail";
     }
 
     @GetMapping("/remove")
-    public String remove(@RequestParam("userId") Long userId,
+    public String remove(@RequestParam("bno") Long bno,
                          Authentication authentication) {
 
         if (!isLogin(authentication)) {
             return "redirect:/login";
         }
 
-        // ✅ 본인만 삭제 가능 (최소 방어)
-        String email = authentication.getName();
-        Long loginUserId = userService.findUserIdByUsername(email);
-
-        if (!userId.equals(loginUserId)) {
-            return "redirect:/error/403";
-        }
-
-        communityService.remove(userId);
+        communityService.remove(bno);
         return "redirect:/community/list";
     }
 }

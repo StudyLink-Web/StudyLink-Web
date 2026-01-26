@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 
 public interface CommunityService {
 
-    /* CommunityDTO -> Community */
     default Community convertDtoToEntity(CommunityDTO dto) {
         if (dto == null) return null;
 
@@ -20,7 +19,6 @@ public interface CommunityService {
                 .build();
     }
 
-    /* Community -> CommunityDTO */
     default CommunityDTO convertEntityToDto(Community entity) {
         if (entity == null) return null;
 
