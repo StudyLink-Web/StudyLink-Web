@@ -35,8 +35,9 @@ public class Payment {
     private String paymentKey;
 
     /** 결제 유저 */
-    @Column(name = "user_id", nullable = false)
-    private long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", updatable = false)
+    private Users user;
 
     /** 결제 상품 id */
     @Column(name = "product_id", nullable = false)

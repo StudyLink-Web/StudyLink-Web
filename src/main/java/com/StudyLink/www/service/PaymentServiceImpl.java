@@ -1,17 +1,23 @@
 package com.StudyLink.www.service;
 
+import com.StudyLink.www.dto.AdminPaymentDTO;
 import com.StudyLink.www.dto.ExchangeRequestDTO;
+import com.StudyLink.www.dto.PaymentDTO;
 import com.StudyLink.www.dto.PaymentPendingResponse;
 import com.StudyLink.www.entity.*;
 import com.StudyLink.www.repository.ExchangeRequestRepository;
 import com.StudyLink.www.repository.PaymentRepository;
 import com.StudyLink.www.repository.ProductRepository;
+import com.StudyLink.www.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
@@ -21,10 +27,15 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -33,6 +44,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${toss.secret-key}")
     private String secretKey;
 
+    private final UserRepository userRepository;
     private final ExchangeRequestRepository exchangeRequestRepository;
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
@@ -48,17 +60,21 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         // orderId 생성
-        String orderId = UUID.randomUUID().toString();
+        String orderId = "ORD-" + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) +
+                         "-" + UUID.randomUUID().toString().substring(0, 8);
 
         // 결제(PENDING) 생성
+        Users user = userRepository.getReferenceById(userId);
+        log.info(">>> user {}", user);
         Payment payment = Payment.builder()
                 .orderId(orderId)
                 .productId(product.getProductId())
-                .userId(userId)
+                .user(user)
                 .amount(product.getProductPrice())
                 .status(PaymentStatus.PENDING)
                 .requestedAt(LocalDateTime.now())
                 .build();
+        log.info(">>> payment {}", payment);
         paymentRepository.save(payment);
 
         // customerKey 생성 (보안을 위해 userId와 서비스명을 조합 혹은 암호화)
@@ -121,7 +137,7 @@ public class PaymentServiceImpl implements PaymentService {
             }
 
             // 본인 결제인지 검사
-            if (!(userId).equals(payment.getUserId())) {
+            if (!(userId).equals(payment.getUser().getUserId())) {
                 throw new SecurityException("주문 소유자 불일치");
             }
 
@@ -269,5 +285,49 @@ public class PaymentServiceImpl implements PaymentService {
             e.printStackTrace();
             return 0;
         }
+    }
+
+    @Override
+    public Page<AdminPaymentDTO> search(
+            PaymentStatus status,
+            String method,
+            String email,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable
+    ) {
+        LocalDateTime startDateTime = null;
+        LocalDateTime endDatePlus = null;
+
+        if (startDate != null) {
+            startDateTime = startDate.atStartOfDay();
+        }
+
+        if (endDate != null) {
+            endDatePlus = endDate.plusDays(1).atStartOfDay();
+        }
+
+        Page<Payment> page = paymentRepository.search(
+                status,
+                method,
+                email,
+                startDateTime,
+                endDatePlus,
+                pageable
+        );
+
+        List<AdminPaymentDTO> dtoList = page.getContent().stream()
+                .map(payment -> {
+                    Product product = productRepository.findById(payment.getProductId())
+                            .orElseThrow(() -> new EntityNotFoundException());
+
+                    return AdminPaymentDTO.builder()
+                            .paymentDTO(new PaymentDTO(payment))
+                            .productName(product.getProductName())
+                            .email(payment.getUser().getEmail())
+                            .build();
+                }).collect(Collectors.toList());
+
+        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
     }
 }
