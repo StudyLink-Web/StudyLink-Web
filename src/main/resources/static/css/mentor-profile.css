@@ -887,6 +887,12 @@ body {
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-semibold);
     color: var(--color-text);
+
+    /* 추가: 긴 텍스트 처리 */
+    word-break: break-word;        /* 단어가 길면 중간에 끊기 */
+    white-space: normal;            /* 자동으로 줄바꿈 */
+    word-wrap: break-word;          /* 호환성을 위해 추가 */
+    overflow-wrap: break-word;      /* 최신 브라우저용 */
 }
 
 /* 인증 배지 */
