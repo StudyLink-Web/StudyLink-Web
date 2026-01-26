@@ -37,12 +37,18 @@ export default defineConfig({
   ],
   build: {
     outDir: "../resources/static/js",
-    emptyOutDir: false, // 기존 static/js 파일들이 지워지지 않도록 설정
+    emptyOutDir: false, 
+    cssCodeSplit: false, // CSS도 하나로 통합
     rollupOptions: {
       output: {
+        // 단일 파일로 합치기 위한 설정 (manualChunks 비활성화 효과)
+        manualChunks: undefined,
         entryFileNames: "react-main.js",
-        chunkFileNames: "[name]-chunk.js",
-        assetFileNames: "[name].[ext]",
+        chunkFileNames: "react-main-chunk.js", // 혹시 조각이 생겨도 이름을 고정
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name && assetInfo.name.endsWith('.css')) return 'react-main.css';
+          return '[name].[ext]';
+        },
       },
     },
   },
