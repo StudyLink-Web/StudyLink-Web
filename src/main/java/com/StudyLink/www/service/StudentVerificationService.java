@@ -6,6 +6,7 @@ import com.StudyLink.www.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -229,18 +230,30 @@ public class StudentVerificationService {
                 return response;
             }
 
-            // 3. 토큰 생성
+            // 3. 다른 사용자가 이미 이 school_email을 사용 중인지 확인
+            Optional<Users> existingUser = userRepository.findBySchoolEmail(email);
+            if (existingUser.isPresent() && !existingUser.get().getUserId().equals(currentUser.getUserId())) {
+                log.warn("⚠️ 다른 계정에서 이미 사용 중인 이메일: {} (기존 userId: {}, 현재 userId: {})",
+                        email, existingUser.get().getUserId(), currentUser.getUserId());
+
+                response.put("success", false);
+                response.put("message", "다른 계정에서 이미 인증을 요청한 이메일입니다. 해당 계정의 인증을 완료하거나, 다른 이메일을 사용해주세요.");
+                response.put("code", "EMAIL_ALREADY_REQUESTED");
+                return response;
+            }
+
+            // 4. 토큰 생성
             String token = UUID.randomUUID().toString();
             LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(tokenExpirationMinutes);  // ← plusHours 대신 plusMinutes
 
-            // 4. 현재 사용자 정보 수정
+            // 5. 현재 사용자 정보 수정
             currentUser.setSchoolEmail(email);
             currentUser.setSchoolEmailVerificationToken(token);
             currentUser.setSchoolEmailTokenExpires(expiresAt);
             currentUser.setLastEmailSentAt(LocalDateTime.now());  // ⭐ 전송 시간 기록
             userRepository.save(currentUser);
 
-            // 5. 이메일 전송
+            // 6. 이메일 전송
             sendVerificationEmail(email, token);
 
             response.put("success", true);
@@ -251,6 +264,13 @@ public class StudentVerificationService {
             log.info("✅ 인증 이메일 전송: {} (사용자: {})", email, currentUser.getUsername());
             return response;
 
+        } catch (DataIntegrityViolationException e) {
+            // ✅ UNIQUE 제약조건 위반 → 사용자 친화적 메시지
+            log.error("❌ UNIQUE 제약 위반: {}", e.getMessage());
+            response.put("success", false);
+            response.put("message", "다른 계정에서 이미 인증을 요청한 이메일입니다. 해당 계정의 인증을 완료하거나, 다른 이메일을 사용해주세요.");
+            response.put("code", "EMAIL_ALREADY_REQUESTED");
+            return response;
         } catch (Exception e) {
             log.error("❌ 이메일 인증 요청 실패", e);
             response.put("success", false);
