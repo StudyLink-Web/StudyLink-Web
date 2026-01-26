@@ -18,7 +18,10 @@ ul, li, ol, dl, dt, dd { list-style: none; }
 button, input, select, textarea { outline: none; }
 container-md {max-width:1200px;}
 textarea {resize:none !important;}
-input:read-only {background: #ededed; border:none;}
+input:read-only {background: #ededed; border:none; cursor:inherit}
+input:read-only:focus {background: #ededed; border:none; border-color: #ededed; outline: none; box-shadow: none; cursor:inherit}
+textarea:read-only {background: #ededed; border:none; cursor:inherit}
+textarea:read-only:focus {background: #ededed; border:none; border-color: #ededed; outline: none; box-shadow: none; cursor:inherit}
 button:disabled {background: #ededed; border:none }
 /* ===== Reset (E) ===== */
 
@@ -113,6 +116,10 @@ button:disabled {background: #ededed; border:none }
     border-radius: 20px;
     padding:10px;
 }
+
+
+
+
 
 .main-container {
     text-align: center;
