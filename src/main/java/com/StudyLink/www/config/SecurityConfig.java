@@ -5,6 +5,8 @@ import com.StudyLink.www.repository.UserRepository;
 import com.StudyLink.www.service.CustomOAuth2UserService;
 import com.StudyLink.www.service.CustomOidcUserService;
 import com.StudyLink.www.service.CustomUserDetailsService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,8 +20,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @EnableWebSecurity
@@ -30,7 +30,7 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final CustomOAuth2UserService customOAuth2UserService;
-    private final CustomOidcUserService customOidcUserService; // ✅ 추가
+    private final CustomOidcUserService customOidcUserService;
     private final UserRepository userRepository;
     private final ObjectProvider<PasswordEncoder> passwordEncoderProvider;
 
@@ -52,70 +52,46 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // ✅ CSRF 설정: REST API와 폼 로그인 모두 지원
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
-                                "/api/auth/**",          // REST API는 CSRF 토큰 필요 없음
-                                "/loginProc",             // 폼 기반 로그인
+                                "/api/auth/**",
+                                "/loginProc",
                                 "/logout",
-                                "/oauth2/**",             // OAuth2 요청도 CSRF 제외
-                                "/logout",
+                                "/oauth2/**",
                                 "/ws/**",
-                                "/chatbot/**",            // 챗봇 관련 요청 허용
-                                "/api/chatbot/archive/**", // 추가: 챗봇 아카이브 API CSRF 제외
-                                "/room/**",               // 방 관련 요청 허용
-                                "/payment/**",            // 결제 관련 허용
-                                "/map/**",                // 추가: 지도 관련 요청 CSRF 제외
-                                "/api/cover-letter/**",   // 추가: 자소서 API CSRF 제외
-                                "/api/fcm/**"             // 추가: FCM 푸시 알림 API CSRF 제외
+                                "/chatbot/**",
+                                "/api/chatbot/archive/**",
+                                "/room/**",
+                                "/payment/**",
+                                "/map/**",
+                                "/api/cover-letter/**",
+                                "/api/fcm/**"
                         )
                 )
 
-                // 권한 설정
                 .authorizeHttpRequests(authz -> authz
-                        // 관리자 페이지
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // 멘토 프로필 추가
                         .requestMatchers("/mentor/edit-profile").authenticated()
                         .requestMatchers("/mentor/**").authenticated()
                         .requestMatchers("/api/mentor-profiles/**").permitAll()
 
-                        .requestMatchers("/**")
-                        .access((auth, context) -> {
-                            String ip = context.getRequest().getRemoteAddr();
-                            // 학원 IP 또는 localhost 허용
-                            boolean allowed = ip.startsWith("192.168.11.")
-                                    || ip.equals("127.0.0.1")
-                                    || ip.equals("0:0:0:0:0:0:0:1")  // IPv6 localhost
-                                    || ip.equals("::1"); // IPv6 localhost
-                            return new AuthorizationDecision(allowed);
-                        })
-                        // ✅ 댓글 목록: 비로그인 허용
                         .requestMatchers(HttpMethod.GET, "/comment/list/**").permitAll()
-
-                        // ✅ 댓글 작성/수정/삭제: 로그인 필요
                         .requestMatchers("/comment/post", "/comment/modify", "/comment/remove/**").authenticated()
 
-                        // ✅ 에러 페이지는 누구나 접근 가능 (CustomErrorController가 /error 에서 분기함)
                         .requestMatchers("/error", "/error/**").permitAll()
 
-                        // ✅ 등록(폼/처리): MENTOR만 허용 ( /board/** permitAll 보다 위에 있어야 함 )
                         .requestMatchers("/board/register", "/board/register/**").hasRole("MENTOR")
-
                         .requestMatchers("/community/register", "/community/register/**").hasRole("STUDENT")
 
-                        // 나의 질문, 답변 내역 비로그인시 접근 불가
                         .requestMatchers("/room/myQuiz").authenticated()
 
                         .requestMatchers(
-                                // ✅ 홈페이지는 누구나 접근 가능
                                 "/",
                                 "/index",
                                 "/cover-letter",
                                 "/cover_letter",
 
-                                // ✅ 로그인 관련
                                 "/login",
                                 "/signup",
                                 "/error",
@@ -123,7 +99,6 @@ public class SecurityConfig {
                                 "/loginProc",
                                 "/logout",
 
-                                // ✅ 정적 리소스 (CSS, JS, 이미지)
                                 "/css/**",
                                 "/js/**",
                                 "/img/**",
@@ -131,37 +106,31 @@ public class SecurityConfig {
                                 "/static/**",
                                 "/static.dist/**",
 
-                                // ✅ API는 모두 공개 (테스트용)
                                 "/api/**",
                                 "/api/auth/**",
-                                "/api/fcm/**",          // ✅ 추가: FCM 푸시 알림 API 공개
+                                "/api/fcm/**",
 
-                                // 문제 관련
                                 "/room/list",
                                 "/room/enterRoom",
                                 "/ws/**",
 
-                                // 결제 관련
                                 "/payment/**",
 
-                                // ✅ board 전체 공개(단, register는 위에서 예외로 막음)
                                 "/board/**",
                                 "/community/**",
-                                "/api/auth/**",
-                                "/.well-known/**",      // Chrome DevTools 에러 무시
-                                "/oauth2/**",           // OAuth2 요청
-                                "/login/oauth2/**",      // OAuth2 리다이렉트 URI
-                                "/.well-known/**",      // ✅ Chrome DevTools 에러 무시
+                                "/.well-known/**",
+                                "/oauth2/**",
+                                "/login/oauth2/**",
                                 "/chatbot/**",
-                                "/map/**",              // 추가: 지도 관련 요청 허용
-                                "/auth/student-verification/verify", // ⭐ 추가: 이메일 인증 링크는 로그인 불필요
-                                "/firebase-messaging-sw.js", // ✅ 추가: 서비스 워커 공개 접근 허용
-                                "/manifest.webmanifest",      // ✅ 추가: PWA 매니페스트 공개 접근 허용
-                                "/pwa-192x192.png",          // ✅ 추가: 아이콘 등
+                                "/map/**",
+
+                                "/auth/student-verification/verify",
+                                "/firebase-messaging-sw.js",
+                                "/manifest.webmanifest",
+                                "/pwa-192x192.png",
                                 "/pwa-512x512.png"
                         ).permitAll()
 
-                        // ⭐ 학교 이메일 인증 페이지는 로그인 필수
                         .requestMatchers(
                                 "/auth/student-verification",
                                 "/auth/student-verification/check-email",
@@ -170,32 +139,23 @@ public class SecurityConfig {
                                 "/auth/student-verification/reset-token"
                         ).authenticated()
 
-                        // 마이페이지는 인증된 사용자만 접근
                         .requestMatchers("/my-page", "/my-page/**").authenticated()
-
-                        // 마이페이지 API는 인증된 사용자만 접근
                         .requestMatchers("/api/profile/**", "/api/account/**", "/api/settings/**").authenticated()
 
-                        .anyRequest().authenticated()
+                        .anyRequest().access((auth, context) -> {
+                            String ip = context.getRequest().getRemoteAddr();
+                            boolean allowed = ip.startsWith("192.168.11.")
+                                    || ip.equals("127.0.0.1")
+                                    || ip.equals("0:0:0:0:0:0:0:1")
+                                    || ip.equals("::1");
+                            return new AuthorizationDecision(allowed);
+                        })
                 )
 
-                // ✅ 권한(403) 처리: /error 로 보내서 CustomErrorController가 403.html로 분기
                 .exceptionHandling(e -> e
                         .accessDeniedPage("/error")
                 )
 
-//                // ✅ Form Login (폼 기반 로그인)
-//                .formLogin(form -> form
-//                        .loginPage("/login")
-//                        .loginProcessingUrl("/api/auth/login")
-//                        .usernameParameter("email")
-//                        .passwordParameter("password")
-//                        .defaultSuccessUrl("/", true)
-//                        .failureUrl("/login?error=true")
-//                        .permitAll()
-//                )
-
-                // ✅ Form Login (폼 기반 로그인)
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/api/auth/login")
@@ -206,29 +166,16 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-//                // OAuth2 설정
-//                .oauth2Login(oauth2 -> oauth2
-//                        .loginPage("/login")
-//                        .userInfoEndpoint(userInfo -> userInfo
-//                                .userService(customOAuth2UserService)      // 카카오 / 네이버
-//                                .oidcUserService(customOidcUserService)    // ✅ 구글 OIDC
-//                        )
-//                        .defaultSuccessUrl("/", true)
-//                        .failureUrl("/login?error=true")
-//                )
-
-                // OAuth2 설정
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)      // 카카오 / 네이버
-                                .oidcUserService(customOidcUserService)    // ✅ 구글 OIDC
+                                .userService(customOAuth2UserService)
+                                .oidcUserService(customOidcUserService)
                         )
                         .successHandler(new RoleBasedLoginSuccessHandler())
                         .failureUrl("/login?error=true")
                 )
 
-                // Logout 설정
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
@@ -238,7 +185,6 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // 세션 관리
                 .sessionManagement(session -> session
                         .sessionConcurrency(concurrency -> concurrency
                                 .maximumSessions(1)
@@ -248,5 +194,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-
 }

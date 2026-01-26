@@ -12,7 +12,8 @@
 
         <div class="mb-3">
             <label class="form-label">제목</label>
-            <input type="text" name="title" class="form-control" placeholder="제목을 입력하세요." required>
+            <input type="text" name="title" class="form-control"
+                   placeholder="제목을 입력하세요." required>
         </div>
 
         <div class="mb-3">
@@ -34,51 +35,22 @@
         </div>
 
         <div class="mb-3">
-            <input type="file" name="files" id="file" class="form-control" multiple hidden>
-            <button type="button" class="btn btn-outline-dark" id="trigger">file upload</button>
+            <input type="file" name="files" id="file"
+                   class="form-control" multiple hidden>
+            <button type="button" class="btn btn-outline-dark" id="trigger">
+                file upload
+            </button>
         </div>
 
         <div class="mb-3 d-flex flex-wrap gap-2" id="fileZone"></div>
 
-        <button type="submit" class="btn btn-primary">register</button>
+        <!-- ❗ regBtn id 추가 (JS에서 제어용) -->
+        <button type="submit" class="btn btn-primary" id="regBtn">
+            register
+        </button>
         <a th:href="@{/community/list}" class="btn btn-secondary">cancel</a>
     </form>
 
-    <script>
-        const fileInput = document.getElementById('file');
-        const trigger = document.getElementById('trigger');
-        const fileZone = document.getElementById('fileZone');
-
-        trigger.addEventListener('click', () => fileInput.click());
-
-        fileInput.addEventListener('change', () => {
-            fileZone.innerHTML = '';
-            const files = Array.from(fileInput.files || []);
-            if (!files.length) return;
-
-            files.forEach(file => {
-                const box = document.createElement('div');
-                box.style.width = '120px';
-                box.style.textAlign = 'center';
-
-                if (file.type.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.src = URL.createObjectURL(file);
-                    img.style.width = '100%';
-                    img.style.height = '100px';
-                    img.style.objectFit = 'cover';
-                    img.onload = () => URL.revokeObjectURL(img.src);
-                    box.appendChild(img);
-                }
-
-                const name = document.createElement('div');
-                name.style.fontSize = '12px';
-                name.textContent = file.name;
-                box.appendChild(name);
-
-                fileZone.appendChild(box);
-            });
-        });
-    </script>
+    <script th:src="@{/js/communityRegister.js}"></script>
 </div>
 </html>
