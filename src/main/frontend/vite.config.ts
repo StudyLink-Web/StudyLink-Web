@@ -41,8 +41,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         entryFileNames: "react-main.js",
-        chunkFileNames: "react-main-[hash].js",
-        assetFileNames: "react-main.[ext]",
+        chunkFileNames: "[name]-chunk.js",
+        assetFileNames: "[name].[ext]",
       },
     },
   },

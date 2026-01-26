@@ -61,12 +61,19 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
         paymentRepository.save(payment);
 
+        // customerKey 생성 (보안을 위해 userId와 서비스명을 조합 혹은 암호화)
+        // 여기서는 가장 직관적으로 "USER_" + userId 방식을 사용합니다.
+        String customerKey = "USER_"
+                + (userId != null ? userId : "GUEST_" + UUID.randomUUID().toString().substring(0, 8));
+
         // 반환할 DTO 생성
         return PaymentPendingResponse.builder()
                 .orderId(orderId)
                 .productName(product.getProductName())
+                .productDescription(product.getProductName() + " 요금제 결제") // 📍 설명 추가 (필요시 DB 필드 연동)
                 .productPrice(product.getProductPrice())
                 .currency("KRW")
+                .customerKey(customerKey) // 📍 추가
                 .build();
     }
 
@@ -202,7 +209,6 @@ public class PaymentServiceImpl implements PaymentService {
                 paymentRepository.save(payment);
             }
 
-
             // 결과 반환용 JSONObject 생성
             JSONObject result = new JSONObject();
             result.put("jsonObject", jsonObject);
@@ -238,13 +244,11 @@ public class PaymentServiceImpl implements PaymentService {
         return result;
     }
 
-
     @Override
     public int insertExchangeRequest(ExchangeRequestDTO request, Long userId) {
         // db에서 보유포인트와 비교해서 포인트 조작 검증하기
 
         // 잔액 차감 (DB에 반영)
-
 
         // 계좌번호, 예금주 검증. 사실상 지금 프로젝트에서 불가능
 
