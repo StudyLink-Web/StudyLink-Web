@@ -1,9 +1,6 @@
 package com.StudyLink.www.service;
 
-import com.StudyLink.www.dto.AdminPaymentDTO;
-import com.StudyLink.www.dto.ExchangeRequestDTO;
-import com.StudyLink.www.dto.PaymentPendingRequest;
-import com.StudyLink.www.dto.PaymentPendingResponse;
+import com.StudyLink.www.dto.*;
 import com.StudyLink.www.entity.Payment;
 import com.StudyLink.www.entity.PaymentStatus;
 import net.minidev.json.JSONObject;
@@ -22,4 +19,6 @@ public interface PaymentService {
     int insertExchangeRequest(ExchangeRequestDTO request, Long userId);
 
     Page<AdminPaymentDTO> search(PaymentStatus status, String method, String email, LocalDate startDate, LocalDate endDate, Pageable sortedPageable);
+
+    AdminPaymentDetailDTO getPaymentDetail(Long id);
 }

@@ -1,6 +1,7 @@
 package com.StudyLink.www.controller;
 
 import com.StudyLink.www.dto.AdminPaymentDTO;
+import com.StudyLink.www.dto.AdminPaymentDetailDTO;
 import com.StudyLink.www.entity.Payment;
 import com.StudyLink.www.entity.PaymentStatus;
 import com.StudyLink.www.entity.Product;
@@ -79,6 +80,10 @@ public class AdminController {
 
     @GetMapping("/payment/{id}")
     public String paymentDetail(@PathVariable Long id, Model model) {
+        AdminPaymentDetailDTO adminPaymentDetail = paymentService.getPaymentDetail(id);
+
+        model.addAttribute("adminPaymentDetail", adminPaymentDetail);
+        model.addAttribute("currentMenu", "payment");
         return "/admin/paymentDetail";
     }
 }

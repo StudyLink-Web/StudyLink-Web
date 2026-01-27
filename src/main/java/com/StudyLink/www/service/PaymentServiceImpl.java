@@ -1,9 +1,6 @@
 package com.StudyLink.www.service;
 
-import com.StudyLink.www.dto.AdminPaymentDTO;
-import com.StudyLink.www.dto.ExchangeRequestDTO;
-import com.StudyLink.www.dto.PaymentDTO;
-import com.StudyLink.www.dto.PaymentPendingResponse;
+import com.StudyLink.www.dto.*;
 import com.StudyLink.www.entity.*;
 import com.StudyLink.www.repository.ExchangeRequestRepository;
 import com.StudyLink.www.repository.PaymentRepository;
@@ -329,5 +326,18 @@ public class PaymentServiceImpl implements PaymentService {
                 }).collect(Collectors.toList());
 
         return new PageImpl<>(dtoList, pageable, page.getTotalElements());
+    }
+
+    @Override
+    public AdminPaymentDetailDTO getPaymentDetail(Long id) {
+        Payment payment = paymentRepository.findById(id).orElseThrow(() -> new EntityNotFoundException());
+        Product product = productRepository.findById(payment.getProductId()).orElseThrow(() -> new EntityNotFoundException());
+        Users user = payment.getUser();
+
+        return AdminPaymentDetailDTO.builder()
+                .paymentDTO(new PaymentDTO(payment))
+                .productDTO(new ProductDTO(product))
+                .usersDTO(new UsersDTO(user))
+                .build();
     }
 }
