@@ -1,11 +1,8 @@
 package com.StudyLink.www.controller;
 
-import com.StudyLink.www.dto.AdminPaymentDTO;
-import com.StudyLink.www.dto.AdminPaymentDetailDTO;
-import com.StudyLink.www.entity.Payment;
+import com.StudyLink.www.dto.*;
+import com.StudyLink.www.entity.ExchangeStatus;
 import com.StudyLink.www.entity.PaymentStatus;
-import com.StudyLink.www.entity.Product;
-import com.StudyLink.www.repository.ProductRepository;
 import com.StudyLink.www.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,17 +12,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -33,7 +25,6 @@ import java.util.Map;
 @RequestMapping("/admin")
 public class AdminController {
     private final PaymentService paymentService;
-    private final ProductRepository productRepository;
 
     @GetMapping("/admin")
     public void admin(Model model) {
@@ -85,5 +76,70 @@ public class AdminController {
         model.addAttribute("adminPaymentDetail", adminPaymentDetail);
         model.addAttribute("currentMenu", "payment");
         return "/admin/paymentDetail";
+    }
+
+    @GetMapping("/exchange")
+    public void exchange(
+            @RequestParam(required = false) ExchangeStatus status,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate endDate,
+            @RequestParam(defaultValue = "createdAt") String basis,
+            @RequestParam(defaultValue = "desc") String sort,
+            @PageableDefault(size = 10) Pageable pageable,
+            Model model
+    ) {
+        email = (email != null && email.isBlank()) ? null : email;
+
+        Sort sortOption = null;
+        if (basis.equals("createdAt")) {
+            sortOption = sort.equals("asc")
+                    ? Sort.by("createdAt").ascending()
+                    : Sort.by("createdAt").descending();
+        } else {
+            sortOption = sort.equals("asc")
+                    ? Sort.by("processedAt").ascending()
+                    : Sort.by("processedAt").descending();
+        }
+
+        Pageable sortedPageable =
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOption);
+
+        Page<AdminExchangeRequestDTO> page =
+                paymentService.searchExchangeRequests(status, email, startDate, endDate, basis, sortedPageable);
+
+        model.addAttribute("adminExchangeRequestDTOList", page.getContent());
+        model.addAttribute("page", page);
+        model.addAttribute("status", status);
+        model.addAttribute("statuses", ExchangeStatus.values());
+        model.addAttribute("email", email);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("basis", basis);
+        model.addAttribute("sort", sort);
+        model.addAttribute("currentMenu", "exchange");
+    };
+
+    @GetMapping("/exchange/{id}")
+    public String exchangeDetail(@PathVariable Long id, Model model) {
+        AdminExchangeRequestDetailDTO adminExchangeRequestDetail = paymentService.getExchangeRequestDetail(id);
+
+        model.addAttribute("adminExchangeRequestDetail", adminExchangeRequestDetail);
+        model.addAttribute("currentMenu", "exchange");
+        return "/admin/exchangeDetail";
+    }
+
+    @GetMapping("/exchangeApprove/{id}")
+    public ResponseEntity<Void> approveExchange(@PathVariable long id) {
+        paymentService.approve(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/exchangeReject")
+    public ResponseEntity<Void> exchangeReject(@RequestBody AdminExchangeRequestRejectDTO adminExchangeRequestRejectDTO) {
+        paymentService.reject(adminExchangeRequestRejectDTO);
+        return ResponseEntity.ok().build();
     }
 }

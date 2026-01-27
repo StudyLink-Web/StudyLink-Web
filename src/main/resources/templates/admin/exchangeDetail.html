@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content" class="container-md">
+	<div class="row">
+		<!-- Sidebar -->
+		<nav class="col-2 adminSidebar p-0">
+			<h5 class="text-white text-center py-3 border-bottom">ADMIN</h5>
+			<a th:href="@{/admin/admin}"
+			   th:classappend="${currentMenu == 'admin'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				대시보드
+			</a>
+			<a th:href="@{/admin/user}"
+			   th:classappend="${currentMenu == 'user'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				회원 관리
+			</a>
+			<a th:href="@{/admin/payment}"
+			   th:classappend="${currentMenu == 'payment'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				결제 내역
+			</a>
+			<a th:href="@{/admin/exchange}"
+			   th:classappend="${currentMenu == 'exchange'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				환전 관리
+			</a>
+			<a th:href="@{/admin/application}"
+			   th:classappend="${currentMenu == 'application'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				입시 지원 관리
+			</a>
+			<a th:href="@{/admin/notice}"
+			   th:classappend="${currentMenu == 'notice'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				알림 / 공지
+			</a>
+			<a th:href="@{/admin/statistics}"
+			   th:classappend="${currentMenu == 'statistics'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				통계
+			</a>
+			<a th:href="@{/admin/settings}"
+			   th:classappend="${currentMenu == 'settings'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				시스템 설정
+			</a>
+		</nav>
+
+		<!-- Main -->
+		<main class="col-10 p-4">
+			<div class="d-flex justify-content-between align-items-center mb-4">
+				<h4 class="fw-bold">환전 요청 상세 정보</h4>
+			</div>
+
+			<div class="card-body">
+				<!-- 결제 정보 -->
+				<table class="table table-bordered">
+					<tbody>
+					<tr>
+						<th>환전 ID</th>
+						<td th:text="${adminExchangeRequestDetail.exchangeRequestDTO.Id}">1</td>
+					</tr>
+					<tr>
+						<th>환전 금액</th>
+						<td th:text="|₩${#numbers.formatInteger(adminExchangeRequestDetail.exchangeRequestDTO.point, 3, 'COMMA')}|">₩100,000</td>
+					</tr>
+					<tr>
+						<th>환전 상태</th>
+						<td>
+							<span th:switch="${adminExchangeRequestDetail.exchangeRequestDTO.status}">
+							<span th:case="${T(com.StudyLink.www.entity.ExchangeStatus).PENDING}" class="badge bg-warning">대기</span>
+							<span th:case="${T(com.StudyLink.www.entity.ExchangeStatus).APPROVED}" class="badge bg-success">승인</span>
+							<span th:case="${T(com.StudyLink.www.entity.ExchangeStatus).REJECTED}" class="badge bg-danger">거부</span>
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<th>환전 요청 시각</th>
+						<td th:text="${#temporals.format(adminExchangeRequestDetail.exchangeRequestDTO.createdAt, 'yyyy-MM-dd HH:mm:ss')}">2026-01-26 13:37:04</td>
+					</tr>
+					<tr>
+						<th>환전 승인/거부 시각</th>
+						<td th:text="${#temporals.format(adminExchangeRequestDetail.exchangeRequestDTO.processedAt, 'yyyy-MM-dd HH:mm:ss')}">2026-01-26 13:37:11</td>
+					</tr>
+					<tr>
+						<th>은행명</th>
+						<td th:text="${adminExchangeRequestDetail.exchangeRequestDTO.bankName}">KRW</td>
+					</tr>
+					<tr>
+						<th>계좌번호</th>
+						<td>
+							<span th:text="${adminExchangeRequestDetail.exchangeRequestDTO.account}">
+							-
+							</span>
+							<button type="button"
+									class="btn btn-sm btn-outline-primary"
+									id="accountLookupBtn">
+								계좌번호 조회
+							</button>
+						</td>
+					</tr>
+					<tr>
+						<th>예금주</th>
+						<td th:text="${adminExchangeRequestDetail.exchangeRequestDTO.accountHolder}">KRW</td>
+					</tr>
+					<tr>
+						<th>거부사유</th>
+						<td th:text="${adminExchangeRequestDetail.exchangeRequestDTO.rejectedReason}">KRW</td>
+					</tr>
+					<tr>
+						<th>거래 ID</th>
+						<td th:text="${adminExchangeRequestDetail.exchangeRequestDTO.transactionId}">KRW</td>
+					</tr>
+					</tbody>
+				</table>
+
+				<!-- 사용자 정보 -->
+				<h5 class="mt-4">회원 정보</h5>
+				<table class="table table-bordered">
+					<tbody>
+					<tr>
+						<th>회원 ID</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.userId}">3</td>
+					</tr>
+					<tr>
+						<th>이메일</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.email}">email@test.com</td>
+					</tr>
+					<tr>
+						<th>이름</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.name}">홍길동</td>
+					</tr>
+					<tr>
+						<th>닉네임</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.nickname}">nickname</td>
+					</tr>
+					<tr>
+						<th>사용자명</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.username}">username</td>
+					</tr>
+					<tr>
+						<th>역할 (Role)</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.role}">USER</td>
+					</tr>
+					<tr>
+						<th>이메일 인증 여부</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.emailVerified} ? '인증됨' : '미인증'">인증됨</td>
+					</tr>
+					<tr>
+						<th>학생 인증 여부</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.isStudentVerified} ? '인증됨' : '미인증'">인증됨</td>
+					</tr>
+					<tr>
+						<th>활성 상태</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.isActive} ? '활성' : '비활성'">활성</td>
+					</tr>
+					<tr>
+						<th>가입일</th>
+						<td th:text="${#temporals.format(adminExchangeRequestDetail.usersDTO.createdAt, 'yyyy-MM-dd HH:mm:ss')}">2024-03-15 10:30:00</td>
+					</tr>
+					<tr>
+						<th>최종 수정일</th>
+						<td th:text="${#temporals.format(adminExchangeRequestDetail.usersDTO.updatedAt, 'yyyy-MM-dd HH:mm:ss')}">2024-04-01 15:00:00</td>
+					</tr>
+					<tr>
+						<th>OAuth 제공자</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.oauthProvider}">google</td>
+					</tr>
+					<tr>
+						<th>OAuth ID</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.oauthId}">1234567890</td>
+					</tr>
+					<tr>
+						<th>프로필 이미지</th>
+						<td>
+							<img th:src="${adminExchangeRequestDetail.usersDTO.profileImageUrl}" alt="프로필 이미지" style="max-height: 100px; max-width: 100px;" />
+						</td>
+					</tr>
+					<tr>
+						<th>학년</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.gradeYear}">2학년</td>
+					</tr>
+					<tr>
+						<th>관심사</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.interests}">프로그래밍, 음악</td>
+					</tr>
+					<tr>
+						<th>전화번호</th>
+						<td th:text="${adminExchangeRequestDetail.usersDTO.phone}">010-1234-5678</td>
+					</tr>
+					</tbody>
+				</table>
+
+				<div class="d-flex justify-content-center gap-2 mt-4">
+					<!-- 승인 / 거부 버튼 (대기 상태일 때만) -->
+					<div th:if="${adminExchangeRequestDetail.exchangeRequestDTO.status == T(com.StudyLink.www.entity.ExchangeStatus).PENDING}">
+						<button type="button"
+								class="btn btn-success me-1"
+								id="approveBtn">
+							승인
+						</button>
+						<button type="button"
+								class="btn btn-danger"
+								id="rejectBtn">
+							거부
+						</button>
+					</div>
+					<!-- 항상 노출 -->
+					<a th:href="@{/admin/exchange}"
+					   class="btn btn-secondary">
+						목록으로 돌아가기
+					</a>
+				</div>
+			</div>
+		</main>
+	</div>
+
+	<!-- 계좌번호 조회 모달 -->
+	<div class="modal fade" id="accountLookupModal" tabindex="-1"
+		 aria-labelledby="accountLookupModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="accountLookupModalLabel">
+						계좌번호 조회 결과
+					</h5>
+					<button type="button" class="btn-close"
+							data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<table class="table table-bordered mb-0">
+						<tbody>
+						<tr>
+							<th class="bg-light">은행명</th>
+							<td th:text="${adminExchangeRequestDetail.exchangeRequestDTO.bankName}">
+								국민은행
+							</td>
+						</tr>
+						<tr>
+							<th class="bg-light">계좌번호</th>
+							<td th:text="${adminExchangeRequestDetail.exchangeRequestDTO.account}">
+								123-456-7890
+							</td>
+						</tr>
+						<tr>
+							<th class="bg-light">예금주</th>
+							<td th:text="${adminExchangeRequestDetail.exchangeRequestDTO.accountHolder}">
+								홍길동
+							</td>
+						</tr>
+						<tr>
+							<th class="bg-light">조회 결과</th>
+							<td>
+								<span class="badge bg-success">
+								예금주 일치
+								</span>
+							</td>
+						</tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="modal-footer">
+					<button type="button"
+							class="btn btn-secondary"
+							data-bs-dismiss="modal">
+						닫기
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Reject Modal -->
+	<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true" style="display:none">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<form id="rejectForm">
+					<div class="modal-header">
+						<h5 class="modal-title" id="rejectModalLabel">거부 사유 입력</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+					</div>
+					<div class="modal-body">
+						<div class="mb-3">
+							<label for="rejectReason" class="form-label">거부 사유</label>
+							<textarea class="form-control" id="rejectReason" name="rejectReason" rows="3" required></textarea>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+						<button type="submit" class="btn btn-danger">거부하기</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<script th:inline="javascript">
+		let exchangeId = [[${adminExchangeRequestDetail.exchangeRequestDTO.id}]]
+		let status = [[${adminExchangeRequestDetail.exchangeRequestDTO.status}]]
+	</script>
+	<script src="/js/exchangeRequestDetail.js"></script>
+</div>

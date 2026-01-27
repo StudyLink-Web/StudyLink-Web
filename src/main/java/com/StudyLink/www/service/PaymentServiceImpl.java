@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,7 +29,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -266,8 +266,9 @@ public class PaymentServiceImpl implements PaymentService {
         // 계좌번호, 예금주 검증. 사실상 지금 프로젝트에서 불가능
 
         try {
+            Users user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException());
             ExchangeRequest exchangeRequest = ExchangeRequest.builder()
-                    .userId(userId)
+                    .user(user)
                     .point(request.getPoint())
                     .status(ExchangeStatus.PENDING)
                     .createdAt(LocalDateTime.now())
@@ -304,7 +305,7 @@ public class PaymentServiceImpl implements PaymentService {
             endDatePlus = endDate.plusDays(1).atStartOfDay();
         }
 
-        Page<Payment> page = paymentRepository.search(
+        Page<Payment> page = paymentRepository.searchPayments(
                 status,
                 method,
                 email,
@@ -339,5 +340,91 @@ public class PaymentServiceImpl implements PaymentService {
                 .productDTO(new ProductDTO(product))
                 .usersDTO(new UsersDTO(user))
                 .build();
+    }
+
+    @Override
+    public Page<AdminExchangeRequestDTO> searchExchangeRequests(
+            ExchangeStatus status, String email, LocalDate startDate,
+            LocalDate endDate, String basis, Pageable pageable
+    ) {
+        LocalDateTime startDateTime = null;
+        LocalDateTime endDatePlus = null;
+
+        if (startDate != null) {
+            startDateTime = startDate.atStartOfDay();
+        }
+
+        if (endDate != null) {
+            endDatePlus = endDate.plusDays(1).atStartOfDay();
+        }
+
+        Page<ExchangeRequest> page;
+
+
+        if ("createdAt".equals(basis)) {
+            return paymentRepository.searchByCreatedAt(
+                    status,
+                    email,
+                    startDateTime,
+                    endDatePlus,
+                    pageable
+            ).map(exchangeRequest -> AdminExchangeRequestDTO.builder()
+                    .exchangeRequestDTO(new ExchangeRequestDTO(exchangeRequest))
+                    .usersDTO(new UsersDTO(exchangeRequest.getUser()))
+                    .build());
+        } else {
+            return paymentRepository.searchByProcessedAt(
+                    status,
+                    email,
+                    startDateTime,
+                    endDatePlus,
+                    pageable
+            ).map(exchangeRequest -> AdminExchangeRequestDTO.builder()
+                    .exchangeRequestDTO(new ExchangeRequestDTO(exchangeRequest))
+                    .usersDTO(new UsersDTO(exchangeRequest.getUser()))
+                    .build());
+        }
+    }
+
+    @Override
+    public AdminExchangeRequestDetailDTO getExchangeRequestDetail(Long id) {
+        ExchangeRequest exchangeRequest = exchangeRequestRepository.findById(id).orElseThrow(() -> new EntityNotFoundException());
+        Users user = exchangeRequest.getUser();
+
+        return AdminExchangeRequestDetailDTO.builder()
+                .exchangeRequestDTO(new ExchangeRequestDTO(exchangeRequest))
+                .usersDTO(new UsersDTO(user))
+                .build();
+    }
+
+    @Transactional
+    @Override
+    public void approve(long exchangeId) {
+        ExchangeRequest exchange = exchangeRequestRepository
+                .findById(exchangeId)
+                .orElseThrow(() -> new IllegalArgumentException("환전 요청 없음"));
+
+        if (exchange.getStatus() != ExchangeStatus.PENDING) {
+            throw new IllegalStateException("이미 처리된 요청");
+        }
+
+        exchange.setStatus(ExchangeStatus.APPROVED);
+        exchange.setProcessedAt(LocalDateTime.now());
+    }
+
+    @Transactional
+    @Override
+    public void reject(AdminExchangeRequestRejectDTO adminExchangeRequestRejectDTO) {
+        ExchangeRequest exchange = exchangeRequestRepository
+                .findById(adminExchangeRequestRejectDTO.getId())
+                .orElseThrow(() -> new IllegalArgumentException("환전 요청 없음"));
+
+        if (exchange.getStatus() != ExchangeStatus.PENDING) {
+            throw new IllegalStateException("이미 처리된 요청");
+        }
+
+        exchange.setStatus(ExchangeStatus.REJECTED);
+        exchange.setRejectedReason(adminExchangeRequestRejectDTO.getReason());
+        exchange.setProcessedAt(LocalDateTime.now());
     }
 }

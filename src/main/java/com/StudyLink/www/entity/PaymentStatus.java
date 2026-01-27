@@ -1,12 +1,11 @@
 package com.StudyLink.www.entity;
 
-
 public enum PaymentStatus {
     PENDING("대기"),
-    REQUESTED("요청"),
-    APPROVED("완료"),
-    FAILED("실패"),
-    CANCELED("취소");
+    REQUESTED("결제 요청"),
+    APPROVED("결제 완료"),
+    FAILED("결제 실패"),
+    CANCELED("결제 취소");
 
     private final String displayName;
 

@@ -1,5 +1,7 @@
 package com.StudyLink.www.repository;
 
+import com.StudyLink.www.entity.ExchangeRequest;
+import com.StudyLink.www.entity.ExchangeStatus;
 import com.StudyLink.www.entity.Payment;
 import com.StudyLink.www.entity.PaymentStatus;
 import org.springframework.data.domain.Page;
@@ -24,9 +26,44 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
         AND (:startDateTime IS NULL OR p.approvedAt >= :startDateTime)
         AND (:endDatePlus IS NULL OR p.approvedAt < :endDatePlus)
     """)
-    Page<Payment> search(
+    Page<Payment> searchPayments(
             @Param("status") PaymentStatus status,
             @Param("method") String method,
+            @Param("email") String email,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDatePlus") LocalDateTime endDatePlus,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT e
+        FROM ExchangeRequest e
+        JOIN e.user u
+        WHERE (:status IS NULL OR e.status = :status)
+        AND (:email IS NULL OR u.email LIKE %:email%)
+        AND (:startDateTime IS NULL OR e.createdAt >= :startDateTime)
+        AND (:endDatePlus IS NULL OR e.createdAt < :endDatePlus)
+    """)
+    Page<ExchangeRequest> searchByCreatedAt(
+            @Param("status") ExchangeStatus status,
+            @Param("email") String email,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDatePlus") LocalDateTime endDatePlus,
+            Pageable pageable
+    );
+
+
+    @Query("""
+        SELECT e
+        FROM ExchangeRequest e
+        JOIN e.user u
+        WHERE (:status IS NULL OR e.status = :status)
+        AND (:email IS NULL OR u.email LIKE %:email%)
+        AND (:startDateTime IS NULL OR e.processedAt >= :startDateTime)
+        AND (:endDatePlus IS NULL OR e.processedAt < :endDatePlus)
+    """)
+    Page<ExchangeRequest> searchByProcessedAt(
+            @Param("status") ExchangeStatus status,
             @Param("email") String email,
             @Param("startDateTime") LocalDateTime startDateTime,
             @Param("endDatePlus") LocalDateTime endDatePlus,
