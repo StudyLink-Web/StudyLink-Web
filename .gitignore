@@ -85,3 +85,6 @@ logs/
 
 
 
+
+# AI Reference Folder (Private)
+.reference/
