@@ -1,5 +1,6 @@
 package com.StudyLink.www.dto;
 
+import com.StudyLink.www.entity.ExchangeRequest;
 import com.StudyLink.www.entity.ExchangeStatus;
 import lombok.*;
 
@@ -34,4 +35,18 @@ public class ExchangeRequestDTO {
     private String rejectedReason; // 거부 사유
 
     private String transactionId; // PG사 거래 ID
+
+    public ExchangeRequestDTO(ExchangeRequest exchangeRequest) {
+        this.id = exchangeRequest.getId();
+        this.userId = exchangeRequest.getUser().getUserId();
+        this.point = exchangeRequest.getPoint();
+        this.status = exchangeRequest.getStatus();
+        this.createdAt = exchangeRequest.getCreatedAt();
+        this.processedAt = exchangeRequest.getProcessedAt();
+        this.account = exchangeRequest.getAccount();
+        this.bankName = exchangeRequest.getBankName();
+        this.accountHolder = exchangeRequest.getAccountHolder();
+        this.rejectedReason = exchangeRequest.getRejectedReason();
+        this.transactionId = exchangeRequest.getTransactionId();
+    }
 }

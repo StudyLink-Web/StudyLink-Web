@@ -75,6 +75,10 @@ public class PaymentController {
             userId = userService.findUserIdByUsername(username);
         }
 
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "서버 오류가 발생했습니다."));
+        }
+
         try {
             PaymentPendingResponse response = paymentService.createPendingPayment(request.getProductId(), userId);
             return ResponseEntity.ok(response);

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content" class="container-md">
+	<div class="row">
+		<!-- Sidebar -->
+		<nav class="col-2 adminSidebar p-0">
+			<h5 class="text-white text-center py-3 border-bottom">ADMIN</h5>
+			<a th:href="@{/admin/admin}"
+			   th:classappend="${currentMenu == 'admin'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				대시보드
+			</a>
+			<a th:href="@{/admin/user}"
+			   th:classappend="${currentMenu == 'user'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				회원 관리
+			</a>
+			<a th:href="@{/admin/payment}"
+			   th:classappend="${currentMenu == 'payment'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				결제 내역
+			</a>
+			<a th:href="@{/admin/exchange}"
+			   th:classappend="${currentMenu == 'exchange'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				환전 관리
+			</a>
+			<a th:href="@{/admin/application}"
+			   th:classappend="${currentMenu == 'application'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				입시 지원 관리
+			</a>
+			<a th:href="@{/admin/notice}"
+			   th:classappend="${currentMenu == 'notice'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				알림 / 공지
+			</a>
+			<a th:href="@{/admin/statistics}"
+			   th:classappend="${currentMenu == 'statistics'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				통계
+			</a>
+			<a th:href="@{/admin/settings}"
+			   th:classappend="${currentMenu == 'settings'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				시스템 설정
+			</a>
+		</nav>
+
+		<!-- Main -->
+		<main class="col-10 p-4">
+			<div class="d-flex justify-content-between align-items-center mb-4">
+				<h4 class="fw-bold">결제 상세 정보</h4>
+			</div>
+
+			<div class="card-body">
+				<!-- 결제 정보 -->
+				<table class="table table-bordered">
+					<tbody>
+					<tr>
+						<th>결제 ID</th>
+						<td th:text="${adminPaymentDetail.paymentDTO.paymentId}">1</td>
+					</tr>
+					<tr>
+						<th>주문 번호</th>
+						<td th:text="${adminPaymentDetail.paymentDTO.orderId}">ORD-20260126-XXXX</td>
+					</tr>
+					<tr>
+						<th>결제 키</th>
+						<td th:text="${adminPaymentDetail.paymentDTO.paymentKey}">tgen_20260126XXXX</td>
+					</tr>
+					<tr>
+						<th>결제 금액</th>
+						<td th:text="|₩${#numbers.formatInteger(adminPaymentDetail.paymentDTO.amount, 3, 'COMMA')}|">₩100,000</td>
+					</tr>
+					<tr>
+						<th>결제 상태</th>
+						<td>
+							<span th:switch="${adminPaymentDetail.paymentDTO.status}">
+							<span th:case="${T(com.StudyLink.www.entity.PaymentStatus).PENDING}" class="badge bg-warning">대기</span>
+							<span th:case="${T(com.StudyLink.www.entity.PaymentStatus).APPROVED}" class="badge bg-success">결제 완료</span>
+							<span th:case="${T(com.StudyLink.www.entity.PaymentStatus).CANCELED}" class="badge bg-danger">결제 취소</span>
+							<span th:case="${T(com.StudyLink.www.entity.PaymentStatus).FAILED}" class="badge bg-secondary">결제 실패</span>
+							<span th:case="*">알 수 없음</span>
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<th>결제 수단</th>
+						<td th:text="${adminPaymentDetail.paymentDTO.method}">카드</td>
+					</tr>
+					<tr>
+						<th>결제 요청 시각</th>
+						<td th:text="${#temporals.format(adminPaymentDetail.paymentDTO.requestedAt, 'yyyy-MM-dd HH:mm:ss')}">2026-01-26 13:37:04</td>
+					</tr>
+					<tr>
+						<th>결제 승인 시각</th>
+						<td th:text="${#temporals.format(adminPaymentDetail.paymentDTO.approvedAt, 'yyyy-MM-dd HH:mm:ss')}">2026-01-26 13:37:11</td>
+					</tr>
+					<tr>
+						<th>결제 실패 시각</th>
+						<td th:text="${#temporals.format(adminPaymentDetail.paymentDTO.failedAt, 'yyyy-MM-dd HH:mm:ss')}">-</td>
+					</tr>
+					<tr>
+						<th>결제 취소 시각</th>
+						<td th:text="${#temporals.format(adminPaymentDetail.paymentDTO.canceledAt, 'yyyy-MM-dd HH:mm:ss')}">-</td>
+					</tr>
+					<tr>
+						<th>통화</th>
+						<td th:text="${adminPaymentDetail.paymentDTO.currency}">KRW</td>
+					</tr>
+					</tbody>
+				</table>
+
+				<!-- 상품 정보 -->
+				<h5 class="mt-4">상품 정보</h5>
+				<table class="table table-bordered">
+					<tbody>
+					<tr>
+						<th>상품 ID</th>
+						<td th:text="${adminPaymentDetail.productDTO.productId}">1</td>
+					</tr>
+					<tr>
+						<th>상품명</th>
+						<td th:text="${adminPaymentDetail.productDTO.productName}">Standard</td>
+					</tr>
+					<tr>
+						<th>가격</th>
+						<td th:text="|₩${#numbers.formatInteger(adminPaymentDetail.productDTO.productPrice, 3, 'COMMA')}|">₩19,900</td>
+					</tr>
+					<tr>
+						<th>판매 상태</th>
+						<td>
+							<span th:if="${adminPaymentDetail.productDTO.isActive}" class="badge bg-success">판매중</span>
+							<span th:if="${!adminPaymentDetail.productDTO.isActive}" class="badge bg-secondary">판매 중지</span>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+
+				<!-- 사용자 정보 -->
+				<h5 class="mt-4">회원 정보</h5>
+				<table class="table table-bordered">
+					<tbody>
+					<tr>
+						<th>회원 ID</th>
+						<td th:text="${adminPaymentDetail.usersDTO.userId}">3</td>
+					</tr>
+					<tr>
+						<th>이메일</th>
+						<td th:text="${adminPaymentDetail.usersDTO.email}">email@test.com</td>
+					</tr>
+					<tr>
+						<th>이름</th>
+						<td th:text="${adminPaymentDetail.usersDTO.name}">홍길동</td>
+					</tr>
+					<tr>
+						<th>닉네임</th>
+						<td th:text="${adminPaymentDetail.usersDTO.nickname}">nickname</td>
+					</tr>
+					<tr>
+						<th>사용자명</th>
+						<td th:text="${adminPaymentDetail.usersDTO.username}">username</td>
+					</tr>
+					<tr>
+						<th>역할 (Role)</th>
+						<td th:text="${adminPaymentDetail.usersDTO.role}">USER</td>
+					</tr>
+					<tr>
+						<th>이메일 인증 여부</th>
+						<td th:text="${adminPaymentDetail.usersDTO.emailVerified} ? '인증됨' : '미인증'">인증됨</td>
+					</tr>
+					<tr>
+						<th>학생 인증 여부</th>
+						<td th:text="${adminPaymentDetail.usersDTO.isStudentVerified} ? '인증됨' : '미인증'">인증됨</td>
+					</tr>
+					<tr>
+						<th>활성 상태</th>
+						<td th:text="${adminPaymentDetail.usersDTO.isActive} ? '활성' : '비활성'">활성</td>
+					</tr>
+					<tr>
+						<th>가입일</th>
+						<td th:text="${#temporals.format(adminPaymentDetail.usersDTO.createdAt, 'yyyy-MM-dd HH:mm:ss')}">2024-03-15 10:30:00</td>
+					</tr>
+					<tr>
+						<th>최종 수정일</th>
+						<td th:text="${#temporals.format(adminPaymentDetail.usersDTO.updatedAt, 'yyyy-MM-dd HH:mm:ss')}">2024-04-01 15:00:00</td>
+					</tr>
+					<tr>
+						<th>OAuth 제공자</th>
+						<td th:text="${adminPaymentDetail.usersDTO.oauthProvider}">google</td>
+					</tr>
+					<tr>
+						<th>OAuth ID</th>
+						<td th:text="${adminPaymentDetail.usersDTO.oauthId}">1234567890</td>
+					</tr>
+					<tr>
+						<th>프로필 이미지</th>
+						<td>
+							<img th:src="${adminPaymentDetail.usersDTO.profileImageUrl}" alt="프로필 이미지" style="max-height: 100px; max-width: 100px;" />
+						</td>
+					</tr>
+					<tr>
+						<th>학년</th>
+						<td th:text="${adminPaymentDetail.usersDTO.gradeYear}">2학년</td>
+					</tr>
+					<tr>
+						<th>관심사</th>
+						<td th:text="${adminPaymentDetail.usersDTO.interests}">프로그래밍, 음악</td>
+					</tr>
+					<tr>
+						<th>전화번호</th>
+						<td th:text="${adminPaymentDetail.usersDTO.phone}">010-1234-5678</td>
+					</tr>
+					</tbody>
+				</table>
+
+				<div class="text-center mt-4">
+					<a th:href="@{/admin/payment}" class="btn btn-secondary">목록으로 돌아가기</a>
+				</div>
+			</div>
+		</main>
+	</div>
+</div>

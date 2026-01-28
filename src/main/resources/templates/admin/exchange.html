@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content" class="container-md">
+	<div class="row">
+		<!-- Sidebar -->
+		<nav class="col-2 adminSidebar p-0">
+			<h5 class="text-white text-center py-3 border-bottom">ADMIN</h5>
+			<a th:href="@{/admin/admin}"
+			   th:classappend="${currentMenu == 'admin'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				대시보드
+			</a>
+			<a th:href="@{/admin/user}"
+			   th:classappend="${currentMenu == 'user'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				회원 관리
+			</a>
+			<a th:href="@{/admin/payment}"
+			   th:classappend="${currentMenu == 'payment'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				결제 내역
+			</a>
+			<a th:href="@{/admin/exchange}"
+			   th:classappend="${currentMenu == 'exchange'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				환전 관리
+			</a>
+			<a th:href="@{/admin/application}"
+			   th:classappend="${currentMenu == 'application'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				입시 지원 관리
+			</a>
+			<a th:href="@{/admin/notice}"
+			   th:classappend="${currentMenu == 'notice'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				알림 / 공지
+			</a>
+			<a th:href="@{/admin/statistics}"
+			   th:classappend="${currentMenu == 'statistics'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				통계
+			</a>
+			<a th:href="@{/admin/settings}"
+			   th:classappend="${currentMenu == 'settings'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				시스템 설정
+			</a>
+		</nav>
+
+		<!-- Main -->
+		<main class="col-10 p-4">
+			<div class="d-flex justify-content-between align-items-center mb-4">
+				<h4 class="fw-bold">환전 요청 내역</h4>
+			</div>
+
+			<!-- 검색 -->
+			<div class="card mb-4 shadow-sm">
+				<div class="card-body">
+					<form method="get" th:action="@{/admin/exchange}" class="row g-1 align-items-end" style="max-width: 1100px; margin:auto;">
+						<div class="col-md-1">
+							<label class="form-label">환전 상태</label>
+							<select class="form-select" name="status">
+								<option value="" th:selected="${status == null}">전체</option>
+								<option th:each="stat : ${statuses}"
+										th:value="${stat.name()}"
+										th:text="${stat.displayName}"
+										th:selected="${stat == status}">
+								</option>
+							</select>
+						</div>
+
+						<div class="col-md-2">
+							<label class="form-label">회원 이메일</label>
+							<input type="text" name="email" class="form-control" th:value="${email}">
+						</div>
+
+						<div class="col-md-2">
+							<label class="form-label">시작일</label>
+							<input type="date" name="startDate" class="form-control" th:value="${startDate}">
+						</div>
+
+						<div class="col-md-2">
+							<label class="form-label">종료일</label>
+							<input type="date" name="endDate" class="form-control" th:value="${endDate}">
+						</div>
+
+						<div class="col-md-2">
+							<label class="form-label">기준</label>
+							<select name="basis" class="form-select">
+								<option value="createdAt" th:selected="${basis == 'createdAt'}">요청일</option>
+								<option value="processedAt" th:selected="${basis == 'processedAt'}">승인/거부일</option>
+							</select>
+						</div>
+
+						<div class="col-md-2">
+							<label class="form-label">정렬</label>
+							<select name="sort" class="form-select">
+								<option value="desc" th:selected="${sort == 'desc'}">최신순</option>
+								<option value="asc" th:selected="${sort == 'asc'}">오래된순</option>
+							</select>
+						</div>
+
+						<div class="col-md-1 d-grid">
+							<button class="btn btn-primary">검색</button>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<!-- 테이블 -->
+			<div class="card shadow-sm">
+				<div class="card-header fw-bold text-center">
+					환전 내역
+				</div>
+
+				<div class="card-body p-0">
+					<table class="table table-hover mb-0">
+						<thead class="table-light">
+						<tr>
+							<th>ID</th>
+							<th>회원</th>
+							<th>금액</th>
+							<th>은행</th>
+							<th>계좌 번호</th>
+							<th>예금주</th>
+							<th>상태</th>
+							<th>요청일</th>
+							<th>승인/거부일</th>
+							<th class="text-center">관리</th>
+						</tr>
+						</thead>
+
+						<tbody>
+						<tr th:each="exchange : ${adminExchangeRequestDTOList}">
+							<td th:text="${exchange.exchangeRequestDTO.Id}">1</td>
+							<td th:text="${exchange.usersDTO.email}">user@test.com</td>
+							<td th:text="|₩${#numbers.formatInteger(exchange.exchangeRequestDTO.point, 3, 'COMMA')}|">₩100,000</td>
+							<td th:text="${exchange.exchangeRequestDTO.bankName}">국민은행</td>
+							<td th:text="${exchange.exchangeRequestDTO.account}">123-456-7890</td>
+							<td th:text="${exchange.exchangeRequestDTO.accountHolder}">홍길동</td>
+							<td>
+								<span th:switch="${exchange.exchangeRequestDTO.status}">
+								<span th:case="${T(com.StudyLink.www.entity.ExchangeStatus).PENDING}"
+									  class="badge bg-warning">대기</span>
+								<span th:case="${T(com.StudyLink.www.entity.ExchangeStatus).APPROVED}"
+									  class="badge bg-success">승인</span>
+								<span th:case="${T(com.StudyLink.www.entity.ExchangeStatus).REJECTED}"
+									  class="badge bg-danger">거부</span>
+								</span>
+							</td>
+							<td th:text="${exchange.exchangeRequestDTO.createdAt != null
+								? #temporals.format(exchange.exchangeRequestDTO.createdAt, 'yyyy-MM-dd HH:mm')
+								: '-'}">
+								-
+							</td>
+							<td th:text="${exchange.exchangeRequestDTO.processedAt != null
+								? #temporals.format(exchange.exchangeRequestDTO.processedAt, 'yyyy-MM-dd HH:mm')
+								: '-'}">
+								-
+							</td>
+
+							<td class="text-center">
+								<a th:href="@{/admin/exchange/{id}(id=${exchange.exchangeRequestDTO.Id})}"
+								   class="btn btn-sm btn-outline-secondary">
+									상세
+								</a>
+							</td>
+						</tr>
+
+						<tr th:if="${#lists.isEmpty(adminExchangeRequestDTOList)}">
+							<td colspan="9" class="text-center py-4 text-muted">
+								환전 요청 내역이 없습니다.
+							</td>
+						</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+
+			<!-- Pagination -->
+			<nav class="mt-4" th:if="${page.totalPages > 1}">
+				<ul class="pagination justify-content-center">
+					<li class="page-item" th:classappend="${page.first} ? 'disabled'">
+						<a class="page-link"
+						    th:href="@{/admin/exchange(
+							page=${page.number - 1},
+							status=${status},
+							email=${email},
+							startDate=${startDate},
+							endDate=${endDate},
+							sort=${sort}
+							)}">
+							이전
+						</a>
+					</li>
+
+					<li class="page-item"
+						th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+						th:classappend="${i == page.number} ? 'active'">
+						<a class="page-link"
+						    th:text="${i + 1}"
+						    th:href="@{/admin/exchange(
+							page=${i},
+							status=${status},
+							email=${email},
+							startDate=${startDate},
+							endDate=${endDate},
+							sort=${sort}
+							)}">
+						</a>
+					</li>
+
+					<li class="page-item" th:classappend="${page.last} ? 'disabled'">
+						<a class="page-link"
+						    th:href="@{/admin/exchange(
+							page=${page.number + 1},
+							status=${status},
+							email=${email},
+							startDate=${startDate},
+							endDate=${endDate},
+							sort=${sort}
+							)}">
+							다음
+						</a>
+					</li>
+				</ul>
+			</nav>
+		</main>
+	</div>
+</div>

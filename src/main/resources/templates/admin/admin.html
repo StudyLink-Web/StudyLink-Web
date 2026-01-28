@@ -8,14 +8,46 @@
 		<!-- Sidebar -->
 		<nav class="col-2 adminSidebar p-0">
 			<h5 class="text-white text-center py-3 border-bottom">ADMIN</h5>
-			<a class="adminSidebarMenu active">대시보드</a>
-			<a class="adminSidebarMenu">회원 관리</a>
-			<a class="adminSidebarMenu">결제 관리</a>
-			<a class="adminSidebarMenu">환전 관리</a>
-			<a class="adminSidebarMenu">입시 지원 관리</a>
-			<a class="adminSidebarMenu">알림 / 공지</a>
-			<a class="adminSidebarMenu">통계</a>
-			<a class="adminSidebarMenu">시스템 설정</a>
+			<a th:href="@{/admin/admin}"
+			   th:classappend="${currentMenu == 'admin'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				대시보드
+			</a>
+			<a th:href="@{/admin/user}"
+			   th:classappend="${currentMenu == 'user'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				회원 관리
+			</a>
+			<a th:href="@{/admin/payment}"
+			   th:classappend="${currentMenu == 'payment'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				결제 내역
+			</a>
+			<a th:href="@{/admin/exchange}"
+			   th:classappend="${currentMenu == 'exchange'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				환전 관리
+			</a>
+			<a th:href="@{/admin/application}"
+			   th:classappend="${currentMenu == 'application'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				입시 지원 관리
+			</a>
+			<a th:href="@{/admin/notice}"
+			   th:classappend="${currentMenu == 'notice'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				알림 / 공지
+			</a>
+			<a th:href="@{/admin/statistics}"
+			   th:classappend="${currentMenu == 'statistics'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				통계
+			</a>
+			<a th:href="@{/admin/settings}"
+			   th:classappend="${currentMenu == 'settings'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				시스템 설정
+			</a>
 		</nav>
 
 		<!-- Main -->
