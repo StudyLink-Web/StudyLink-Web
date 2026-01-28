@@ -3,6 +3,7 @@ package com.StudyLink.www.controller;
 import com.StudyLink.www.dto.*;
 import com.StudyLink.www.entity.ExchangeStatus;
 import com.StudyLink.www.entity.PaymentStatus;
+import com.StudyLink.www.entity.Role;
 import com.StudyLink.www.service.PaymentService;
 import com.StudyLink.www.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +58,56 @@ public class AdminController {
 
         model.addAttribute("currentMenu", "admin");
     };
+
+    @GetMapping("/user")
+    public void user(
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate endDate,
+            @RequestParam(defaultValue = "desc") String sort,
+            @PageableDefault(size = 10) Pageable pageable,
+            Model model
+    ) {
+        email = (email != null && email.isBlank()) ? null : email;
+
+        Role roleEnum = null;
+        if (role != null && !role.isBlank()) {
+            roleEnum = Role.valueOf(role.toUpperCase());
+        }
+
+        Sort sortOption = sort.equals("asc")
+                ? Sort.by("createdAt").ascending()
+                : Sort.by("createdAt").descending();
+
+        Pageable sortedPageable =
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOption);
+
+        Page<AdminUserDTO> page =
+                userService.search(email, roleEnum, isActive, startDate, endDate, sortedPageable);
+
+        model.addAttribute("usersList", page.getContent());
+        model.addAttribute("page", page);
+        model.addAttribute("email", email);
+        model.addAttribute("role", role);
+        model.addAttribute("isActive", isActive);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("sort", sort);
+        model.addAttribute("currentMenu", "user");
+    }
+
+    @GetMapping("/user/{id}")
+    public String userDetail(@PathVariable Long id, Model model) {
+        UsersDTO usersDTO = userService.getUserDetail(id);
+
+        model.addAttribute("adminUserDetail", usersDTO);
+        model.addAttribute("currentMenu", "user");
+        return "/admin/userDetail";
+    }
 
     @GetMapping("/payment")
     public void payment(

@@ -28,20 +28,15 @@
 			   class="adminSidebarMenu">
 				환전 관리
 			</a>
-			<a th:href="@{/admin/application}"
-			   th:classappend="${currentMenu == 'application'} ? 'active' : ''"
-			   class="adminSidebarMenu">
-				입시 지원 관리
-			</a>
 			<a th:href="@{/admin/notice}"
 			   th:classappend="${currentMenu == 'notice'} ? 'active' : ''"
 			   class="adminSidebarMenu">
 				알림 / 공지
 			</a>
-			<a th:href="@{/admin/settings}"
-			   th:classappend="${currentMenu == 'settings'} ? 'active' : ''"
+			<a th:href="@{/admin/application}"
+			   th:classappend="${currentMenu == 'application'} ? 'active' : ''"
 			   class="adminSidebarMenu">
-				시스템 설정
+				문의 내역
 			</a>
 		</nav>
 
