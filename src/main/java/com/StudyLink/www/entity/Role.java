@@ -9,7 +9,8 @@ package com.StudyLink.www.entity;
 public enum Role {
     STUDENT("학생"),
     MENTOR("멘토"),
-    ADMIN("관리자");
+    ADMIN("관리자"),
+    ROLE_USER("유저"); // db에 있는 값과 맞추는 용도
 
     private final String description;
 

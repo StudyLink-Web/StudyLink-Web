@@ -2,6 +2,63 @@ let recaptchaVerifier = null;
 
 console.log('📋 mentor-profile.js 로드됨');
 
+/* =========================
+   📷 프로필 사진 미리보기
+========================= */
+console.log('📷 프로필 사진 미리보기 시스템 로드됨');
+
+document.addEventListener('DOMContentLoaded', () => {
+    const avatarUpload = document.getElementById('avatarUpload');
+    const avatarPreview = document.getElementById('avatarPreview');
+
+    if (!avatarUpload) {
+        console.warn('⚠️ 사진 업로드 필드를 찾을 수 없습니다');
+        return;
+    }
+
+    // 📷 파일 선택 시 즉시 미리보기
+    avatarUpload.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+
+        if (!file) {
+            console.log('❌ 파일이 선택되지 않음');
+            return;
+        }
+
+        // 파일 형식 검증
+        if (!file.type.startsWith('image/')) {
+            alert('⚠️ 이미지 파일만 업로드 가능합니다');
+            avatarUpload.value = ''; // 입력값 초기화
+            return;
+        }
+
+        // 파일 크기 검증 (10MB 제한)
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        if (file.size > MAX_FILE_SIZE) {
+            alert('⚠️ 파일 크기는 10MB 이하여야 합니다');
+            avatarUpload.value = '';
+            return;
+        }
+
+        // FileReader를 사용한 즉시 미리보기
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+            const imageUrl = event.target.result;
+            avatarPreview.src = imageUrl;
+            console.log('✅ 프로필 사진 미리보기 완료');
+        };
+
+        reader.onerror = () => {
+            console.error('❌ 파일 읽기 실패');
+            alert('파일을 읽을 수 없습니다. 다시 시도해주세요.');
+        };
+
+        reader.readAsDataURL(file);
+    });
+});
+
+
 // ⭐ 즉시 실행
 console.log('🚀 탭 시스템 즉시 초기화');
 

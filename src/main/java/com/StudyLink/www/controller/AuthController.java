@@ -15,7 +15,7 @@ import java.util.Map;
  * 회원가입, 로그인, 이메일/닉네임 중복 확인
  */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {
