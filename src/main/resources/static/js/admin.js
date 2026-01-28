@@ -2,31 +2,32 @@
 function drawChart(canvasId, labels, data) {
 const canvas = document.getElementById(canvasId);
 
-if (canvas.chartInstance) {
-canvas.chartInstance.destroy();
-}
-
-canvas.chartInstance = new Chart(canvas, {
-    type: 'line',
-    data: {
-        labels: labels,
-        datasets: [{
-            data: data,
-            borderWidth: 2,
-            tension: 0.3,
-            pointRadius: 3
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { display: false }
-        },
-        scales: {
-            y: { beginAtZero: true }
-        }
+    if (canvas.chartInstance) {
+        canvas.chartInstance.destroy();
     }
-});
+
+    canvas.chartInstance = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
 
 /* ================= 차트 데이터 맵 ================= */
 const chartConfig = {
