@@ -29,6 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -362,7 +363,7 @@ public class PaymentServiceImpl implements PaymentService {
 
 
         if ("createdAt".equals(basis)) {
-            return paymentRepository.searchByCreatedAt(
+            return exchangeRequestRepository.searchByCreatedAt(
                     status,
                     email,
                     startDateTime,
@@ -373,7 +374,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .usersDTO(new UsersDTO(exchangeRequest.getUser()))
                     .build());
         } else {
-            return paymentRepository.searchByProcessedAt(
+            return exchangeRequestRepository.searchByProcessedAt(
                     status,
                     email,
                     startDateTime,
@@ -426,5 +427,116 @@ public class PaymentServiceImpl implements PaymentService {
         exchange.setStatus(ExchangeStatus.REJECTED);
         exchange.setRejectedReason(adminExchangeRequestRejectDTO.getReason());
         exchange.setProcessedAt(LocalDateTime.now());
+    }
+
+    @Override
+    public int getTodayPaymentCount() {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay(); // 오늘 00:00:00
+        LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay(); // 내일 00:00:00
+        return paymentRepository.getTodayPaymentCount(startOfDay, startOfNextDay);
+    }
+
+    @Override
+    public long getTodayPaymentAmount() {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
+        Long amount = paymentRepository.getSumPaymentAmountBetween(startOfDay, startOfNextDay);
+        return amount != null ? amount : 0L;
+    }
+
+    @Override
+    public int getTodayExchangeRequestCount() {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
+        return exchangeRequestRepository.countByCreatedAtBetween(startOfDay, startOfNextDay);
+    }
+
+    @Override
+    public long getTodayExchangeAmount() {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
+
+        Long amountSum = exchangeRequestRepository.sumAmountByCreatedAtBetween(startOfDay, startOfNextDay);
+        return amountSum != null ? amountSum : 0L;
+    }
+
+    @Override
+    public PaymentChartDTO getPaymentChart() {
+        return new PaymentChartDTO(
+                getPaymentChartByDays(7),
+                getPaymentChartByDays(30)
+        );
+    }
+
+    private PaymentChartPeriodDTO getPaymentChartByDays(int days) {
+        List<String> labels = new ArrayList<>();
+        List<Long> daily = new ArrayList<>();
+        List<Long> cumulative = new ArrayList<>();
+
+        LocalDate startDate = LocalDate.now().minusDays(days - 1);
+
+        long sum = paymentRepository.sumAmountBefore(
+                startDate.atStartOfDay()
+        );
+
+        for (int i = days - 1; i >= 0; i--) {
+            LocalDate date = LocalDate.now().minusDays(i);
+
+            long amount = paymentRepository.sumAmountByDate(
+                    date.atStartOfDay(),
+                    date.plusDays(1).atStartOfDay()
+            );
+
+            sum += amount;
+
+            labels.add(date.format(DateTimeFormatter.ofPattern("MM-dd")));
+            daily.add(amount);
+            cumulative.add(sum);
+        }
+
+        return new PaymentChartPeriodDTO(labels, daily, cumulative);
+    }
+
+    @Override
+    public ExchangeChartDTO getExchangeChart() {
+        return new ExchangeChartDTO(
+                getExchangeChartByDays(7),
+                getExchangeChartByDays(30)
+        );
+    }
+
+    private ExchangeChartPeriodDTO getExchangeChartByDays(int days) {
+        List<String> labels = new ArrayList<>();
+        List<Long> daily = new ArrayList<>();
+        List<Long> cumulative = new ArrayList<>();
+
+        LocalDate startDate = LocalDate.now().minusDays(days - 1);
+
+        long sum = exchangeRequestRepository.sumAmountBefore(
+                startDate.atStartOfDay(),
+                ExchangeStatus.APPROVED
+        );
+
+        for (int i = days - 1; i >= 0; i--) {
+            LocalDate date = LocalDate.now().minusDays(i);
+
+            long amount = exchangeRequestRepository.sumAmountByDate(
+                    date.atStartOfDay(),
+                    date.plusDays(1).atStartOfDay(),
+                    ExchangeStatus.APPROVED
+            );
+
+            sum += amount;
+
+            labels.add(date.format(DateTimeFormatter.ofPattern("MM-dd")));
+            daily.add(amount);
+            cumulative.add(sum);
+        }
+
+        return new ExchangeChartPeriodDTO(labels, daily, cumulative);
     }
 }

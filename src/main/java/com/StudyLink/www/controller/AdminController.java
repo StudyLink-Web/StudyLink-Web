@@ -4,6 +4,7 @@ import com.StudyLink.www.dto.*;
 import com.StudyLink.www.entity.ExchangeStatus;
 import com.StudyLink.www.entity.PaymentStatus;
 import com.StudyLink.www.service.PaymentService;
+import com.StudyLink.www.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,9 +26,35 @@ import java.time.LocalDate;
 @RequestMapping("/admin")
 public class AdminController {
     private final PaymentService paymentService;
+    private final UserService userService;
 
     @GetMapping("/admin")
     public void admin(Model model) {
+        // 일일 통계 데이터 조회
+        // 오늘 결제 건수, 오늘 결제 금액, 오늘 환전 요청 건수, 오늘 환전 금액, 오늘 신규 가입자 수
+        int todayPaymentCount = paymentService.getTodayPaymentCount();
+        long todayPaymentAmount = paymentService.getTodayPaymentAmount();
+        int todayExchangeRequestCount = paymentService.getTodayExchangeRequestCount();
+        long todayExchangeAmount = paymentService.getTodayExchangeAmount();
+        int todayNewUsers = userService.getTodayNewUserCount();
+
+        // 모델에 데이터 담기
+        model.addAttribute("todayPaymentCount", todayPaymentCount); // 오늘 결제 건수 (건)
+        model.addAttribute("todayPaymentAmount", todayPaymentAmount); // 오늘 결제 금액 합계 (원)
+        model.addAttribute("todayExchangeRequestCount", todayExchangeRequestCount); // 오늘 환전 요청 건수 (건)
+        model.addAttribute("todayExchangeAmount", todayExchangeAmount); // 오늘 환전 요청 금액 합계 (원)
+        model.addAttribute("todayNewUsers", todayNewUsers); // 오늘 신규 가입자 수 (명)
+
+        // 그래프 데이터 받아오기
+        UserChartDTO userChartDTO = userService.getUserChart();
+        PaymentChartDTO paymentChartDTO = paymentService.getPaymentChart();
+        ExchangeChartDTO exchangeChartDTO = paymentService.getExchangeChart();
+
+        // 모델에 데이터 담기
+        model.addAttribute("userChartDTO", userChartDTO); // 회원 차트 데이터
+        model.addAttribute("paymentChartDTO", paymentChartDTO); // 결제 차트 데이터
+        model.addAttribute("exchangeChartDTO", exchangeChartDTO); // 환전 차트 데이터
+
         model.addAttribute("currentMenu", "admin");
     };
 
