@@ -1,6 +1,9 @@
 package com.StudyLink.www.repository;
 
+import com.StudyLink.www.entity.Role;
 import com.StudyLink.www.entity.Users;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -51,4 +54,22 @@ public interface UserRepository extends JpaRepository<Users, Long> {
         and u.createdAt < :end
         """)
     int countByCreatedDate(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("""
+        select u
+        from Users u
+        where (:email is null or u.email like concat('%', :email, '%'))
+        and (:role is null or u.role = :role)
+        and (:isActive is null or u.isActive = :isActive)
+        and (:start is null or u.createdAt >= :start)
+        and (:end is null or u.createdAt < :end)
+    """)
+    Page<Users> searchByCreatedAt(
+            @Param("email") String email,
+            @Param("role") Role role,
+            @Param("isActive") Boolean isActive,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            Pageable pageable
+    );
 }

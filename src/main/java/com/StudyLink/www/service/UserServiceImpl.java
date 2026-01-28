@@ -1,10 +1,16 @@
 package com.StudyLink.www.service;
 
+import com.StudyLink.www.dto.AdminUserDTO;
 import com.StudyLink.www.dto.UserChartDTO;
 import com.StudyLink.www.dto.UserChartPeriodDTO;
+import com.StudyLink.www.dto.UsersDTO;
+import com.StudyLink.www.entity.Role;
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,5 +78,40 @@ public class UserServiceImpl implements UserService {
         }
 
         return new UserChartPeriodDTO(labels, daily, cumulative);
+    }
+
+    @Override
+    public Page<AdminUserDTO> search(String email, Role role, Boolean isActive, LocalDate startDate, LocalDate endDate, Pageable sortedPageable) {
+        LocalDateTime startDateTime = null;
+        LocalDateTime endDatePlus = null;
+
+        if (startDate != null) {
+            startDateTime = startDate.atStartOfDay();
+        }
+
+        if (endDate != null) {
+            endDatePlus = endDate.plusDays(1).atStartOfDay();
+        }
+
+        return userRepository.searchByCreatedAt(
+                email,
+                role,
+                isActive,
+                startDateTime,
+                endDatePlus,
+                sortedPageable
+        ).map(user -> AdminUserDTO.builder()
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .name(user.getName())
+                .role(user.getRole().name())
+                .isActive(user.getIsActive())
+                .createdAt(user.getCreatedAt())
+                .build());
+    }
+
+    @Override
+    public UsersDTO getUserDetail(Long id) {
+        return new UsersDTO(userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("유저가 없습니다.")));
     }
 }
