@@ -27,4 +27,16 @@ public interface PaymentService {
     void approve(long id);
 
     void reject(AdminExchangeRequestRejectDTO adminExchangeRequestRejectDTO);
+
+    int getTodayPaymentCount();
+
+    long getTodayPaymentAmount();
+
+    int getTodayExchangeRequestCount();
+
+    long getTodayExchangeAmount();
+
+    PaymentChartDTO getPaymentChart();
+
+    ExchangeChartDTO getExchangeChart();
 }

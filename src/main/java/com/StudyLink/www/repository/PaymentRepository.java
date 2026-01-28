@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -35,38 +36,25 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             Pageable pageable
     );
 
-    @Query("""
-        SELECT e
-        FROM ExchangeRequest e
-        JOIN e.user u
-        WHERE (:status IS NULL OR e.status = :status)
-        AND (:email IS NULL OR u.email LIKE %:email%)
-        AND (:startDateTime IS NULL OR e.createdAt >= :startDateTime)
-        AND (:endDatePlus IS NULL OR e.createdAt < :endDatePlus)
-    """)
-    Page<ExchangeRequest> searchByCreatedAt(
-            @Param("status") ExchangeStatus status,
-            @Param("email") String email,
-            @Param("startDateTime") LocalDateTime startDateTime,
-            @Param("endDatePlus") LocalDateTime endDatePlus,
-            Pageable pageable
-    );
+    @Query("SELECT COUNT(p) FROM Payment p WHERE p.approvedAt >= :start AND p.approvedAt < :end")
+    int getTodayPaymentCount(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
+    @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.approvedAt >= :start AND p.approvedAt < :end")
+    Long getSumPaymentAmountBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("""
-        SELECT e
-        FROM ExchangeRequest e
-        JOIN e.user u
-        WHERE (:status IS NULL OR e.status = :status)
-        AND (:email IS NULL OR u.email LIKE %:email%)
-        AND (:startDateTime IS NULL OR e.processedAt >= :startDateTime)
-        AND (:endDatePlus IS NULL OR e.processedAt < :endDatePlus)
+        select coalesce(sum(p.amount), 0)
+        from Payment p
+        where p.requestedAt < :start
     """)
-    Page<ExchangeRequest> searchByProcessedAt(
-            @Param("status") ExchangeStatus status,
-            @Param("email") String email,
-            @Param("startDateTime") LocalDateTime startDateTime,
-            @Param("endDatePlus") LocalDateTime endDatePlus,
-            Pageable pageable
-    );
+    long sumAmountBefore(@Param("start") LocalDateTime start);
+
+    @Query("""
+        select coalesce(sum(p.amount), 0)
+        from Payment p
+        where p.status = 'APPROVED'
+        and p.requestedAt >= :start
+        and p.requestedAt < :end
+    """)
+    long sumAmountByDate(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
