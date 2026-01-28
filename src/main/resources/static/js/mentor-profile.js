@@ -94,23 +94,23 @@ tabButtons.forEach(btn => {
 console.log('✅ 탭 시스템 준비 완료');
 
 // ================================================
-// 🔄 토글 체크박스 시스템 초기화
+// 🔄 토글 라벨 시스템 초기화 (새로운 구조)
 // ================================================
 
-console.log('📚 토글 체크박스 시스템 로드됨');
+console.log('📚 토글 라벨 시스템 로드됨');
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 토글 체크박스 시스템 초기화 시작');
+    console.log('🚀 토글 라벨 시스템 초기화 시작');
     initializeCollapsibleSubjects();
 });
 
 function initializeCollapsibleSubjects() {
-    const mainSubjects = document.querySelectorAll('.main-subject');
+    const mainSubjectLabels = document.querySelectorAll('.main-subject-label[data-toggle]');
 
-    console.log('📋 메인 과목 개수:', mainSubjects.length);
+    console.log('📋 메인 과목 라벨 개수:', mainSubjectLabels.length);
 
-    mainSubjects.forEach((checkbox) => {
-        const toggleId = checkbox.dataset.toggle;
+    mainSubjectLabels.forEach((label) => {
+        const toggleId = label.getAttribute('data-toggle');
         const contentDiv = document.getElementById(toggleId);
 
         if (!contentDiv) {
@@ -118,60 +118,46 @@ function initializeCollapsibleSubjects() {
             return;
         }
 
-        console.log(`✅ 토글 과목 등록: ${checkbox.id} → ${toggleId}`);
+        console.log(`✅ 토글 과목 라벨 등록: ${toggleId}`);
 
-        checkbox.addEventListener('change', (e) => {
-            toggleSubjectContent(contentDiv, checkbox.checked);
-            console.log(`🔄 ${checkbox.id} 토글됨: ${checkbox.checked ? '펼침' : '접음'}`);
+        label.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleSubjectContent(contentDiv, label);
+            console.log(`🔄 ${toggleId} 토글됨`);
         });
 
-        if (checkbox.checked) {
-            contentDiv.classList.add('show');
+        // 초기 상태: 세부과목에 체크된 항목이 있으면 펼침
+        const subCheckboxes = contentDiv.querySelectorAll('.checkbox-input');
+        const hasCheckedSubitem = Array.from(subCheckboxes).some(cb => cb.checked);
+
+        if (hasCheckedSubitem) {
+            contentDiv.classList.add('open');
+            label.classList.add('active');
             console.log(`📂 초기 상태: ${toggleId} 표시됨`);
         }
-
-        syncSubitemCheckboxes(checkbox, contentDiv);
     });
 
-    console.log('✅ 토글 체크박스 시스템 준비 완료');
+    // 세부과목 체크박스 동기화
+    initializeSubitemCheckboxes();
+
+    console.log('✅ 토글 라벨 시스템 준비 완료');
 }
 
-function toggleSubjectContent(contentDiv, show) {
-    if (show) {
-        contentDiv.classList.add('show');
-        contentDiv.style.display = 'flex';
-        contentDiv.style.flexDirection = 'column';
-    } else {
-        contentDiv.classList.remove('show');
-        contentDiv.style.display = 'none';
-    }
+function toggleSubjectContent(contentDiv, label) {
+    contentDiv.classList.toggle('open');
+    label.classList.toggle('active');
 }
 
-function syncSubitemCheckboxes(mainCheckbox, contentDiv) {
-    const subCheckboxes = contentDiv.querySelectorAll('.checkbox-input');
+function initializeSubitemCheckboxes() {
+    const allSubCheckboxes = document.querySelectorAll('.collapsible-content .checkbox-input');
 
-    console.log(`🔗 세부과목 개수 (${mainCheckbox.id}): ${subCheckboxes.length}`);
+    console.log(`🔗 세부과목 체크박스 총 개수: ${allSubCheckboxes.length}`);
 
-    subCheckboxes.forEach((subCheckbox) => {
+    allSubCheckboxes.forEach((subCheckbox) => {
         subCheckbox.addEventListener('change', () => {
-            const hasCheckedSubitem = Array.from(subCheckboxes).some(
-                (cb) => cb.checked
-            );
-
-            if (mainCheckbox.checked !== hasCheckedSubitem) {
-                mainCheckbox.checked = hasCheckedSubitem;
-                console.log(
-                    `🔄 메인 체크박스 동기화: ${mainCheckbox.id} = ${hasCheckedSubitem}`
-                );
-            }
+            console.log(`🔄 세부과목 변경: ${subCheckbox.value}`);
         });
     });
-
-    const hasCheckedSubitem = Array.from(subCheckboxes).some((cb) => cb.checked);
-    if (hasCheckedSubitem && !mainCheckbox.checked) {
-        mainCheckbox.checked = true;
-        console.log(`📌 초기 동기화: ${mainCheckbox.id} 자동 체크됨`);
-    }
 }
 
 // Firebase 변수 선언

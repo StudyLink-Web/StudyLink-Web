@@ -157,7 +157,7 @@
                                 </div>
 
                                 <!-- 인증번호 입력 (숨겨진 상태) -->
-                                <div id="authCodeSection" class="auth-section" style="display: none; margin-top: 12px;">
+                                <div id="authCodeSection" class="auth-section" >
                                     <div class="auth-input-group">
                                         <input type="text" class="form-control" id="authCode"
                                                placeholder="인증번호 6자리" maxlength="6"
@@ -222,7 +222,7 @@
                         </div>
                     </div>
 
-                    <!-- 수업 정보 탭 -->
+                    <!-- 수업 정보 탭. -->
                     <div class="tab-content" id="teaching">
                         <div class="form-section">
                             <div class="section-header">
@@ -235,16 +235,23 @@
                                 <div class="checkbox-group">
                                     <!-- 국어 (토글) -->
                                     <div class="checkbox-item collapsible-item">
+                                        <!--
                                         <input type="checkbox" id="subject_korean" class="checkbox-input main-subject"
                                                data-toggle="korean-subjects" name="subjects" value="korean"
                                                th:checked="${mentor.subjects != null and mentor.subjects.contains('korean')}">
-                                        <label for="subject_korean" class="checkbox-label">
-                                            공통국어 <span class="toggle-icon">▼</span>
+                                        -->
+                                        <label for="subject_korean" class="checkbox-label main-subject-label" data-toggle="korean-subjects">
+                                            <span class="subject-icon">★</span> 국어 <span class="toggle-icon">▼</span>
                                         </label>
                                     </div>
 
                                     <!-- 국어 세부과목 -->
-                                    <div id="korean-subjects" class="collapsible-content" style="display: none;">
+                                    <div id="korean-subjects" class="collapsible-content">
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="korean_common"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('korean_common')}">
+                                            <label class="checkbox-label">공통국어</label>
+                                        </div>
                                         <div class="checkbox-item sub-item">
                                             <input type="checkbox" class="checkbox-input" name="subjects" value="korean_speech"
                                                    th:checked="${mentor.subjects != null and mentor.subjects.contains('korean_speech')}">
@@ -269,16 +276,18 @@
 
                                     <!-- 수학 (토글) -->
                                     <div class="checkbox-item collapsible-item">
-                                        <input type="checkbox" id="subject_math" class="checkbox-input main-subject"
-                                               data-toggle="math-subjects" name="subjects" value="math"
-                                               th:checked="${mentor.subjects != null and mentor.subjects.contains('math')}">
-                                        <label for="subject_math" class="checkbox-label">
-                                            공통수학 <span class="toggle-icon">▼</span>
+                                        <label for="subject_math" class="checkbox-label main-subject-label" data-toggle="math-subjects">
+                                            <span class="subject-icon">★</span> 수학 <span class="toggle-icon">▼</span>
                                         </label>
                                     </div>
 
                                     <!-- 수학 세부과목 -->
-                                    <div id="math-subjects" class="collapsible-content" style="display: none;">
+                                    <div id="math-subjects" class="collapsible-content" >
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="math_common"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('math_common')}">
+                                            <label class="checkbox-label">공통수학</label>
+                                        </div>
                                         <div class="checkbox-item sub-item">
                                             <input type="checkbox" class="checkbox-input" name="subjects" value="math_1"
                                                    th:checked="${mentor.subjects != null and mentor.subjects.contains('math_1')}">
@@ -308,16 +317,18 @@
 
                                     <!-- 영어 (토글) -->
                                     <div class="checkbox-item collapsible-item">
-                                        <input type="checkbox" id="subject_english" class="checkbox-input main-subject"
-                                               data-toggle="english-subjects" name="subjects" value="english"
-                                               th:checked="${mentor.subjects != null and mentor.subjects.contains('english')}">
-                                        <label for="subject_english" class="checkbox-label">
-                                            공통영어 <span class="toggle-icon">▼</span>
+                                        <label for="subject_english" class="checkbox-label main-subject-label" data-toggle="english-subjects">
+                                            <span class="subject-icon">★</span> 영어 <span class="toggle-icon">▼</span>
                                         </label>
                                     </div>
 
                                     <!-- 영어 세부과목 -->
-                                    <div id="english-subjects" class="collapsible-content" style="display: none;">
+                                    <div id="english-subjects" class="collapsible-content" >
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="english_common"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('english_common')}">
+                                            <label class="checkbox-label">공통영어</label>
+                                        </div>
                                         <div class="checkbox-item sub-item">
                                             <input type="checkbox" class="checkbox-input" name="subjects" value="english_conversation"
                                                    th:checked="${mentor.subjects != null and mentor.subjects.contains('english_conversation')}">
@@ -337,16 +348,18 @@
 
                                     <!-- 과학 (토글) -->
                                     <div class="checkbox-item collapsible-item">
-                                        <input type="checkbox" id="subject_science" class="checkbox-input main-subject"
-                                               data-toggle="science-subjects" name="subjects" value="science"
-                                               th:checked="${mentor.subjects != null and mentor.subjects.contains('science')}">
-                                        <label for="subject_science" class="checkbox-label">
-                                            통합과학 <span class="toggle-icon">▼</span>
+                                        <label for="subject_science" class="checkbox-label main-subject-label" data-toggle="science-subjects">
+                                            <span class="subject-icon">★</span> 과학 <span class="toggle-icon">▼</span>
                                         </label>
                                     </div>
 
                                     <!-- 과학 세부과목 -->
-                                    <div id="science-subjects" class="collapsible-content" style="display: none;">
+                                    <div id="science-subjects" class="collapsible-content" >
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="science_common"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('science_common')}">
+                                            <label class="checkbox-label">통합과학</label>
+                                        </div>
                                         <div class="checkbox-item sub-item">
                                             <input type="checkbox" class="checkbox-input" name="subjects" value="physics1"
                                                    th:checked="${mentor.subjects != null and mentor.subjects.contains('physics1')}">
@@ -391,16 +404,18 @@
 
                                     <!-- 사회 (토글) -->
                                     <div class="checkbox-item collapsible-item">
-                                        <input type="checkbox" id="subject_social" class="checkbox-input main-subject"
-                                               data-toggle="social-subjects" name="subjects" value="social"
-                                               th:checked="${mentor.subjects != null and mentor.subjects.contains('social')}">
-                                        <label for="subject_social" class="checkbox-label">
-                                            통합사회 <span class="toggle-icon">▼</span>
+                                        <label for="subject_social" class="checkbox-label main-subject-label" data-toggle="social-subjects">
+                                            <span class="subject-icon">★</span> 사회 <span class="toggle-icon">▼</span>
                                         </label>
                                     </div>
 
                                     <!-- 사회 세부과목 -->
-                                    <div id="social-subjects" class="collapsible-content" style="display: none;">
+                                    <div id="social-subjects" class="collapsible-content" >
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="social_common"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('social_common')}">
+                                            <label class="checkbox-label">통합사회</label>
+                                        </div>
                                         <div class="checkbox-item sub-item">
                                             <input type="checkbox" class="checkbox-input" name="subjects" value="ethics"
                                                    th:checked="${mentor.subjects != null and mentor.subjects.contains('ethics')}">
@@ -448,14 +463,23 @@
                                         </div>
                                     </div>
 
-                                    <!-- 한국사 -->
-                                    <div class="checkbox-item">
-                                        <input type="checkbox" id="subject_korean_history" class="checkbox-input" name="subjects" value="korean_history"
-                                               th:checked="${mentor.subjects != null and mentor.subjects.contains('korean_history')}">
-                                        <label for="subject_korean_history" class="checkbox-label">한국사</label>
+                                    <!-- 한국사 (토글 유지) -->
+                                    <div class="checkbox-item collapsible-item">
+                                        <label class="checkbox-label main-subject-label" data-toggle="korean-history-subjects">
+                                            <span class="subject-icon">★</span> 한국사 <span class="toggle-icon">▼</span>
+                                        </label>
                                     </div>
+
+                                    <div id="korean-history-subjects" class="collapsible-content">
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="korean_history"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('korean_history')}">
+                                            <label class="checkbox-label">한국사</label>
+                                        </div>
+                                    </div>
+
                                 </div>
-                            </div>
+
 
                             <!--
                             <div class="form-group">
