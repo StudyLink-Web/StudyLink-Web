@@ -21,6 +21,7 @@
 	<link rel="stylesheet" th:href="@{/css/success.css}">
 	<link rel="stylesheet" th:href="@{/css/admin.css}">
 
+
 	<!-- WebSocket -->
 	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
@@ -32,6 +33,8 @@
 </head>
 
 <body>
+
+<div id="recaptcha-container"></div>
 
 <div class="wrap">
 	<!-- Header -->
@@ -50,10 +53,37 @@
 <!-- ⭐ Bootstrap 4 JS - jQuery 다음에 로드 -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<!-- ⭐ Firebase 초기화 (동기 실행) -->
+<script type="module">
+	import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+	import {
+		getAuth,
+		RecaptchaVerifier,
+		signInWithPhoneNumber
+	} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+	window.firebaseInitPromise = fetch('/mentor/firebase-config')
+			.then(r => r.json())
+			.then(config => {
+				window.firebaseApp = initializeApp(config);
+				window.firebaseAuth = getAuth(window.firebaseApp);
+				console.log('🔥 projectId:', config.projectId);
+				console.log('✅ Firebase 초기화 완료');
+			});
+</script>
+
+
+<!-- ⭐ mentor-profile.js 로드 -->
 <script th:src="@{/js/mentor-profile.js}" defer></script>
 
 <!-- ⭐ header.js 명시적 로드 -->
 <script th:src="@{/js/header.js}" defer></script>
+
+
 
 </body>
 </html>

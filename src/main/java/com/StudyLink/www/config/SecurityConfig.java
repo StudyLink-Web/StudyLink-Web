@@ -86,6 +86,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/room/myQuiz").authenticated()
 
+                        .requestMatchers("/mentor/firebase-config").authenticated()
+
                         .requestMatchers(
                                 "/",
                                 "/index",
@@ -105,6 +107,7 @@ public class SecurityConfig {
                                 "/images/**",
                                 "/static/**",
                                 "/static.dist/**",
+                                "/uploads/**",
 
                                 "/api/**",
                                 "/api/auth/**",

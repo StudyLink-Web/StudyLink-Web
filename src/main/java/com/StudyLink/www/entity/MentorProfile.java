@@ -1,7 +1,6 @@
 package com.StudyLink.www.entity;
 
 import com.StudyLink.www.dto.MentorProfileDTO;
-import com.StudyLink.www.dto.UsersDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Mentor_Profile (멘토 상세 - 대학생)
@@ -30,7 +30,6 @@ public class MentorProfile {
     @MapsId
     @JoinColumn(name = "user_id")
     private Users user;
-
 
     /**
      * 재학 중인 대학 ID
@@ -129,15 +128,25 @@ public class MentorProfile {
      * 주요 과목 (JSON 형식)
      * 예: ["math", "korean", "english"]
      */
-    @Column(name = "subjects", columnDefinition = "JSON")
-    private String subjects;
+    @ElementCollection
+    @CollectionTable(
+            name = "mentor_subjects",
+            joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Column(name = "subject")
+    private List<String> subjects;
 
     /**
      * 수업 대상 학년 (JSON 형식)
      * 예: ["middle", "high", "adult"]
      */
-    @Column(name = "grades", columnDefinition = "JSON")
-    private String grades;
+    @ElementCollection
+    @CollectionTable(
+            name = "mentor_grades",
+            joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Column(name = "grade")
+    private List<String> grades;
 
     /**
      * 시간당 수업료 (원)
@@ -231,7 +240,7 @@ public class MentorProfile {
     // 🔹 DTO -> 엔티티 생성자
     public MentorProfile(MentorProfileDTO dto, Users user) {
         this.user = user;
-        this.userId = user.getUserId(); // @MapsId 필요
+        this.userId = user.getUserId();
         this.univId = dto.getUnivId();
         this.deptId = dto.getDeptId();
         this.studentCardImg = dto.getStudentCardImg();
@@ -260,6 +269,4 @@ public class MentorProfile {
         this.notificationMessage = dto.getNotificationMessage() != null ? dto.getNotificationMessage() : true;
         this.notificationReview = dto.getNotificationReview() != null ? dto.getNotificationReview() : true;
     }
-
-
 }

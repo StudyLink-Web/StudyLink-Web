@@ -36,7 +36,7 @@ public class QMentorProfile extends EntityPathBase<MentorProfile> {
 
     public final NumberPath<Long> exp = createNumber("exp", Long.class);
 
-    public final StringPath grades = createString("grades");
+    public final ListPath<String, StringPath> grades = this.<String, StringPath>createList("grades", String.class, StringPath.class, PathInits.DIRECT2);
 
     public final NumberPath<Integer> graduationYear = createNumber("graduationYear", Integer.class);
 
@@ -70,7 +70,7 @@ public class QMentorProfile extends EntityPathBase<MentorProfile> {
 
     public final StringPath studentCardImg = createString("studentCardImg");
 
-    public final StringPath subjects = createString("subjects");
+    public final ListPath<String, StringPath> subjects = this.<String, StringPath>createList("subjects", String.class, StringPath.class, PathInits.DIRECT2);
 
     public final StringPath university = createString("university");
 

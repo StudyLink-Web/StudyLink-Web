@@ -84,4 +84,6 @@ logs/
 .github/skills/**
 
 
-
+# User uploads
+uploads/profile/
+uploads/profile/**

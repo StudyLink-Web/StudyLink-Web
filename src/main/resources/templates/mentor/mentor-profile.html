@@ -7,11 +7,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
     <title>프로필 수정 - StudyLink</title>
     <link rel="stylesheet" th:href="@{/css/mentor-profile.css}">
 </head>
 
 <body>
+
 <div layout:fragment="content">
     <!-- 헤더 -->
     <!--
@@ -30,74 +34,83 @@
             ✗ 저장 중 오류가 발생했습니다. 다시 시도해주세요.
         </div>
 
-        <div class="profile-grid">
-            <!-- 사이드바 -->
-            <aside class="sidebar">
-                <div class="profile-avatar">
-                    <img id="avatarPreview" th:src="${user != null && user.profileImageUrl != null ? user.profileImageUrl : 'https://via.placeholder.com/150'}" alt="프로필" class="avatar-image">                    <div class="avatar-upload">
-                        <label class="upload-label">프로필 사진</label>
-                        <input type="file" id="avatarUpload" class="upload-input" accept="image/*">
-                        <button class="upload-btn" onclick="document.getElementById('avatarUpload').click()">
-                            📷 업로드
-                        </button>
-                    </div>
-                </div>
+        <form id="profileForm" method="POST" action="/mentor/update" enctype="multipart/form-data">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
 
-                <div class="sidebar-section">
-                    <div class="section-title">기본 정보</div>
-                    <div class="info-item">
-                        <div class="info-label">이름</div>
-                        <div class="info-value" id="sidebarName" th:text="${mentor != null && user != null ? user.name : '김수현'}">김수현</div>
+            <div class="profile-grid">
+                <!-- 사이드바 -->
+                <aside class="sidebar">
+                    <div class="profile-avatar">
+                        <img id="avatarPreview" th:src="${user != null && user.profileImageUrl != null ? user.profileImageUrl : 'https://via.placeholder.com/150'}" alt="프로필" class="avatar-image">
+                        <div class="avatar-upload">
+                            <label class="upload-label">프로필 사진</label>
+                            <input type="file" id="avatarUpload" name="profileImage" class="upload-input" accept="image/*">
+                            <button type="button" class="upload-btn" onclick="document.getElementById('avatarUpload').click()">
+                                📷 업로드
+                            </button>
+                        </div>
                     </div>
-                    <div class="info-item">
-                        <div class="info-label">닉네임</div>
-                        <div class="info-value" id="sidebarNickname" th:text="${mentor != null ? user.nickname : '수학왕'}">수학왕</div>
-                    </div>
-                    <div class="verified-badge" th:if="${mentor != null && mentor.isVerified}">
-                        ✓ 인증됨
-                    </div>
-                </div>
 
-                <div class="sidebar-section">
-                    <div class="section-title">통계</div>
-                    <div class="info-item">
-                        <div class="info-label">평점</div>
-                        <div class="info-value" th:text="${mentor != null && mentor.averageRating != null ? mentor.averageRating + ' ⭐' : '4.8 ⭐'}">4.8 ⭐</div>
+                    <div class="sidebar-section">
+                        <div class="section-title">기본 정보</div>
+                        <div class="info-item">
+                            <div class="info-label">이름</div>
+                            <div class="info-value" id="sidebarName" th:text="${mentor != null && user != null ? user.name : '공백'}">공백</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">닉네임</div>
+                            <div class="info-value" id="sidebarNickname" th:text="${mentor != null ? user.nickname : '공백'}">공백</div>
+                        </div>
+                        <div class="verified-badge" th:if="${mentor != null && mentor.isVerified}">
+                            ✓ 인증됨
+                        </div>
                     </div>
-                    <div class="info-item">
-                        <div class="info-label">수업 횟수</div>
-                        <div class="info-value" th:text="${mentor != null && mentor.lessonCount != null ? mentor.lessonCount + '회' : '420회'}">420회</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">리뷰</div>
-                        <div class="info-value" th:text="${mentor != null && mentor.reviewCount != null ? mentor.reviewCount + '개' : '156개'}">156개</div>
-                    </div>
-                </div>
 
-                <div class="sidebar-section">
-                    <div class="section-title">계정</div>
-                    <div class="info-item">
-                        <div class="info-label">가입일</div>
-                        <div class="info-value" th:text="${mentor != null && user != null && user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy년 M월') : '2023년 1월'}">2023년 1월</div>
+                    <div class="sidebar-section">
+                        <div class="section-title">통계</div>
+                        <div class="info-item">
+                            <div class="info-label">평점</div>
+                            <div class="info-value" th:text="${mentor != null && mentor.averageRating != null ? mentor.averageRating + ' ⭐' : '공백 ⭐'}">공백 ⭐</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">수업 횟수</div>
+                            <div class="info-value" th:text="${mentor != null && mentor.lessonCount != null ? mentor.lessonCount + '회' : '공백'}">공백</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">리뷰</div>
+                            <div class="info-value" th:text="${mentor != null && mentor.reviewCount != null ? mentor.reviewCount + '개' : 공백}">공백</div>
+                        </div>
                     </div>
-                    <div class="info-item">
-                        <div class="info-label">상태</div>
-                        <div class="info-value" th:text="${mentor != null && user != null && user.isActive ? '활성' : '비활성'}">활성</div>
+
+                    <div class="sidebar-section">
+                        <div class="section-title">계정</div>
+                        <div class="info-item">
+                            <div class="info-label">가입일</div>
+                            <div class="info-value" th:text="${mentor != null && user != null && user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy년 M월') : '공백'}">공백</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">상태</div>
+                            <div class="info-value" th:text="${mentor != null && user != null && user.isActive ? '활성' : '비활성'}">활성</div>
+                        </div>
                     </div>
-                </div>
-            </aside>
+                </aside>
 
-            <!-- 메인 컨텐츠 -->
-            <main class="main-content">
-                <!-- 탭 네비게이션 -->
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="basic">기본 정보</button>
-                    <button class="tab-btn" data-tab="education">학력</button>
-                    <button class="tab-btn" data-tab="teaching">수업 정보</button>
-                    <button class="tab-btn" data-tab="account">계정 설정</button>
-                </div>
+                <!-- 메인 컨텐츠 -->
+                <main class="main-content">
+                    <!-- 탭 네비게이션 -->
+                    <div class="tabs">
+                        <button type="button" class="tab-btn active" data-tab="basic">기본 정보</button>
+                        <button type="button" class="tab-btn" data-tab="education">학력</button>
+                        <button type="button" class="tab-btn" data-tab="teaching">수업 정보</button>
+                        <!-- <button type="button" class="tab-btn" data-tab="account">계정 설정</button> -->
+                    </div>
 
-                <form id="profileForm">
+                    <!-- 필수 입력 안내 -->
+                    <div class="required-notice">
+                        <strong>⚠️ 필수 입력 필드 안내</strong><br>
+                        아래 표시된 필수 항목(*)을 모두 입력해야만 멘토 활동이 가능합니다.
+                    </div>
+
                     <!-- 기본 정보 탭 -->
                     <div class="tab-content active" id="basic">
                         <div class="form-section">
@@ -108,16 +121,16 @@
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">이름 *</label>
+                                    <label class="form-label">이름 <span class="required-mark">*</span></label>
                                     <!-- DB에서 로드한 데이터 바인딩 -->
-                                    <input type="text" class="form-control" id="firstName"
-                                           th:value="${mentor != null && user != null ? user.name : '김수현'}" required>
+                                    <input type="text" class="form-control" id="firstName" name="firstName"
+                                           th:value="${mentor != null && user != null ? user.name : '공백'}">
                                     <div class="form-hint">실제 이름을 입력하세요</div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">닉네임 *</label>
-                                    <input type="text" class="form-control" id="nickname"
-                                           th:value="${mentor != null ? user.nickname : '수학왕'}" required>
+                                    <label class="form-label">닉네임 <span class="required-mark">*</span></label>
+                                    <input type="text" class="form-control" id="nickname" name="nickname"
+                                           th:value="${mentor != null ? user.nickname : '수학왕'}">
                                     <div class="form-hint">학생들이 보게 될 이름</div>
                                 </div>
                             </div>
@@ -130,14 +143,38 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">전화번호</label>
-                                <input type="tel" class="form-control" id="phone"
-                                       th:value="${mentor != null && user != null ? user.phone : ''}" placeholder="010-0000-0000">
+                                <label class="form-label">전화번호
+                                    <!-- <span class="required-mark">*</span> -->
+                                </label>
+                                <div class="phone-auth-group">
+                                    <input type="tel" class="form-control" id="phone" name="phone"
+                                           th:value="${mentor != null && user != null ? user.phone : ''}"
+                                           placeholder="010-0000-0000" maxlength="13">
+                                    <button type="button" class="btn btn-secondary" id="sendAuthBtn"
+                                            onclick="requestPhoneAuth()">
+                                        인증번호 받기
+                                    </button>
+                                </div>
+
+                                <!-- 인증번호 입력 (숨겨진 상태) -->
+                                <div id="authCodeSection" class="auth-section" style="display: none; margin-top: 12px;">
+                                    <div class="auth-input-group">
+                                        <input type="text" class="form-control" id="authCode"
+                                               placeholder="인증번호 6자리" maxlength="6"
+                                               oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                        <button type="button" class="btn btn-primary" onclick="verifyPhoneAuth()">
+                                            인증하기
+                                        </button>
+                                    </div>
+                                    <div id="authTimer" class="auth-timer">남은 시간: <span>05:00</span></div>
+                                    <div id="authMessage" class="auth-message"></div>
+                                </div>
                             </div>
+
 
                             <div class="form-group">
                                 <label class="form-label">소개글</label>
-                                <textarea class="form-control" id="bio" placeholder="자신을 소개해주세요"
+                                <textarea class="form-control" id="bio" name="bio" placeholder="자신을 소개해주세요"
                                           th:text="${mentor != null ? mentor.introduction : '10년 입시 경험, 수능 만점자 배출 다수'}"></textarea>
                                 <div class="form-hint">최대 500자까지 입력 가능합니다</div>
                             </div>
@@ -153,33 +190,33 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">대학교 *</label>
-                                <input type="text" class="form-control" id="university"
-                                       th:value="${mentor != null ? mentor.university : '서울대학교'}" required>
+                                <label class="form-label">대학교 <span class="required-mark">*</span></label>
+                                <input type="text" class="form-control" id="university" name="university"
+                                       th:value="${mentor != null ? mentor.university : '서울대학교'}">
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">학과/전공 *</label>
-                                <input type="text" class="form-control" id="major"
-                                       th:value="${mentor != null ? mentor.major : '수학교육과'}" required>
+                                <label class="form-label">학과/전공 <span class="required-mark">*</span></label>
+                                <input type="text" class="form-control" id="major" name="major"
+                                       th:value="${mentor != null ? mentor.major : '수학교육과'}">
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">입학년도</label>
-                                    <input type="number" class="form-control" id="entranceYear"
+                                    <label class="form-label">입학년도 <span class="required-mark">*</span></label>
+                                    <input type="number" class="form-control" id="entranceYear" name="entranceYear"
                                            th:value="${mentor != null ? mentor.entranceYear : ''}" placeholder="2010" min="1990" max="2025">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">졸업년도</label>
-                                    <input type="number" class="form-control" id="graduationYear"
+                                    <label class="form-label">졸업년도 <span class="required-mark">*</span></label>
+                                    <input type="number" class="form-control" id="graduationYear" name="graduationYear"
                                            th:value="${mentor != null ? mentor.graduationYear : ''}" placeholder="2014" min="1990" max="2030">
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">추가 자격사항</label>
-                                <textarea class="form-control" id="credentials"
+                                <textarea class="form-control" id="credentials" name="credentials"
                                           th:text="${mentor != null ? mentor.credentials : ''}" placeholder="교사 자격증, 공인 자격증 등"></textarea>
                             </div>
                         </div>
@@ -194,66 +231,264 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">주요 과목 *</label>
+                                <label class="form-label">주요 과목 <span class="required-mark">*</span></label>
                                 <div class="checkbox-group">
-                                    <div class="checkbox-item">
-                                        <input type="checkbox" id="subject1" class="checkbox-input" value="math"
-                                               th:checked="${mentor != null && mentor.subjects != null && mentor.subjects.contains('math')}">
-                                        <label for="subject1" class="checkbox-label">수학</label>
+                                    <!-- 국어 (토글) -->
+                                    <div class="checkbox-item collapsible-item">
+                                        <input type="checkbox" id="subject_korean" class="checkbox-input main-subject"
+                                               data-toggle="korean-subjects" name="subjects" value="korean"
+                                               th:checked="${mentor.subjects != null and mentor.subjects.contains('korean')}">
+                                        <label for="subject_korean" class="checkbox-label">
+                                            공통국어 <span class="toggle-icon">▼</span>
+                                        </label>
                                     </div>
-                                    <div class="checkbox-item">
-                                        <input type="checkbox" id="subject2" class="checkbox-input" value="korean"
-                                               th:checked="${mentor != null && mentor.subjects != null && mentor.subjects.contains('korean')}">
-                                        <label for="subject2" class="checkbox-label">국어</label>
+
+                                    <!-- 국어 세부과목 -->
+                                    <div id="korean-subjects" class="collapsible-content" style="display: none;">
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="korean_speech"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('korean_speech')}">
+                                            <label class="checkbox-label">화법과 작문</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="korean_language"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('korean_language')}">
+                                            <label class="checkbox-label">언어와 매체</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="korean_reading"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('korean_reading')}">
+                                            <label class="checkbox-label">독서</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="korean_literature"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('korean_literature')}">
+                                            <label class="checkbox-label">문학</label>
+                                        </div>
                                     </div>
-                                    <div class="checkbox-item">
-                                        <input type="checkbox" id="subject3" class="checkbox-input" value="english"
-                                               th:checked="${mentor != null && mentor.subjects != null && mentor.subjects.contains('english')}">
-                                        <label for="subject3" class="checkbox-label">영어</label>
+
+                                    <!-- 수학 (토글) -->
+                                    <div class="checkbox-item collapsible-item">
+                                        <input type="checkbox" id="subject_math" class="checkbox-input main-subject"
+                                               data-toggle="math-subjects" name="subjects" value="math"
+                                               th:checked="${mentor.subjects != null and mentor.subjects.contains('math')}">
+                                        <label for="subject_math" class="checkbox-label">
+                                            공통수학 <span class="toggle-icon">▼</span>
+                                        </label>
                                     </div>
-                                    <div class="checkbox-item">
-                                        <input type="checkbox" id="subject4" class="checkbox-input" value="science"
-                                               th:checked="${mentor != null && mentor.subjects != null && mentor.subjects.contains('science')}">
-                                        <label for="subject4" class="checkbox-label">과학</label>
+
+                                    <!-- 수학 세부과목 -->
+                                    <div id="math-subjects" class="collapsible-content" style="display: none;">
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="math_1"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('math_1')}">
+                                            <label class="checkbox-label">수학 I</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="math_2"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('math_2')}">
+                                            <label class="checkbox-label">수학 II</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="math_probability"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('math_probability')}">
+                                            <label class="checkbox-label">확률과 통계</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="math_calculus"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('math_calculus')}">
+                                            <label class="checkbox-label">미적분</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="math_geometry"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('math_geometry')}">
+                                            <label class="checkbox-label">기하</label>
+                                        </div>
                                     </div>
+
+                                    <!-- 영어 (토글) -->
+                                    <div class="checkbox-item collapsible-item">
+                                        <input type="checkbox" id="subject_english" class="checkbox-input main-subject"
+                                               data-toggle="english-subjects" name="subjects" value="english"
+                                               th:checked="${mentor.subjects != null and mentor.subjects.contains('english')}">
+                                        <label for="subject_english" class="checkbox-label">
+                                            공통영어 <span class="toggle-icon">▼</span>
+                                        </label>
+                                    </div>
+
+                                    <!-- 영어 세부과목 -->
+                                    <div id="english-subjects" class="collapsible-content" style="display: none;">
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="english_conversation"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('english_conversation')}">
+                                            <label class="checkbox-label">영어 회화</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="english_writing"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('english_writing')}">
+                                            <label class="checkbox-label">영어 작문</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="english_reading"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('english_reading')}">
+                                            <label class="checkbox-label">영어 읽기</label>
+                                        </div>
+                                    </div>
+
+                                    <!-- 과학 (토글) -->
+                                    <div class="checkbox-item collapsible-item">
+                                        <input type="checkbox" id="subject_science" class="checkbox-input main-subject"
+                                               data-toggle="science-subjects" name="subjects" value="science"
+                                               th:checked="${mentor.subjects != null and mentor.subjects.contains('science')}">
+                                        <label for="subject_science" class="checkbox-label">
+                                            통합과학 <span class="toggle-icon">▼</span>
+                                        </label>
+                                    </div>
+
+                                    <!-- 과학 세부과목 -->
+                                    <div id="science-subjects" class="collapsible-content" style="display: none;">
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="physics1"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('physics1')}">
+                                            <label class="checkbox-label">물리학Ⅰ</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="physics2"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('physics2')}">
+                                            <label class="checkbox-label">물리학Ⅱ</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="chemistry1"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('chemistry1')}">
+                                            <label class="checkbox-label">화학Ⅰ</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="chemistry2"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('chemistry2')}">
+                                            <label class="checkbox-label">화학Ⅱ</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="lifescience1"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('lifescience1')}">
+                                            <label class="checkbox-label">생명과학Ⅰ</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="lifescience2"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('lifescience2')}">
+                                            <label class="checkbox-label">생명과학Ⅱ</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="earthscience1"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('earthscience1')}">
+                                            <label class="checkbox-label">지구과학Ⅰ</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="earthscience2"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('earthscience2')}">
+                                            <label class="checkbox-label">지구과학Ⅱ</label>
+                                        </div>
+                                    </div>
+
+                                    <!-- 사회 (토글) -->
+                                    <div class="checkbox-item collapsible-item">
+                                        <input type="checkbox" id="subject_social" class="checkbox-input main-subject"
+                                               data-toggle="social-subjects" name="subjects" value="social"
+                                               th:checked="${mentor.subjects != null and mentor.subjects.contains('social')}">
+                                        <label for="subject_social" class="checkbox-label">
+                                            통합사회 <span class="toggle-icon">▼</span>
+                                        </label>
+                                    </div>
+
+                                    <!-- 사회 세부과목 -->
+                                    <div id="social-subjects" class="collapsible-content" style="display: none;">
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="ethics"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('ethics')}">
+                                            <label class="checkbox-label">생활과 윤리</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="ethics_philosophy"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('ethics_philosophy')}">
+                                            <label class="checkbox-label">윤리와 사상</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="korean_geography"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('korean_geography')}">
+                                            <label class="checkbox-label">한국지리</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="world_geography"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('world_geography')}">
+                                            <label class="checkbox-label">세계지리</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="east_asia_history"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('east_asia_history')}">
+                                            <label class="checkbox-label">동아시아사</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="world_history"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('world_history')}">
+                                            <label class="checkbox-label">세계사</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="economics"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('economics')}">
+                                            <label class="checkbox-label">경제</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="politics_law"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('politics_law')}">
+                                            <label class="checkbox-label">정치와 법</label>
+                                        </div>
+                                        <div class="checkbox-item sub-item">
+                                            <input type="checkbox" class="checkbox-input" name="subjects" value="society_culture"
+                                                   th:checked="${mentor.subjects != null and mentor.subjects.contains('society_culture')}">
+                                            <label class="checkbox-label">사회·문화</label>
+                                        </div>
+                                    </div>
+
+                                    <!-- 한국사 -->
                                     <div class="checkbox-item">
-                                        <input type="checkbox" id="subject5" class="checkbox-input" value="social"
-                                               th:checked="${mentor != null && mentor.subjects != null && mentor.subjects.contains('social')}">
-                                        <label for="subject5" class="checkbox-label">사회</label>
+                                        <input type="checkbox" id="subject_korean_history" class="checkbox-input" name="subjects" value="korean_history"
+                                               th:checked="${mentor.subjects != null and mentor.subjects.contains('korean_history')}">
+                                        <label for="subject_korean_history" class="checkbox-label">한국사</label>
                                     </div>
                                 </div>
                             </div>
 
+                            <!--
                             <div class="form-group">
-                                <label class="form-label">수업 대상 학년 *</label>
+                                <label class="form-label">수업 대상 학년 <span class="required-mark">*</span></label>
                                 <div class="checkbox-group">
                                     <div class="checkbox-item">
-                                        <input type="checkbox" id="grade1" class="checkbox-input" value="middle"
-                                               th:checked="${mentor != null && mentor.grades != null && mentor.grades.contains('middle')}">
+                                        <input type="checkbox" id="grade1" class="checkbox-input" name="grades" value="middle"
+                                               th:checked="${mentor.grades != null and mentor.grades.contains('middle')}">
                                         <label for="grade1" class="checkbox-label">중학교</label>
                                     </div>
                                     <div class="checkbox-item">
-                                        <input type="checkbox" id="grade2" class="checkbox-input" value="high"
-                                               th:checked="${mentor != null && mentor.grades != null && mentor.grades.contains('high')}">
+                                        <input type="checkbox" id="grade2" class="checkbox-input" name="grades" value="high"
+                                               th:checked="${mentor.grades != null and mentor.grades.contains('high')}">
                                         <label for="grade2" class="checkbox-label">고등학교</label>
                                     </div>
                                     <div class="checkbox-item">
-                                        <input type="checkbox" id="grade3" class="checkbox-input" value="adult"
-                                               th:checked="${mentor != null && mentor.grades != null && mentor.grades.contains('adult')}">
+                                        <input type="checkbox" id="grade3" class="checkbox-input" name="grades" value="adult"
+                                               th:checked="${mentor.grades != null and mentor.grades.contains('ault')}">
                                         <label for="grade3" class="checkbox-label">성인</label>
                                     </div>
                                 </div>
                             </div>
+                            -->
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">시간당 수업료 (₩)</label>
-                                    <input type="number" class="form-control" id="pricePerHour"
+                                    <label class="form-label">시간당 수업료 (₩) <span class="required-mark">*</span></label>
+                                    <input type="number" class="form-control" id="pricePerHour" name="pricePerHour"
                                            th:value="${mentor != null && mentor.pricePerHour != null ? mentor.pricePerHour : '35000'}" min="10000">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">최소 수업 시간</label>
-                                    <select class="form-control" id="minLessonHours">
+                                    <select class="form-control" id="minLessonHours" name="minLessonHours">
                                         <option value="1" th:selected="${mentor != null && mentor.minLessonHours == 1}">1시간</option>
                                         <option value="1.5" th:selected="${mentor != null && mentor.minLessonHours == 1.5}">1.5시간</option>
                                         <option value="2" th:selected="${mentor == null || mentor.minLessonHours == 2}">2시간</option>
@@ -262,7 +497,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">수업 방식</label>
+                                <label class="form-label">수업 방식 <span class="required-mark">*</span></label>
                                 <div class="radio-group">
                                     <div class="radio-item">
                                         <input type="radio" id="online" class="radio-input" name="lessonType" value="online"
@@ -284,13 +519,13 @@
 
                             <div class="form-group">
                                 <label class="form-label">수업 위치 (오프라인인 경우)</label>
-                                <input type="text" class="form-control" id="lessonLocation"
+                                <input type="text" class="form-control" id="lessonLocation" name="lessonLocation"
                                        th:value="${mentor != null ? mentor.lessonLocation : ''}" placeholder="서울시 강남구">
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">수업 가능 시간</label>
-                                <textarea class="form-control" id="availableTime" placeholder="예: 평일 오후 6시 이후, 주말 자유"
+                                <textarea class="form-control" id="availableTime" name="availableTime" placeholder="예: 평일 오후 6시 이후, 주말 자유"
                                           th:text="${mentor != null ? mentor.availableTime : '평일 오후 6시 이후, 주말 자유'}"></textarea>
                             </div>
                         </div>
@@ -361,11 +596,12 @@
                         <button type="submit" class="btn btn-primary">✓ 저장하기</button>
                         <button type="reset" class="btn btn-secondary">↻ 취소</button>
                     </div>
-                </form>
-            </main>
-        </div>
+                </main>
+            </div>
+        </form>
     </div>
 </div>
 
 </body>
+
 </html>
