@@ -84,7 +84,9 @@ logs/
 .github/skills/**
 
 
-
+# User uploads
+uploads/profile/
+uploads/profile/**
 
 # AI Reference Folder (Private)
 .reference/

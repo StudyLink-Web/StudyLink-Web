@@ -3,7 +3,6 @@ package com.StudyLink.www.service;
 import com.StudyLink.www.dto.MentorProfileDTO;
 import com.StudyLink.www.entity.MentorProfile;
 import com.StudyLink.www.entity.Users;
-import com.StudyLink.www.handler.MentorProfileImageHandler;
 import com.StudyLink.www.repository.MentorProfileRepository;
 import com.StudyLink.www.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class MentorProfileService {
 
     private final MentorProfileRepository mentorProfileRepository;
     private final UserRepository userRepository;
-    private final MentorProfileImageHandler imageHandler;
+    private final FileStorageService fileStorageService;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -204,10 +203,10 @@ public class MentorProfileService {
                 try {
                     if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isEmpty()) {
                         log.debug("🗑️  기존 이미지 삭제: {}", user.getProfileImageUrl());
-                        imageHandler.deleteProfileImage(user.getProfileImageUrl());
+                        fileStorageService.deleteProfileImage(user.getUserId());
                     }
                     log.debug("💾 새 이미지 저장 중...");
-                    String imageUrl = imageHandler.saveProfileImage(profileImage, user.getUserId());
+                    String imageUrl = fileStorageService.saveProfileImage(profileImage, user.getUserId());
                     user.setProfileImageUrl(imageUrl);
                     log.info("✅ 프로필 이미지 저장 완료: {}", imageUrl);
                 } catch (IOException e) {

@@ -1053,10 +1053,182 @@ textarea.form-control {
 
 .checkbox-label,
 .radio-label {
+    cursor: pointer;
+    font-weight: 500;
     font-size: var(--font-size-base);
     color: var(--color-text);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    user-select: none;
+    transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.checkbox-label:hover {
+    color: var(--color-primary);
+}
+
+.collapsible-item {
+    display: flex;
+    align-items: flex-start;
     cursor: pointer;
-    line-height: var(--line-height-normal);
+    transition: all var(--duration-normal) var(--ease-standard);
+}
+
+.collapsible-item .checkbox-label {
+    flex: 1;
+}
+
+.toggle-icon {
+    display: inline-block;
+    transition: transform var(--duration-normal) var(--ease-standard);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.collapsible-item .checkbox-input:checked ~ .checkbox-label .toggle-icon {
+    transform: rotate(-180deg);
+}
+
+.collapsible-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    margin-left: 0; !important;  /* 제거 */
+    margin-right: auto;
+    padding: var(--space-12);
+    text-align: left;
+
+    width: 100%;                 /* 핵심 */
+    max-width: none;             /* 핵심 */
+
+    background-color: var(--color-secondary);
+    border-radius: var(--radius-base);
+}
+
+
+.collapsible-content.show {
+    display: flex;
+    flex-direction: column;
+    animation: slideDown var(--duration-normal) var(--ease-standard);
+    gap: var(--space-16);   /* 위아래 간격 넓히기 */
+}
+
+
+
+.subject-content {
+    display: none;
+    margin-top: var(--space-12);
+    margin-left: 24px;
+    padding: var(--space-12) var(--space-16);
+    gap: var(--space-8);
+
+    width: 85%;
+    max-width: 480px;
+
+    background-color: rgba(var(--color-teal-500-rgb), 0.05);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-card-border);
+
+    animation: fadeSlideDown var(--duration-normal) var(--ease-standard);
+}
+
+
+
+.subject-content.show {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (prefers-color-scheme: dark) {
+    .subject-content {
+        background-color: rgba(var(--color-teal-300-rgb), 0.08);
+        border-color: var(--color-card-border);
+    }
+}
+
+
+@keyframes fadeSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 500px;
+    }
+}
+
+.sub-item {
+    align-items: flex-start;
+}
+
+.sub-item .checkbox-input {
+    width: 16px;
+    height: 16px;
+}
+
+.sub-item .checkbox-label {
+    font-weight: 400;
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    gap: var(--space-6);
+}
+
+@media (max-width: 768px) {
+    .checkbox-group {
+        gap: var(--space-8);
+    }
+
+    .checkbox-item {
+        gap: var(--space-6);
+    }
+
+    .collapsible-content.show {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        padding: var(--space-8);
+        gap: var(--space-8);
+    }
+
+    .checkbox-label {
+        font-size: var(--font-size-sm);
+    }
+
+    .sub-item .checkbox-label {
+        font-size: var(--font-size-xs);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .collapsible-content {
+        background-color: var(--color-secondary);
+    }
+
+    .toggle-icon {
+        color: var(--color-text-secondary);
+    }
+}
+
+[data-color-scheme="dark"] .collapsible-content {
+    background-color: var(--color-secondary);
+}
+
+[data-color-scheme="dark"] .toggle-icon {
+    color: var(--color-text-secondary);
 }
 
 /* 버튼 그룹 */
@@ -1150,6 +1322,243 @@ textarea.form-control {
 .btn-danger:active:not(:disabled) {
     background: rgba(var(--color-error-rgb), 0.2);
 }
+
+/* 전화번호 인증 관련 스타일 */
+.phone-auth-group {
+    display: flex;
+    gap: var(--space-8);
+    margin-bottom: var(--space-8);
+}
+
+.phone-auth-group .form-control {
+    flex: 1;
+}
+
+.phone-auth-group .btn {
+    flex-shrink: 0;
+    min-width: 120px;
+}
+
+.auth-section {
+    padding: var(--space-12);
+    background: var(--color-secondary);
+    border-radius: var(--radius-base);
+    border-left: 3px solid var(--color-primary);
+}
+
+.auth-input-group {
+    display: flex;
+    gap: var(--space-8);
+    margin-bottom: var(--space-8);
+}
+
+.auth-input-group .form-control {
+    flex: 1;
+}
+
+.auth-input-group .btn {
+    flex-shrink: 0;
+}
+
+.auth-timer {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-8);
+}
+
+.auth-timer span {
+    font-weight: bold;
+    color: var(--color-primary);
+}
+
+.auth-message {
+    padding: var(--space-8);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+.auth-message.success {
+    background: rgba(33, 128, 141, 0.1);
+    color: var(--color-success);
+    border: 1px solid rgba(33, 128, 141, 0.3);
+}
+
+.auth-message.error {
+    background: rgba(192, 21, 47, 0.1);
+    color: var(--color-error);
+    border: 1px solid rgba(192, 21, 47, 0.3);
+}
+
+
+.required-notice {
+    background-color: #fff8f0;
+    border-left: 4px solid #ff6b6b;
+    padding: 12px 16px;
+    margin-bottom: 30px;
+    margin-top: 20px;
+}
+
+.form-label .required-mark {
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+/* ✅ 에러 모달 스타일 */
+.error-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.error-modal.show .error-modal-overlay {
+    opacity: 1;
+}
+
+.error-modal.show .error-modal-content {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.error-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+}
+
+.error-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.error-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+    color: white;
+}
+
+.error-modal-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.error-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    flex: 1;
+}
+
+.error-modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.error-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.error-modal-body {
+    padding: 24px;
+}
+
+.error-modal-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.error-modal-list li {
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #fff5f5;
+    border-left: 4px solid #ff6b6b;
+    border-radius: 6px;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.error-modal-list li:last-child {
+    margin-bottom: 0;
+}
+
+.error-modal-footer {
+    padding: 16px 24px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.error-modal-btn {
+    padding: 10px 24px;
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.error-modal-btn:hover {
+    background: #ff5252;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.error-modal-btn:active {
+    transform: translateY(0);
+}
+
+/* 다크모드 대응 */
+@media (prefers-color-scheme: dark) {
+    .error-modal-content {
+        background: #2a2a2a;
+        color: #f5f5f5;
+    }
+
+    .error-modal-list li {
+        background: rgba(255, 107, 107, 0.15);
+        color: #f5f5f5;
+    }
+}
+
 
 /* 알림 메시지 */
 .alert {

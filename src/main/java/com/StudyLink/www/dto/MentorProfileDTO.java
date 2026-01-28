@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -41,8 +42,8 @@ public class MentorProfileDTO {
     private String bio;            // introduction과 같은 내용
 
     // 수업 정보
-    private String subjects;       // JSON: ["math", "korean"]
-    private String grades;         // JSON: ["high", "adult"]
+    private List<String> subjects;       // JSON: ["math", "korean"]
+    private List<String> grades;         // JSON: ["high", "adult"]
     private Integer pricePerHour;
     private Double minLessonHours;
     private String lessonType;

@@ -16,7 +16,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+// Firebase 설정값 추가
+import org.springframework.beans.factory.annotation.Value;
 
 @Slf4j
 @Controller
@@ -26,6 +30,28 @@ public class MentorProfileController {
 
     private final MentorProfileService mentorProfileService;
     private final UserRepository userRepository;
+
+    // Firebase 설정값 (application.properties에서 읽어오기)
+    @Value("${firebase.api-key}")
+    private String firebaseApiKey;
+
+    @Value("${firebase.auth-domain}")
+    private String firebaseAuthDomain;
+
+    @Value("${firebase.project-id}")
+    private String firebaseProjectId;
+
+    @Value("${firebase.storage-bucket}")
+    private String firebaseStorageBucket;
+
+    @Value("${firebase.messaging-sender-id}")
+    private String firebaseMessagingSenderId;
+
+    @Value("${firebase.app-id}")
+    private String firebaseAppId;
+
+    @Value("${firebase.measurement-id}")
+    private String firebaseMeasurementId;
 
     /**
      * Authentication에서 Users 엔티티 추출
@@ -54,7 +80,7 @@ public class MentorProfileController {
                 Users currentUser = extractUser(authentication);
                 log.info("사용자 조회 성공 - userId: {}, email: {}", currentUser.getUserId(), currentUser.getEmail());
 
-                // ⭐ 수정: Optional 처리 + 없으면 자동 생성
+                // Optional 처리 + 없으면 자동 생성
                 MentorProfile mentor = mentorProfileService.getMentorProfileWithStats(currentUser.getUserId())
                         .orElseGet(() -> {
                             log.info("⚠️ 멘토 프로필이 없어서 새로 생성합니다. userId: {}", currentUser.getUserId());
@@ -105,8 +131,8 @@ public class MentorProfileController {
             @RequestParam(value = "entranceYear", required = false) String entranceYear,
             @RequestParam(value = "graduationYear", required = false) String graduationYear,
             @RequestParam(value = "credentials", required = false) String credentials,
-            @RequestParam(value = "subjects", required = false) String subjects,
-            @RequestParam(value = "grades", required = false) String grades,
+            @RequestParam(value = "subjects", required = false) List<String> subjects,
+            @RequestParam(value = "grades", required = false) List<String> grades,
             @RequestParam(value = "pricePerHour", required = false) String pricePerHour,
             @RequestParam(value = "minLessonHours", required = false) String minLessonHours,
             @RequestParam(value = "lessonType", required = false) String lessonType,
@@ -115,9 +141,9 @@ public class MentorProfileController {
             @RequestParam(value = "currentPassword", required = false) String currentPassword,
             @RequestParam(value = "newPassword", required = false) String newPassword,
             @RequestParam(value = "confirmPassword", required = false) String confirmPassword,
-            @RequestParam(value = "notificationLesson", required = false) boolean notificationLesson,
-            @RequestParam(value = "notificationMessage", required = false) boolean notificationMessage,
-            @RequestParam(value = "notificationReview", required = false) boolean notificationReview,
+            @RequestParam(value = "notificationLesson", required = false) Boolean notificationLesson,
+            @RequestParam(value = "notificationMessage", required = false) Boolean notificationMessage,
+            @RequestParam(value = "notificationReview", required = false) Boolean notificationReview,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
             Authentication authentication) {
 
@@ -136,7 +162,44 @@ public class MentorProfileController {
             String username = authentication.getName();
             log.info("✅ 사용자 인증 완료: {}", username);
 
-            // 2️⃣ DTO 생성
+            // 2️⃣ 안전한 숫자 파싱 (NumberFormatException 방지)
+            Integer entranceYearInt = null;
+            if (entranceYear != null && !entranceYear.isEmpty() && !entranceYear.trim().isEmpty()) {
+                try {
+                    entranceYearInt = Integer.parseInt(entranceYear);
+                } catch (NumberFormatException e) {
+                    log.warn("⚠️ 입학년도 파싱 실패: {}", entranceYear);
+                }
+            }
+
+            Integer graduationYearInt = null;
+            if (graduationYear != null && !graduationYear.isEmpty() && !graduationYear.trim().isEmpty()) {
+                try {
+                    graduationYearInt = Integer.parseInt(graduationYear);
+                } catch (NumberFormatException e) {
+                    log.warn("⚠️ 졸업년도 파싱 실패: {}", graduationYear);
+                }
+            }
+
+            Integer pricePerHourInt = null;
+            if (pricePerHour != null && !pricePerHour.isEmpty() && !pricePerHour.trim().isEmpty()) {
+                try {
+                    pricePerHourInt = Integer.parseInt(pricePerHour);
+                } catch (NumberFormatException e) {
+                    log.warn("⚠️ 시급 파싱 실패: {}", pricePerHour);
+                }
+            }
+
+            Double minLessonHoursDouble = null;
+            if (minLessonHours != null && !minLessonHours.isEmpty() && !minLessonHours.trim().isEmpty()) {
+                try {
+                    minLessonHoursDouble = Double.parseDouble(minLessonHours);
+                } catch (NumberFormatException e) {
+                    log.warn("⚠️ 최소수업시간 파싱 실패: {}", minLessonHours);
+                }
+            }
+
+            // 3️⃣ DTO 생성
             MentorProfileDTO mentorDTO = MentorProfileDTO.builder()
                     .firstName(firstName)
                     .nickname(nickname)
@@ -144,27 +207,27 @@ public class MentorProfileController {
                     .bio(bio)
                     .university(university)
                     .major(major)
-                    .entranceYear(entranceYear != null && !entranceYear.isEmpty() ? Integer.parseInt(entranceYear) : null)
-                    .graduationYear(graduationYear != null && !graduationYear.isEmpty() ? Integer.parseInt(graduationYear) : null)
+                    .entranceYear(entranceYearInt)
+                    .graduationYear(graduationYearInt)
                     .credentials(credentials)
                     .subjects(subjects)
                     .grades(grades)
-                    .pricePerHour(pricePerHour != null && !pricePerHour.isEmpty() ? Integer.parseInt(pricePerHour) : null)
-                    .minLessonHours(minLessonHours != null && !minLessonHours.isEmpty() ? Double.parseDouble(minLessonHours) : null)
+                    .pricePerHour(pricePerHourInt)
+                    .minLessonHours(minLessonHoursDouble)
                     .lessonType(lessonType)
                     .lessonLocation(lessonLocation)
                     .availableTime(availableTime)
                     .currentPassword(currentPassword)
                     .newPassword(newPassword)
                     .confirmPassword(confirmPassword)
-                    .notificationLesson(notificationLesson)
-                    .notificationMessage(notificationMessage)
-                    .notificationReview(notificationReview)
+                    .notificationLesson(notificationLesson != null ? notificationLesson : true)
+                    .notificationMessage(notificationMessage != null ? notificationMessage : true)
+                    .notificationReview(notificationReview != null ? notificationReview : true)
                     .build();
 
             log.info("✅ DTO 생성 완료");
 
-            // 3️⃣ 서비스 호출
+            // 4️⃣ 서비스 호출
             mentorProfileService.updateMentorProfileWithPassword(username, mentorDTO, profileImage);
 
             log.info("✅ 프로필 업데이트 완료");
@@ -178,10 +241,43 @@ public class MentorProfileController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
             log.error("❌ 프로필 업데이트 실패: {}", e.getMessage(), e);
+            e.printStackTrace();
             response.put("error", e.getMessage() != null ? e.getMessage() : "프로필 저장 중 오류가 발생했습니다");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+
+    /**
+     * Firebase 설정값 반환 API (새로 추가)
+     */
+    @GetMapping("/firebase-config")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> getFirebaseConfig(Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            log.warn("❌ Firebase Config 접근 거부 - 인증 안됨");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        log.info("🔥 Firebase 설정값 요청 - user={}", authentication.getName());
+
+        Map<String, String> config = new HashMap<>();
+        config.put("apiKey", firebaseApiKey);
+        config.put("authDomain", firebaseAuthDomain);
+        config.put("projectId", firebaseProjectId);
+        config.put("storageBucket", firebaseStorageBucket);
+        /*
+        config.put("messagingSenderId", firebaseMessagingSenderId);
+        config.put("appId", firebaseAppId);
+        config.put("measurementId", firebaseMeasurementId);
+        */
+
+        return ResponseEntity.ok(config);
+    }
+
+
+
 
     /**
      * 계정 삭제 (DELETE)
