@@ -1026,7 +1026,7 @@ textarea.form-control {
 .radio-group {
     display: flex;
     flex-direction: column;
-    gap: var(--space-12);
+    gap: 2px;
 }
 
 .checkbox-item,
@@ -1064,15 +1064,23 @@ textarea.form-control {
     transition: color var(--duration-fast) var(--ease-standard);
 }
 
+.checkbox-label.main-subject-label {
+    align-items: center;   /* flex-start → center */
+    line-height: 1.1;      /* 더 타이트 */
+    padding: 2px 0;        /* 최소 시각 여백 */
+}
+
 .checkbox-label:hover {
     color: var(--color-primary);
 }
 
+/* ===== 메인 과목 토글 ===== */
 .collapsible-item {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     cursor: pointer;
-    transition: all var(--duration-normal) var(--ease-standard);
+
+    padding: 2px 8px;   /* 위아래 줄이되 클릭성 유지 */
 }
 
 .collapsible-item .checkbox-label {
@@ -1086,12 +1094,7 @@ textarea.form-control {
     color: var(--color-text-secondary);
 }
 
-.collapsible-item .checkbox-input:checked ~ .checkbox-label .toggle-icon {
-    transform: rotate(-180deg);
-}
-
 .collapsible-content {
-    display: flex;
     flex-direction: column;
     align-items: flex-start;
 
@@ -1108,17 +1111,76 @@ textarea.form-control {
 }
 
 
-.collapsible-content.show {
+
+
+/* 과목 토글 관련 스타일 */
+.main-subject-label {
     display: flex;
-    flex-direction: column;
-    animation: slideDown var(--duration-normal) var(--ease-standard);
-    gap: var(--space-16);   /* 위아래 간격 넓히기 */
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    font-weight: 600;
+    user-select: none;
+
+    line-height: 1.2;
+    padding: 4px 0;        /* 위아래 시각적 여백 감소 */
+}
+
+.main-subject-label:hover {
+    color: var(--color-primary, #2180);
+}
+
+.subject-icon {
+    font-size: 15px;
+    line-height: 1;    /* 아이콘 박스 줄이기 */
+    color: var(--color-primary, #208080);
+    transition: transform 0.3s ease;
+}
+
+.main-subject-label[data-toggle].active .subject-icon {
+    color: var(--color-primary, #208080);
+}
+
+.toggle-icon {
+    margin-left: auto;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    transition: transform var(--duration-normal) var(--ease-standard);
+}
+
+/* 화살표 회전 */
+.main-subject-label.active .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* ===== 토글 콘텐츠 ===== */
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    padding-left: 16px;
+    transition:
+            max-height 0.35s var(--ease-standard),
+            opacity 0.25s var(--ease-standard);
+    opacity: 0;
+}
+
+/* 열렸을 때 */
+.collapsible-content.open {
+    max-height: 800px; /* 충분히 큰 값 */
+    opacity: 1;
+    margin-top: 6px;
+    margin-bottom: 12px;
+}
+
+/* 서브 과목 */
+.collapsible-content .sub-item {
+    margin: 6px 0;
+    padding-left: 12px;
+    border-left: 2px solid var(--color-border);
 }
 
 
-
 .subject-content {
-    display: none;
     margin-top: var(--space-12);
     margin-left: 24px;
     padding: var(--space-12) var(--space-16);
@@ -1134,12 +1196,6 @@ textarea.form-control {
     animation: fadeSlideDown var(--duration-normal) var(--ease-standard);
 }
 
-
-
-.subject-content.show {
-    display: flex;
-    flex-direction: column;
-}
 
 @media (prefers-color-scheme: dark) {
     .subject-content {
@@ -1183,10 +1239,8 @@ textarea.form-control {
 }
 
 .sub-item .checkbox-label {
-    font-weight: 400;
     font-size: var(--font-size-sm);
-    color: var(--color-text);
-    gap: var(--space-6);
+    font-weight: 400;
 }
 
 @media (max-width: 768px) {
@@ -1196,12 +1250,6 @@ textarea.form-control {
 
     .checkbox-item {
         gap: var(--space-6);
-    }
-
-    .collapsible-content.show {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-        padding: var(--space-8);
-        gap: var(--space-8);
     }
 
     .checkbox-label {
