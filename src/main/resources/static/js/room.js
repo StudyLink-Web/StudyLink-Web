@@ -509,6 +509,9 @@ const SMOOTH_ALPHA = 0.35; // 손떨림 보정(0 ~ 1.0(원본))
 // 도구 선택
 let selectedTool = 'draw';
 
+// 캔버스 이동 관련
+let isPanning = false;
+
 // 랜더링 관련
 let renderScheduled = false;
 let lastRenderTime = 0;
@@ -1319,9 +1322,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // canvas 이벤트 바인딩
     canvas.on('mouse:down', (opt) => {
-        isDrawing = selectedTool === 'draw' || selectedTool === 'erase';
-        lastPoint = canvas.getPointer(opt.e);
-        currentPointer = lastPoint;
+        if (opt.e.altKey) { // Alt 누르고 드래그
+            isPanning = true;
+        } else {
+            isDrawing = selectedTool === 'draw' || selectedTool === 'erase';
+            lastPoint = canvas.getPointer(opt.e);
+            currentPointer = lastPoint;
+        }
 
         if (isDrawing) {
             initializeCurrentAction({type: selectedTool});
@@ -1336,59 +1343,73 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     canvas.on('mouse:move', (opt) => {
-        if (!isDrawing) return;
-        currentPointer = canvas.getPointer(opt.e);
+        if (isDrawing) {
+            currentPointer = canvas.getPointer(opt.e);
+        };
+
+        if (isPanning) {
+            const e = opt.e;
+            const vpt = canvas.viewportTransform;
+            vpt[4] += e.movementX;
+            vpt[5] += e.movementY;
+            scheduleRender();
+        }
     });
 
     canvas.on('mouse:up', async () => {
-        if (!isDrawing) return;
-        isDrawing = false;
-        currentPointer = null;
+        if (isDrawing) {
+            isDrawing = false;
+            currentPointer = null;
 
-        if (currentAction && currentAction.targets.length > 0) {
-            // UI 즉시 반영: undoStack에 push
-            pushToUndoStack();
+            if (currentAction && currentAction.targets.length > 0) {
+                // UI 즉시 반영: undoStack에 push
+                pushToUndoStack();
 
-            // pushToUndoStack 메시지는 UI 즉시 전송
-            const pushMsg = {
-                senderId: senderId,
-                seq: mySeq++
-            };
-            safeSend('/app/pushToUndoStack', pushMsg);
+                // pushToUndoStack 메시지는 UI 즉시 전송
+                const pushMsg = {
+                    senderId: senderId,
+                    seq: mySeq++
+                };
+                safeSend('/app/pushToUndoStack', pushMsg);
 
-            const actionCopy = JSON.parse(JSON.stringify(currentAction));
+                const actionCopy = JSON.parse(JSON.stringify(currentAction));
 
-            const undoRedoStackDTO = {
-                roomId: roomId,
-                undoStack: JSON.parse(JSON.stringify(undoStack)),
-                redoStack: JSON.parse(JSON.stringify(redoStack))
-            };
+                const undoRedoStackDTO = {
+                    roomId: roomId,
+                    undoStack: JSON.parse(JSON.stringify(undoStack)),
+                    redoStack: JSON.parse(JSON.stringify(redoStack))
+                };
 
-            undoRedoQueue = undoRedoQueue.then(async () => {
-                // DB 저장
-                await saveCanvasActionToDB(actionCopy.type, actionCopy.targets.map(t => ({
-                    uuid: t.uuid,
-                    x1: t.x1,
-                    y1: t.y1,
-                    x2: t.x2,
-                    y2: t.y2
-                })));
+                undoRedoQueue = undoRedoQueue.then(async () => {
+                    // DB 저장
+                    await saveCanvasActionToDB(actionCopy.type, actionCopy.targets.map(t => ({
+                        uuid: t.uuid,
+                        x1: t.x1,
+                        y1: t.y1,
+                        x2: t.x2,
+                        y2: t.y2
+                    })));
 
-                // undo/redo 스택 DB 저장
-                await saveUndoRedoStack(undoRedoStackDTO);
-            }).catch(console.error);
+                    // undo/redo 스택 DB 저장
+                    await saveUndoRedoStack(undoRedoStackDTO);
+                }).catch(console.error);
 
-            // currentAction 리셋 & 메시지 전송
-            resetCurrentAction();
+                // currentAction 리셋 & 메시지 전송
+                resetCurrentAction();
 
-            const resetMsg = {
-                senderId: senderId,
-                seq: mySeq++
-            };
-            safeSend('/app/resetCurrentAction', resetMsg);
-        } else {
-            // currentAction 비어있으면 그냥 리셋
-            resetCurrentAction();
+                const resetMsg = {
+                    senderId: senderId,
+                    seq: mySeq++
+                };
+                safeSend('/app/resetCurrentAction', resetMsg);
+            } else {
+                // currentAction 비어있으면 그냥 리셋
+                resetCurrentAction();
+            }
+        }
+
+        if (isPanning) {
+            isPanning = false;
         }
     });
 
@@ -1449,6 +1470,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// 마우스 휠 확대 / 축소
+canvas.on('mouse:wheel', function(opt) {
+  const delta = opt.e.deltaY;
+  let zoom = canvas.getZoom();
+
+  zoom *= 0.999 ** delta;
+
+  if (zoom > 10) zoom = 10;
+  if (zoom < 0.2) zoom = 0.2;
+
+  canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+  opt.e.preventDefault();
+  opt.e.stopPropagation();
+});
 
 
 // WebSocket 연결
