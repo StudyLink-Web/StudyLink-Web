@@ -10,12 +10,14 @@ import com.StudyLink.www.repository.BoardRepository;
 import com.StudyLink.www.repository.FileRepository;
 import com.StudyLink.www.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BoardServiceImpl implements BoardService {
@@ -29,6 +31,13 @@ public class BoardServiceImpl implements BoardService {
         String u = f.getUuid();
         String n = f.getFileName();
         return (u != null && u.startsWith("_th_")) || (n != null && n.contains("_th_"));
+    }
+
+    private void attachThumb(BoardDTO dto, Long postId) {
+        if (dto == null || postId == null) return;
+        fileRepository.findFirstByPostIdAndFileTypeOrderByCreatedAtAsc(postId, 1)
+                .filter(img -> !isThumb(img))
+                .ifPresent(img -> dto.setThumbPath("/board/file/" + img.getUuid()));
     }
 
     @Override
@@ -80,9 +89,16 @@ public class BoardServiceImpl implements BoardService {
 
         return page.map(board -> {
             BoardDTO dto = convertEntityToDto(board);
-            fileRepository.findFirstByPostIdAndFileTypeOrderByCreatedAtAsc(board.getPostId(), 1)
-                    .filter(img -> !isThumb(img))
-                    .ifPresent(img -> dto.setThumbPath("/board/file/" + img.getUuid()));
+
+            // ✅ 작성자 프로필 이미지 URL (특정 유저)
+            dto.setWriterProfileImageUrl(
+                    board.getUser() != null ? board.getUser().getProfileImageUrl() : null
+            );
+
+            // ✅ 썸네일
+            attachThumb(dto, board.getPostId());
+
+            log.info(">>>> {}", dto);
             return dto;
         });
     }
@@ -108,7 +124,17 @@ public class BoardServiceImpl implements BoardService {
                         .map(this::convertEntityToDto)
                         .toList();
 
-        return new BoardFileDTO(convertEntityToDto(board), dtoList);
+        BoardDTO dto = convertEntityToDto(board);
+
+        // ✅ 작성자 프로필 이미지 URL (특정 유저)
+        dto.setWriterProfileImageUrl(
+                board.getUser() != null ? board.getUser().getProfileImageUrl() : null
+        );
+
+        // ✅ 썸네일(상세에서 필요하면)
+        attachThumb(dto, postId);
+
+        return new BoardFileDTO(dto, dtoList);
     }
 
     @Override

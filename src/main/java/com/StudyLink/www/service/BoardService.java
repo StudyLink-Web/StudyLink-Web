@@ -34,12 +34,14 @@ public interface BoardService {
                 .postId(board.getPostId())
                 .userId(board.getUser().getUserId())
                 .writer(board.getUser().getUsername())
+                .writerProfileImageUrl(board.getUser().getProfileImageUrl())
                 .department(board.getDepartment())
                 .title(board.getTitle())
                 .content(board.getContent())
                 .viewCount(board.getViewCount())
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())
+                .thumbPath(null)
                 .build();
     }
 

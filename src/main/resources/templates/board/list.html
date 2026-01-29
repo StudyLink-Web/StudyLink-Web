@@ -77,14 +77,10 @@
 
                     <div class="profil_imgbox">
                         <div class="profil_img">
-                            <img th:src="${loginUser != null
-                                          and loginUser.profileImageUrl != null
-                                          and loginUser.profileImageUrl != ''
-                                          ? loginUser.profileImageUrl
-                                          : '/img/default_profile.png'}"
-                                 alt="프로필 이미지"
+                            <img th:src="@{${b.writerProfileImageUrl != null and b.writerProfileImageUrl != ''
+                                        ? b.writerProfileImageUrl
+                                        : '/img/default_profile.png'}}"
                                  onerror="this.src='/img/default_profile.png'">
-
                         </div>
 
                         <div class="board_info">
