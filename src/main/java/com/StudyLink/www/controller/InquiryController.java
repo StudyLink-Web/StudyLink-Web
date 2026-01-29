@@ -32,20 +32,22 @@ public class InquiryController {
     private boolean isAdmin(Authentication authentication) {
         if (!isLogin(authentication)) return false;
         return authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> "ADMIN".equals(a.getAuthority()) || "ROLE_ADMIN".equals(a.getAuthority()));
     }
 
     /* ===================== 목록 ===================== */
     @GetMapping("/list")
     public String list(@RequestParam(name = "pageNo", defaultValue = "1") int pageNo,
-                       @RequestParam(required = false) String type,
+                       @RequestParam(required = false) String category,
+                       @RequestParam(required = false) String status,
                        @RequestParam(required = false) String keyword,
                        Model model) {
 
-        var result = inquiryService.getList(pageNo);
+        var result = inquiryService.getList(pageNo, category, status, keyword);
 
         InquiryPageHandler<?> ph = new InquiryPageHandler<>(pageNo, result);
-        ph.setType(type);
+        ph.setCategory(category);
+        ph.setStatus(status);
         ph.setKeyword(keyword);
 
         model.addAttribute("ph", ph);
@@ -66,7 +68,9 @@ public class InquiryController {
                                RedirectAttributes redirectAttributes) {
         if (!isLogin(authentication)) return "redirect:/login";
 
+        inquiryDTO.setStatus("PENDING");
         inquiryService.register(inquiryDTO, authentication.getName());
+
         redirectAttributes.addFlashAttribute("msg", "문의가 등록되었습니다.");
         return "redirect:/inquiry/list";
     }
@@ -136,10 +140,7 @@ public class InquiryController {
         boolean ok = inquiryService.verifyPassword(qno, password);
 
         if (!ok) {
-            return Map.of(
-                    "ok", false,
-                    "message", "비밀번호가 일치하지 않습니다."
-            );
+            return Map.of("ok", false, "message", "비밀번호가 일치하지 않습니다.");
         }
 
         session.setAttribute("INQ_OK_" + qno, true);
@@ -158,7 +159,14 @@ public class InquiryController {
             return "redirect:/inquiry/detail/" + qno;
         }
 
-        inquiryService.answer(qno, adminContent);
+        try {
+            inquiryService.answer(qno, adminContent);
+            inquiryService.updateStatus(qno, "COMPLETE");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "처리 중 오류가 발생했습니다.");
+            return "redirect:/inquiry/detail/" + qno;
+        }
+
         redirectAttributes.addFlashAttribute("msg", "답변이 등록되었습니다.");
         return "redirect:/inquiry/detail/" + qno;
     }

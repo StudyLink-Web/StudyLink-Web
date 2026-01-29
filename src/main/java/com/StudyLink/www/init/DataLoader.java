@@ -1,25 +1,61 @@
 package com.StudyLink.www.init;
 
 import com.StudyLink.www.entity.Product;
+import com.StudyLink.www.entity.Role;
 import com.StudyLink.www.entity.Subject;
+import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.ProductRepository;
 import com.StudyLink.www.repository.SubjectRepository;
+import com.StudyLink.www.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class DataLoader implements CommandLineRunner {
     // subject 초기 데이터 삽입 용
     // 서버 실행시 자동 실행
+    @Value("${admin.email}")
+    private String adminEmail;
 
+    @Value("${admin.password}")
+    private String adminPassword;
+
+    @Value("${admin.name}")
+    private String adminName;
+
+    @Value("${admin.nickname}")
+    private String adminNickname;
+
+    @Value("${admin.username}")
+    private String adminUsername;
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     private final SubjectRepository subjectRepository;
     private final ProductRepository productRepository;
 
     @Override
     public void run(String... args) throws Exception {
         // 초기 데이터 세팅 필요시 여기에 추가
+
+        // 1. 관리자 계정 자동 생성
+        if (!userRepository.existsByEmail(adminEmail)) {
+            Users admin = Users.builder()
+                    .email(adminEmail)
+                    .password(passwordEncoder.encode(adminPassword))
+                    .name(adminName)
+                    .role(Role.ADMIN)
+                    .nickname(adminNickname)
+                    .username(adminUsername)
+                    .build();
+            userRepository.save(admin);
+        }
 
         // 과목 초기 데이터
         if(subjectRepository.count() == 0) {

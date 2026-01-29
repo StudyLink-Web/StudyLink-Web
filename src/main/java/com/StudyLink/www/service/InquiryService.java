@@ -5,17 +5,15 @@ import org.springframework.data.domain.Page;
 
 public interface InquiryService {
 
-    Page<InquiryDTO> getList(int page);
+    Page<InquiryDTO> getList(int pageNo, String category, String status, String keyword);
 
-    void register(InquiryDTO dto, String writerEmail);
+    void register(InquiryDTO inquiryDTO, String loginEmail);
 
     InquiryDTO getDetail(Long qno);
 
+    boolean verifyPassword(Long qno, String password);
+
     void answer(Long qno, String adminContent);
 
-    /* ✅ 비공개 문의 비밀번호 검증 */
-    boolean verifyPassword(Long qno, String rawPassword);
-
-    /* ✅ 비공개 문의 상세 조회(비밀번호 통과 시) */
-    InquiryDTO getDetailWithPassword(Long qno, String rawPassword);
+    void updateStatus(Long qno, String status);
 }

@@ -1,76 +1,57 @@
+// src/main/resources/static/js/inquiry.js
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("[inquiry.js] loaded");
+    const isAdmin = !!window.IS_ADMIN;
 
-    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute("content") || "";
-    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute("content") || "";
-
-    if (!csrfToken || !csrfHeader) {
-        console.warn("[inquiry.js] CSRF meta not found (layout head에 meta 필요)");
-    }
-
-    async function verifyPasswordAjax(qno, password) {
-        const body = new URLSearchParams();
-        body.append("qno", qno);
-        body.append("password", password);
-
-        const headers = {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "Accept": "application/json"
-        };
-        if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
-
-        const resp = await fetch("/inquiry/password/verify-ajax", {
-            method: "POST",
-            headers,
-            body: body.toString()
-        });
-
-        const text = await resp.text();
-        console.log("[verify-ajax] status=", resp.status, "body=", text);
-
-        try {
-            return JSON.parse(text);
-        } catch (e) {
-            return { ok: false, message: "서버 응답이 JSON이 아닙니다. 콘솔 확인" };
-        }
-    }
-
-    const links = document.querySelectorAll(".inq-link");
-    console.log("[inquiry.js] .inq-link count =", links.length);
-
-    links.forEach(a => {
+    document.querySelectorAll(".inq-link").forEach((a) => {
         a.addEventListener("click", async (e) => {
             e.preventDefault();
 
-            const qno = (a.dataset.qno || "").trim();
-            const isPublic = (a.dataset.public || "").trim(); // 'Y' or 'N'
+            const qno = a.dataset.qno;
+            const isPublic = a.dataset.public; // 'Y' or 'N' (list에서 넣어줬을 때만)
 
-            console.log("[click] qno=", qno, "isPublic=", isPublic);
+            if (!qno) return;
 
-            if (!qno) {
-                alert("qno가 없습니다. data-qno 확인");
-                return;
-            }
-
-            // 공개면 바로 상세 이동
-            if (isPublic !== "N") {
+            // ✅ 관리자면 무조건 상세로
+            if (isAdmin) {
                 location.href = `/inquiry/detail/${qno}`;
                 return;
             }
 
-            // 비공개면 비번 입력
-            const pw = prompt("비공개 문의입니다.\n비밀번호를 입력하세요:");
-            if (pw === null) return;
-            if (!pw.trim()) {
-                alert("비밀번호를 입력하세요.");
+            // ✅ list.html에서 data-public 안 쓰는 경우 대비: 배지는 비공개만 .inq-link로 걸려있음
+            const isPrivate = (isPublic === "N") || a.classList.contains("private");
+
+            // 공개면 바로 상세로
+            if (!isPrivate) {
+                location.href = `/inquiry/detail/${qno}`;
                 return;
             }
 
-            const res = await verifyPasswordAjax(qno, pw.trim());
-            if (res.ok) {
+            // 비공개면 비번 검증
+            const pw = prompt("비공개 문의입니다.\n비밀번호를 입력하세요.");
+            if (!pw) return;
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute("content") || "";
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute("content") || "";
+
+            const params = new URLSearchParams();
+            params.append("qno", qno);
+            params.append("password", pw);
+
+            const resp = await fetch("/inquiry/password/verify-ajax", {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {})
+                },
+                body: params.toString()
+            });
+
+            const data = await resp.json().catch(() => ({}));
+            if (resp.ok && data.ok) {
                 location.href = `/inquiry/detail/${qno}`;
             } else {
-                alert(res.message || "비밀번호가 일치하지 않습니다.");
+                alert(data.message || "비밀번호가 일치하지 않습니다.");
             }
         });
     });

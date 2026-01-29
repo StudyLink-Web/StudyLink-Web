@@ -6,6 +6,7 @@ import com.StudyLink.www.entity.Room;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface RoomService {
@@ -28,5 +29,5 @@ public interface RoomService {
 
     void deleteRoom(long roomId);
 
-    Page<RoomDTO> getMyQuizList(long userId, Pageable pageable);
+    Page<RoomDTO> getMyQuizList(long userId, Room.Status status, String subject, LocalDate startDate, LocalDate endDate, Pageable sortedPageable);
 }

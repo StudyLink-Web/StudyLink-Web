@@ -45,3 +45,8 @@
 .community_table th, td {text-align: center; padding:10px; border:1px solid #ededed;}
 .community_table tbody tr:hover {background: #dddbdb;}
 
+/* 문의하기 */
+.text-right {text-align: right;}
+.text-right > p {margin:6px 0; font-weight: 700; }
+.text-right > p span {color:crimson;}
+

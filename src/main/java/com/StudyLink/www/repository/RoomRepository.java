@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
@@ -24,19 +25,19 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     int deleteIfPending(@Param("roomId") long roomId);
 
     @Query("""
-    SELECT r 
-    FROM Room r 
-    WHERE r.studentId = :userId OR r.mentorId = :userId
-    ORDER BY 
-        CASE r.status
-            WHEN 'TEMP' THEN 1
-            WHEN 'PENDING' THEN 2
-            WHEN 'IN_PROGRESS' THEN 3
-            WHEN 'ANSWERED' THEN 4
-            WHEN 'COMPLETED' THEN 5
-            ELSE 99
-        END,
-        r.createdAt DESC
-""")
-    Page<Room> findByStudentOrMentorOrderByStatus(@Param("userId") long userId, Pageable pageable);
+        SELECT r
+        FROM Room r
+        WHERE (r.mentorId = :userId OR r.studentId = :userId)
+          AND (:status IS NULL OR r.status = :status)
+          AND (:subjectId IS NULL OR r.subject.id = :subjectId)
+          AND (:startDateTime IS NULL OR r.createdAt >= :startDateTime)
+          AND (:endDateTime IS NULL OR r.createdAt <= :endDateTime)
+    """)
+    Page<Room> findByFilters(
+            @Param("userId") Long userId,
+            @Param("status") Room.Status status,
+            @Param("subjectId") Integer subjectId,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            Pageable pageable);
 }

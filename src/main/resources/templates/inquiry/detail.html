@@ -16,18 +16,16 @@
 
     <div th:if="${inquiry != null}">
 
-        <!-- 제목 -->
         <div class="mb-3">
             <label class="form-label">제목</label>
             <input type="text" class="form-control" th:value="${inquiry.title}" readonly>
         </div>
 
-        <!-- 문의 유형 / 공개여부 -->
         <div class="mb-3 d-flex gap-3">
             <div style="flex:1">
-                <label class="form-label">문의 유형</label>
+                <label class="form-label">카테고리</label>
                 <input type="text" class="form-control"
-                       th:value="${inquiry.choose != null ? inquiry.choose : '-'}" readonly>
+                       th:value="${inquiry.category != null ? inquiry.category : '-'}" readonly>
             </div>
             <div style="flex:1">
                 <label class="form-label">공개 여부</label>
@@ -37,18 +35,16 @@
             <div style="flex:1">
                 <label class="form-label">상태</label>
                 <input type="text" class="form-control"
-                       th:value="${inquiry.status != null ? inquiry.status : '대기'}" readonly>
+                       th:value="${inquiry.status != null ? inquiry.status : 'PENDING'}" readonly>
             </div>
         </div>
 
-        <!-- 문의 내용 -->
         <div class="mb-3">
             <label class="form-label">문의 내용</label>
             <textarea class="form-control" rows="8" readonly
                       th:text="${inquiry.userContent}"></textarea>
         </div>
 
-        <!-- 등록일 / 답변일 -->
         <div class="mb-3 d-flex gap-3">
             <div>
                 <small class="text-muted">등록일</small><br>
@@ -60,38 +56,44 @@
             </div>
         </div>
 
-        <!-- 관리자 답변 표시 -->
         <div class="mb-3">
             <h4>관리자 답변</h4>
 
-            <div th:if="${inquiry.adminContent == null or inquiry.adminContent == ''}">
+            <div th:if="${#strings.isEmpty(inquiry.adminContent)}">
                 <p class="text-muted">아직 답변이 없습니다.</p>
             </div>
 
-            <div th:if="${inquiry.adminContent != null and inquiry.adminContent != ''}">
+            <div th:if="${!#strings.isEmpty(inquiry.adminContent)}">
                 <textarea class="form-control" rows="6" readonly
                           th:text="${inquiry.adminContent}"></textarea>
             </div>
         </div>
 
-        <!-- 관리자만 답변 입력 폼 (권한은 너 프로젝트 기준으로 ADMIN으로 가정) -->
-        <form sec:authorize="hasRole('ADMIN')"
-              th:action="@{/inquiry/answer}" method="post">
+        <div sec:authorize="hasAnyAuthority('ADMIN','ROLE_ADMIN')"
+             th:if="${#strings.isEmpty(inquiry.adminContent)}">
 
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <input type="hidden" name="qno" th:value="${inquiry.qno}"/>
+            <form th:action="@{/inquiry/answer}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="qno" th:value="${inquiry.qno}"/>
 
-            <div class="mb-3">
-                <label class="form-label">답변 작성</label>
-                <textarea class="form-control" rows="6" name="adminContent"
-                          placeholder="답변 내용을 입력하세요." required></textarea>
-            </div>
+                <div class="mb-3">
+                    <label class="form-label">답변 작성</label>
+                    <textarea class="form-control" rows="6" name="adminContent"
+                              placeholder="답변 내용을 입력하세요." required></textarea>
+                </div>
 
-            <button type="submit" class="btn btn-primary"
-                    onclick="return confirm('답변을 등록할까요?');">
-                답변 등록
-            </button>
-        </form>
+                <button type="submit" class="btn btn-primary"
+                        onclick="return confirm('답변을 등록할까요?');">
+                    답변 등록
+                </button>
+            </form>
+        </div>
+
+        <div sec:authorize="hasAnyAuthority('ADMIN','ROLE_ADMIN')"
+             th:if="${!#strings.isEmpty(inquiry.adminContent)}"
+             class="text-muted mt-2">
+            이미 답변이 등록되어 더 이상 수정할 수 없습니다.
+        </div>
 
         <div class="mt-4 d-flex gap-2">
             <a th:href="@{/inquiry/list}" class="btn btn-secondary">목록</a>
