@@ -111,6 +111,29 @@ public class FCMController {
         return username + " 님의 모든 기기에 발송 및 DB 저장 완료";
     }
 
+    // 📍 정식 전체 공지 발송 API
+    @PostMapping("/send-notice")
+    public String sendNotice(@RequestBody Map<String, String> payload) {
+        String title = payload.getOrDefault("title", "StudyLink 공지");
+        String message = payload.get("message");
+
+        if (message == null || message.isBlank()) {
+            return "Error: 공지 내용을 입력해 주세요.";
+        }
+
+        // 1. 모든 기기에 푸시 발송
+        pushTokenRepository.findAll().forEach(tokenEntity -> {
+            fcmService.sendNotification(tokenEntity.getToken(), title, message);
+        });
+
+        // 2. 모든 사용자의 알림 내역에 저장
+        userRepository.findAll().forEach(user -> {
+            notificationService.createNotification(user.getUserId(), "SYSTEM", message, null);
+        });
+
+        return "success";
+    }
+
     // 📍 토큰 삭제 (로그아웃 시 호출)
     @DeleteMapping("/token")
     public String deleteToken(@RequestBody Map<String, String> payload) {

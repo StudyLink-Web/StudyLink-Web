@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content" class="container-md">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-2 adminSidebar p-0">
+            <h5 class="text-white text-center py-3 border-bottom">ADMIN</h5>
+            <a th:href="@{/admin/admin}"
+               th:classappend="${currentMenu == 'admin'} ? 'active' : ''"
+               class="adminSidebarMenu">
+                대시보드
+            </a>
+            <a th:href="@{/admin/user}"
+               th:classappend="${currentMenu == 'user'} ? 'active' : ''"
+               class="adminSidebarMenu">
+                회원 관리
+            </a>
+            <a th:href="@{/admin/payment}"
+               th:classappend="${currentMenu == 'payment'} ? 'active' : ''"
+               class="adminSidebarMenu">
+                결제 내역
+            </a>
+            <a th:href="@{/admin/exchange}"
+               th:classappend="${currentMenu == 'exchange'} ? 'active' : ''"
+               class="adminSidebarMenu">
+                환전 관리
+            </a>
+            <a th:href="@{/admin/notice}"
+               th:classappend="${currentMenu == 'notice'} ? 'active' : ''"
+               class="adminSidebarMenu">
+                알림 / 공지
+            </a>
+            <a th:href="@{/admin/application}"
+               th:classappend="${currentMenu == 'application'} ? 'active' : ''"
+               class="adminSidebarMenu">
+                문의 내역
+            </a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold mb-0">알림 / 공지 관리</h4>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                        <div class="card-header bg-primary text-white py-3 border-0">
+                            <h5 class="card-title mb-0 d-flex align-items-center">
+                                <span class="me-2 text-xl">📢</span> 전체 공지 발송
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <p class="text-muted small mb-4">
+                                * 여기서 발송되는 공지는 <strong>모든 기기</strong>에 즉시 발송되며, <strong>모든 사용자</strong>의 알림 내역에 영구적으로 기록됩니다.
+                            </p>
+                            
+                            <form id="noticeForm">
+                                <div class="mb-4">
+                                    <label for="noticeTitle" class="form-label fw-bold">공지 제목</label>
+                                    <input type="text" class="form-control form-control-lg border-2" id="noticeTitle" 
+                                           placeholder="예: [안내] 서버 정기 점검 안내" required>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="noticeContent" class="form-label fw-bold">공지 내용</label>
+                                    <textarea class="form-control border-2" id="noticeContent" rows="8" 
+                                              placeholder="공지할 내용을 상세히 입력해 주세요..." required></textarea>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" id="sendBtn" class="btn btn-primary btn-lg py-3 rounded-pill fw-bold shadow-sm transition-all hover-scale">
+                                        <span id="btnText">전체 공지 발송하기</span>
+                                        <span id="btnLoader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0 rounded-4 bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3 d-flex align-items-center text-primary">
+                                <span class="me-2">💡</span> 안내 사항
+                            </h6>
+                            <ul class="small text-muted mb-0 ps-3">
+                                <li class="mb-2">FCM 푸시 알림은 네트워크 상태에 따라 지연될 수 있습니다.</li>
+                                <li class="mb-2">발송된 공지는 취소할 수 없으므로 오타가 없는지 한 번 더 확인해 주세요.</li>
+                                <li class="mb-2">사용자 알림 센터(DB)에는 즉시 반영됩니다.</li>
+                                <li>내용은 1,000자 이내로 작성을 권장합니다.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<style layout:fragment="css">
+    .hover-scale:hover {
+        transform: translateY(-2px);
+    }
+    .hover-scale:active {
+        transform: translateY(0);
+    }
+    .adminSidebarMenu.active {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-left: 4px solid #fff;
+        font-weight: bold;
+    }
+</style>
+
+<script layout:fragment="script">
+    document.getElementById('noticeForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const title = document.getElementById('noticeTitle').value;
+        const message = document.getElementById('noticeContent').value;
+        const sendBtn = document.getElementById('sendBtn');
+        const btnText = document.getElementById('btnText');
+        const btnLoader = document.getElementById('btnLoader');
+        
+        if (!confirm('정말로 모든 사용자에게 전체 공지를 발송하시겠습니까?')) return;
+        
+        // 상태 변경
+        sendBtn.disabled = true;
+        btnText.textContent = '발송 중...';
+        btnLoader.classList.remove('d-none');
+        
+        try {
+            const response = await fetch('/api/fcm/send-notice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, message })
+            });
+            
+            const result = await response.text();
+            
+            if (result === 'success') {
+                alert('🚀 전체 공지가 성공적으로 발송되었습니다!');
+                document.getElementById('noticeForm').reset();
+            } else {
+                alert('❌ 발송 실패: ' + result);
+            }
+        } catch (error) {
+            console.error('발송 오류:', error);
+            alert('❌ 서버 연결에 실패했습니다.');
+        } finally {
+            sendBtn.disabled = false;
+            btnText.textContent = '전체 공지 발송하기';
+            btnLoader.classList.add('d-none');
+        }
+    });
+</script>
+
+</html>
