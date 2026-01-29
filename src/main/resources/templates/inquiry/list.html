@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content" class="content_box">
+
+    <link rel="stylesheet" th:href="@{/css/board.css}">
+    <script th:src="@{/js/board.js}"></script>
+
+    <!-- 탭은 inquiry용으로 변경 -->
+    <ul class="community_tab">
+        <li class="active" data-url="/inquiry/list"><span>문의</span></li>
+        <li data-url="/community/list"><span>커뮤니티</span></li>
+    </ul>
+
+    <p class="life_campus">문의 게시판</p>
+
+    <div class="search_campus">
+
+        <div class="register_campus_link">
+            <a href="/inquiry/register"> 문의 등록하기</a>
+        </div>
+
+        <!-- 검색/정렬 (현재 service에 검색 기능 없으면 UI만 존재해도 됨) -->
+        <form class="form_board" role="search" th:action="@{/inquiry/list}" method="get">
+            <div class="form_board_box">
+                <select class="form-select" name="type" aria-label="정렬 기준">
+                    <option value="" th:selected="${ph != null and (ph.type == null or ph.type == '')}">전체</option>
+                    <option value="new" th:selected="${ph != null and ph.type == 'new'}">최신순</option>
+                    <option value="status" th:selected="${ph != null and ph.type == 'status'}">상태순</option>
+                </select>
+
+                <input class="form-control" type="search" name="keyword"
+                       th:value="${ph != null ? ph.keyword : ''}"
+                       placeholder="검색" aria-label="검색어를 입력하세요."/>
+
+                <input type="hidden" name="pageNo" value="1">
+            </div>
+
+            <button type="submit" class="btn search_button">
+                검색
+                <span class="g" th:text="${ph != null ? ph.totalElement : 0}">0</span>
+            </button>
+        </form>
+
+        <div class="community_table_wrap table-hover">
+            <table class="community_table">
+                <thead>
+                <tr>
+                    <th>No</th>
+                    <th>제목</th>
+                    <th>상태</th>
+                    <th>등록일</th>
+                    <th>답변일</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:if="${ph == null or ph.list == null or #lists.isEmpty(ph.list)}">
+                    <td colspan="5" class="text-center">데이터가 없습니다.</td>
+                </tr>
+
+                <th:block th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list)}">
+                    <tr th:each="q, stat : ${ph.list}">
+                        <!-- No 계산: 커뮤니티랑 똑같이 -->
+                        <td th:text="${ph.totalElement - (ph.pageNo - 1) * 10 - stat.index}"></td>
+
+                        <td>
+                            <!-- ✅ 비공개면 prompt로 비번 입력하도록 JS가 처리 -->
+                            <a href="javascript:void(0);"
+                               class="inq-link"
+                               th:text="${q.title}"
+                               th:attr="data-qno=${q.qno},data-public=${q.isPublic}">
+                            </a>
+
+                            <!-- (선택) 비공개 표시 뱃지 -->
+                            <span th:if="${q.isPublic == 'N'}"
+                                  class="badge bg-secondary ms-2">비공개</span>
+                        </td>
+
+                        <td th:text="${q.status}">대기</td>
+
+                        <td th:text="${q.createdAt != null ? #temporals.format(q.createdAt, 'yyyy-MM-dd') : '-'}"></td>
+
+                        <td th:text="${q.answerAt != null ? #temporals.format(q.answerAt, 'yyyy-MM-dd') : '-'}"></td>
+                    </tr>
+                </th:block>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <nav aria-label="Page navigation"
+             th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list) and ph.totalPage > 1}">
+            <ul class="pagination justify-content-center">
+
+                <li class="page-item" th:classappend="${ph.prev == false} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/inquiry/list(pageNo=${ph.startPage-1}, type=${ph.type}, keyword=${ph.keyword})}"
+                       aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                <li class="page-item"
+                    th:each="i : ${#numbers.sequence(ph.startPage, ph.endPage)}"
+                    th:classappend="${i == ph.pageNo} ? 'active'">
+                    <a class="page-link"
+                       th:href="@{/inquiry/list(pageNo=${i}, type=${ph.type}, keyword=${ph.keyword})}"
+                       th:text="${i}"></a>
+                </li>
+
+                <li class="page-item" th:classappend="${ph.next == false} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/inquiry/list(pageNo=${ph.endPage+1}, type=${ph.type}, keyword=${ph.keyword})}"
+                       aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+    </div>
+
+    <!-- ✅ 비공개 비번 prompt 처리 JS -->
+    <script th:src="@{/js/inquiry.js}"></script>
+</div>
+
+</html>

@@ -85,8 +85,14 @@ public class SecurityConfig {
                         .requestMatchers("/community/register", "/community/register/**").hasRole("STUDENT")
 
                         .requestMatchers("/room/myQuiz").authenticated()
-
                         .requestMatchers("/mentor/firebase-config").authenticated()
+
+                        /* ===================== ✅ Inquiry 규칙 추가 ===================== */
+                        .requestMatchers(HttpMethod.GET, "/inquiry/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/inquiry/register").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/inquiry/password/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/inquiry/answer").hasRole("ADMIN")
+                        /* ============================================================ */
 
                         .requestMatchers(
                                 "/",
