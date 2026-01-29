@@ -52,6 +52,8 @@ public interface UserNotificationRepository extends JpaRepository<UserNotificati
     /**
      * 특정 사용자의 모든 읽지 않은 알림 표시
      */
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
     @Query("UPDATE UserNotification un SET un.isRead = true, un.readAt = CURRENT_TIMESTAMP " +
             "WHERE un.user.userId = :userId AND un.isRead = false")
     void markAllAsRead(@Param("userId") Long userId);

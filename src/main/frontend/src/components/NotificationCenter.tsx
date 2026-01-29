@@ -57,11 +57,25 @@ const NotificationCenter = React.forwardRef<HTMLDivElement, NotificationCenterPr
 
     const markAsRead = async (id: number) => {
         try {
-            const response = await fetch(`/api/notifications/${id}/read`, { method: 'PUT' });
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
+            const response = await fetch(`/api/notifications/${id}/read`, { 
+                method: 'PUT',
+                headers: {
+                    ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+                }
+            });
             if (response.ok) {
                 const updated = notifications.map(n => n.id === id ? { ...n, isRead: true } : n);
                 setNotifications(updated);
-                onUnreadCountChange(updated.filter(n => !n.isRead).length);
+                const unreadCount = updated.filter(n => !n.isRead).length;
+                onUnreadCountChange(unreadCount);
+                
+                // ⭐ 헤더 동기화를 위한 커스텀 이벤트 발송 (현재 숫자 포함)
+                window.dispatchEvent(new CustomEvent('notificationUpdate', { 
+                    detail: { count: unreadCount } 
+                }));
             }
         } catch (error) {
             console.error('Failed to mark as read:', error);
@@ -70,11 +84,24 @@ const NotificationCenter = React.forwardRef<HTMLDivElement, NotificationCenterPr
 
     const markAllAsRead = async () => {
         try {
-            const response = await fetch('/api/notifications/read-all', { method: 'PUT' });
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
+            const response = await fetch('/api/notifications/read-all', { 
+                method: 'PUT',
+                headers: {
+                    ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+                }
+            });
             if (response.ok) {
                 const updated = notifications.map(n => ({ ...n, isRead: true }));
                 setNotifications(updated);
                 onUnreadCountChange(0);
+                
+                // ⭐ 헤더 동기화를 위한 커스텀 이벤트 발송 (0으로 초기화)
+                window.dispatchEvent(new CustomEvent('notificationUpdate', { 
+                    detail: { count: 0 } 
+                }));
             }
         } catch (error) {
             console.error('Failed to mark all as read:', error);
@@ -178,10 +205,11 @@ const NotificationCenter = React.forwardRef<HTMLDivElement, NotificationCenterPr
                             {!isAdminMode && notifications.map((notification) => (
                                 <div 
                                     key={notification.id}
-                                    className={`p-4 rounded-2xl border transition-all duration-200 ${
+                                    onClick={() => !notification.isRead && markAsRead(notification.id)}
+                                    className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${
                                         notification.isRead 
                                         ? 'bg-transparent border-slate-100 dark:border-white/5 grayscale-[0.5] opacity-70' 
-                                        : 'bg-white dark:bg-white/5 border-blue-100 dark:border-blue-500/20 shadow-sm'
+                                        : 'bg-white dark:bg-white/5 border-blue-100 dark:border-blue-500/20 shadow-sm hover:border-blue-300 dark:hover:border-blue-400/40'
                                     }`}
                                 >
                                     <div className="flex gap-4">
@@ -195,12 +223,9 @@ const NotificationCenter = React.forwardRef<HTMLDivElement, NotificationCenterPr
                                                 {notification.message}
                                             </p>
                                             {!notification.isRead && (
-                                                <button 
-                                                    onClick={() => markAsRead(notification.id)}
-                                                    className="mt-3 text-[10px] font-black text-blue-500 flex items-center gap-1 hover:underline"
-                                                >
-                                                    읽음 처리
-                                                </button>
+                                                <div className="mt-3 text-[10px] font-black text-blue-500 flex items-center gap-1">
+                                                    클릭하여 읽음 처리
+                                                </div>
                                             )}
                                         </div>
                                     </div>

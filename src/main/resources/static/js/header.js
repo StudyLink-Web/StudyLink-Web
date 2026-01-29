@@ -372,6 +372,22 @@ async function initNotificationCenter() {
         }
     });
 
+    // ⭐ 리액트 알림 센터와 동기화를 위한 커스텀 이벤트 리스너 추가
+    window.addEventListener('notificationUpdate', (e) => {
+        console.log('🔔 Notification update event received:', e.detail);
+        
+        // 📍 상세 데이터에 count가 있으면 서버 요청 없이 즉시 업데이트
+        if (e.detail && typeof e.detail.count === 'number') {
+            updateUnreadCount(e.detail.count);
+        } else {
+            updateUnreadCount();
+        }
+
+        if (notiPanel.classList.contains('show')) {
+            fetchNotifications();
+        }
+    });
+
     // 3. 패널 내부 클릭 시 닫히지 않게
     notiPanel.addEventListener('click', (e) => e.stopPropagation());
 
@@ -383,7 +399,15 @@ async function initNotificationCenter() {
     // 5. 모두 읽음 처리
     markAllRead.addEventListener('click', async () => {
         try {
-            await fetch('/api/notifications/read-all', { method: 'PUT' });
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+            await fetch('/api/notifications/read-all', { 
+                method: 'PUT',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            });
             updateUnreadCount();
             fetchNotifications();
         } catch (err) {
@@ -394,18 +418,33 @@ async function initNotificationCenter() {
     /**
      * 안 읽은 알림 개수 업데이트
      */
-    async function updateUnreadCount() {
+    async function updateUnreadCount(forcedCount = null) {
         try {
-            const res = await fetch('/api/notifications/unread-count');
-            const count = await res.json();
-            if (count > 0) {
-                notiBadge.textContent = count > 99 ? '99+' : count;
-                notiBadge.style.display = 'flex';
-            } else {
-                notiBadge.style.display = 'none';
+            // 📍 강제 값이 들어오면 서버 요청 없이 즉시 반영 (실시간성)
+            if (forcedCount !== null) {
+                applyBadgeCount(forcedCount);
+                return;
             }
+
+            // 📍 캐시 방지를 위해 타임스탬프 추가
+            const res = await fetch('/api/notifications/unread-count?t=' + new Date().getTime());
+            const count = await res.json();
+            applyBadgeCount(count);
         } catch (err) {
             console.error('Failed to fetch unread count', err);
+        }
+    }
+
+    /**
+     * 배지 표시 및 숫자 적용 공통 함수
+     */
+    function applyBadgeCount(count) {
+        if (count > 0) {
+            notiBadge.textContent = count > 99 ? '99+' : count;
+            notiBadge.style.display = 'flex';
+        } else {
+            notiBadge.textContent = '0';
+            notiBadge.style.display = 'none';
         }
     }
 
@@ -415,7 +454,8 @@ async function initNotificationCenter() {
     async function fetchNotifications() {
         try {
             notiList.innerHTML = '<div class="noti-empty">불러오는 중...</div>';
-            const res = await fetch('/api/notifications');
+            // 📍 캐시 방지 타임스탬프 추가
+            const res = await fetch('/api/notifications?t=' + new Date().getTime());
             const data = await res.json();
 
             if (!data || data.length === 0) {
@@ -439,7 +479,15 @@ async function initNotificationCenter() {
 
                 item.addEventListener('click', async () => {
                     if (!noti.isRead) {
-                        await fetch(`/api/notifications/${noti.id}/read`, { method: 'PUT' });
+                        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+                        await fetch(`/api/notifications/${noti.id}/read`, { 
+                            method: 'PUT',
+                            headers: {
+                                [csrfHeader]: csrfToken
+                            }
+                        });
                         updateUnreadCount();
                     }
                     // 클릭 시 관련 링크로 이동 로직 추가 가능 (현재는 내역 확인이 목적)
