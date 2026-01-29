@@ -504,6 +504,7 @@ document.addEventListener('keydown', (e)=> {
 // 캔버스 관련 전역 변수
 const canvas = new fabric.Canvas('canvas');
 canvas.isDrawingMode = false; // 드로잉 모드
+const SMOOTH_ALPHA = 0.35; // 손떨림 보정(0 ~ 1.0(원본))
 
 // 도구 선택
 let selectedTool = 'draw';
@@ -725,11 +726,12 @@ function pushToUndoStack(){
 // 그리기, 지우기처럼 연속 동작, 프레임마다 실행하는 함수를 포함, undo redo x
 function loop() {
     if (isDrawing && currentPointer && lastPoint) {
+        const smooth = stabilize(lastPoint, currentPointer);
         if (selectedTool === 'draw') {
-            drawInterpolatedLine({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
+            drawInterpolatedLine({x1: lastPoint.x, y1: lastPoint.y, x2: smooth.x, y2: smooth.y});
         }
         if (selectedTool === 'erase') {
-            eraseInterpolated({x1: lastPoint.x, y1: lastPoint.y, x2: currentPointer.x, y2: currentPointer.y});
+            eraseInterpolated({x1: lastPoint.x, y1: lastPoint.y, x2: smooth.x, y2: smooth.y});
 
             message = {
                 roomId: roomId,
@@ -737,12 +739,12 @@ function loop() {
                 seq: mySeq++,
                 x1: lastPoint.x,
                 y1: lastPoint.y,
-                x2: currentPointer.x,
-                y2: currentPointer.y
+                x2: smooth.x,
+                y2: smooth.y
             }
             safeSend("/app/erase", message);
         }
-        lastPoint = { ...currentPointer };
+        lastPoint = { ...smooth };
         scheduleRender();
     }
 
@@ -803,6 +805,14 @@ function generateUUID() {
             Math.floor(Math.random() * 16).toString(16)
         );
     }
+}
+
+// 그리기 보정
+function stabilize(prev, curr) {
+    return {
+        x: prev.x + (curr.x - prev.x) * SMOOTH_ALPHA,
+        y: prev.y + (curr.y - prev.y) * SMOOTH_ALPHA
+    };
 }
 
 // 그리기

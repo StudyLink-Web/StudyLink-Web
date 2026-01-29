@@ -4,39 +4,94 @@
 	  layout:decorate="~{layout/layout}">
 
 <div layout:fragment="content" class="container-md">
-	<h1 th:text="${#authorization.expression('hasRole(''MENTOR'')')
-                  ? '나의 답변 목록'
-                  : '나의 질문 목록'}"></h1>
+	<div id="" style="width: 1000px; margin: 0 auto;">
+		<h3 th:text="${#authorization.expression('hasRole(''MENTOR'')')
+					  ? '나의 답변 목록'
+					  : '나의 질문 목록'}"
+		class="mt-3"></h3>
 
+		<!-- 검색 -->
+		<div class="card mb-4 shadow-sm">
+			<div class="card-body">
+				<form method="get" th:action="@{/room/myQuiz}" class="row g-2 align-items-end" style="max-width: 1100px; margin:auto;">
+					<div class="col-md-2">
+						<label class="form-label">상태</label>
+						<select class="form-select" name="status">
+							<option value="" th:selected="${status == null}">전체</option>
+							<option th:each="stat : ${statuses}"
+									th:value="${stat.name()}"
+									th:text="${stat.displayName}"
+									th:selected="${stat == status}">
+							</option>
+						</select>
+					</div>
 
-	<div id="myQuizContainer" class="text-center grid-container">
-		<div th:if="${myQuizPage.totalElements == 0}" class="empty-message">
-			<p th:text="${#authorization.expression('hasRole(''MENTOR'')')
-                  ? '해결한 문제가 없습니다.'
-                  : '등록한 문제가 없습니다.'}"></p>
+					<div class="col-md-2">
+						<label class="form-label">과목</label>
+						<select class="form-select" name="subject">
+							<option value="" th:selected="${subject == null}">전체</option>
+							<option th:each="sub : ${subjectList}"
+									th:value="${sub.name}"
+									th:text="${sub.name}"
+									th:selected="${sub.name == subject}">
+							</option>
+						</select>
+					</div>
+
+					<div class="col-md-2">
+						<label class="form-label">시작일</label>
+						<input type="date" name="startDate" class="form-control" th:value="${startDate}">
+					</div>
+
+					<div class="col-md-2">
+						<label class="form-label">종료일</label>
+						<input type="date" name="endDate" class="form-control" th:value="${endDate}">
+					</div>
+
+					<div class="col-md-2">
+						<label class="form-label">정렬</label>
+						<select name="sort" class="form-select">
+							<option value="desc" th:selected="${sort == 'desc'}">최신순</option>
+							<option value="asc" th:selected="${sort == 'asc'}">오래된순</option>
+						</select>
+					</div>
+
+					<div class="col-md-1 d-grid">
+						<button class="btn btn-primary">검색</button>
+					</div>
+				</form>
+			</div>
 		</div>
+
+		<div id="myQuizContainer" class="text-center grid-container">
+			<div th:if="${myQuizPage.totalElements == 0}" class="empty-message">
+				<p th:text="${#authorization.expression('hasRole(''MENTOR'')')
+					  ? '해결한 문제가 없습니다.'
+					  : '등록한 문제가 없습니다.'}"></p>
+			</div>
+		</div>
+		<nav aria-label="Page navigation example" class="mt-2 d-flex justify-content-center" th:if="${myQuizPage.totalPages > 1}">
+			<!-- private 페이지네이션 -->
+			<ul class="pagination">
+				<!-- 이전 그룹 -->
+				<li class="page-item" th:classappend="${startPage == 0} ? 'disabled'">
+					<a class="page-link" th:href="@{/room/myQuiz(page=${prevGroup})}">&lt;&lt;</a>
+				</li>
+
+				<!-- 현재 그룹 페이지 번호 -->
+				<li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage - 1)}"
+					th:classappend="${i == myQuizPage.number} ? 'active'">
+					<a class="page-link" th:text="${i + 1}"
+					   th:href="@{/room/myQuiz(page=${i})}"></a>
+				</li>
+
+				<!-- 다음 그룹 -->
+				<li class="page-item" th:classappend="${endPage >= myQuizPage.totalPages} ? 'disabled'">
+					<a class="page-link" th:href="@{/room/myQuiz(page=${nextGroup})}">&gt;&gt;</a>
+				</li>
+			</ul>
+		</nav>
 	</div>
-	<nav aria-label="Page navigation example" class="mt-2 d-flex justify-content-center" th:if="${myQuizPage.totalElements > 0}">
-		<!-- private 페이지네이션 -->
-		<ul class="pagination">
-			<!-- 이전 그룹 -->
-			<li class="page-item" th:classappend="${startPage == 0} ? 'disabled'">
-				<a class="page-link" th:href="@{/room/myQuiz(page=${prevGroup})}">&lt;&lt;</a>
-			</li>
-
-			<!-- 현재 그룹 페이지 번호 -->
-			<li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage - 1)}"
-				th:classappend="${i == myQuizPage.number} ? 'active'">
-				<a class="page-link" th:text="${i + 1}"
-				   th:href="@{/room/myQuiz(page=${i})}"></a>
-			</li>
-
-			<!-- 다음 그룹 -->
-			<li class="page-item" th:classappend="${endPage >= myQuizPage.totalPages} ? 'disabled'">
-				<a class="page-link" th:href="@{/room/myQuiz(page=${nextGroup})}">&gt;&gt;</a>
-			</li>
-		</ul>
-	</nav>
 	<script th:inline="javascript">
 		// 서버에서 넘어온 데이터를 JS 변수로 변환
 		let myQuizList = [[${myQuizList}]];

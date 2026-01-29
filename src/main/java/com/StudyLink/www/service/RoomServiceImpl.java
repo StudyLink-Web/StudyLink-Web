@@ -4,6 +4,7 @@ import com.StudyLink.www.dto.RoomDTO;
 import com.StudyLink.www.dto.RoomFileDTO;
 import com.StudyLink.www.dto.SubjectDTO;
 import com.StudyLink.www.entity.Room;
+import com.StudyLink.www.entity.Subject;
 import com.StudyLink.www.handler.RoomFileHandler;
 import com.StudyLink.www.repository.MessageRepository;
 import com.StudyLink.www.repository.RoomFileRepository;
@@ -17,6 +18,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Slf4j
@@ -99,7 +103,24 @@ public class RoomServiceImpl implements RoomService{
     }
 
     @Override
-    public Page<RoomDTO> getMyQuizList(long userId, Pageable pageable) {
-        return roomRepository.findByStudentOrMentorOrderByStatus(userId, pageable).map(RoomDTO::new);
+    public Page<RoomDTO> getMyQuizList(long userId, Room.Status status, String subject, LocalDate startDate, LocalDate endDate, Pageable sortedPageable) {
+        Integer subjectId = subjectRepository.findByName(subject)
+                .map(Subject::getSubjectId)
+                .orElse(null);
+
+        LocalDateTime startDateTime = null;
+        LocalDateTime endDatePlus = null;
+
+        if (startDate != null) {
+            startDateTime = startDate.atStartOfDay();
+        }
+
+        if (endDate != null) {
+            endDatePlus = endDate.plusDays(1).atStartOfDay();
+        }
+
+        Page<Room> rooms = roomRepository.findByFilters(userId, status, subjectId, startDateTime, endDatePlus, sortedPageable);
+
+        return rooms.map(RoomDTO::new);
     }
 }

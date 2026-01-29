@@ -12,6 +12,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,6 +22,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +36,7 @@ public class RoomController {
     private final UserService userService;
     private final StudentProfileService studentProfileService;
     private final DrawDataService drawDataService;
+    private final NotificationService notificationService;
 
     @GetMapping("/list")
     public void list(@RequestParam(defaultValue = "0") int publicPage,
@@ -114,13 +118,10 @@ public class RoomController {
         model.addAttribute("roomDTO", roomDTO);
 
 
-
         // 필요한 데이터 보내기
         // 과목
         List<SubjectDTO> subjectList = roomService.getSubjectDTOList();
         model.addAttribute("subjectList", subjectList);
-        log.info(">>> subjectList {}", subjectList);
-
 
 
         // 찜 멘토
@@ -246,6 +247,8 @@ public class RoomController {
 
 
                         // 학생에게 알림 (선택)
+                        notificationService.createNotification(roomDTO.getStudentId(), "ANSWER_RECEIVED", "'" + username + "' 멘토가 문제풀이를 시작했습니다.", null);
+
                         return "redirect:/room/enterRoom";
                     } else {
                         // 업데이트 실패 → 이미 다른 멘토가 시작했거나 PENDING 아님
@@ -340,33 +343,64 @@ public class RoomController {
 
 
     @GetMapping("/myQuiz")
-    public String myQuiz(Authentication authentication, Model model, @RequestParam(defaultValue = "0") int page){
+    public String myQuiz(Authentication authentication, Model model,
+                         @RequestParam(required = false) String status,
+                         @RequestParam(required = false) String subject,
+                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+                         @RequestParam(defaultValue = "desc") String sort,
+                         @PageableDefault(size = 15) Pageable pageable) {
 
-        int pageGroupSize = 5; // 한 그룹에 보여줄 페이지 수
+        // 빈 문자열을 null로 처리 (optional)
+        Room.Status statusEnum = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                statusEnum = Room.Status.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("잘못된 status 값: " + status);
+            }
+        }
 
-        Pageable pageable = PageRequest.of(page, 15);
-        Page<RoomDTO> myQuizPage;
+        // 정렬 기준 만들기
+        Sort sortOption = sort.equalsIgnoreCase("asc")
+                ? Sort.by("createdAt").ascending()
+                : Sort.by("createdAt").descending();
+
+        // 정렬 반영된 Pageable 생성 (pageable에서 페이지 번호, 사이즈 사용)
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOption);
 
         String username = authentication.getName();
         long userId = userService.findUserIdByUsername(username);
-        myQuizPage = roomService.getMyQuizList(userId, pageable);
+
+        // 조건 반영한 페이지 조회 (서비스 메서드에 인자 추가 필요)
+        Page<RoomDTO> myQuizPage = roomService.getMyQuizList(userId, statusEnum, subject, startDate, endDate, sortedPageable);
 
         List<RoomDTO> myQuizList = myQuizPage.getContent();
+        log.info(">>> userId {}", userId);
         log.info(">>> myQuizList {}", myQuizList);
-
-        // 그룹 시작/끝 페이지 계산
+        int pageGroupSize = 5;
         int startPage = (myQuizPage.getNumber() / pageGroupSize) * pageGroupSize;
         int endPage = Math.min(startPage + pageGroupSize, myQuizPage.getTotalPages());
-
         int prevGroup = Math.max(startPage - pageGroupSize, 0);
         int nextGroup = Math.min(startPage + pageGroupSize, myQuizPage.getTotalPages());
 
         model.addAttribute("myQuizPage", myQuizPage);
         model.addAttribute("myQuizList", myQuizList);
+
         model.addAttribute("startPage", startPage);
         model.addAttribute("endPage", endPage);
         model.addAttribute("prevGroup", prevGroup);
         model.addAttribute("nextGroup", nextGroup);
+
+        // 검색 조건 유지
+        List<SubjectDTO> subjectList = roomService.getSubjectDTOList();
+        model.addAttribute("subjectList", subjectList);
+        model.addAttribute("status", statusEnum);
+        model.addAttribute("statuses", Room.Status.values());
+        model.addAttribute("subject", subject);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("sort", sort);
 
         return "/room/myQuiz";
     }
@@ -378,7 +412,6 @@ public class RoomController {
         RoomDTO roomDTO = roomService.getRoomDTO(roomId);
         roomDTO.setStatus(RoomDTO.Status.COMPLETED);
         roomDTO.setRating(rating);
-        log.info(">>> roomDTO {}", roomDTO);
         roomService.save(roomDTO);
         // 멘토에게 포인트 지급
 

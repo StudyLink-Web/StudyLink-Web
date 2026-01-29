@@ -50,11 +50,21 @@ public class Room {
     private Integer rating;
 
     public enum Status {
-        TEMP,
-        PENDING,
-        IN_PROGRESS,
-        ANSWERED,
-        COMPLETED
+        TEMP("임시"),
+        PENDING("대기 중"),
+        IN_PROGRESS("답변 중 "),
+        ANSWERED("답변 완료"),
+        COMPLETED("종료");
+
+        private final String displayName;
+
+        Status(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
 

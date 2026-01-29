@@ -64,7 +64,8 @@ public class StudentVerificationService {
             "@kcu.ac.kr",
             "@gangseo.ac.kr",
             "@naver.com",
-            "@google.com"
+            "@google.com",
+            "@gmail.com"
     };
 
     /**
