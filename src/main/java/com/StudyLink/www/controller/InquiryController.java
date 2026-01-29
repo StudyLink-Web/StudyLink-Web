@@ -38,14 +38,16 @@ public class InquiryController {
     /* ===================== 목록 ===================== */
     @GetMapping("/list")
     public String list(@RequestParam(name = "pageNo", defaultValue = "1") int pageNo,
-                       @RequestParam(required = false) String type,
+                       @RequestParam(required = false) String category,
+                       @RequestParam(required = false) String status,
                        @RequestParam(required = false) String keyword,
                        Model model) {
 
-        var result = inquiryService.getList(pageNo);
+        var result = inquiryService.getList(pageNo, category, status, keyword);
 
         InquiryPageHandler<?> ph = new InquiryPageHandler<>(pageNo, result);
-        ph.setType(type);
+        ph.setCategory(category);
+        ph.setStatus(status);
         ph.setKeyword(keyword);
 
         model.addAttribute("ph", ph);
@@ -161,8 +163,6 @@ public class InquiryController {
         }
 
         inquiryService.answer(qno, adminContent);
-
-        // ✅ 답변 달리면 상태 COMPLETE로 변경
         inquiryService.updateStatus(qno, "COMPLETE");
 
         redirectAttributes.addFlashAttribute("msg", "답변이 등록되었습니다.");

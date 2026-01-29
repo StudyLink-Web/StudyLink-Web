@@ -16,10 +16,10 @@ public class InquiryServiceImpl implements InquiryService {
 
     private final InquiryRepository inquiryRepository;
 
-    /* ===================== 목록 ===================== */
+    /* ===================== 목록(검색 포함) ===================== */
     @Override
     @Transactional(readOnly = true)
-    public Page<InquiryDTO> getList(int pageNo) {
+    public Page<InquiryDTO> getList(int pageNo, String category, String status, String keyword) {
 
         int pageIndex = Math.max(pageNo - 1, 0);
 
@@ -29,7 +29,7 @@ public class InquiryServiceImpl implements InquiryService {
                 Sort.by(Sort.Direction.DESC, "qno")
         );
 
-        return inquiryRepository.findAll(pageable)
+        return inquiryRepository.search(category, status, keyword, pageable)
                 .map(this::convertEntityToDto);
     }
 
@@ -70,14 +70,13 @@ public class InquiryServiceImpl implements InquiryService {
     public void answer(Long qno, String adminContent) {
         Inquiry inquiry = inquiryRepository.findById(qno).orElseThrow();
 
-        // ✅ 이미 답변 있으면 수정 불가
         if (inquiry.getAdminContent() != null && !inquiry.getAdminContent().trim().isEmpty()) {
             throw new IllegalStateException("이미 답변이 등록된 문의입니다.");
         }
 
         inquiry.setAdminContent(adminContent);
         inquiry.setAnswerAt(LocalDateTime.now());
-        inquiry.setStatus("COMPLETE"); // ✅ 답변 달리면 COMPLETE
+        inquiry.setStatus("COMPLETE");
     }
 
     /* ===================== 상태 변경 ===================== */
@@ -95,8 +94,10 @@ public class InquiryServiceImpl implements InquiryService {
                 .title(inquiry.getTitle())
                 .userContent(inquiry.getUserContent())
                 .adminContent(inquiry.getAdminContent())
+                .category(inquiry.getCategory())
                 .status(inquiry.getStatus())
                 .isPublic(inquiry.getIsPublic())
+                .password(inquiry.getPassword())
                 .createdAt(inquiry.getCreatedAt())
                 .answerAt(inquiry.getAnswerAt())
                 .build();
@@ -109,9 +110,11 @@ public class InquiryServiceImpl implements InquiryService {
                 .title(dto.getTitle())
                 .userContent(dto.getUserContent())
                 .adminContent(dto.getAdminContent())
+                .category(dto.getCategory())
                 .status(dto.getStatus())
                 .isPublic(dto.getIsPublic())
                 .password(dto.getPassword())
+                .createdAt(dto.getCreatedAt())
                 .answerAt(dto.getAnswerAt())
                 .build();
     }

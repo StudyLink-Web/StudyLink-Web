@@ -16,49 +16,35 @@ public class Inquiry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "qno")
     private Long qno;
 
-    @Column(length = 100, nullable = false)
-    private String status;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "answer_at")
-    private LocalDateTime answerAt;
-
-    @Column(length = 200, nullable = false)
+    @Column(nullable = false, length = 200)
     private String title;
 
-    @Lob
-    @Column(name = "user_content", nullable = false)
-    private String userContent;
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String userContent;   // 사용자 문의 내용
 
-    @Lob
-    @Column(name = "admin_content")
-    private String adminContent;
+    @Column(columnDefinition = "TEXT")
+    private String adminContent;  // 관리자 답변
 
-    @Column(name = "is_public", length = 1, nullable = false)
-    private String isPublic;   // Y / N
+    @Column(length = 20)
+    private String category;      // CAT1, CAT2
 
-    @Column(length = 100)
-    private String choose;
+    @Column(length = 20)
+    private String status;        // PENDING, READY, COMPLETE
 
-    /* 🔐 비공개 문의 비밀번호 (암호화해서 저장 권장) */
+    @Column(length = 1)
+    private String isPublic;      // Y / N
+
     @Column(length = 255)
     private String password;
 
-    /* ===== 기본값 세팅 ===== */
+    private LocalDateTime createdAt;
+
+    private LocalDateTime answerAt;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
-
-        if (this.status == null) {
-            this.status = "대기";
-        }
-        if (this.isPublic == null) {
-            this.isPublic = "N";
-        }
     }
 }

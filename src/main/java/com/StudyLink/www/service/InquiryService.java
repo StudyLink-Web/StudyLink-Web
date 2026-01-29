@@ -5,8 +5,7 @@ import org.springframework.data.domain.Page;
 
 public interface InquiryService {
 
-    // ✅ Page로 변경 (InquiryPageHandler가 Page<T> 받기 때문)
-    Page<InquiryDTO> getList(int pageNo);
+    Page<InquiryDTO> getList(int pageNo, String category, String status, String keyword);
 
     void register(InquiryDTO inquiryDTO, String loginEmail);
 
@@ -16,6 +15,5 @@ public interface InquiryService {
 
     void answer(Long qno, String adminContent);
 
-    // ✅ 추가
     void updateStatus(Long qno, String status);
 }
