@@ -1,6 +1,7 @@
 package com.StudyLink.www.service;
 
 import com.StudyLink.www.entity.Board;
+import com.StudyLink.www.entity.QUsers;
 import com.StudyLink.www.repository.BoardCustomeRepository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -26,6 +27,7 @@ public class BoardCustomeRepositoryImpl implements BoardCustomeRepository {
     @Override
     public Page<Board> searchBoard(String type, String keyword, Pageable pageable) {
 
+        QUsers user = QUsers.users;
         BooleanExpression condition = null;
 
         if (type != null && !type.isBlank() && keyword != null && !keyword.isBlank()) {
@@ -39,16 +41,13 @@ public class BoardCustomeRepositoryImpl implements BoardCustomeRepository {
                                 : condition.or(board.title.containsIgnoreCase(keyword));
                         break;
 
-                    // 작성자(FK) 검색: keyword가 숫자일 때만 userId(Long) 비교
-                    // 만약 너 UI에서 계속 w를 쓰고 있다면 case "w"도 같이 처리
                     case "u":
                     case "w":
                         try {
                             Long uid = Long.valueOf(keyword);
-                            BooleanExpression userCond = board.userId.eq(uid);
+                            BooleanExpression userCond = board.user.userId.eq(uid);
                             condition = (condition == null) ? userCond : condition.or(userCond);
                         } catch (NumberFormatException ignored) {
-                            // userId가 Long(FK)이므로 숫자가 아니면 조건 추가 안 함
                         }
                         break;
 
@@ -66,6 +65,7 @@ public class BoardCustomeRepositoryImpl implements BoardCustomeRepository {
 
         List<Board> result = queryFactory
                 .selectFrom(board)
+                .join(board.user, user)
                 .where(condition)
                 .orderBy(board.postId.desc())
                 .offset(pageable.getOffset())
@@ -75,6 +75,7 @@ public class BoardCustomeRepositoryImpl implements BoardCustomeRepository {
         Long total = queryFactory
                 .select(board.count())
                 .from(board)
+                .join(board.user, user)
                 .where(condition)
                 .fetchOne();
 

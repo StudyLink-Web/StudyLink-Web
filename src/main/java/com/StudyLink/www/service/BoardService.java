@@ -5,19 +5,21 @@ import com.StudyLink.www.dto.BoardFileDTO;
 import com.StudyLink.www.dto.FileDTO;
 import com.StudyLink.www.entity.Board;
 import com.StudyLink.www.entity.File;
+import com.StudyLink.www.entity.Users;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 public interface BoardService {
 
-    default Board convertDtoToEntity(BoardDTO boardDTO) {
-        if (boardDTO == null) return null;
+    /* ================= Board ================= */
+
+    default Board convertDtoToEntity(BoardDTO boardDTO, Users user) {
+        if (boardDTO == null || user == null) return null;
 
         return Board.builder()
                 .postId(boardDTO.getPostId())
-                .userId(boardDTO.getUserId())
-                .writer(boardDTO.getWriter())
+                .user(user)
                 .department(boardDTO.getDepartment())
                 .title(boardDTO.getTitle())
                 .content(boardDTO.getContent())
@@ -30,8 +32,8 @@ public interface BoardService {
 
         return BoardDTO.builder()
                 .postId(board.getPostId())
-                .userId(board.getUserId())
-                .writer(board.getWriter())
+                .userId(board.getUser().getUserId())
+                .writer(board.getUser().getUsername())
                 .department(board.getDepartment())
                 .title(board.getTitle())
                 .content(board.getContent())
@@ -40,6 +42,8 @@ public interface BoardService {
                 .updatedAt(board.getUpdatedAt())
                 .build();
     }
+
+    /* ================= File ================= */
 
     default File convertDtoToEntity(FileDTO fileDTO) {
         if (fileDTO == null) return null;
@@ -68,6 +72,8 @@ public interface BoardService {
                 .updatedAt(file.getUpdatedAt())
                 .build();
     }
+
+    /* ================= CRUD ================= */
 
     Long insert(BoardDTO boardDTO);
 
