@@ -210,6 +210,7 @@ public class AdminController {
 
     @GetMapping("/notice")
     public String notice(Model model) {
+        log.info("📂 [AdminController] 공지 관리 페이지(/admin/notice) 요청 수신");
         model.addAttribute("currentMenu", "notice");
         return "admin/notice";
     }

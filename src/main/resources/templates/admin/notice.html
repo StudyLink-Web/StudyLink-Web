@@ -1,43 +1,34 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
 
 <div layout:fragment="content" class="container-md">
+    <!-- ✅ 브라우저 캐시 방지 및 로드 확인용 로그 -->
+    <script>console.log("🚀 [notice.html] Admin Notice Page Initializing...");</script>
+
     <div class="row">
         <!-- Sidebar -->
         <nav class="col-2 adminSidebar p-0">
             <h5 class="text-white text-center py-3 border-bottom">ADMIN</h5>
             <a th:href="@{/admin/admin}"
                th:classappend="${currentMenu == 'admin'} ? 'active' : ''"
-               class="adminSidebarMenu">
-                대시보드
-            </a>
+               class="adminSidebarMenu">대시보드</a>
             <a th:href="@{/admin/user}"
                th:classappend="${currentMenu == 'user'} ? 'active' : ''"
-               class="adminSidebarMenu">
-                회원 관리
-            </a>
+               class="adminSidebarMenu">회원 관리</a>
             <a th:href="@{/admin/payment}"
                th:classappend="${currentMenu == 'payment'} ? 'active' : ''"
-               class="adminSidebarMenu">
-                결제 내역
-            </a>
+               class="adminSidebarMenu">결제 내역</a>
             <a th:href="@{/admin/exchange}"
                th:classappend="${currentMenu == 'exchange'} ? 'active' : ''"
-               class="adminSidebarMenu">
-                환전 관리
-            </a>
+               class="adminSidebarMenu">환전 관리</a>
             <a th:href="@{/admin/notice}"
                th:classappend="${currentMenu == 'notice'} ? 'active' : ''"
-               class="adminSidebarMenu">
-                알림 / 공지
-            </a>
+               class="adminSidebarMenu">알림 / 공지</a>
             <a th:href="@{/admin/application}"
                th:classappend="${currentMenu == 'application'} ? 'active' : ''"
-               class="adminSidebarMenu">
-                문의 내역
-            </a>
+               class="adminSidebarMenu">문의 내역</a>
         </nav>
 
         <!-- Main Content -->
@@ -101,65 +92,102 @@
             </div>
         </main>
     </div>
-</div>
 
-<style layout:fragment="css">
-    .hover-scale:hover {
-        transform: translateY(-2px);
-    }
-    .hover-scale:active {
-        transform: translateY(0);
-    }
-    .adminSidebarMenu.active {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-left: 4px solid #fff;
-        font-weight: bold;
-    }
-</style>
-
-<script layout:fragment="script">
-    document.getElementById('noticeForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const title = document.getElementById('noticeTitle').value;
-        const message = document.getElementById('noticeContent').value;
-        const sendBtn = document.getElementById('sendBtn');
-        const btnText = document.getElementById('btnText');
-        const btnLoader = document.getElementById('btnLoader');
-        
-        if (!confirm('정말로 모든 사용자에게 전체 공지를 발송하시겠습니까?')) return;
-        
-        // 상태 변경
-        sendBtn.disabled = true;
-        btnText.textContent = '발송 중...';
-        btnLoader.classList.remove('d-none');
-        
-        try {
-            const response = await fetch('/api/fcm/send-notice', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ title, message })
-            });
-            
-            const result = await response.text();
-            
-            if (result === 'success') {
-                alert('🚀 전체 공지가 성공적으로 발송되었습니다!');
-                document.getElementById('noticeForm').reset();
-            } else {
-                alert('❌ 발송 실패: ' + result);
-            }
-        } catch (error) {
-            console.error('발송 오류:', error);
-            alert('❌ 서버 연결에 실패했습니다.');
-        } finally {
-            sendBtn.disabled = false;
-            btnText.textContent = '전체 공지 발송하기';
-            btnLoader.classList.add('d-none');
+    <style>
+        .hover-scale { transition: all 0.2s ease-in-out; }
+        .hover-scale:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .hover-scale:active { transform: translateY(0); }
+        .adminSidebarMenu.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #fff;
+            font-weight: bold;
         }
-    });
-</script>
+    </style>
 
+    <script th:inline="javascript">
+        // 즉시 실행 함수(IIFE)로 캡슐화 및 즉시 실행 보장
+        (function() {
+            "use strict";
+
+            const initNoticePage = function() {
+                const form = document.querySelector('#noticeForm');
+                if (!form) {
+                    console.error("❌ [notice.html] Error: noticeForm not found. Retrying in 500ms...");
+                    setTimeout(initNoticePage, 500); // DOM이 늦게 로드될 경우 대비
+                    return;
+                }
+
+                console.log("✅ [notice.html] noticeForm successfully bound.");
+
+                form.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+
+                    const titleInput = document.querySelector('#noticeTitle');
+                    const contentInput = document.querySelector('#noticeContent');
+                    const btn = document.querySelector('#sendBtn');
+                    const btnText = document.querySelector('#btnText');
+                    const loader = document.querySelector('#btnLoader');
+
+                    if (!titleInput.value.trim() || !contentInput.value.trim()) {
+                        alert("제목과 내용을 모두 입력해 주세요.");
+                        return;
+                    }
+
+                    if (!confirm(`📢 [전체 공지 발송]\n\n제목: ${titleInput.value}\n\n정말로 발송하시겠습니까?`)) {
+                        return;
+                    }
+
+                    // UI 상태 업데이트
+                    btn.disabled = true;
+                    btnText.textContent = "발송 중...";
+                    loader.classList.remove('d-none');
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+                        const headers = { 'Content-Type': 'application/json' };
+                        if (csrfToken && csrfHeader) {
+                            headers[csrfHeader] = csrfToken;
+                        }
+
+                        // 백엔드 test-all 엔드포인트 호출
+                        const response = await fetch('/api/fcm/test-all', {
+                            method: 'POST',
+                            headers: headers,
+                            body: JSON.stringify({ 
+                                title: titleInput.value, 
+                                message: contentInput.value 
+                            })
+                        });
+
+                        const result = await response.text();
+                        console.log("📩 [notice.html] Response Received:", result);
+
+                        if (response.ok && (result.includes('success') || result.includes('완료'))) {
+                            alert("🚀 전체 공지 발송 성공!");
+                            form.reset();
+                        } else {
+                            alert("❌ 발송 에러: " + (result || "서버 응답 없음"));
+                        }
+                    } catch (error) {
+                        console.error("❌ [notice.html] Fetch Error:", error);
+                        alert("❌ 네트워크 오류가 발생했습니다.");
+                    } finally {
+                        btn.disabled = false;
+                        btnText.textContent = "전체 공지 발송하기";
+                        loader.classList.add('d-none');
+                    }
+                });
+            };
+
+            // 브라우저 로딩 상태에 따라 적절히 초기화
+            if (document.readyState === "complete" || document.readyState === "interactive") {
+                initNoticePage();
+            } else {
+                document.addEventListener("DOMContentLoaded", initNoticePage);
+            }
+        })();
+    </script>
+</div>
 </html>

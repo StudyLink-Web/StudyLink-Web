@@ -1,17 +1,21 @@
 package com.StudyLink.www.controller;
 
+import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.entity.PushToken;
 import com.StudyLink.www.repository.PushTokenRepository;
 import com.StudyLink.www.repository.UserRepository;
 import com.StudyLink.www.service.FCMService;
 import com.StudyLink.www.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/fcm")
 @RequiredArgsConstructor
@@ -75,17 +79,29 @@ public class FCMController {
                 ? payload.get("message")
                 : "서비스를 이용 중인 모든 기기에 발송된 알림입니다! 📢";
 
-        // 1. 모든 토큰 사용자에게 푸시 발송
-        pushTokenRepository.findAll().forEach(tokenEntity -> {
-            fcmService.sendNotification(tokenEntity.getToken(), title, message);
-        });
+        log.info("📢 [FCMController] test-all 요청 수신: {}", message);
 
-        // 2. 모든 사용자의 알림 내역에 저장
-        userRepository.findAll().forEach(user -> {
-            notificationService.createNotification(user.getUserId(), "SYSTEM", message, null);
-        });
+        try {
+            // 1. 모든 토큰 사용자에게 푸시 발송
+            List<PushToken> tokens = pushTokenRepository.findAll();
+            log.info("🚀 총 {}개의 기기에 FCM 푸시 발송 시작", tokens.size());
+            tokens.forEach(tokenEntity -> {
+                fcmService.sendNotification(tokenEntity.getToken(), title, message);
+            });
 
-        return "전체 기기 발송 및 DB 저장 완료";
+            // 2. 모든 사용자의 알림 내역에 저장
+            List<Users> allUsers = userRepository.findAll();
+            log.info("💾 총 {}명의 사용자 DB 알림 내역 저장 시작", allUsers.size());
+            allUsers.forEach(user -> {
+                notificationService.createNotification(user.getUserId(), "SYSTEM", message, null);
+            });
+
+            log.info("✅ [FCMController] test-all 전송 완료");
+            return "success";
+        } catch (Exception e) {
+            log.error("❌ [FCMController] test-all 중 오류 발생", e);
+            return "Fail: " + e.getMessage();
+        }
     }
 
     // 📍 내 계정으로 로그인된 모든 기기에 알림 보내기
@@ -117,21 +133,38 @@ public class FCMController {
         String title = payload.getOrDefault("title", "StudyLink 공지");
         String message = payload.get("message");
 
+        log.info("📢 전체 공지 발송 요청 수신: title={}, message={}", title, message);
+
         if (message == null || message.isBlank()) {
+            log.warn("❌ 공지 발송 실패: 메시지 내용이 비어있음");
             return "Error: 공지 내용을 입력해 주세요.";
         }
 
-        // 1. 모든 기기에 푸시 발송
-        pushTokenRepository.findAll().forEach(tokenEntity -> {
-            fcmService.sendNotification(tokenEntity.getToken(), title, message);
-        });
+        try {
+            // 1. 모든 기기에 푸시 발송
+            List<PushToken> tokens = pushTokenRepository.findAll();
+            log.info("🚀 총 {}개의 기기에 FCM 푸시 발송 시작", tokens.size());
+            tokens.forEach(tokenEntity -> {
+                fcmService.sendNotification(tokenEntity.getToken(), title, message);
+            });
 
-        // 2. 모든 사용자의 알림 내역에 저장
-        userRepository.findAll().forEach(user -> {
-            notificationService.createNotification(user.getUserId(), "SYSTEM", message, null);
-        });
+            // 2. 모든 사용자의 알림 내역에 저장
+            List<Users> allUsers = userRepository.findAll();
+            log.info("💾 총 {}명의 사용자 DB 알림 내역 저장 시작", allUsers.size());
+            allUsers.forEach(user -> {
+                try {
+                    notificationService.createNotification(user.getUserId(), "SYSTEM", message, null);
+                } catch (Exception e) {
+                    log.error("❌ 사용자 {} 에게 알림 저장 실패: {}", user.getUserId(), e.getMessage());
+                }
+            });
 
-        return "success";
+            log.info("✅ 전체 공지 발송 절차 완료");
+            return "success";
+        } catch (Exception e) {
+            log.error("❌ 전체 공지 발송 중 치명적 오류 발생", e);
+            return "Error: " + e.getMessage();
+        }
     }
 
     // 📍 토큰 삭제 (로그아웃 시 호출)
