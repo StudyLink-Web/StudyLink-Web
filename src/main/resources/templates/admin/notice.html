@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content" class="container-md">
+    <!-- ✅ 브라우저 캐시 방지 및 로드 확인용 로그 -->
+    <script>console.log("🚀 [notice.html] Admin Notice Page Initializing...");</script>
+
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-2 adminSidebar p-0">
+            <h5 class="text-white text-center py-3 border-bottom">ADMIN</h5>
+            <a th:href="@{/admin/admin}"
+               th:classappend="${currentMenu == 'admin'} ? 'active' : ''"
+               class="adminSidebarMenu">대시보드</a>
+            <a th:href="@{/admin/user}"
+               th:classappend="${currentMenu == 'user'} ? 'active' : ''"
+               class="adminSidebarMenu">회원 관리</a>
+            <a th:href="@{/admin/payment}"
+               th:classappend="${currentMenu == 'payment'} ? 'active' : ''"
+               class="adminSidebarMenu">결제 내역</a>
+            <a th:href="@{/admin/exchange}"
+               th:classappend="${currentMenu == 'exchange'} ? 'active' : ''"
+               class="adminSidebarMenu">환전 관리</a>
+            <a th:href="@{/admin/notice}"
+               th:classappend="${currentMenu == 'notice'} ? 'active' : ''"
+               class="adminSidebarMenu">알림 / 공지</a>
+            <a th:href="@{/admin/application}"
+               th:classappend="${currentMenu == 'application'} ? 'active' : ''"
+               class="adminSidebarMenu">문의 내역</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold mb-0">알림 / 공지 관리</h4>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                        <div class="card-header bg-primary text-white py-3 border-0">
+                            <h5 class="card-title mb-0 d-flex align-items-center">
+                                <span class="me-2 text-xl">📢</span> 전체 공지 발송
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <p class="text-muted small mb-4">
+                                * 여기서 발송되는 공지는 <strong>모든 기기</strong>에 즉시 발송되며, <strong>모든 사용자</strong>의 알림 내역에 영구적으로 기록됩니다.
+                            </p>
+                            
+                            <form id="noticeForm">
+                                <div class="mb-4">
+                                    <label for="noticeTitle" class="form-label fw-bold">공지 제목</label>
+                                    <input type="text" class="form-control form-control-lg border-2" id="noticeTitle" 
+                                           placeholder="예: [안내] 서버 정기 점검 안내" required>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="noticeContent" class="form-label fw-bold">공지 내용</label>
+                                    <textarea class="form-control border-2" id="noticeContent" rows="8" 
+                                              placeholder="공지할 내용을 상세히 입력해 주세요..." required></textarea>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" id="sendBtn" class="btn btn-primary btn-lg py-3 rounded-pill fw-bold shadow-sm transition-all hover-scale">
+                                        <span id="btnText">전체 공지 발송하기</span>
+                                        <span id="btnLoader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0 rounded-4 bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3 d-flex align-items-center text-primary">
+                                <span class="me-2">💡</span> 안내 사항
+                            </h6>
+                            <ul class="small text-muted mb-0 ps-3">
+                                <li class="mb-2">FCM 푸시 알림은 네트워크 상태에 따라 지연될 수 있습니다.</li>
+                                <li class="mb-2">발송된 공지는 취소할 수 없으므로 오타가 없는지 한 번 더 확인해 주세요.</li>
+                                <li class="mb-2">사용자 알림 센터(DB)에는 즉시 반영됩니다.</li>
+                                <li>내용은 1,000자 이내로 작성을 권장합니다.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <style>
+        .hover-scale { transition: all 0.2s ease-in-out; }
+        .hover-scale:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .hover-scale:active { transform: translateY(0); }
+        .adminSidebarMenu.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #fff;
+            font-weight: bold;
+        }
+    </style>
+
+    <script th:inline="javascript">
+        // 즉시 실행 함수(IIFE)로 캡슐화 및 즉시 실행 보장
+        (function() {
+            "use strict";
+
+            const initNoticePage = function() {
+                const form = document.querySelector('#noticeForm');
+                if (!form) {
+                    console.error("❌ [notice.html] Error: noticeForm not found. Retrying in 500ms...");
+                    setTimeout(initNoticePage, 500); // DOM이 늦게 로드될 경우 대비
+                    return;
+                }
+
+                console.log("✅ [notice.html] noticeForm successfully bound.");
+
+                form.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+
+                    const titleInput = document.querySelector('#noticeTitle');
+                    const contentInput = document.querySelector('#noticeContent');
+                    const btn = document.querySelector('#sendBtn');
+                    const btnText = document.querySelector('#btnText');
+                    const loader = document.querySelector('#btnLoader');
+
+                    if (!titleInput.value.trim() || !contentInput.value.trim()) {
+                        alert("제목과 내용을 모두 입력해 주세요.");
+                        return;
+                    }
+
+                    if (!confirm(`📢 [전체 공지 발송]\n\n제목: ${titleInput.value}\n\n정말로 발송하시겠습니까?`)) {
+                        return;
+                    }
+
+                    // UI 상태 업데이트
+                    btn.disabled = true;
+                    btnText.textContent = "발송 중...";
+                    loader.classList.remove('d-none');
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+                        const headers = { 'Content-Type': 'application/json' };
+                        if (csrfToken && csrfHeader) {
+                            headers[csrfHeader] = csrfToken;
+                        }
+
+                        // 백엔드 test-all 엔드포인트 호출
+                        const response = await fetch('/api/fcm/test-all', {
+                            method: 'POST',
+                            headers: headers,
+                            body: JSON.stringify({ 
+                                title: titleInput.value, 
+                                message: contentInput.value 
+                            })
+                        });
+
+                        const result = await response.text();
+                        console.log("📩 [notice.html] Response Received:", result);
+
+                        if (response.ok && (result.includes('success') || result.includes('완료'))) {
+                            alert("🚀 전체 공지 발송 성공!");
+                            form.reset();
+                        } else {
+                            alert("❌ 발송 에러: " + (result || "서버 응답 없음"));
+                        }
+                    } catch (error) {
+                        console.error("❌ [notice.html] Fetch Error:", error);
+                        alert("❌ 네트워크 오류가 발생했습니다.");
+                    } finally {
+                        btn.disabled = false;
+                        btnText.textContent = "전체 공지 발송하기";
+                        loader.classList.add('d-none');
+                    }
+                });
+            };
+
+            // 브라우저 로딩 상태에 따라 적절히 초기화
+            if (document.readyState === "complete" || document.readyState === "interactive") {
+                initNoticePage();
+            } else {
+                document.addEventListener("DOMContentLoaded", initNoticePage);
+            }
+        })();
+    </script>
+</div>
+</html>

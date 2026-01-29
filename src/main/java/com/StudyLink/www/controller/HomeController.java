@@ -21,7 +21,7 @@ public class HomeController {
             System.out.println("✅ 로그인 사용자: " + authentication.getName());
         } else {
             model.addAttribute("isAuthenticated", false);
-            System.out.println("❌ 비로그인 사용자");
+            System.out.println("비로그인 사용자");
         }
         return "modern_index";
     }
@@ -73,7 +73,7 @@ public class HomeController {
     /**
      * AI 대입 자소서 페이지 (리액트 라우팅 대응)
      */
-    @GetMapping({"/cover-letter", "/cover_letter", "/pricing"})
+    @GetMapping({ "/cover-letter", "/cover_letter", "/pricing" })
     public String coverLetter(Authentication authentication, Model model) {
         if (authentication != null && authentication.isAuthenticated()) {
             model.addAttribute("user", authentication.getPrincipal());

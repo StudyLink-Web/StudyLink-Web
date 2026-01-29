@@ -4,11 +4,11 @@ import { requestForToken, onMessageListener } from "./firebase-init";
 import NotificationCenter from "./components/NotificationCenter";
 
 
-// Use Dynamic Imports for Heavy Components
+// [Vercel Best Practice 1.5] 다이나믹 import를 통해 무거운 컴포넌트를 렌더링 전에 로딩
 const AdmissionEssayPage = lazy(() => import("./pages/AdmissionEssayPage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
 
-// Extract to Memoized Components to prevent unnecessary re-renders during scroll
+// 스크롤 시 불필요한 재렌더링을 방지하기 위해 메모이제이션된 컴포넌트로 추출
 const MentorSection = memo(lazy(() => import("./components/MentorSection")));
 const AdSection = memo(lazy(() => import("./components/AdSection")));
 const CommunitySection = memo(
@@ -24,11 +24,11 @@ function App() {
   const [scrollY, setScrollY] = useState(0);
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [isPushPanelOpen, setIsPushPanelOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0); // 📍 상단으로 이동
+  const [unreadCount, setUnreadCount] = useState(0); // 상단으로 이동
   const [theme, setTheme] = useState<'light' | 'dark'>(isDarkInitial ? 'dark' : 'light'); // 📍 초기값 설정
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // 📍 테마 감지 로직 (MutationObserver)
+  // 테마 감지 로직 (MutationObserver)
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
@@ -45,7 +45,7 @@ function App() {
 
   // 푸시 알림 권한 요청 핸들러
   const handleRequestPermission = async () => {
-    // 📍 이미 열려있고 토큰이 있다면 토글(닫기)
+    // 이미 열려있고 토큰이 있다면 토글(닫기)
     if (isPushPanelOpen && pushToken) {
       setIsPushPanelOpen(false);
       return;
@@ -55,14 +55,14 @@ function App() {
       const token = await requestForToken();
       if (token) {
         setPushToken(token);
-        localStorage.setItem("pushToken", token); // 📍 로그아웃 전처리를 위해 저장
+        localStorage.setItem("pushToken", token); // 로그아웃 전처리를 위해 저장
         await saveTokenToServer(token);
-        setIsPushPanelOpen(true); // 📍 성공 시 패널 열기
+        setIsPushPanelOpen(true); // 성공 시 패널 열기
         if (!isPushPanelOpen)
-          alert("✅ 푸시 알림 권한 승인 및 서버 등록 완료!");
+          alert("푸시 알림 권한 승인 및 서버 등록 완료!");
       } else {
         alert(
-          "⚠️ 토큰을 가져오지 못했습니다. 브라우저 설정에서 알림 권한을 확인해 주세요.",
+          "토큰을 가져오지 못했습니다. 브라우저 설정에서 알림 권한을 확인해 주세요.",
         );
       }
     } catch (error) {
@@ -71,7 +71,7 @@ function App() {
 
       if (errorMessage.includes("permission-blocked")) {
         alert(
-          "🔒 브라우저에서 알림 권한이 차단되어 있습니다.\n\n" +
+          "브라우저에서 알림 권한이 차단되어 있습니다.\n\n" +
             "해결 방법:\n" +
             "1. 주소창 왼쪽의 [자물쇠] 또는 [설정] 아이콘 클릭\n" +
             "2. [알림] 항목을 [허용]으로 변경\n" +
@@ -97,7 +97,7 @@ function App() {
     }
   };
 
-  // 📍 서버 측 테스트 푸시 발송 요청
+  // 서버 측 테스트 푸시 발송 요청
   const handleTestServerPush = async () => {
     if (!pushToken) return alert("먼저 알림 권한을 승인해 주세요!");
     try {
@@ -108,11 +108,11 @@ function App() {
       });
       const result = await response.text();
       alert(
-        `🚀 서버 응답: ${result}\n\n알림이 안 온다면 응답 내용을 확인해 보세요!`,
+        `서버 응답: ${result}\n\n알림이 안 온다면 응답 내용을 확인해 보세요!`,
       );
     } catch (error) {
-      console.error("❌ 서버 테스트 푸시 요청 실패:", error);
-      alert("❌ 서버 테스트 푸시 요청 실패");
+      console.error("서버 테스트 푸시 요청 실패:", error);
+      alert("서버 테스트 푸시 요청 실패");
     }
   };
 
@@ -152,8 +152,8 @@ function App() {
         );
       }
     } catch (error) {
-      console.error("❌ 내 기기 테스트 푸시 요청 실패:", error);
-      alert("❌ 내 기기 테스트 푸시 요청 실패");
+      console.error("내 기기 테스트 푸시 요청 실패:", error);
+      alert("내 기기 테스트 푸시 요청 실패");
     }
   };
 
@@ -162,7 +162,7 @@ function App() {
     onMessageListener()
       .then((payload) => {
         const messagePayload = payload as any;
-        console.log("📩 포그라운드 알림 수신:", messagePayload);
+        console.log("포그라운드 알림 수신:", messagePayload);
         
         // 알림 개수 즉시 갱신 (헤더에서 관리되므로 여기서는 생략)
 
@@ -176,27 +176,27 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // 📍 자동 토큰 동기화: 이미 권한이 있다면 로그인 상태 변화 등에 대비해 서버에 토큰 갱신
+    // 자동 토큰 동기화: 이미 권한이 있다면 로그인 상태 변화 등에 대비해 서버에 토큰 갱신
     const syncToken = async () => {
       if (Notification.permission === "granted") {
         const token = await requestForToken();
         if (token) {
           setPushToken(token);
-          localStorage.setItem("pushToken", token); // 📍 동기화 시에도 저장
+          localStorage.setItem("pushToken", token); // 동기화 시에도 저장
           await saveTokenToServer(token);
-          console.log("🔄 알림 토큰 자동 동기화 완료");
+          console.log("알림 토큰 자동 동기화 완료");
         }
       }
     };
     syncToken();
 
     const handleScroll = () => {
-      // Throttle or just ensure passive is set
+      // 쓰로틀링 또는 passive 속성 설정 확인
       setScrollY(window.scrollY);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []); // Static dependency array is correct here
+  }, []); // 이 부분에는 정적 의존성 배열을 사용하는 것이 올바름
 
     // 📍 전역 객체(window)에 알림 센터 제어 함수 등록 (헤더 연동용)
     useEffect(() => {
@@ -249,7 +249,7 @@ function App() {
     );
   }
 
-  // 배경색 보간 (BG Color Interpolation)
+  // 배경색 보간
   const progress = Math.min(scrollY / 200, 1);
   const bgColor = `rgb(${248 + (255 - 248) * progress}, ${
     250 + (255 - 250) * progress
@@ -276,7 +276,7 @@ function App() {
         />
         <Hero scrollProgress={progress} />
 
-        {/* [Vercel Best Practice 1.5] Strategic Suspense Boundaries for independent sections */}
+        {/* [Vercel 베스트 프랙티스 1.5] 독립적인 섹션을 위한 전략적 Suspense 경계 */}
         <Suspense
           fallback={
             <div className="h-40 animate-pulse bg-slate-100 dark:bg-white/5" />
@@ -284,7 +284,7 @@ function App() {
         >
           <QuickActionGrid />
 
-          {/* Infinite Ticker */}
+          {/* 무한 티커 */}
           <div className="bg-white/50 dark:bg-[#030014] border-y border-slate-200 dark:border-white/5 py-4 overflow-hidden whitespace-nowrap relative z-20 backdrop-blur-sm">
             <div className="inline-block animate-shimmer bg-gradient-to-r from-transparent via-teal-500/5 dark:via-white/5 to-transparent bg-[length:200%_100%] w-full absolute inset-0 pointer-events-none" />
             <div className="inline-block animate-marquee">

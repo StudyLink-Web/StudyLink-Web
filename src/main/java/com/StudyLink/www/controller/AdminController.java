@@ -64,14 +64,11 @@ public class AdminController {
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String role,
             @RequestParam(required = false) Boolean isActive,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "desc") String sort,
             @PageableDefault(size = 10) Pageable pageable,
-            Model model
-    ) {
+            Model model) {
         email = (email != null && email.isBlank()) ? null : email;
 
         Role roleEnum = null;
@@ -83,11 +80,9 @@ public class AdminController {
                 ? Sort.by("createdAt").ascending()
                 : Sort.by("createdAt").descending();
 
-        Pageable sortedPageable =
-                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOption);
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOption);
 
-        Page<AdminUserDTO> page =
-                userService.search(email, roleEnum, isActive, startDate, endDate, sortedPageable);
+        Page<AdminUserDTO> page = userService.search(email, roleEnum, isActive, startDate, endDate, sortedPageable);
 
         model.addAttribute("usersList", page.getContent());
         model.addAttribute("page", page);
@@ -114,14 +109,11 @@ public class AdminController {
             @RequestParam(required = false) PaymentStatus status,
             @RequestParam(required = false) String method,
             @RequestParam(required = false) String email,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "desc") String sort,
             @PageableDefault(size = 10) Pageable pageable,
-            Model model
-    ) {
+            Model model) {
         method = (method != null && method.isBlank()) ? null : method;
         email = (email != null && email.isBlank()) ? null : email;
 
@@ -129,11 +121,9 @@ public class AdminController {
                 ? Sort.by("approvedAt").ascending()
                 : Sort.by("approvedAt").descending();
 
-        Pageable sortedPageable =
-                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOption);
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOption);
 
-        Page<AdminPaymentDTO> page =
-                paymentService.search(status, method, email, startDate, endDate, sortedPageable);
+        Page<AdminPaymentDTO> page = paymentService.search(status, method, email, startDate, endDate, sortedPageable);
 
         model.addAttribute("adminPaymentDTOList", page.getContent());
         model.addAttribute("page", page);
@@ -160,15 +150,12 @@ public class AdminController {
     public void exchange(
             @RequestParam(required = false) ExchangeStatus status,
             @RequestParam(required = false) String email,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "createdAt") String basis,
             @RequestParam(defaultValue = "desc") String sort,
             @PageableDefault(size = 10) Pageable pageable,
-            Model model
-    ) {
+            Model model) {
         email = (email != null && email.isBlank()) ? null : email;
 
         Sort sortOption = null;
@@ -182,11 +169,10 @@ public class AdminController {
                     : Sort.by("processedAt").descending();
         }
 
-        Pageable sortedPageable =
-                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOption);
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOption);
 
-        Page<AdminExchangeRequestDTO> page =
-                paymentService.searchExchangeRequests(status, email, startDate, endDate, basis, sortedPageable);
+        Page<AdminExchangeRequestDTO> page = paymentService.searchExchangeRequests(status, email, startDate, endDate,
+                basis, sortedPageable);
 
         model.addAttribute("adminExchangeRequestDTOList", page.getContent());
         model.addAttribute("page", page);
@@ -216,8 +202,16 @@ public class AdminController {
     }
 
     @PostMapping("/exchangeReject")
-    public ResponseEntity<Void> exchangeReject(@RequestBody AdminExchangeRequestRejectDTO adminExchangeRequestRejectDTO) {
+    public ResponseEntity<Void> exchangeReject(
+            @RequestBody AdminExchangeRequestRejectDTO adminExchangeRequestRejectDTO) {
         paymentService.reject(adminExchangeRequestRejectDTO);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/notice")
+    public String notice(Model model) {
+        log.info("📂 [AdminController] 공지 관리 페이지(/admin/notice) 요청 수신");
+        model.addAttribute("currentMenu", "notice");
+        return "admin/notice";
     }
 }
