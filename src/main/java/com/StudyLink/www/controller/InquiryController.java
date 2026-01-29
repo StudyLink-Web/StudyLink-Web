@@ -66,7 +66,9 @@ public class InquiryController {
                                RedirectAttributes redirectAttributes) {
         if (!isLogin(authentication)) return "redirect:/login";
 
+        inquiryDTO.setStatus("PENDING"); // ✅ 등록 시 기본 상태
         inquiryService.register(inquiryDTO, authentication.getName());
+
         redirectAttributes.addFlashAttribute("msg", "문의가 등록되었습니다.");
         return "redirect:/inquiry/list";
     }

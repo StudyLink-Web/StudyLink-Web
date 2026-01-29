@@ -40,9 +40,14 @@
 
       <button type="submit" class="btn search_button">
         검색
-        <span class="g" th:text="${ph != null ? ph.totalElement : 0}">0</span>
       </button>
     </form>
+    <div class="text-right"
+         th:if="${param.keyword != null or param.category != null or param.status != null}">
+      <p>
+        <span class="g" th:text="${ph != null ? ph.totalElement : 0}">0</span> 건이 검색되었습니다.
+      </p>
+    </div>
 
     <div class="community_table_wrap table-hover">
       <table class="community_table">

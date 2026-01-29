@@ -27,10 +27,17 @@
         <!-- 검색/정렬 (현재 service에 검색 기능 없으면 UI만 존재해도 됨) -->
         <form class="form_board" role="search" th:action="@{/inquiry/list}" method="get">
             <div class="form_board_box">
-                <select class="form-select" name="type" aria-label="정렬 기준">
-                    <option value="" th:selected="${ph != null and (ph.type == null or ph.type == '')}">전체</option>
-                    <option value="new" th:selected="${ph != null and ph.type == 'new'}">최신순</option>
-                    <option value="status" th:selected="${ph != null and ph.type == 'status'}">상태순</option>
+                <select class="form-select" name="category" aria-label="카테고리">
+                    <option value="" th:selected="${param.category == null or param.category[0] == ''}">전체</option>
+                    <option value="CAT1" th:selected="${param.category != null and param.category[0] == 'CAT1'}">카테고리1</option>
+                    <option value="CAT2" th:selected="${param.category != null and param.category[0] == 'CAT2'}">카테고리2</option>
+                </select>
+
+                <select class="form-select" name="status" aria-label="답변 상태">
+                    <option value="" th:selected="${param.status == null or param.status[0] == ''}">전체</option>
+                    <option value="PENDING" th:selected="${param.status != null and param.status[0] == 'PENDING'}">PENDING</option>
+                    <option value="READY" th:selected="${param.status != null and param.status[0] == 'READY'}">READY</option>
+                    <option value="COMPLETE" th:selected="${param.status != null and param.status[0] == 'COMPLETE'}">COMPLETE</option>
                 </select>
 
                 <input class="form-control" type="search" name="keyword"
@@ -42,9 +49,14 @@
 
             <button type="submit" class="btn search_button">
                 검색
-                <span class="g" th:text="${ph != null ? ph.totalElement : 0}">0</span>
             </button>
         </form>
+        <div class="text-right"
+             th:if="${param.keyword != null or param.category != null or param.status != null}">
+            <p>
+                <span class="g" th:text="${ph != null ? ph.totalElement : 0}">0</span> 건이 검색되었습니다.
+            </p>
+        </div>
 
         <div class="community_table_wrap table-hover">
             <table class="community_table">
@@ -81,7 +93,12 @@
                                   class="badge bg-secondary ms-2">비공개</span>
                         </td>
 
-                        <td th:text="${q.status}"></td>
+                        <td th:switch="${q.status}">
+                            <span th:case="'PENDING'" class="text-success">PENDING</span>
+                            <span th:case="'READY'" class="text-primary">READY</span>
+                            <span th:case="'COMPLETE'" class="text-danger">COMPLETE</span>
+                            <span th:case="*">대기</span>
+                        </td>
 
                         <td th:text="${q.createdAt != null ? #temporals.format(q.createdAt, 'yyyy-MM-dd') : '-'}"></td>
 
