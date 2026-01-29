@@ -23,11 +23,11 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log("🏢 백그라운드 메시지 수신 (Smart Filtering):", payload);
 
-  const notificationTitle = payload.notification.title;
+  const notificationTitle = payload.data.title || "StudyLink 알림";
   const notificationOptions = {
-    body: payload.notification.body,
+    body: payload.data.body || "",
     icon: "/pwa-192x192.png",
-    tag: "chatbot-notification", // 중복 알림 방지
+    tag: "studylink-notification", // 중복 알림 방지 태그
   };
 
   // 📍 스마트 필터링: 현재 사용자가 챗봇 페이지를 보고 있는지 확인

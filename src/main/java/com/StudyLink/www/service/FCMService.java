@@ -12,38 +12,40 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class FCMService {
 
-    public String sendNotification(String token, String title, String body) {
-        Notification notification = Notification.builder()
-                .setTitle(title)
-                .setBody(body)
-                .build();
+        public String sendNotification(String token, String title, String body) {
+                Notification notification = Notification.builder()
+                                .setTitle(title)
+                                .setBody(body)
+                                .build();
 
-        // 📍 iOS(APNS) 전용 설정 강화
-        com.google.firebase.messaging.ApnsConfig apnsConfig = com.google.firebase.messaging.ApnsConfig.builder()
-                .setAps(com.google.firebase.messaging.Aps.builder()
-                        .setSound("default")
-                        .setBadge(1)
-                        .setContentAvailable(true)
-                        .build())
-                .putHeader("apns-priority", "10") // 즉시 발송 우선순위
-                .build();
+                // 📍 iOS(APNS) 전용 설정 강화
+                com.google.firebase.messaging.ApnsConfig apnsConfig = com.google.firebase.messaging.ApnsConfig.builder()
+                                .setAps(com.google.firebase.messaging.Aps.builder()
+                                                .setSound("default")
+                                                .setBadge(1)
+                                                .setContentAvailable(true)
+                                                .build())
+                                .putHeader("apns-priority", "10") // 즉시 발송 우선순위
+                                .build();
 
-        Message message = Message.builder()
-                .setToken(token)
-                .setNotification(notification)
-                .setApnsConfig(apnsConfig)
-                .setAndroidConfig(com.google.firebase.messaging.AndroidConfig.builder()
-                        .setPriority(com.google.firebase.messaging.AndroidConfig.Priority.HIGH)
-                        .build())
-                .build();
+                Message message = Message.builder()
+                                .setToken(token)
+                                // .setNotification(notification) // 📍 주석 처리: 브라우저의 자동 알림 표시를 막음
+                                .putData("title", title) // 📍 대신 데이터로 실어서 보냄
+                                .putData("body", body)
+                                .setApnsConfig(apnsConfig)
+                                .setAndroidConfig(com.google.firebase.messaging.AndroidConfig.builder()
+                                                .setPriority(com.google.firebase.messaging.AndroidConfig.Priority.HIGH)
+                                                .build())
+                                .build();
 
-        try {
-            String response = FirebaseMessaging.getInstance().send(message);
-            log.info("✅ 푸시 알림 전송 성공: " + response);
-            return response;
-        } catch (Exception e) {
-            log.error("❌ 푸시 알림 전송 실패: ", e);
-            return "Error: " + e.getMessage();
+                try {
+                        String response = FirebaseMessaging.getInstance().send(message);
+                        log.info("✅ 푸시 알림 전송 성공: " + response);
+                        return response;
+                } catch (Exception e) {
+                        log.error("❌ 푸시 알림 전송 실패: ", e);
+                        return "Error: " + e.getMessage();
+                }
         }
-    }
 }

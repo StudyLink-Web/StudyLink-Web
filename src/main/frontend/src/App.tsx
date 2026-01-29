@@ -166,9 +166,9 @@ function App() {
         
         // 알림 개수 즉시 갱신 (헤더에서 관리되므로 여기서는 생략)
 
-        if (messagePayload?.notification) {
+        if (messagePayload?.data) {
           alert(
-            `StudyLink 알림\n\n${messagePayload.notification.title}\n${messagePayload.notification.body}`,
+            `StudyLink 알림\n\n${messagePayload.data.title}\n${messagePayload.data.body}`,
           );
         }
       })
@@ -327,7 +327,7 @@ function App() {
             <div className={`relative ${!isPushPanelOpen && unreadCount > 0 && "animate-bounce"}`}>
               <span className="text-xl">{isPushPanelOpen ? "✕" : "🔔"}</span>
               {!isPushPanelOpen && unreadCount > 0 && (
-                <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-slate-900 dark:border-indigo-900 px-1 px-1">
+                <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-slate-900 dark:border-indigo-900 px-1">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
