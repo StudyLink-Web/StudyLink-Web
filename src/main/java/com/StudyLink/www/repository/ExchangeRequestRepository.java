@@ -46,10 +46,19 @@ public interface ExchangeRequestRepository extends JpaRepository<ExchangeRequest
             Pageable pageable
     );
 
-    int countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    int countByStatusAndCreatedAtBetween(ExchangeStatus exchangeStatus, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT SUM(e.point) FROM ExchangeRequest e WHERE e.createdAt BETWEEN :start AND :end")
-    Long sumAmountByCreatedAtBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    @Query("""
+        SELECT SUM(e.point)
+        FROM ExchangeRequest e
+        WHERE (:status IS NULL OR e.status = :status)
+          AND e.createdAt BETWEEN :start AND :end
+    """)
+    Long sumAmountByCreatedAtBetween(
+            @Param("status") ExchangeStatus status,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 
     @Query("""
         select coalesce(sum(e.point), 0)

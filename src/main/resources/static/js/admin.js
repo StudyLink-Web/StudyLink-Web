@@ -23,7 +23,15 @@ const canvas = document.getElementById(canvasId);
                 legend: { display: false }
             },
             scales: {
-                y: { beginAtZero: true }
+                y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function (value) {
+                        return value.toLocaleString();
+                    },
+                    precision: 0
+                    }
+                }
             }
         }
     });
