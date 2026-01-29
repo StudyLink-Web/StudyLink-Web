@@ -31,16 +31,34 @@ public class InquiryPageHandler<T> {
     private List<T> list;
 
     public InquiryPageHandler(int pageNo, Page<T> result) {
+        this(pageNo, result, 10);
+    }
+
+    public InquiryPageHandler(int pageNo, Page<T> result, int naviSize) {
         this.pageNo = pageNo;
+        this.naviSize = (naviSize <= 0 ? 10 : naviSize);
+
+        if (result == null) {
+            this.size = 10;
+            this.totalElement = 0;
+            this.totalPage = 0;
+            this.list = List.of();
+            this.startPage = 1;
+            this.endPage = 1;
+            this.prev = false;
+            this.next = false;
+            return;
+        }
+
         this.size = result.getSize();
         this.totalElement = result.getTotalElements();
-        this.totalPage = result.getTotalPages();
-        this.list = result.getContent();
+        this.totalPage = Math.max(result.getTotalPages(), 1);
+        this.list = (result.getContent() == null ? List.of() : result.getContent());
 
-        this.startPage = ((pageNo - 1) / naviSize) * naviSize + 1;
-        this.endPage = Math.min(startPage + naviSize - 1, totalPage);
+        this.startPage = ((pageNo - 1) / this.naviSize) * this.naviSize + 1;
+        this.endPage = Math.min(this.startPage + this.naviSize - 1, this.totalPage);
 
-        this.prev = startPage > 1;
-        this.next = endPage < totalPage;
+        this.prev = this.startPage > 1;
+        this.next = this.endPage < this.totalPage;
     }
 }

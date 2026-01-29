@@ -3,27 +3,25 @@ package com.StudyLink.www.service;
 import com.StudyLink.www.dto.InquiryDTO;
 import com.StudyLink.www.entity.Inquiry;
 import com.StudyLink.www.repository.InquiryRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class InquiryServiceImpl implements InquiryService {
 
     private final InquiryRepository inquiryRepository;
-    private final PasswordEncoder passwordEncoder; // ✅ Security에 Bean 등록 필요
 
     /* ===================== 목록 ===================== */
-    @Transactional(readOnly = true)
     @Override
-    public Page<InquiryDTO> getList(int page) {
-        int pageIndex = Math.max(page - 1, 0);
+    @Transactional(readOnly = true)
+    public Page<InquiryDTO> getList(int pageNo) {
+
+        int pageIndex = Math.max(pageNo - 1, 0);
 
         Pageable pageable = PageRequest.of(
                 pageIndex,
@@ -31,127 +29,90 @@ public class InquiryServiceImpl implements InquiryService {
                 Sort.by(Sort.Direction.DESC, "qno")
         );
 
-        Page<Inquiry> result = inquiryRepository.findAll(pageable);
-        return result.map(this::toDto);
+        return inquiryRepository.findAll(pageable)
+                .map(this::convertEntityToDto);
     }
 
     /* ===================== 등록 ===================== */
-    @Transactional
     @Override
-    public void register(InquiryDTO dto, String writerEmail) {
-        if (dto == null) throw new IllegalArgumentException("InquiryDTO is null");
+    @Transactional
+    public void register(InquiryDTO inquiryDTO, String loginEmail) {
 
-        // ✅ 공개여부 기본값 방어
-        String isPublic = (dto.getIsPublic() == null || dto.getIsPublic().isBlank())
-                ? "N"
-                : dto.getIsPublic();
-
-        // ✅ 비공개면 비밀번호 필수
-        if ("N".equals(isPublic)) {
-            if (dto.getPassword() == null || dto.getPassword().isBlank()) {
-                throw new IllegalArgumentException("비공개 문의는 비밀번호가 필요합니다.");
-            }
-        } else {
-            // 공개면 비밀번호는 저장 안 하도록 비움
-            dto.setPassword(null);
+        if (inquiryDTO.getStatus() == null || inquiryDTO.getStatus().isBlank()) {
+            inquiryDTO.setStatus("PENDING");
         }
 
-        Inquiry inquiry = toEntity(dto);
-
-        // ✅ 비밀번호는 암호화 저장(비공개일 때만)
-        if ("N".equals(isPublic) && dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            inquiry.setPassword(passwordEncoder.encode(dto.getPassword()));
-        }
-
-        // writerEmail은 현재 엔티티에 컬럼이 없어서 저장은 안 함.
+        Inquiry inquiry = convertDtoToEntity(inquiryDTO);
         inquiryRepository.save(inquiry);
     }
 
     /* ===================== 상세 ===================== */
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public InquiryDTO getDetail(Long qno) {
-        Inquiry inquiry = inquiryRepository.findById(qno)
-                .orElseThrow(() -> new EntityNotFoundException("Inquiry not found. qno=" + qno));
-        return toDto(inquiry);
-    }
-
-    /* ===================== 답변 ===================== */
-    @Transactional
-    @Override
-    public void answer(Long qno, String adminContent) {
-        if (qno == null) throw new IllegalArgumentException("qno is null");
-        inquiryRepository.answer(qno, adminContent);
-    }
-
-    /* ===================== 비공개 비밀번호 검증 ===================== */
-    @Transactional(readOnly = true)
-    @Override
-    public boolean verifyPassword(Long qno, String rawPassword) {
-        if (qno == null) throw new IllegalArgumentException("qno is null");
-        if (rawPassword == null || rawPassword.isBlank()) return false;
-
-        String enc = inquiryRepository.findPasswordByQno(qno)
+        return inquiryRepository.findById(qno)
+                .map(this::convertEntityToDto)
                 .orElse(null);
-
-        // 비밀번호가 저장되어 있지 않으면(false)
-        if (enc == null || enc.isBlank()) return false;
-
-        return passwordEncoder.matches(rawPassword, enc);
     }
 
-    /* ===================== 비공개 상세 조회(비번 통과) ===================== */
-    @Transactional(readOnly = true)
+    /* ===================== 비밀번호 검증 ===================== */
     @Override
-    public InquiryDTO getDetailWithPassword(Long qno, String rawPassword) {
-        Inquiry inquiry = inquiryRepository.findById(qno)
-                .orElseThrow(() -> new EntityNotFoundException("Inquiry not found. qno=" + qno));
-
-        // 공개면 그냥 반환
-        if (!"N".equals(inquiry.getIsPublic())) {
-            return toDto(inquiry);
-        }
-
-        // 비공개면 비번 검증
-        if (!verifyPassword(qno, rawPassword)) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-        }
-
-        return toDto(inquiry);
+    @Transactional(readOnly = true)
+    public boolean verifyPassword(Long qno, String password) {
+        return inquiryRepository.findById(qno)
+                .map(i -> i.getPassword() != null && i.getPassword().equals(password))
+                .orElse(false);
     }
 
-    /* ===================== DTO <-> Entity ===================== */
-    private InquiryDTO toDto(Inquiry e) {
-        if (e == null) return null;
+    /* ===================== 관리자 답변 ===================== */
+    @Override
+    @Transactional
+    public void answer(Long qno, String adminContent) {
+        Inquiry inquiry = inquiryRepository.findById(qno).orElseThrow();
 
+        // ✅ 이미 답변 있으면 수정 불가
+        if (inquiry.getAdminContent() != null && !inquiry.getAdminContent().trim().isEmpty()) {
+            throw new IllegalStateException("이미 답변이 등록된 문의입니다.");
+        }
+
+        inquiry.setAdminContent(adminContent);
+        inquiry.setAnswerAt(LocalDateTime.now());
+        inquiry.setStatus("COMPLETE"); // ✅ 답변 달리면 COMPLETE
+    }
+
+    /* ===================== 상태 변경 ===================== */
+    @Override
+    @Transactional
+    public void updateStatus(Long qno, String status) {
+        Inquiry inquiry = inquiryRepository.findById(qno).orElseThrow();
+        inquiry.setStatus(status);
+    }
+
+    /* ===================== Entity → DTO ===================== */
+    private InquiryDTO convertEntityToDto(Inquiry inquiry) {
         return InquiryDTO.builder()
-                .qno(e.getQno())
-                .status(e.getStatus())
-                .createdAt(e.getCreatedAt())
-                .answerAt(e.getAnswerAt())
-                .title(e.getTitle())
-                .userContent(e.getUserContent())
-                .adminContent(e.getAdminContent())
-                .isPublic(e.getIsPublic())
-                .choose(e.getChoose())
-                // password는 화면에 내려주지 않음(보안)
+                .qno(inquiry.getQno())
+                .title(inquiry.getTitle())
+                .userContent(inquiry.getUserContent())
+                .adminContent(inquiry.getAdminContent())
+                .status(inquiry.getStatus())
+                .isPublic(inquiry.getIsPublic())
+                .createdAt(inquiry.getCreatedAt())
+                .answerAt(inquiry.getAnswerAt())
                 .build();
     }
 
-    private Inquiry toEntity(InquiryDTO d) {
-        if (d == null) return null;
-
+    /* ===================== DTO → Entity ===================== */
+    private Inquiry convertDtoToEntity(InquiryDTO dto) {
         return Inquiry.builder()
-                .qno(d.getQno())
-                .status(d.getStatus())
-                .createdAt(d.getCreatedAt())
-                .answerAt(d.getAnswerAt())
-                .title(d.getTitle())
-                .userContent(d.getUserContent())
-                .adminContent(d.getAdminContent())
-                .isPublic(d.getIsPublic())
-                .choose(d.getChoose())
-                // password는 register()에서 암호화 후 setPassword로 넣음
+                .qno(dto.getQno())
+                .title(dto.getTitle())
+                .userContent(dto.getUserContent())
+                .adminContent(dto.getAdminContent())
+                .status(dto.getStatus())
+                .isPublic(dto.getIsPublic())
+                .password(dto.getPassword())
+                .answerAt(dto.getAnswerAt())
                 .build();
     }
 }

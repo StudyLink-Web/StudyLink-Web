@@ -7,11 +7,9 @@
 <div layout:fragment="content" class="content_box">
 
     <link rel="stylesheet" th:href="@{/css/board.css}">
-    <script th:src="@{/js/community.js}"></script>
 
-    <!-- 탭은 inquiry용으로 변경 -->
     <ul class="community_tab">
-        <li  data-url="/community/list"><span>취업 준비생</span></li>
+        <li data-url="/community/list"><span>취업 준비생</span></li>
         <li data-url="/board/list"><span>대학 캠퍼스</span></li>
         <li class="active" data-url="/inquiry/list"><span>문의하기</span></li>
     </ul>
@@ -24,7 +22,6 @@
             <a href="/inquiry/register"> 문의 등록하기</a>
         </div>
 
-        <!-- 검색/정렬 (현재 service에 검색 기능 없으면 UI만 존재해도 됨) -->
         <form class="form_board" role="search" th:action="@{/inquiry/list}" method="get">
             <div class="form_board_box">
                 <select class="form-select" name="category" aria-label="카테고리">
@@ -41,18 +38,19 @@
                 </select>
 
                 <input class="form-control" type="search" name="keyword"
-                       th:value="${ph != null ? ph.keyword : ''}"
+                       th:value="${param.keyword != null ? param.keyword[0] : ''}"
                        placeholder="검색" aria-label="검색어를 입력하세요."/>
 
                 <input type="hidden" name="pageNo" value="1">
             </div>
 
-            <button type="submit" class="btn search_button">
-                검색
-            </button>
+            <button type="submit" class="btn search_button">검색</button>
         </form>
+
         <div class="text-right"
-             th:if="${param.keyword != null or param.category != null or param.status != null}">
+             th:if="${(param.keyword != null and param.keyword[0] != '')
+               or (param.category != null and param.category[0] != '')
+               or (param.status != null and param.status[0] != '')}">
             <p>
                 <span class="g" th:text="${ph != null ? ph.totalElement : 0}">0</span> 건이 검색되었습니다.
             </p>
@@ -77,31 +75,27 @@
 
                 <th:block th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list)}">
                     <tr th:each="q, stat : ${ph.list}">
-                        <!-- No 계산: 커뮤니티랑 똑같이 -->
                         <td th:text="${ph.totalElement - (ph.pageNo - 1) * 10 - stat.index}"></td>
 
                         <td>
-                            <!-- ✅ 비공개면 prompt로 비번 입력하도록 JS가 처리 -->
                             <a href="javascript:void(0);"
                                class="inq-link"
                                th:text="${q.title}"
                                th:attr="data-qno=${q.qno},data-public=${q.isPublic}">
                             </a>
 
-                            <!-- (선택) 비공개 표시 뱃지 -->
                             <span th:if="${q.isPublic == 'N'}"
                                   class="badge bg-secondary ms-2">비공개</span>
                         </td>
 
                         <td th:switch="${q.status}">
                             <span th:case="'PENDING'" class="text-success">PENDING</span>
-                            <span th:case="'READY'" class="text-primary">READY</span>
+                            <span th:case="'READY'" class="text-success">READY</span>
                             <span th:case="'COMPLETE'" class="text-danger">COMPLETE</span>
-                            <span th:case="*">대기</span>
+                            <span th:case="*">-</span>
                         </td>
 
                         <td th:text="${q.createdAt != null ? #temporals.format(q.createdAt, 'yyyy-MM-dd') : '-'}"></td>
-
                         <td th:text="${q.answerAt != null ? #temporals.format(q.answerAt, 'yyyy-MM-dd') : '-'}"></td>
                     </tr>
                 </th:block>
@@ -109,14 +103,16 @@
             </table>
         </div>
 
-        <!-- 페이지네이션 -->
         <nav aria-label="Page navigation"
              th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list) and ph.totalPage > 1}">
             <ul class="pagination justify-content-center">
 
                 <li class="page-item" th:classappend="${ph.prev == false} ? 'disabled'">
                     <a class="page-link"
-                       th:href="@{/inquiry/list(pageNo=${ph.startPage-1}, type=${ph.type}, keyword=${ph.keyword})}"
+                       th:href="@{/inquiry/list(pageNo=${ph.startPage-1},
+                                category=${param.category != null ? param.category[0] : null},
+                                status=${param.status != null ? param.status[0] : null},
+                                keyword=${param.keyword != null ? param.keyword[0] : null})}"
                        aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
@@ -126,13 +122,19 @@
                     th:each="i : ${#numbers.sequence(ph.startPage, ph.endPage)}"
                     th:classappend="${i == ph.pageNo} ? 'active'">
                     <a class="page-link"
-                       th:href="@{/inquiry/list(pageNo=${i}, type=${ph.type}, keyword=${ph.keyword})}"
+                       th:href="@{/inquiry/list(pageNo=${i},
+                                category=${param.category != null ? param.category[0] : null},
+                                status=${param.status != null ? param.status[0] : null},
+                                keyword=${param.keyword != null ? param.keyword[0] : null})}"
                        th:text="${i}"></a>
                 </li>
 
                 <li class="page-item" th:classappend="${ph.next == false} ? 'disabled'">
                     <a class="page-link"
-                       th:href="@{/inquiry/list(pageNo=${ph.endPage+1}, type=${ph.type}, keyword=${ph.keyword})}"
+                       th:href="@{/inquiry/list(pageNo=${ph.endPage+1},
+                                category=${param.category != null ? param.category[0] : null},
+                                status=${param.status != null ? param.status[0] : null},
+                                keyword=${param.keyword != null ? param.keyword[0] : null})}"
                        aria-label="Next">
                         <span aria-hidden="true">&raquo;</span>
                     </a>
@@ -142,9 +144,14 @@
 
     </div>
 
-    <!-- ✅ 비공개 비번 prompt 처리 JS -->
+    <!-- ✅ 관리자면 prompt 스킵용 -->
+    <script th:inline="javascript">
+        window.IS_ADMIN = /*[[${#authorization.expression("hasAnyAuthority('ADMIN','ROLE_ADMIN')")}]]*/ false;
+        console.log("IS_ADMIN =", window.IS_ADMIN);
+    </script>
     <script th:src="@{/js/inquiry.js}"></script>
-    <script th:src="@{/js/community.js}"></script>
+
+    <script th:src="@{/js/inquiry.js}"></script>
 </div>
 
 </html>

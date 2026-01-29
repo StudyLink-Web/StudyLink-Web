@@ -32,7 +32,7 @@ public class InquiryController {
     private boolean isAdmin(Authentication authentication) {
         if (!isLogin(authentication)) return false;
         return authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> "ADMIN".equals(a.getAuthority()) || "ROLE_ADMIN".equals(a.getAuthority()));
     }
 
     /* ===================== 목록 ===================== */
@@ -66,7 +66,7 @@ public class InquiryController {
                                RedirectAttributes redirectAttributes) {
         if (!isLogin(authentication)) return "redirect:/login";
 
-        inquiryDTO.setStatus("PENDING"); // ✅ 등록 시 기본 상태
+        inquiryDTO.setStatus("PENDING");
         inquiryService.register(inquiryDTO, authentication.getName());
 
         redirectAttributes.addFlashAttribute("msg", "문의가 등록되었습니다.");
@@ -161,6 +161,10 @@ public class InquiryController {
         }
 
         inquiryService.answer(qno, adminContent);
+
+        // ✅ 답변 달리면 상태 COMPLETE로 변경
+        inquiryService.updateStatus(qno, "COMPLETE");
+
         redirectAttributes.addFlashAttribute("msg", "답변이 등록되었습니다.");
         return "redirect:/inquiry/detail/" + qno;
     }
