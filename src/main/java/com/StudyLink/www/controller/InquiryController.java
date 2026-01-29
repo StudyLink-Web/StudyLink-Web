@@ -140,10 +140,7 @@ public class InquiryController {
         boolean ok = inquiryService.verifyPassword(qno, password);
 
         if (!ok) {
-            return Map.of(
-                    "ok", false,
-                    "message", "비밀번호가 일치하지 않습니다."
-            );
+            return Map.of("ok", false, "message", "비밀번호가 일치하지 않습니다.");
         }
 
         session.setAttribute("INQ_OK_" + qno, true);
@@ -162,8 +159,13 @@ public class InquiryController {
             return "redirect:/inquiry/detail/" + qno;
         }
 
-        inquiryService.answer(qno, adminContent);
-        inquiryService.updateStatus(qno, "COMPLETE");
+        try {
+            inquiryService.answer(qno, adminContent);
+            inquiryService.updateStatus(qno, "COMPLETE");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "처리 중 오류가 발생했습니다.");
+            return "redirect:/inquiry/detail/" + qno;
+        }
 
         redirectAttributes.addFlashAttribute("msg", "답변이 등록되었습니다.");
         return "redirect:/inquiry/detail/" + qno;

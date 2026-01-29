@@ -1,14 +1,14 @@
 package com.StudyLink.www.dto;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class InquiryDTO {
 
     private Long qno;
@@ -17,7 +17,7 @@ public class InquiryDTO {
     private String userContent;
     private String adminContent;
 
-    private String category;   // ✅ builder에 포함
+    private String category;
     private String status;
 
     private String isPublic;

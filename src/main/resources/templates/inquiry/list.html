@@ -78,10 +78,18 @@
                         <td th:text="${ph.totalElement - (ph.pageNo - 1) * 10 - stat.index}"></td>
 
                         <td>
-                            <a href="javascript:void(0);"
+                            <!-- 공개글: 바로 상세로 -->
+                            <a th:if="${q.isPublic != 'N'}"
+                               th:href="@{/inquiry/detail/{qno}(qno=${q.qno})}"
+                               th:text="${q.title}">
+                            </a>
+
+                            <!-- 비공개글: JS로 비밀번호 페이지 이동 -->
+                            <a th:if="${q.isPublic == 'N'}"
+                               href="javascript:void(0);"
                                class="inq-link"
                                th:text="${q.title}"
-                               th:attr="data-qno=${q.qno},data-public=${q.isPublic}">
+                               th:attr="data-qno=${q.qno}">
                             </a>
 
                             <span th:if="${q.isPublic == 'N'}"
@@ -144,14 +152,11 @@
 
     </div>
 
-    <!-- ✅ 관리자면 prompt 스킵용 -->
     <script th:inline="javascript">
         window.IS_ADMIN = /*[[${#authorization.expression("hasAnyAuthority('ADMIN','ROLE_ADMIN')")}]]*/ false;
-        console.log("IS_ADMIN =", window.IS_ADMIN);
     </script>
     <script th:src="@{/js/inquiry.js}"></script>
 
-    <script th:src="@{/js/inquiry.js}"></script>
 </div>
 
 </html>

@@ -23,9 +23,9 @@
 
         <div class="mb-3 d-flex gap-3">
             <div style="flex:1">
-                <label class="form-label">문의 유형</label>
+                <label class="form-label">카테고리</label>
                 <input type="text" class="form-control"
-                       th:value="${inquiry.choose != null ? inquiry.choose : '-'}" readonly>
+                       th:value="${inquiry.category != null ? inquiry.category : '-'}" readonly>
             </div>
             <div style="flex:1">
                 <label class="form-label">공개 여부</label>
@@ -35,7 +35,7 @@
             <div style="flex:1">
                 <label class="form-label">상태</label>
                 <input type="text" class="form-control"
-                       th:value="${inquiry.status != null ? inquiry.status : '대기'}" readonly>
+                       th:value="${inquiry.status != null ? inquiry.status : 'PENDING'}" readonly>
             </div>
         </div>
 
@@ -69,7 +69,6 @@
             </div>
         </div>
 
-        <!-- ✅ 관리자 답변 입력 폼: 관리자 + 아직 답변 없을 때만 보이기 -->
         <div sec:authorize="hasAnyAuthority('ADMIN','ROLE_ADMIN')"
              th:if="${#strings.isEmpty(inquiry.adminContent)}">
 
@@ -90,7 +89,6 @@
             </form>
         </div>
 
-        <!-- ✅ 관리자 + 이미 답변 있으면 안내만 -->
         <div sec:authorize="hasAnyAuthority('ADMIN','ROLE_ADMIN')"
              th:if="${!#strings.isEmpty(inquiry.adminContent)}"
              class="text-muted mt-2">
