@@ -1,0 +1,122 @@
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: #030014;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    overflow: hidden;
+    color: white;
+    font-family: 'Inter', 'Pretendard', sans-serif;
+}
+
+.splash-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+}
+
+.glow-orb {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.2;
+    animation: orb-float 20s infinite alternate ease-in-out;
+}
+
+.orb-1 {
+    top: -10%;
+    left: -10%;
+    background: radial-gradient(circle, #0066ff 0%, transparent 70%);
+}
+
+.orb-2 {
+    bottom: -10%;
+    right: -10%;
+    background: radial-gradient(circle, #7000ff 0%, transparent 70%);
+    animation-delay: -5s;
+}
+
+@keyframes orb-float {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(100px, 50px) scale(1.1); }
+}
+
+.splash-content {
+    text-align: center;
+    perspective: 1000px;
+}
+
+.title-wrapper {
+    display: flex;
+    gap: 0.1rem;
+    margin-bottom: 2rem;
+}
+
+.splash-title-char {
+    display: inline-block;
+    font-size: 6rem;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    background: linear-gradient(to bottom, #ffffff 30%, #a5b4fc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.splash-description {
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: #94a3b8;
+    letter-spacing: 0.2em;
+    margin-bottom: 4rem;
+    text-transform: uppercase;
+}
+
+.splash-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 1rem 2.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 9999px;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.splash-button:hover {
+    background: white;
+    color: black;
+    box-shadow: 0 10px 40px rgba(255, 255, 255, 0.2);
+}
+
+.splash-footer {
+    position: absolute;
+    bottom: 2rem;
+    font-size: 0.75rem;
+    color: #475569;
+    letter-spacing: 0.1em;
+}
+
+@media (max-width: 768px) {
+    .splash-title-char {
+        font-size: 3rem;
+    }
+    .splash-description {
+        font-size: 0.875rem;
+        letter-spacing: 0.1em;
+    }
+}

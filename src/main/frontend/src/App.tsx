@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, lazy, Suspense, memo } from "react";
 import Hero from "./components/Hero";
 import { requestForToken, onMessageListener } from "./firebase-init";
+import { AnimatePresence } from "framer-motion";
+import Splash from "./components/Splash";
 import NotificationCenter from "./components/NotificationCenter";
-
 
 // [Vercel Best Practice 1.5] 다이나믹 import를 통해 무거운 컴포넌트를 렌더링 전에 로딩
 const AdmissionEssayPage = lazy(() => import("./pages/AdmissionEssayPage"));
@@ -22,13 +23,22 @@ const isDarkInitial = typeof document !== 'undefined' && document.documentElemen
 
 function App() {
   const [scrollY, setScrollY] = useState(0);
-  const [pushToken, setPushToken] = useState<string | null>(null);
+  const [pushToken, setPushToken] = useState<string | null>(localStorage.getItem("pushToken"));
   const [isPushPanelOpen, setIsPushPanelOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0); // 상단으로 이동
-  const [theme, setTheme] = useState<'light' | 'dark'>(isDarkInitial ? 'dark' : 'light'); // 📍 초기값 설정
+  const [showSplash, setShowSplash] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0); 
+  const [theme, setTheme] = useState<'light' | 'dark'>(isDarkInitial ? 'dark' : 'light'); 
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // 테마 감지 로직 (MutationObserver)
+  // 📍 인트로 세션 관리 (나중에 다시 활성화할 예정)
+  /* useEffect(() => {
+    const isSplashShown = sessionStorage.getItem("splash_shown");
+    if (!isSplashShown) {
+      setShowSplash(true);
+    }
+  }, []); */
+
+  // 테마 감지 로직
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
@@ -45,7 +55,6 @@ function App() {
 
   // 푸시 알림 권한 요청 핸들러
   const handleRequestPermission = async () => {
-    // 이미 열려있고 토큰이 있다면 토글(닫기)
     if (isPushPanelOpen && pushToken) {
       setIsPushPanelOpen(false);
       return;
@@ -54,106 +63,77 @@ function App() {
     try {
       const token = await requestForToken();
       if (token) {
+        const isNewToken = token !== localStorage.getItem("pushToken");
         setPushToken(token);
-        localStorage.setItem("pushToken", token); // 로그아웃 전처리를 위해 저장
+        localStorage.setItem("pushToken", token); 
         await saveTokenToServer(token);
-        setIsPushPanelOpen(true); // 성공 시 패널 열기
-        if (!isPushPanelOpen)
+        
+        setIsPushPanelOpen(true); 
+
+        if (isNewToken) {
           alert("푸시 알림 권한 승인 및 서버 등록 완료!");
+        }
       } else {
-        alert(
-          "토큰을 가져오지 못했습니다. 브라우저 설정에서 알림 권한을 확인해 주세요.",
-        );
+        alert("토큰을 가져오지 못했습니다. 브라우저 설정에서 알림 권한을 확인해 주세요.");
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("permission-blocked")) {
-        alert(
-          "브라우저에서 알림 권한이 차단되어 있습니다.\n\n" +
-            "해결 방법:\n" +
-            "1. 주소창 왼쪽의 [자물쇠] 또는 [설정] 아이콘 클릭\n" +
-            "2. [알림] 항목을 [허용]으로 변경\n" +
-            "3. 페이지를 새로고침(F5) 후 다시 [권한 요청] 클릭",
-        );
+        alert("브라우저에서 알림 권한이 차단되어 있습니다.\n\n설정에서 허용 후 다시 시도해 주세요.");
       } else {
         alert(`❌ 오류 발생: ${errorMessage}`);
       }
     }
   };
 
-  // 📍 서버에 토큰 저장
   const saveTokenToServer = async (token: string) => {
     try {
-      const response = await fetch("/api/fcm/token", {
+      await fetch("/api/fcm/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
       });
-      console.log("✅ 서버에 토큰 등록 시도:", await response.text());
-    } catch (err) {
-      console.error("❌ 서버 토큰 등록 실패:", err);
+    } catch (error) {
+      console.error("서버 토큰 등록 실패:", error);
     }
   };
 
-  // 서버 측 테스트 푸시 발송 요청
   const handleTestServerPush = async () => {
     if (!pushToken) return alert("먼저 알림 권한을 승인해 주세요!");
     try {
-      const response = await fetch("/api/fcm/test", {
+      await fetch("/api/fcm/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: pushToken }),
       });
-      const result = await response.text();
-      alert(
-        `서버 응답: ${result}\n\n알림이 안 온다면 응답 내용을 확인해 보세요!`,
-      );
+      alert("테스트 푸시가 발송되었습니다.");
     } catch (error) {
-      console.error("서버 테스트 푸시 요청 실패:", error);
-      alert("서버 테스트 푸시 요청 실패");
+      alert("테스트 푸시 실패");
     }
   };
 
-  // 📍 모든 기기 대상 통합 알림 테스트
   const handleTestAllDevicesPush = async () => {
-    const message = window.prompt("전체 공지 메시지를 입력하세요:", "서비스를 이용 중인 모든 기기에 발송된 알림입니다! 📢");
-    if (message === null) return; // 취소 시 중단
-
+    const message = window.prompt("전체 공지 메시지:", "StudyLink 전체 알림입니다.");
+    if (message === null) return;
     try {
-      const response = await fetch("/api/fcm/test-all", {
+      await fetch("/api/fcm/test-all", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
       });
-      const result = await response.text();
-      alert(
-        `📢 모든 기기 발송 요청: ${result}\n\n이제 다른 기기를 확인해 보세요!`,
-      );
+      alert("전체 발송 완료");
     } catch (error) {
-      console.error("❌ 통합 테스트 푸시 요청 실패:", error);
-      alert("❌ 통합 테스트 푸시 요청 실패");
+      alert("전체 발송 실패");
     }
   };
 
-  // 📍 내 계정으로 로그인된 모든 기기에 전송
   const handleTestMineDevicesPush = async () => {
     try {
-      const response = await fetch("/api/fcm/test-mine", {
-        method: "POST",
-      });
+      const response = await fetch("/api/fcm/test-mine", { method: "POST" });
       const result = await response.text();
-      if (result.includes("Error")) {
-        alert("🔒 로그인이 필요한 기능입니다!");
-      } else {
-        alert(
-          `🔗 내 기기 연동 알림: ${result}\n이 계정으로 로그인된 다른 폰/PC를 확인해 보세요!`,
-        );
-      }
+      alert(`내 기기 알림 발송: ${result}`);
     } catch (error) {
-      console.error("내 기기 테스트 푸시 요청 실패:", error);
-      alert("내 기기 테스트 푸시 요청 실패");
+      alert("내 기기 알림 실패");
     }
   };
 
@@ -162,75 +142,51 @@ function App() {
     onMessageListener()
       .then((payload) => {
         const messagePayload = payload as any;
-        console.log("포그라운드 알림 수신:", messagePayload);
-        
-        // 알림 개수 즉시 갱신 (헤더에서 관리되므로 여기서는 생략)
-
         if (messagePayload?.data) {
-          alert(
-            `StudyLink 알림\n\n${messagePayload.data.title}\n${messagePayload.data.body}`,
-          );
+          alert(`StudyLink 알림\n\n${messagePayload.data.title}\n${messagePayload.data.body}`);
         }
       })
       .catch((error) => console.log("failed: ", error));
   }, []);
 
   useEffect(() => {
-    // 자동 토큰 동기화: 이미 권한이 있다면 로그인 상태 변화 등에 대비해 서버에 토큰 갱신
     const syncToken = async () => {
       if (Notification.permission === "granted") {
         const token = await requestForToken();
         if (token) {
           setPushToken(token);
-          localStorage.setItem("pushToken", token); // 동기화 시에도 저장
+          localStorage.setItem("pushToken", token);
           await saveTokenToServer(token);
-          console.log("알림 토큰 자동 동기화 완료");
         }
       }
     };
     syncToken();
 
-    const handleScroll = () => {
-      // 쓰로틀링 또는 passive 속성 설정 확인
-      setScrollY(window.scrollY);
-    };
+    const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []); // 이 부분에는 정적 의존성 배열을 사용하는 것이 올바름
+  }, []);
 
-    // 📍 전역 객체(window)에 알림 센터 제어 함수 등록 (헤더 연동용)
-    useEffect(() => {
-      (window as any).openNotificationCenter = () => {
-        setIsPushPanelOpen(true);
-      };
-      
-      const handleClickOutside = (event: MouseEvent) => {
-        if (
-          panelRef.current &&
-          !panelRef.current.contains(event.target as Node)
-        ) {
-          setIsPushPanelOpen(false);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-        delete (window as any).openNotificationCenter;
-      };
-    }, []);
+  useEffect(() => {
+    (window as any).openNotificationCenter = () => setIsPushPanelOpen(true);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        setIsPushPanelOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      delete (window as any).openNotificationCenter;
+    };
+  }, []);
 
-  const isCoverLetter =
-    window.location.pathname === "/cover-letter" ||
-    window.location.pathname === "/cover_letter";
-
+  const isCoverLetter = window.location.pathname.startsWith("/cover");
   const isPricing = window.location.pathname === "/pricing";
 
-  // AI 자소서 페이지일 경우 전체 화면 렌더링
   if (isCoverLetter) {
     return (
-      <Suspense
-        fallback={<div className="min-h-screen bg-white dark:bg-[#030014]" />}
-      >
+      <Suspense fallback={<div className="min-h-screen bg-white dark:bg-[#030014]" />}>
         <div className="min-h-screen bg-white dark:bg-[#030014] relative z-[9999]">
           <AdmissionEssayPage />
         </div>
@@ -238,105 +194,86 @@ function App() {
     );
   }
 
-  // 요금제 페이지 렌더링
   if (isPricing) {
     return (
-      <Suspense
-        fallback={<div className="min-h-screen bg-white dark:bg-[#0d1117]" />}
-      >
+      <Suspense fallback={<div className="min-h-screen bg-white dark:bg-[#0d1117]" />}>
         <PricingPage />
       </Suspense>
     );
   }
 
-  // 배경색 보간
   const progress = Math.min(scrollY / 200, 1);
-  const bgColor = `rgb(${248 + (255 - 248) * progress}, ${
-    250 + (255 - 250) * progress
-  }, ${252 + (255 - 252) * progress})`;
+  const bgColor = `rgb(${248 + (255 - 248) * progress}, ${250 + (255 - 250) * progress}, ${252 + (255 - 252) * progress})`;
 
-
-  // 메인 페이지 렌더링
   return (
-    <div
-      className={`min-h-screen w-full transition-colors duration-300 overflow-x-hidden dynamic-bg ${theme}`}
-      style={{ "--scroll-bg": bgColor } as React.CSSProperties}
-    >
-      <main className="relative">
-        {/* 알림 센터 패널 */}
-        <NotificationCenter 
-          ref={panelRef}
-          isOpen={isPushPanelOpen} 
-          onClose={() => setIsPushPanelOpen(false)} 
-          onUnreadCountChange={setUnreadCount}
-          pushToken={pushToken}
-          onTestPush={handleTestServerPush}
-          onTestMine={handleTestMineDevicesPush}
-          onTestAll={handleTestAllDevicesPush}
+    <AnimatePresence mode="wait">
+      {showSplash ? (
+        <Splash 
+          key="splash" 
+          onComplete={() => {
+            // sessionStorage.setItem("splash_shown", "true"); // 상시 노출을 위해 주석 처리
+            setShowSplash(false);
+          }} 
         />
-        <Hero scrollProgress={progress} />
-
-        {/* [Vercel 베스트 프랙티스 1.5] 독립적인 섹션을 위한 전략적 Suspense 경계 */}
-        <Suspense
-          fallback={
-            <div className="h-40 animate-pulse bg-slate-100 dark:bg-white/5" />
-          }
+      ) : (
+        <div
+          key="main-app"
+          className={`min-h-screen w-full transition-colors duration-300 overflow-x-hidden dynamic-bg ${theme}`}
+          style={{ "--scroll-bg": bgColor } as React.CSSProperties}
         >
-          <QuickActionGrid />
+          <main className="relative">
+            <Suspense fallback={<div className="h-screen bg-transparent" />}>
+              <Hero scrollProgress={progress} />
+              
+              <div className="bg-white/50 dark:bg-[#030014] border-y border-slate-200 dark:border-white/5 py-4 overflow-hidden whitespace-nowrap relative z-20 backdrop-blur-sm">
+                <div className="inline-block animate-marquee">
+                  <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">✨ 2024 SKY Admission Rate 94%</span>
+                  <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">✨ Verified Mentors Only</span>
+                  <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">✨ 15,000+ Matches</span>
+                </div>
+              </div>
 
-          {/* 무한 티커 */}
-          <div className="bg-white/50 dark:bg-[#030014] border-y border-slate-200 dark:border-white/5 py-4 overflow-hidden whitespace-nowrap relative z-20 backdrop-blur-sm">
-            <div className="inline-block animate-shimmer bg-gradient-to-r from-transparent via-teal-500/5 dark:via-white/5 to-transparent bg-[length:200%_100%] w-full absolute inset-0 pointer-events-none" />
-            <div className="inline-block animate-marquee">
-              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-                ✨ 2024 SKY Admission Rate 94%
-              </span>
-              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-                ✨ Verified Mentors Only
-              </span>
-              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-                ✨ 15,000+ Matches
-              </span>
-              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-                ✨ 2024 SKY Admission Rate 94%
-              </span>
-              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-                ✨ Verified Mentors Only
-              </span>
-              <span className="mx-8 text-xs font-mono text-slate-600 dark:text-slate-500 tracking-widest uppercase">
-                ✨ 15,000+ Matches
-              </span>
+              <AdSection />
+              <MentorSection />
+              <QuickActionGrid />
+              <CommunitySection />
+            </Suspense>
+
+            <NotificationCenter 
+              ref={panelRef}
+              isOpen={isPushPanelOpen} 
+              onClose={() => setIsPushPanelOpen(false)} 
+              onUnreadCountChange={setUnreadCount}
+              pushToken={pushToken}
+              onTestPush={handleTestServerPush}
+              onTestMine={handleTestMineDevicesPush}
+              onTestAll={handleTestAllDevicesPush}
+            />
+
+            <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-3">
+              <button
+                onClick={handleRequestPermission}
+                className={`px-8 py-4 rounded-full shadow-2xl font-black transition-all flex items-center gap-3 hover:scale-105 active:scale-95 group backdrop-blur-xl border ${
+                  isPushPanelOpen
+                    ? "bg-white/90 dark:bg-slate-800/90 text-slate-900 border-slate-200"
+                    : "bg-slate-900/90 dark:bg-indigo-600/20 text-white border-white/10"
+                }`}
+              >
+                <div className={`relative ${!isPushPanelOpen && unreadCount > 0 && "animate-bounce"}`}>
+                  <span className="text-xl">{isPushPanelOpen ? "✕" : "🔔"}</span>
+                  {!isPushPanelOpen && unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full px-1">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+                <span>{isPushPanelOpen ? "닫기" : "알림 설정"}</span>
+              </button>
             </div>
-          </div>
-
-          <MentorSection />
-          <AdSection />
-          <CommunitySection />
-        </Suspense>
-
-        {/* 푸시 알림 테스트용 플로팅 버튼 */}
-        <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-3">
-          <button
-            onClick={handleRequestPermission}
-            className={`px-8 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(79,70,229,0.2)] font-black transition-all flex items-center gap-3 hover:scale-105 active:scale-95 group backdrop-blur-xl border ${
-              isPushPanelOpen
-                ? "bg-white/90 dark:bg-slate-800/90 text-slate-900 dark:text-white border-slate-200 dark:border-white/10"
-                : "bg-slate-900/90 dark:bg-indigo-600/20 text-white dark:text-indigo-300 border-white/10 dark:border-indigo-500/30 hover:dark:bg-indigo-600/30"
-            }`}
-          >
-            <div className={`relative ${!isPushPanelOpen && unreadCount > 0 && "animate-bounce"}`}>
-              <span className="text-xl">{isPushPanelOpen ? "✕" : "🔔"}</span>
-              {!isPushPanelOpen && unreadCount > 0 && (
-                <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-slate-900 dark:border-indigo-900 px-1">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </div>
-            <span>{isPushPanelOpen ? "닫기" : "알림 설정"}</span>
-          </button>
+          </main>
         </div>
-      </main>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }
 
