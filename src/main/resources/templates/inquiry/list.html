@@ -7,12 +7,13 @@
 <div layout:fragment="content" class="content_box">
 
     <link rel="stylesheet" th:href="@{/css/board.css}">
-    <script th:src="@{/js/board.js}"></script>
+    <script th:src="@{/js/community.js}"></script>
 
     <!-- 탭은 inquiry용으로 변경 -->
     <ul class="community_tab">
-        <li class="active" data-url="/inquiry/list"><span>문의</span></li>
-        <li data-url="/community/list"><span>커뮤니티</span></li>
+        <li  data-url="/community/list"><span>취업 준비생</span></li>
+        <li data-url="/board/list"><span>대학 캠퍼스</span></li>
+        <li class="active" data-url="/inquiry/list"><span>문의하기</span></li>
     </ul>
 
     <p class="life_campus">문의 게시판</p>
@@ -80,7 +81,7 @@
                                   class="badge bg-secondary ms-2">비공개</span>
                         </td>
 
-                        <td th:text="${q.status}">대기</td>
+                        <td th:text="${q.status}"></td>
 
                         <td th:text="${q.createdAt != null ? #temporals.format(q.createdAt, 'yyyy-MM-dd') : '-'}"></td>
 
@@ -126,6 +127,7 @@
 
     <!-- ✅ 비공개 비번 prompt 처리 JS -->
     <script th:src="@{/js/inquiry.js}"></script>
+    <script th:src="@{/js/community.js}"></script>
 </div>
 
 </html>
