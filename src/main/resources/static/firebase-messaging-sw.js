@@ -21,13 +21,19 @@ const messaging = firebase.messaging();
 
 // 백그라운드 메시지 수신부
 messaging.onBackgroundMessage((payload) => {
-  console.log("🏢 백그라운드 메시지 수신 (Smart Filtering):", payload);
+  console.log("🏢 백그라운드 메시지 수신:", payload);
+
+  // 📍 중복 방지: 서버에서 이미 알림(notification)을 보냈다면 브라우저가 자동으로 띄우므로 여기서 수동으로 띄우지 않음
+  if (payload.notification) {
+    console.log("✅ 자동 알림이 포함되어 있으므로 수동 표시를 생략합니다.");
+    return;
+  }
 
   const notificationTitle = payload.data.title || "StudyLink 알림";
   const notificationOptions = {
     body: payload.data.body || "",
     icon: "/pwa-192x192.png",
-    tag: "studylink-notification", // 중복 알림 방지 태그
+    tag: "studylink-notification", 
   };
 
   // 📍 스마트 필터링: 현재 사용자가 챗봇 페이지를 보고 있는지 확인

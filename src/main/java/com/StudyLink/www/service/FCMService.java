@@ -30,8 +30,8 @@ public class FCMService {
 
                 Message message = Message.builder()
                                 .setToken(token)
-                                // .setNotification(notification) // 📍 주석 처리: 브라우저의 자동 알림 표시를 막음
-                                .putData("title", title) // 📍 대신 데이터로 실어서 보냄
+                                .setNotification(notification) // 📍 100% 발송 보장을 위해 복구
+                                .putData("title", title) // 📍 데이터도 함께 유지
                                 .putData("body", body)
                                 .setApnsConfig(apnsConfig)
                                 .setAndroidConfig(com.google.firebase.messaging.AndroidConfig.builder()
