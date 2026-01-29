@@ -1,6 +1,7 @@
-package com.StudyLink.www.repository;
+package com.StudyLink.www.service;
 
 import com.StudyLink.www.entity.Board;
+import com.StudyLink.www.repository.BoardCustomeRepository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -8,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import com.StudyLink.www.entity.QBoard;
 
 import java.util.List;
 

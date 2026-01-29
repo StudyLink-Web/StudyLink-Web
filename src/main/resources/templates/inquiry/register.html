@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content" class="content_box">
+    <h1>문의 등록하기</h1>
+
+    <form th:action="@{/inquiry/register}" method="post">
+        <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+
+        <!-- 제목 -->
+        <div class="mb-3">
+            <label class="form-label">제목</label>
+            <input type="text" name="title" class="form-control"
+                   placeholder="제목을 입력하세요." required>
+        </div>
+
+        <!-- 문의자 -->
+        <div class="mb-3">
+            <label class="form-label">문의자</label>
+            <input type="text" class="form-control"
+                   th:value="${#authentication?.name}" readonly>
+        </div>
+
+        <!-- 문의 유형 -->
+        <div class="form_board_box mb-3">
+            <label class="form-label">문의 유형</label>
+            <select class="form-select" name="choose" required>
+                <option value="" selected disabled>선택하세요</option>
+                <option value="계정">계정</option>
+                <option value="결제">결제</option>
+                <option value="기능문의">기능 문의</option>
+                <option value="오류/버그">오류/버그</option>
+                <option value="기타">기타</option>
+            </select>
+        </div>
+
+        <!-- 공개 여부 -->
+        <div class="mb-3">
+            <label class="form-label">공개 여부</label>
+            <div class="d-flex gap-3">
+                <label>
+                    <input type="radio" name="isPublic" value="Y"> 공개
+                </label>
+                <label>
+                    <input type="radio" name="isPublic" value="N" checked> 비공개
+                </label>
+            </div>
+            <small class="text-muted">
+                비공개 문의는 비밀번호를 입력해야 조회할 수 있습니다.
+            </small>
+        </div>
+
+        <!-- 🔐 비밀번호 (비공개일 때만 표시 + required) -->
+        <div class="mb-3" id="passwordBox" style="display:none;">
+            <label class="form-label">비밀번호</label>
+            <input type="password" name="password" id="password"
+                   class="form-control"
+                   placeholder="비공개 문의 비밀번호">
+        </div>
+
+        <!-- 내용 -->
+        <div class="mb-3">
+            <label class="form-label">내용</label>
+            <textarea name="userContent" class="form-control" rows="8"
+                      placeholder="문의 내용을 입력하세요." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="regBtn">등록하기</button>
+        <a th:href="@{/inquiry/list}" class="btn btn-secondary">취소</a>
+    </form>
+
+    <!-- ✅ 반드시 fragment 안에! -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const radios = document.querySelectorAll('input[name="isPublic"]');
+            const passwordBox = document.getElementById('passwordBox');
+            const passwordInput = document.getElementById('password');
+
+            function togglePassword() {
+                const selected = document.querySelector('input[name="isPublic"]:checked');
+                const isPrivate = selected && selected.value === 'N';
+
+                passwordBox.style.display = isPrivate ? 'block' : 'none';
+                passwordInput.required = isPrivate;
+
+                if (!isPrivate) passwordInput.value = '';
+            }
+
+            radios.forEach(r => r.addEventListener('change', togglePassword));
+            togglePassword(); // 초기: 비공개 체크면 바로 보이게
+        });
+    </script>
+</div>
+
+</html>
