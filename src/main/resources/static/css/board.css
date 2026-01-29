@@ -49,4 +49,5 @@
 .text-right {text-align: right;}
 .text-right > p {margin:6px 0; font-weight: 700; }
 .text-right > p span {color:crimson;}
+.font-bold {font-weight: 700;}
 
