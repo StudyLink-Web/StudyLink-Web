@@ -11,11 +11,11 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
 
   return (
     <section className="relative w-full min-h-[90vh] flex flex-col justify-center items-center overflow-hidden bg-transparent dark:bg-transparent pt-20 transition-colors duration-300">
-      {/* Background Layers */}
+      {/* 배경 레이어: 노이즈 질감과 그리드 패턴 */}
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 z-[1] pointer-events-none mix-blend-soft-light" />
       <div className="absolute inset-0 bg-grid-white/[0.03] bg-[bottom_1px_center] z-[0] pointer-events-none mask-image-gradient-vertical" />
 
-      {/* Spotlights - 스크롤에 따라 점점 투명해짐 & 하단으로 갈수록 정적 페이드아웃 마스크 적용 */}
+      {/* 스포트라이트 효과: 그라데이션, 블러, 애니메이션이 조합된 동적인 배경광 */}
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"
         style={{
@@ -38,7 +38,7 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
         />
       </div>
 
-      {/* Floating Elements (Desktop only) */}
+      {/* 부유하는 요소 (데스크톱): 둥둥 떠 있는 듯한 애니메이션과 유리 질감(Glassmorphism) 효과 */}
       <div className="absolute top-[20%] left-[10%] hidden lg:block animate-float opacity-80 dark:opacity-60">
         <div className="bg-white/60 dark:bg-white/5 backdrop-blur-lg border border-slate-200 dark:border-white/10 p-4 rounded-2xl transform -rotate-12 hover:rotate-0 transition-transform duration-500 shadow-2xl shadow-teal-900/10 dark:shadow-purple-900/10">
           <BookOpen
@@ -69,7 +69,9 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
         {/* Badge */}
         <div className="inline-flex items-center justify-center mb-8 animate-fade-in-up">
           <div className="group cursor-pointer relative">
+            {/* 글로우 효과: 배지 뒤에서 은은하게 빛나는 그라데이션 */}
             <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-teal-400 dark:from-purple-500 dark:to-indigo-500 rounded-full blur opacity-20 dark:opacity-30 group-hover:opacity-60 transition duration-300" />
+            {/* 유리 질감 배지: backdrop-blur를 이용한 반투명 효과 */}
             <div className="relative flex items-center gap-2 bg-white/50 dark:bg-[#0F0C29]/80 border border-slate-200 dark:border-white/10 rounded-full pl-3 pr-4 py-1.5 backdrop-blur-md hover:border-teal-300 dark:hover:border-purple-300 transition-colors">
               <span className="flex h-2 w-2 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 dark:bg-green-400 opacity-75" />
@@ -82,7 +84,7 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
           </div>
         </div>
 
-        {/* Main Heading */}
+        {/* 메인 타이틀: 큰 폰트 크기와 입체적인 그라데이션 텍스트 적용 */}
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-slate-900 dark:text-white tracking-tight leading-[1.1] mb-8 animate-fade-in-up [animation-delay:200ms]">
           입시의{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-b from-slate-600 to-slate-400 dark:from-white dark:to-slate-300">
@@ -91,6 +93,7 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
           ,<br />
           <span className="relative inline-block">
             <span className="absolute -inset-2 bg-teal-500/10 dark:bg-purple-500/20 blur-2xl rounded-full" />
+            {/* 쉬머 효과: 좌우로 흐르는 듯한 빛나는 텍스트 애니메이션 */}
             <span className="relative text-transparent bg-clip-text bg-gradient-to-r from-teal-600 via-teal-400 to-teal-600 dark:from-cyan-300 dark:via-white dark:to-cyan-300 animate-shimmer bg-[length:200%_100%]">
               StudyLink
             </span>
@@ -104,7 +107,7 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
           가장 확실한 합격 데이터를 지금 바로 경험하세요.
         </p>
 
-        {/* Buttons */}
+        {/* 버튼 섹션: 그림자 효과, 스케일 변화, 그라데이션 오버레이로 인터랙션 강조 */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up [animation-delay:600ms]">
           <a
             href="/room/list"
@@ -135,7 +138,7 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
         </div>
       </div>
 
-      {/* Bottom Fade-out Overlay - 더 부드럽고 길게 고도화 */}
+      {/* 하단 페이드아웃 오버레이: 다음 섹션과 자연스럽게 연결하기 위한 긴 그라데이션 */}
       <div className="absolute bottom-0 left-0 w-full h-80 bg-gradient-to-t from-white via-white/80 to-transparent z-20 pointer-events-none dark:from-[#030014] dark:to-transparent" />
     </section>
   );
