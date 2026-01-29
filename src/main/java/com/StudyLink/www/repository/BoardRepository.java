@@ -15,11 +15,13 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     @Query("""
         select b
         from Board b
+        join b.user u
         where
           (:keyword is null or :keyword = ''
            or lower(b.title) like lower(concat('%', :keyword, '%'))
            or lower(b.content) like lower(concat('%', :keyword, '%'))
-           or lower(b.writer) like lower(concat('%', :keyword, '%'))
+           or lower(u.username) like lower(concat('%', :keyword, '%'))
+           or lower(u.nickname) like lower(concat('%', :keyword, '%'))
           )
         """)
     Page<Board> search(@Param("keyword") String keyword,

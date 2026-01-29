@@ -9,13 +9,7 @@ import java.util.Optional;
 @Repository
 public interface UserSettingsRepository extends JpaRepository<UserSettings, Long> {
 
-    /**
-     * User ID로 설정 조회
-     */
     Optional<UserSettings> findByUser_UserId(Long userId);
 
-    /**
-     * User ID로 설정 존재 여부 확인
-     */
     boolean existsByUser_UserId(Long userId);
 }

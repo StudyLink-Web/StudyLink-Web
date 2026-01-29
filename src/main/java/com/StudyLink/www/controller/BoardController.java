@@ -39,9 +39,21 @@ public class BoardController {
     private final FileHandler fileHandler;
     private final UserService userService;
 
-    private static final String UPLOAD_ROOT = "D:/web_0826_shinjw/_myProject/_java/_fileUpload";
+    private static final String UPLOAD_ROOT =
+            "D:/web_0826_shinjw/_myProject/_java/_fileUpload";
 
-    // ✅ 등록 폼: 인증/권한은 SecurityConfig에서 막지만, 컨트롤러에서도 방어적으로 체크
+    /* ================= 로그인 사용자 공통 주입 ================= */
+    @ModelAttribute
+    public void addLoginUser(Authentication authentication, Model model) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            model.addAttribute(
+                    "loginUser",
+                    userService.findByUsername(authentication.getName())
+            );
+        }
+    }
+
+    /* ================= 등록 ================= */
     @GetMapping("/register")
     public String register(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -50,7 +62,6 @@ public class BoardController {
         return "board/register";
     }
 
-    // ✅ 등록 처리: 인증 필수 + NPE 방지
     @PostMapping("/register")
     public String register(BoardDTO boardDTO,
                            @RequestParam(name = "files", required = false) MultipartFile[] files,
@@ -88,11 +99,12 @@ public class BoardController {
         return "redirect:/board/list";
     }
 
+    /* ================= 목록 ================= */
     @GetMapping("/list")
     public String list(Model model,
-                       @RequestParam(name = "pageNo", defaultValue = "1") int pageNo,
-                       @RequestParam(name = "type", required = false) String type,
-                       @RequestParam(name = "keyword", required = false) String keyword) {
+                       @RequestParam(defaultValue = "1") int pageNo,
+                       @RequestParam(required = false) String type,
+                       @RequestParam(required = false) String keyword) {
 
         Page<BoardDTO> page = boardService.getList(pageNo, type, keyword);
         PageHandler<BoardDTO> ph = new PageHandler<>(page, pageNo, type, keyword);
@@ -101,22 +113,19 @@ public class BoardController {
         return "board/list";
     }
 
+    /* ================= 상세 ================= */
     @GetMapping("/detail")
     public String detail(@RequestParam("postId") long postId,
-                         @RequestParam(name = "mode", defaultValue = "read") String mode,
+                         @RequestParam(defaultValue = "read") String mode,
                          Model model,
                          HttpServletRequest request) {
 
         String referer = request.getHeader("Referer");
-        boolean fromList = (referer != null && referer.contains("/board/list"));
+        boolean fromList = referer != null && referer.contains("/board/list");
         boolean isModifyMode = "modify".equalsIgnoreCase(mode);
 
         if (fromList && !isModifyMode) {
-            try {
-                boardService.increaseViewCount(postId);
-            } catch (Exception e) {
-                log.error("increaseViewCount failed. postId={}", postId, e);
-            }
+            boardService.increaseViewCount(postId);
         }
 
         BoardFileDTO boardFileDTO = boardService.getDetail(postId);
@@ -126,7 +135,7 @@ public class BoardController {
         return "board/detail";
     }
 
-    // ✅ 수정 처리: 인증 필수 + 작성자 검증(최소 방어)
+    /* ================= 수정 ================= */
     @PostMapping("/modify")
     public String modify(BoardDTO boardDTO,
                          RedirectAttributes redirectAttributes,
@@ -140,22 +149,20 @@ public class BoardController {
         String username = authentication.getName();
         Long userId = userService.findUserIdByUsername(username);
 
-        // ✅ 작성자/권한 검증(서비스에서 더 강하게 검증해도 됨)
         BoardFileDTO origin = boardService.getDetail(boardDTO.getPostId());
         if (origin == null || origin.getBoardDTO() == null ||
-                origin.getBoardDTO().getUserId() == null ||
-                !origin.getBoardDTO().getUserId().equals(userId)) {
+                !userId.equals(origin.getBoardDTO().getUserId())) {
             return "redirect:/error/403";
         }
 
         boardDTO.setUserId(userId);
         boardDTO.setWriter(username);
 
-        List<FileDTO> fileDTOList = null;
+        List<FileDTO> fileList = null;
         if (files != null && files.length > 0 && files[0] != null && !files[0].isEmpty()) {
-            fileDTOList = fileHandler.uploadFile(files);
-            if (fileDTOList != null) {
-                fileDTOList = fileDTOList.stream()
+            fileList = fileHandler.uploadFile(files);
+            if (fileList != null) {
+                fileList = fileList.stream()
                         .filter(f -> f != null)
                         .filter(f -> {
                             String u = f.getUuid();
@@ -169,13 +176,12 @@ public class BoardController {
             }
         }
 
-        Long postId = boardService.modify(new BoardFileDTO(boardDTO, fileDTOList));
-
+        Long postId = boardService.modify(new BoardFileDTO(boardDTO, fileList));
         redirectAttributes.addAttribute("postId", postId);
         return "redirect:/board/detail";
     }
 
-    // ✅ 삭제: 인증 필수 + 작성자 검증(최소 방어)
+    /* ================= 삭제 ================= */
     @GetMapping("/remove")
     public String remove(@RequestParam("postId") long postId,
                          Authentication authentication) {
@@ -189,8 +195,7 @@ public class BoardController {
 
         BoardFileDTO origin = boardService.getDetail(postId);
         if (origin == null || origin.getBoardDTO() == null ||
-                origin.getBoardDTO().getUserId() == null ||
-                !origin.getBoardDTO().getUserId().equals(userId)) {
+                !userId.equals(origin.getBoardDTO().getUserId())) {
             return "redirect:/error/403";
         }
 
@@ -198,64 +203,54 @@ public class BoardController {
         return "redirect:/board/list";
     }
 
-    // ✅ 파일 삭제: 인증 필수 (그리고 작성자 검증 추가)
+    /* ================= 파일 삭제 ================= */
     @DeleteMapping("/file/{uuid}")
     @ResponseBody
-    public ResponseEntity<String> fileRemove(@PathVariable("uuid") String uuid,
+    public ResponseEntity<String> fileRemove(@PathVariable String uuid,
                                              Authentication authentication) {
 
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(401).body("0");
         }
 
-        String username = authentication.getName();
-        Long userId = userService.findUserIdByUsername(username);
+        Long userId = userService.findUserIdByUsername(authentication.getName());
+        FileDTO fileDTO = boardService.getFile(uuid);
+        if (fileDTO == null) return ResponseEntity.notFound().build();
 
-        FileDTO removeFile = boardService.getFile(uuid);
-        if (removeFile == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        // ✅ 파일이 속한 게시글 작성자 검증
-        BoardFileDTO origin = boardService.getDetail(removeFile.getPostId());
+        BoardFileDTO origin = boardService.getDetail(fileDTO.getPostId());
         if (origin == null || origin.getBoardDTO() == null ||
-                origin.getBoardDTO().getUserId() == null ||
-                !origin.getBoardDTO().getUserId().equals(userId)) {
+                !userId.equals(origin.getBoardDTO().getUserId())) {
             return ResponseEntity.status(403).body("0");
         }
 
-        FileRemoveHandler fileRemoveHandler = new FileRemoveHandler();
-        boolean isDel = fileRemoveHandler.removeFile(removeFile);
-        if (!isDel) {
+        FileRemoveHandler handler = new FileRemoveHandler();
+        if (!handler.removeFile(fileDTO)) {
             return ResponseEntity.internalServerError().build();
         }
 
         Long postId = boardService.fileRemove(uuid);
-        return (postId != null && postId > 0)
-                ? ResponseEntity.ok("1")
+        return postId != null ? ResponseEntity.ok("1")
                 : ResponseEntity.internalServerError().build();
     }
 
+    /* ================= 파일 조회 ================= */
     @GetMapping("/file/{uuid}")
     @ResponseBody
-    public ResponseEntity<Resource> viewFile(@PathVariable String uuid) throws MalformedURLException {
+    public ResponseEntity<Resource> viewFile(@PathVariable String uuid)
+            throws MalformedURLException {
 
         FileDTO fileDTO = boardService.getFile(uuid);
-        if (fileDTO == null) {
-            return ResponseEntity.notFound().build();
-        }
+        if (fileDTO == null) return ResponseEntity.notFound().build();
 
         String savedName = fileDTO.getUuid() + "_" + fileDTO.getFileName();
         Path filePath = Paths.get(UPLOAD_ROOT, fileDTO.getSaveDir(), savedName);
 
         Resource resource = new UrlResource(filePath.toUri());
-        if (!resource.exists()) {
-            return ResponseEntity.notFound().build();
-        }
+        if (!resource.exists()) return ResponseEntity.notFound().build();
 
-        String lower = fileDTO.getFileName().toLowerCase();
         MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
         if (fileDTO.getFileType() == 1) {
+            String lower = fileDTO.getFileName().toLowerCase();
             if (lower.endsWith(".png")) mediaType = MediaType.IMAGE_PNG;
             else if (lower.endsWith(".gif")) mediaType = MediaType.IMAGE_GIF;
             else mediaType = MediaType.IMAGE_JPEG;
