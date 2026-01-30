@@ -15,9 +15,11 @@
 				<button type="submit" class="btn btn-primary">문제 등록</button>
 			</form>
 		</div>
-		<div id="privateContainer" class="text-center grid-container">
-			<div th:if="${privateRoomPage.totalElements == 0}" class="empty-message">
-				모든 문제가 해결되었습니다.
+		<div class="private-room-big-card">
+			<div id="privateContainer" class="text-center grid-container">
+				<div th:if="${privateRoomPage.totalElements == 0}" class="empty-message">
+					모든 문제가 해결되었습니다.
+				</div>
 			</div>
 		</div>
 		<nav aria-label="Page navigation example" class="mt-2 d-flex justify-content-center"th:if="${privateRoomPage.totalPages > 1}">
@@ -45,12 +47,13 @@
 
 		<h3>StudyLink Question</h3>
 		<p>답변 가능한 과목으로 선택한 과목의 질문만 확인할 수 있습니다.</p>
-		<div id="publicContainer" class="text-center grid-container">
-			<div th:if="${roomPage.totalElements == 0}" class="empty-message">
-				모든 문제가 해결되었습니다.
+		<div class="public-room-big-card">
+			<div id="publicContainer" class="text-center grid-container">
+				<div th:if="${roomPage.totalElements == 0}" class="empty-message">
+					모든 문제가 해결되었습니다.
+				</div>
 			</div>
 		</div>
-
 		<nav aria-label="Page navigation example" class="mt-2 d-flex justify-content-center"th:if="${roomPage.totalPages > 1}">
 			<ul class="pagination">
 				<!-- 이전 그룹 -->

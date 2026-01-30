@@ -20,8 +20,12 @@ public class Subject {
     @Column
     private String name;
 
+    @Column
+    private String color;
+
     public Subject(SubjectDTO dto) {
         this.subjectId = dto.getSubjectId();
         this.name = dto.getName();
+        this.color = dto.getColor();
     }
 }

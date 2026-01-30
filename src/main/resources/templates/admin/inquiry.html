@@ -128,8 +128,8 @@
 							<td th:text="${inquiry.inquiryDTO.choose}">카테고리</td>
 
 							<td>
-								<span th:if="${inquiry.inquiryDTO.isPublic}" class="badge bg-success">공개</span>
-								<span th:unless="${inquiry.inquiryDTO.isPublic}" class="badge bg-secondary">비공개</span>
+								<span th:if="${inquiry.inquiryDTO.isPublic == 'Y'}" class="badge bg-success">공개</span>
+								<span th:unless="${inquiry.inquiryDTO.isPublic == 'Y'}" class="badge bg-secondary">비공개</span>
 							</td>
 
 							<td>

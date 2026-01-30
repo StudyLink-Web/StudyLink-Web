@@ -31,28 +31,6 @@ public class MentorProfileController {
     private final MentorProfileService mentorProfileService;
     private final UserRepository userRepository;
 
-    // Firebase 설정값 (application.properties에서 읽어오기)
-    @Value("${firebase.api-key}")
-    private String firebaseApiKey;
-
-    @Value("${firebase.auth-domain}")
-    private String firebaseAuthDomain;
-
-    @Value("${firebase.project-id}")
-    private String firebaseProjectId;
-
-    @Value("${firebase.storage-bucket}")
-    private String firebaseStorageBucket;
-
-    @Value("${firebase.messaging-sender-id}")
-    private String firebaseMessagingSenderId;
-
-    @Value("${firebase.app-id}")
-    private String firebaseAppId;
-
-    @Value("${firebase.measurement-id}")
-    private String firebaseMeasurementId;
-
     /**
      * Authentication에서 Users 엔티티 추출
      */
@@ -246,37 +224,6 @@ public class MentorProfileController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
-
-    /**
-     * Firebase 설정값 반환 API (새로 추가)
-     */
-    @GetMapping("/firebase-config")
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> getFirebaseConfig(Authentication authentication) {
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            log.warn("❌ Firebase Config 접근 거부 - 인증 안됨");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        log.info("🔥 Firebase 설정값 요청 - user={}", authentication.getName());
-
-        Map<String, String> config = new HashMap<>();
-        config.put("apiKey", firebaseApiKey);
-        config.put("authDomain", firebaseAuthDomain);
-        config.put("projectId", firebaseProjectId);
-        config.put("storageBucket", firebaseStorageBucket);
-        /*
-        config.put("messagingSenderId", firebaseMessagingSenderId);
-        config.put("appId", firebaseAppId);
-        config.put("measurementId", firebaseMeasurementId);
-        */
-
-        return ResponseEntity.ok(config);
-    }
-
-
 
 
     /**

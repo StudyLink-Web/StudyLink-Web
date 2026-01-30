@@ -14,9 +14,11 @@ import lombok.*;
 public class SubjectDTO {
     private Integer subjectId;
     private String name;
+    private String color;
 
     public SubjectDTO (Subject subject) {
         this.subjectId = subject.getSubjectId();
         this.name = subject.getName();
+        this.color = subject.getColor();
     }
 }

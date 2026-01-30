@@ -239,7 +239,7 @@ public class AdminController {
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOption);
 
         Page<AdminInquiryDTO> page = inquiryService.searchInquiryList(choose, status, username, startDate, endDate, sortedPageable);
-        log.info(">>> adminInquiryDTOList {}", page.getContent());
+
         model.addAttribute("adminInquiryDTOList", page.getContent());
         model.addAttribute("page", page);
         model.addAttribute("choose", choose);
@@ -265,8 +265,6 @@ public class AdminController {
             @RequestParam Long qno,
             @RequestParam String adminContent
     ) {
-        log.info(">>> qno {}", qno);
-        log.info(">>> adminContent {}", adminContent);
         inquiryService.answer(qno, adminContent);
         return ResponseEntity.ok().build();
     }
