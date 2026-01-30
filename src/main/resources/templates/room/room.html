@@ -3,11 +3,61 @@
 	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
 	  layout:decorate="~{layout/layout}">
 
-<div layout:fragment="content" class="container-md">
-	<h1>문제 풀이 페이지</h1>
-	<div>
-		<button id="registerBtn">등록</button>
-		<button id="exitBtn"><a href="/room/list">나가기</a></button>
+<div layout:fragment="content" style="overflow: hidden;">
+	<div class="d-flex flex-column" style="width: 1920px; height: 889px;">
+		<div class="d-flex" style="width:100%; height:100px; border-bottom: 1px solid #ddd;">
+			<div style="width:1520px; height:100px">
+				<div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+					<input type="radio" class="btn-check" name="btnradio" id="btnradio1" value="draw" autocomplete="off" checked>
+					<label class="btn btn-outline-primary btn-tool" for="btnradio1">펜</label>
+
+					<input type="radio" class="btn-check" name="btnradio" id="btnradio2" value="erase" autocomplete="off">
+					<label class="btn btn-outline-primary btn-tool" for="btnradio2">지우개</label>
+
+					<input type="radio" class="btn-check" name="btnradio" id="btnradio3" value="select" autocomplete="off">
+					<label class="btn btn-outline-primary btn-tool" for="btnradio3">선택</label>
+
+					<input type="radio" class="btn-check" name="btnradio" id="btnradio4" value="undo" autocomplete="off">
+					<label class="btn btn-outline-primary btn-tool" for="btnradio4">undo</label>
+
+					<input type="radio" class="btn-check" name="btnradio" id="btnradio5" value="redo" autocomplete="off">
+					<label class="btn btn-outline-primary btn-tool" for="btnradio5">redo</label>
+				</div>
+			</div>
+			<div class="d-flex flex-column" style="width: 400px; height: 100px;">
+				<div class="w-100 h-50 d-flex justify-content-center align-items-center" style="font-size: 1.5rem; background-color: #f0f0f0; border-radius: 8px;">
+					<span id="timerDisplay">00:00</span>
+				</div>
+				<div class="d-flex w-100 h-50">
+					<button id="registerBtn" class="w-50 h-100">등록</button>
+					<button id="exitBtn" class="w-50 h-100"><a href="/room/list">나가기</a></button>
+				</div>
+			</div>
+		</div>
+
+		<div class="d-flex flex-grow-1 overflow-hidden" style="width: 1920px; height: 788px;">
+			<div class="flex-grow-1">
+				<canvas id="canvas" width="1520" height="788"></canvas>
+			</div>
+			<div class="d-flex flex-column flex-shrink-0" style="width: 400px; border-left: 1px solid #ddd;">
+				<div class="flex-grow-1 overflow-auto" id="messageArea"></div>
+				<div id="previewContainer"></div>
+				<div id="inputDiv">
+					<textarea name="message" class="form-control mt-auto" style="height: 120px; border: none" disabled></textarea>
+					<input type="file" class="form-control mb-2" name="files" id="file" style="display: none;" multiple disabled/>
+					<label for="file" id="fileBtn" class="file-button">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" >
+							<path
+									d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1M6.354 9.854a.5.5 0 0 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 8.707V12.5a.5.5 0 0 1-1 0V8.707z"
+									fill="white"
+									stroke="black"
+									stroke-width="0.5"
+							/>
+						</svg>
+					</label>
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<!-- 등록 모달 -->
@@ -32,7 +82,6 @@
 			</form>
 		</div>
 	</div>
-
 	<!-- 종료 모달 -->
 	<div id="endModal" class="modal">
 		<div class="modal-content">
@@ -57,36 +106,6 @@
 			</form>
 		</div>
 	</div>
-
-	<div class="d-flex">
-		<div>
-			<div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-				<input type="radio" class="btn-check" name="btnradio" id="btnradio1" value="draw" autocomplete="off" checked>
-				<label class="btn btn-outline-primary btn-tool" for="btnradio1">펜</label>
-
-				<input type="radio" class="btn-check" name="btnradio" id="btnradio2" value="erase" autocomplete="off">
-				<label class="btn btn-outline-primary btn-tool" for="btnradio2">지우개</label>
-
-				<input type="radio" class="btn-check" name="btnradio" id="btnradio3" value="select" autocomplete="off">
-				<label class="btn btn-outline-primary btn-tool" for="btnradio3">선택</label>
-
-				<input type="radio" class="btn-check" name="btnradio" id="btnradio4" value="undo" autocomplete="off">
-				<label class="btn btn-outline-primary btn-tool" for="btnradio4">undo</label>
-
-				<input type="radio" class="btn-check" name="btnradio" id="btnradio5" value="redo" autocomplete="off">
-				<label class="btn btn-outline-primary btn-tool" for="btnradio5">redo</label>
-			</div>
-			<canvas id="canvas" width="1200" height="700" style="border:1px solid black;"></canvas>
-		</div>
-		<div class="border border-black d-flex flex-column flex-shrink-0" style="width: 300px; height: 750px;">
-			<div class="w-100" style="height: 650px;" id="messageArea"></div>
-			<div class="mb-3">
-				<input type="file" class="form-control" name="files" id="file" multiple disabled/>
-			</div>
-			<button type="button" id="sendFileBtn" disabled>파일 전송</button>
-			<textarea name="message" class="form-control w-100 mt-auto" style="height: 100px;" disabled></textarea>
-		</div>
-	</div>
 	<script th:inline="javascript">
         // 서버에서 넘어온 데이터를 JS 변수로 변환
         let subjectList = [[${subjectList}]];
@@ -96,6 +115,7 @@
         let senderId = [[${senderId}]];
         let userRoles = [[${#authentication.authorities}]];
         let message = [[${message}]] // redirect시 담겨오는 메시지
+		let timeLeft = [[${timeLeft != null} ? ${timeLeft} : 0]];
 	</script>
 	<script src="/js/room.js"></script>
 	<script src="/js/roomRegister.js"></script>
