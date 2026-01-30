@@ -22,4 +22,6 @@ public interface InquiryService {
     void updateStatus(Long qno, String status);
 
     Page<AdminInquiryDTO> searchInquiryList(String choose, String status, String username, LocalDate startDate, LocalDate endDate, Pageable sortedPageable);
+
+    InquiryDTO findById(Long id);
 }

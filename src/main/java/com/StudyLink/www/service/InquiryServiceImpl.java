@@ -9,6 +9,7 @@ import com.StudyLink.www.repository.BoardRepository;
 import com.StudyLink.www.repository.InquiryRepository;
 import com.StudyLink.www.repository.PushTokenRepository;
 import com.StudyLink.www.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -81,11 +82,7 @@ public class InquiryServiceImpl implements InquiryService {
     @Override
     @Transactional
     public void answer(Long qno, String adminContent) {
-        Inquiry inquiry = inquiryRepository.findById(qno).orElseThrow();
-
-        if (inquiry.getAdminContent() != null && !inquiry.getAdminContent().trim().isEmpty()) {
-            throw new IllegalStateException("이미 답변이 등록된 문의입니다.");
-        }
+        Inquiry inquiry = inquiryRepository.findById(qno).orElseThrow(() -> new EntityNotFoundException("해당 문의 내역이 없습니다."));
 
         inquiry.setAdminContent(adminContent);
         inquiry.setAnswerAt(LocalDateTime.now());
@@ -141,6 +138,11 @@ public class InquiryServiceImpl implements InquiryService {
         return new PageImpl<>(dtoList, sortedPageable, inquiryPage.getTotalElements());
     }
 
+    @Override
+    public InquiryDTO findById(Long id) {
+        return convertEntityToDto(inquiryRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("문의 내용을 찾을 수 없습니다.")));
+    }
+
     /* ===================== Entity → DTO ===================== */
     private InquiryDTO convertEntityToDto(Inquiry inquiry) {
         return InquiryDTO.builder()
@@ -154,6 +156,7 @@ public class InquiryServiceImpl implements InquiryService {
                 .isPublic(inquiry.getIsPublic())
                 .password(inquiry.getPassword())
                 .createdAt(inquiry.getCreatedAt())
+                .writerEmail(inquiry.getWriterEmail())
                 .answerAt(inquiry.getAnswerAt())
                 .build();
     }
@@ -172,6 +175,7 @@ public class InquiryServiceImpl implements InquiryService {
                 .password(dto.getPassword())
                 .createdAt(dto.getCreatedAt())
                 .answerAt(dto.getAnswerAt())
+                .writerEmail(dto.getWriterEmail())
                 .build();
     }
 

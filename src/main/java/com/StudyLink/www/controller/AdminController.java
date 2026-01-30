@@ -250,4 +250,24 @@ public class AdminController {
         model.addAttribute("sort", sort);
         model.addAttribute("currentMenu", "inquiry");
     };
+
+    @GetMapping("/inquiry/{id}")
+    public String inquiryDetail(@PathVariable Long id, Model model) {
+        InquiryDTO inquiryDTO = inquiryService.findById(id);
+
+        model.addAttribute("inquiry", inquiryDTO);
+        model.addAttribute("currentMenu", "inquiry");
+        return "/admin/inquiryDetail";
+    }
+
+    @PostMapping("/inquiryAnswer")
+    public ResponseEntity<Void> inquiryAnswer(
+            @RequestParam Long qno,
+            @RequestParam String adminContent
+    ) {
+        log.info(">>> qno {}", qno);
+        log.info(">>> adminContent {}", adminContent);
+        inquiryService.answer(qno, adminContent);
+        return ResponseEntity.ok().build();
+    }
 }
