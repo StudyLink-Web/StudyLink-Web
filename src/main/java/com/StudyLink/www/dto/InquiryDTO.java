@@ -17,6 +17,7 @@ public class InquiryDTO {
     private String userContent;
     private String adminContent;
 
+    private String choose;
     private String category;
     private String status;
 
