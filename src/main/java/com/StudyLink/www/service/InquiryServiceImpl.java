@@ -175,8 +175,6 @@ public class InquiryServiceImpl implements InquiryService {
                 .build();
     }
 
-
-
     private final NotificationService notificationService;
     private final FCMService fcmService;
     private final BoardRepository boardRepository; // 게시글 작성자를 찾기 위함

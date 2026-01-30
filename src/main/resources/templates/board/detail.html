@@ -7,6 +7,7 @@
 
 <body>
 <div layout:fragment="content" class="content_box ">
+    <link rel="stylesheet" th:href="@{/css/board.css}">
     <h1 th:text="${mode == 'modify' ? '수정하기' : '상세보기'}">상세보기</h1>
 
     <!-- ===================== 수정 모드 ===================== -->
@@ -71,7 +72,7 @@
             </div>
 
             <div th:if="${boardFileDTO.fileDTOList == null or #lists.isEmpty(boardFileDTO.fileDTOList)}">
-                <p class="text-muted">첨부파일이 없습니다.</p>
+                <p class="no_file">첨부파일이 없습니다.</p>
             </div>
 
             <div th:unless="${boardFileDTO.fileDTOList == null or #lists.isEmpty(boardFileDTO.fileDTOList)}">
@@ -143,15 +144,15 @@
 
         <div class="mb-3 d-flex gap-3">
             <div>
-                <small class="text-muted">작성일</small><br>
+                <small class="col_white">작성일</small><br>
                 <span th:text="${#temporals.format(boardFileDTO.boardDTO.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
             </div>
             <div>
-                <small class="text-muted">수정일</small><br>
+                <small class="col_white">수정일</small><br>
                 <span th:text="${#temporals.format(boardFileDTO.boardDTO.updatedAt, 'yyyy-MM-dd HH:mm')}"></span>
             </div>
             <div>
-                <small class="text-muted">조회수</small><br>
+                <small class="col_white">조회수</small><br>
                 <span th:text="${boardFileDTO.boardDTO.viewCount}"></span>
             </div>
         </div>
@@ -160,7 +161,7 @@
             <h4>첨부파일</h4>
 
             <div th:if="${boardFileDTO.fileDTOList == null or #lists.isEmpty(boardFileDTO.fileDTOList)}">
-                <p class="text-muted">첨부파일이 없습니다.</p>
+                <p class="no_file">첨부파일이 없습니다.</p>
             </div>
 
             <div th:unless="${boardFileDTO.fileDTOList == null or #lists.isEmpty(boardFileDTO.fileDTOList)}">
@@ -169,11 +170,11 @@
                         <div th:if="${f.fileType == 1}" class="mb-2">
                             <img th:src="@{'/board/file/' + ${f.uuid}}"
                                  alt="첨부 이미지"
-                                 style="max-width: 300px; height: auto; display:block;">
+                                 class="file_click">
                         </div>
 
                         <a th:href="@{'/board/file/' + ${f.uuid}}"
-                           th:text="${f.fileName}"></a>
+                           th:text="${f.fileName}" target="_blank"></a>
 
                         <span class="text-muted"
                               th:text="${' (' + f.fileSize + ' bytes)'}"></span>
@@ -183,7 +184,7 @@
         </div>
 
         <div class="mt-4 d-flex gap-2">
-            <a th:href="@{/board/list}" class="btn btn-secondary">목록</a>
+            <a th:href="@{/board/list}" class="btn btn-danger">목록</a>
 
             <div class="d-flex gap-2"
                  sec:authorize="isAuthenticated()"
@@ -207,8 +208,8 @@
             </div>
 
             <!-- 비로그인 안내 -->
-            <div class="alert alert-secondary" sec:authorize="isAnonymous()">
-                댓글을 작성하려면 로그인하세요.
+            <div class="alert alert-secondary comment_alert" sec:authorize="isAnonymous()">
+                <span>댓글을 작성하려면 로그인하세요.</span>
             </div>
 
             <!-- 목록: 항상 보임 -->

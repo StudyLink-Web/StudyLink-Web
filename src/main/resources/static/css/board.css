@@ -57,4 +57,11 @@
 .text-right > p span {color:crimson;}
 .font-bold {font-weight: 700;}
 .page-item a { color:#212121;}
-.text-muted {color:crimson;}
+.no_file {color:crimson}
+.col_red { color:crimson}
+.col_white { color:#fff;}
+.comment_alert {cursor:inherit; background:#797979; color:#fff; border:1px solid #797979}
+.comment_alert span {cursor:inherit;}
+#cmtListArea li {border-radius: 6px; margin-bottom:10px;}
+#cmtListArea li:last-child {margin-bottom:0;}
+.file_click {width:100%; max-width:300px; height:auto; display: block; margin:0 auto;}

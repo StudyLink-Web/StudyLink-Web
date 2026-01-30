@@ -18,11 +18,11 @@ ul, li, ol, dl, dt, dd { list-style: none; }
 button, input, select, textarea { outline: none; }
 container-md {max-width:1200px;}
 textarea {resize:none !important;}
-input:read-only {background: #ededed; border:none; cursor:inherit}
-input:read-only:focus {background: #ededed; border:none; border-color: #ededed; outline: none; box-shadow: none; cursor:inherit}
-textarea:read-only {background: #ededed; border:none; cursor:inherit}
-textarea:read-only:focus {background: #ededed; border:none; border-color: #ededed; outline: none; box-shadow: none; cursor:inherit}
-button:disabled {background: #ededed; border:none }
+input:read-only {background: #797979; border:none; cursor:inherit; color:#fff;}
+input:read-only:focus {background: #797979; border:none; border-color: #797979; outline: none; box-shadow: none; cursor:inherit;}
+textarea:read-only {background: #797979; border:none; cursor:inherit; color:#fff;}
+textarea:read-only:focus {background: #797979; border:none; border-color: #797979; outline: none; box-shadow: none; cursor:inherit}
+button:disabled {background: #797979; border:none }
 /* ===== Reset (E) ===== */
 
 /* ===== Color Scheme ===== */
