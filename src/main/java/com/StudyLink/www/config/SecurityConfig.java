@@ -54,7 +54,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
-                                "/api/auth/**",
+                                /* "/api/auth/**", */
                                 "/loginProc",
                                 "/logout",
                                 "/oauth2/**",
@@ -116,7 +116,7 @@ public class SecurityConfig {
                                 "/uploads/**",
 
                                 "/api/**",
-                                "/api/auth/**",
+                                /* "/api/auth/**", */
                                 "/api/fcm/**",
 
                                 "/room/list",
