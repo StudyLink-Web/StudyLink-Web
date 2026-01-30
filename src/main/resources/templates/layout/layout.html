@@ -7,8 +7,10 @@
 
 <head>
 	<meta charset="UTF-8">
+
 	<meta name="_csrf" th:content="${_csrf.token}">
 	<meta name="_csrf_header" th:content="${_csrf.headerName}">
+
 	<title>StudyLink</title>
 
 	<!-- CSS -->
@@ -35,8 +37,6 @@
 
 <body>
 
-<div id="recaptcha-container"></div>
-
 <div class="wrap">
 	<!-- Header -->
 	<div th:replace="~{fragments/header :: header}"></div>
@@ -55,10 +55,13 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- Firebase SDK -->
+<!--
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+-->
 
-<!-- ⭐ Firebase 초기화 (동기 실행) -->
+<!-- Firebase 초기화 (동기 실행) -->
+<!--
 <script type="module">
 	import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 	import {
@@ -76,12 +79,14 @@
 				console.log('✅ Firebase 초기화 완료');
 			});
 </script>
+-->
 
+<script type="module" src="/js/firebase-init.js"></script>
 
-<!-- ⭐ mentor-profile.js 로드 -->
+<!-- mentor-profile.js 로드 -->
 <script th:src="@{/js/mentor-profile.js}" defer></script>
 
-<!-- ⭐ header.js 명시적 로드 -->
+<!-- header.js 명시적 로드 -->
 <script th:src="@{/js/header.js}" defer></script>
 
 

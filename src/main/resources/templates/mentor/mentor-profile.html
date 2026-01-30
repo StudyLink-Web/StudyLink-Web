@@ -7,8 +7,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    -->
 
     <title>프로필 수정 - StudyLink</title>
     <link rel="stylesheet" th:href="@{/css/mentor-profile.css}">
@@ -34,8 +37,11 @@
             ✗ 저장 중 오류가 발생했습니다. 다시 시도해주세요.
         </div>
 
-        <form id="profileForm" method="POST" action="/mentor/update" enctype="multipart/form-data">
+        <form id="profileForm" method="POST" action="/mentor/update"  enctype="multipart/form-data">
+
+
             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+
 
             <div class="profile-grid">
                 <!-- 사이드바 -->
@@ -156,6 +162,9 @@
                                     </button>
                                 </div>
 
+                                <div id="recaptcha-container"></div>
+
+
                                 <!-- 인증번호 입력 (숨겨진 상태) -->
                                 <div id="authCodeSection" class="auth-section" >
                                     <div class="auth-input-group">
@@ -178,6 +187,11 @@
                                           th:text="${mentor != null ? mentor.introduction : '10년 입시 경험, 수능 만점자 배출 다수'}"></textarea>
                                 <div class="form-hint">최대 500자까지 입력 가능합니다</div>
                             </div>
+                        </div>
+                        <!-- 버튼 그룹 -->
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">✓ 저장하기</button>
+                            <button type="reset" class="btn btn-secondary">↻ 취소</button>
                         </div>
                     </div>
 
@@ -219,6 +233,11 @@
                                 <textarea class="form-control" id="credentials" name="credentials"
                                           th:text="${mentor != null ? mentor.credentials : ''}" placeholder="교사 자격증, 공인 자격증 등"></textarea>
                             </div>
+                        </div>
+                        <!-- 버튼 그룹 -->
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">✓ 저장하기</button>
+                            <button type="reset" class="btn btn-secondary">↻ 취소</button>
                         </div>
                     </div>
 
@@ -614,12 +633,11 @@
                         </div>
                     </div>
                     -->
-
-                    <!-- 버튼 그룹 -->
-                    <div class="button-group">
-                        <button type="submit" class="btn btn-primary">✓ 저장하기</button>
-                        <button type="reset" class="btn btn-secondary">↻ 취소</button>
-                    </div>
+                        <!-- 버튼 그룹 -->
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">✓ 저장하기</button>
+                            <button type="reset" class="btn btn-secondary">↻ 취소</button>
+                        </div>
                 </main>
             </div>
         </form>

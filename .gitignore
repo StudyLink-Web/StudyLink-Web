@@ -88,5 +88,8 @@ logs/
 uploads/profile/
 uploads/profile/**
 
+src/main/resources/keystore.p12
+src/main/resources/firebase-key.json
+
 # AI Reference Folder (Private)
 .reference/

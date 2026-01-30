@@ -1,5 +1,3 @@
-let recaptchaVerifier = null;
-
 console.log('📋 mentor-profile.js 로드됨');
 
 /* =========================
@@ -160,12 +158,6 @@ function initializeSubitemCheckboxes() {
     });
 }
 
-// Firebase 변수 선언
-let confirmationResult = null;
-let authTimer = null;
-let authTimeRemaining = 300;
-let phoneAuthVerified = false;
-
 /* =========================
    🔔 인증 메시지 표시 함수 (누락 보완)
 ========================= */
@@ -180,6 +172,9 @@ function showAuthMessage(message, type) {
 /* =========================
    ⏱ 인증 타이머
 ========================= */
+let authTimer = null;
+let authTimeRemaining = 300;
+
 function startAuthTimer() {
     authTimeRemaining = 300;
     const timerEl = document.querySelector('#authTimer span');
@@ -196,126 +191,79 @@ function startAuthTimer() {
 
         if (authTimeRemaining <= 0) {
             clearInterval(authTimer);
-            showAuthMessage('인증 시간이 만료되었습니다. 다시 요청해주세요.', 'error');
+            showAuthMessage('인증 시간이 만료되었습니다.', 'error');
         }
     }, 1000);
 }
 
 /* =========================
-   📱 전화번호 인증 요청
+   🔐 전화번호 인증 상태
 ========================= */
-function requestPhoneAuth() {
-    window.firebaseInitPromise
-        .then(async () => {
-            const phoneInput = document.getElementById('phone');
-            const phone = phoneInput.value.replace(/\D/g, '');
+let phoneAuthVerified = false;
 
-            if (!phone || phone.length !== 11) {
-                showAuthMessage('올바른 전화번호를 입력해주세요 (01X-XXXX-XXXX)', 'error');
-                return;
-            }
+/* =========================
+   📱 인증번호 요청
+========================= */
+async function requestPhoneAuth() {
+    const phoneInput = document.getElementById('phone');
+    const rawPhone = phoneInput.value.replace(/\D/g, '');
 
-            const formattedPhone = '+82' + phone.slice(1);
+    if (rawPhone.length !== 11) {
+        showAuthMessage('전화번호를 정확히 입력해주세요.', 'error');
+        return;
+    }
 
-            const sendBtn = document.getElementById('sendAuthBtn');
-            sendBtn.disabled = true;
-            sendBtn.textContent = '발송 중...';
+    const phoneNumber = '+82' + rawPhone.slice(1);
+    console.log('📱 전화번호 인증 요청:', phoneNumber);
 
-            console.log('📱 전화번호 인증 요청:', formattedPhone);
+    const sendBtn = document.getElementById('sendAuthBtn');
+    sendBtn.disabled = true;
+    sendBtn.textContent = '발송 중...';
 
-            const auth = window.firebaseAuth;
-
-            // ✅ Firebase v9 RecaptchaVerifier (정상 방식)
-            if (!recaptchaVerifier) {
-                const { RecaptchaVerifier } = await import(
-                    'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js'
-                    );
-
-                recaptchaVerifier = new RecaptchaVerifier(
-                    'recaptcha-container',
-                    {
-                        size: 'invisible',
-                        callback: () => console.log('✅ reCAPTCHA 완료'),
-                        'expired-callback': () => console.log('⚠️ reCAPTCHA 만료')
-                    },
-                    auth
-                );
-
-                await recaptchaVerifier.render();
-                console.log('🧩 reCAPTCHA 위젯 생성 완료');
-            }
-
-            const { signInWithPhoneNumber } = await import(
-                'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js'
-                );
-
-            confirmationResult = await signInWithPhoneNumber(
-                auth,
-                formattedPhone,
-                recaptchaVerifier
-            );
-
-            console.log('✅ SMS 발송 성공');
-
-            document.getElementById('authCodeSection').style.display = 'block';
-            document.getElementById('authCode').focus();
-
-            showAuthMessage('인증번호가 발송되었습니다. 문자를 확인해주세요.', 'success');
-            startAuthTimer();
-
-            sendBtn.disabled = false;
-            sendBtn.textContent = '인증번호 재전송';
-        })
-        .catch(error => {
-            console.error('❌ SMS 발송 실패:', error);
-            showAuthMessage('인증번호 발송에 실패했습니다.', 'error');
-
-            const sendBtn = document.getElementById('sendAuthBtn');
-            sendBtn.disabled = false;
-            sendBtn.textContent = '인증번호 받기';
-        });
+    try {
+        await window.sendFirebasePhoneCode(phoneNumber);
+        document.getElementById('authCodeSection').style.display = 'block';
+        showAuthMessage('인증번호가 발송되었습니다.', 'success');
+        startAuthTimer();
+    } catch (error) {
+        console.error(error);
+        showAuthMessage('인증번호 발송에 실패했습니다.', 'error');
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = '인증번호 재전송';
+    }
 }
 
 /* =========================
    🔐 인증번호 확인
 ========================= */
-function verifyPhoneAuth() {
-    window.firebaseInitPromise
-        .then(async () => {
-            const code = document.getElementById('authCode').value;
+async function verifyPhoneAuth() {
+    const code = document.getElementById('authCode').value;
 
-            if (!code || code.length !== 6) {
-                showAuthMessage('인증번호 6자리를 입력해주세요', 'error');
-                return;
-            }
+    if (code.length !== 6) {
+        showAuthMessage('인증번호 6자리를 입력해주세요.', 'error');
+        return;
+    }
 
-            if (!confirmationResult) {
-                showAuthMessage('먼저 인증번호를 요청해주세요', 'error');
-                return;
-            }
+    const result = await window.verifyFirebasePhoneCode(code);
 
-            console.log('🔐 인증번호 확인:', code);
+    if (result.success) {
+        phoneAuthVerified = true;
+        showAuthMessage('전화번호 인증이 완료되었습니다.', 'success');
 
-            await confirmationResult.confirm(code);
+        document.getElementById('phone').disabled = true;
+        document.getElementById('sendAuthBtn').disabled = true;
+        document.getElementById('authCode').disabled = true;
 
-            console.log('✅ 전화번호 인증 성공!');
-
-            phoneAuthVerified = true;
-            showAuthMessage('✓ 전화번호 인증이 완료되었습니다', 'success');
-
-            document.getElementById('phone').disabled = true;
-            document.getElementById('sendAuthBtn').disabled = true;
-            document.getElementById('authCode').disabled = true;
-            document.querySelector('#authCodeSection button').disabled = true;
-
-            if (authTimer) clearInterval(authTimer);
-        })
-        .catch(error => {
-            console.error('❌ 인증 실패:', error);
-            showAuthMessage('인증번호가 올바르지 않거나 만료되었습니다.', 'error');
-            document.getElementById('authCode').value = '';
-        });
+        clearInterval(authTimer);
+    } else {
+        showAuthMessage('인증번호가 올바르지 않습니다.', 'error');
+    }
 }
+
+window.requestPhoneAuth = requestPhoneAuth;
+window.verifyPhoneAuth = verifyPhoneAuth;
+
 
 /* =========================
    ✅ 프로필 저장 전 필수 입력 검증
@@ -395,6 +343,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 body: formData
             });
+
+            const contentType = res.headers.get('content-type');
+
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await res.text();
+                console.error('❌ JSON 아님, 서버 응답:', text);
+                throw new Error('서버가 JSON이 아닌 응답을 반환했습니다.');
+            }
 
             const data = await res.json();
 
