@@ -19,6 +19,9 @@ privateRoomList.forEach(room => {
     link.href = `/room/enterRoom?roomId=${room.roomId}`;
     link.className = 'room-card';
 
+    // 배경색 적용 (과목 색상 사용, 없으면 기본색)
+    link.style.backgroundColor = room.subjectDTO?.color || '#f0f0f0';
+
     const subjectP = document.createElement('p');
     subjectP.textContent = room.subjectDTO?.name || '과목 없음';
     subjectP.className = 'subject';
@@ -27,14 +30,8 @@ privateRoomList.forEach(room => {
     pointP.textContent = `${room.point || 0}p`;
     pointP.className = 'point';
 
-    // 상태 표시
-    const statusP = document.createElement('p');
-    statusP.textContent = statusMap[room.status] || 'UNKNOWN';
-    statusP.className = 'status';
-
     link.appendChild(subjectP);
     link.appendChild(pointP);
-    link.appendChild(statusP);
 
     privateContainer.appendChild(link);
 });
@@ -47,6 +44,9 @@ roomList.forEach(room => {
     link.href = `/room/enterRoom?roomId=${room.roomId}`;
     link.className = 'room-card';
 
+    // 배경색 적용 (과목 색상 사용, 없으면 기본색)
+    link.style.backgroundColor = room.subjectDTO?.color || '#f0f0f0';
+
     const subjectP = document.createElement('p');
     subjectP.textContent = room.subjectDTO?.name || '과목 없음';
     subjectP.className = 'subject';
@@ -55,14 +55,8 @@ roomList.forEach(room => {
     pointP.textContent = `${room.point || 0}p`;
     pointP.className = 'point';
 
-    // 상태 표시
-    const statusP = document.createElement('p');
-    statusP.textContent = statusMap[room.status] || 'UNKNOWN';
-    statusP.className = 'status';
-
     link.appendChild(subjectP);
     link.appendChild(pointP);
-    link.appendChild(statusP);
 
     publicContainer.appendChild(link);
 });

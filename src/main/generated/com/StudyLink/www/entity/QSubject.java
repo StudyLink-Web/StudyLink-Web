@@ -19,6 +19,8 @@ public class QSubject extends EntityPathBase<Subject> {
 
     public static final QSubject subject = new QSubject("subject");
 
+    public final StringPath color = createString("color");
+
     public final StringPath name = createString("name");
 
     public final NumberPath<Integer> subjectId = createNumber("subjectId", Integer.class);

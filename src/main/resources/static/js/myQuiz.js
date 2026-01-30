@@ -11,9 +11,12 @@ let roleStrings = userRoles.map(r => r.authority);
 myQuizList.forEach(room => {
     const link = document.createElement('a');
     link.href = `/room/enterRoom?roomId=${room.roomId}`;
-    link.className = 'room-card'; // 그대로
+    link.className = 'room-card';
     link.style.textDecoration = 'none';
     link.style.color = 'inherit';
+
+    // 배경색 적용 (과목 색상 사용, 없으면 기본색)
+    link.style.backgroundColor = room.subjectDTO?.color || '#f0f0f0';
 
     const subjectP = document.createElement('p');
     subjectP.textContent = room.subjectDTO?.name || '과목 없음';
@@ -23,13 +26,8 @@ myQuizList.forEach(room => {
     pointP.textContent = `${room.point || 0}p`;
     pointP.className = 'point';
 
-    const statusP = document.createElement('p');
-    statusP.textContent = statusMap[room.status] || '알 수 없음';
-    statusP.className = 'room-status ' + room.status.toLowerCase();
-
     link.appendChild(subjectP);
     link.appendChild(pointP);
-    link.appendChild(statusP);
 
     link.addEventListener('click', (e) => {
         if (room.status === 'IN_PROGRESS' && roleStrings.includes("ROLE_STUDENT")) {
