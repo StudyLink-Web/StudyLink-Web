@@ -45,6 +45,7 @@ public class InquiryServiceImpl implements InquiryService {
         }
 
         Inquiry inquiry = convertDtoToEntity(inquiryDTO);
+        inquiry.setWriterEmail(loginEmail);
         inquiryRepository.save(inquiry);
     }
 
