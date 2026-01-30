@@ -6,7 +6,7 @@
       layout:decorate="~{layout/layout}">
 
 <div layout:fragment="content" class="content_box">
-
+    <link rel="stylesheet" th:href="@{/css/board.css}">
     <h1 th:text="${mode == 'modify' ? '수정하기' : '상세보기'}">상세보기</h1>
 
     <div th:if="${communityFileDTO == null or communityFileDTO.communityDTO == null}">
@@ -122,15 +122,15 @@
 
         <div class="mb-3 d-flex gap-3">
             <div>
-                <small class="text-muted">작성일</small><br>
+                <small class="col_white">작성일</small><br>
                 <span th:text="${communityFileDTO.communityDTO.createdAt != null ? #temporals.format(communityFileDTO.communityDTO.createdAt, 'yyyy-MM-dd HH:mm') : ''}"></span>
             </div>
             <div>
-                <small class="text-muted">수정일</small><br>
+                <small class="col_white">수정일</small><br>
                 <span th:text="${communityFileDTO.communityDTO.updatedAt != null ? #temporals.format(communityFileDTO.communityDTO.updatedAt, 'yyyy-MM-dd HH:mm') : ''}"></span>
             </div>
             <div>
-                <small class="text-muted">조회수</small><br>
+                <small class="col_white">조회수</small><br>
                 <span th:text="${communityFileDTO.communityDTO.readCount != null ? communityFileDTO.communityDTO.readCount : 0}"></span>
             </div>
         </div>
@@ -140,7 +140,7 @@
             <h4>첨부파일</h4>
 
             <div th:if="${communityFileDTO.fileDTOList == null or #lists.isEmpty(communityFileDTO.fileDTOList)}">
-                <p class="text-muted">첨부파일이 없습니다.</p>
+                <p class="col_red">첨부파일이 없습니다.</p>
             </div>
 
             <div th:unless="${communityFileDTO.fileDTOList == null or #lists.isEmpty(communityFileDTO.fileDTOList)}">
@@ -149,7 +149,7 @@
                         <div th:if="${f.fileType == 1}" class="mb-2">
                             <img th:src="@{'/community/file/' + ${f.uuid}}"
                                  alt="첨부 이미지"
-                                 style="max-width: 300px; height: auto; display:block;">
+                                 class="file_click">
                         </div>
 
                         <span th:text="${f.fileName}"></span>
@@ -180,11 +180,11 @@
         <div id="comment" class="mt-4">
             <div class="input-group my-3" sec:authorize="isAuthenticated()">
                 <span class="input-group-text" id="cmtWriter">[[${#authentication.name}]]</span>
-                <input type="text" id="cmtText" class="form-control" placeholder="Add Comment...">
-                <button type="button" id="cmtAddBtn" class="btn btn-primary">post</button>
+                <input type="text" id="cmtText" class="form-control" placeholder="댓글을 입력하세요.">
+                <button type="button" id="cmtAddBtn" class="btn btn-primary">댓글 등록</button>
             </div>
 
-            <div class="alert alert-secondary" sec:authorize="isAnonymous()">
+            <div class="alert alert-secondary comment_alert" sec:authorize="isAnonymous()">
                 댓글을 작성하려면 로그인하세요.
             </div>
 
@@ -198,7 +198,7 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="cmtWriterMod">Tester</h5>
+                            <h5 class="modal-title" id="cmtWriterMod"></h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">

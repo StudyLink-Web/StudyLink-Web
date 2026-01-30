@@ -46,14 +46,14 @@
         <!-- file upload -->
         <div class="mb-3">
             <input type="file" name="files" class="form-control" id="file" multiple style="display:none">
-            <button type="button" class="btn btn-danger" id="trigger">file upload</button>
+            <button type="button" class="btn btn-danger" id="trigger">파일 업로드</button>
         </div>
 
         <!-- file list print -->
         <div class="mb-3" id="fileZone"></div>
 
-        <button type="submit" class="btn btn-primary" id="regBtn">register</button>
-        <a th:href="@{/board/list}" class="btn btn-secondary">cancel</a>
+        <button type="submit" class="btn btn-primary" id="regBtn">등록</button>
+        <a th:href="@{/board/list}" class="btn btn-secondary">취소</a>
     </form>
 
     <script th:src="@{/js/board.js}"></script>

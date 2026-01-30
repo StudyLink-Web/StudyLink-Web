@@ -6,7 +6,7 @@
       layout:decorate="~{layout/layout}">
 
 <div layout:fragment="content" class="content_box">
-
+    <link rel="stylesheet" th:href="@{/css/board.css}">
     <h1>문의 상세보기</h1>
 
     <div th:if="${inquiry == null}">
@@ -47,11 +47,11 @@
 
         <div class="mb-3 d-flex gap-3">
             <div>
-                <small class="text-muted">등록일</small><br>
+                <small class="col_white">등록일</small><br>
                 <span th:text="${inquiry.createdAt != null ? #temporals.format(inquiry.createdAt, 'yyyy-MM-dd HH:mm') : '-'}"></span>
             </div>
             <div>
-                <small class="text-muted">답변일</small><br>
+                <small class="col_white">답변일</small><br>
                 <span th:text="${inquiry.answerAt != null ? #temporals.format(inquiry.answerAt, 'yyyy-MM-dd HH:mm') : '-'}"></span>
             </div>
         </div>
@@ -60,7 +60,7 @@
             <h4>관리자 답변</h4>
 
             <div th:if="${#strings.isEmpty(inquiry.adminContent)}">
-                <p class="text-muted">아직 답변이 없습니다.</p>
+                <p class="col_white">아직 답변이 없습니다.</p>
             </div>
 
             <div th:if="${!#strings.isEmpty(inquiry.adminContent)}">
