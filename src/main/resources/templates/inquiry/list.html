@@ -101,9 +101,9 @@
                         </td>
 
                         <td th:switch="${q.status}">
-                            <span th:case="'PENDING'" class="text-success font-bold">PENDING</span>
-                            <span th:case="'READY'" class="text-primary font-bold">READY</span>
-                            <span th:case="'COMPLETE'" class="text-danger font-bold">COMPLETE</span>
+                            <span th:case="'PENDING'" class="text-success font-bold">접수완료</span>
+                            <span th:case="'READY'" class="text-primary font-bold">답변중</span>
+                            <span th:case="'COMPLETE'" class="text-danger font-bold">답변완료</span>
                             <span th:case="*">-</span>
                         </td>
 
