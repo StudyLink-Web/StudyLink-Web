@@ -2,7 +2,9 @@ package com.StudyLink.www.service;
 
 import com.StudyLink.www.dto.InquiryDTO;
 import com.StudyLink.www.entity.Inquiry;
+import com.StudyLink.www.repository.BoardRepository;
 import com.StudyLink.www.repository.InquiryRepository;
+import com.StudyLink.www.repository.PushTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -118,4 +120,11 @@ public class InquiryServiceImpl implements InquiryService {
                 .answerAt(dto.getAnswerAt())
                 .build();
     }
+
+
+
+    private final NotificationService notificationService;
+    private final FCMService fcmService;
+    private final BoardRepository boardRepository; // 게시글 작성자를 찾기 위함
+    private final PushTokenRepository pushTokenRepository; // FCM 토큰을 찾기 위함
 }

@@ -1,4 +1,4 @@
-.life_campus {text-align: center; font-size:30px; font-weight: 700; margin-bottom:0; margin-top:30px;}
+.life_campus {text-align: center; font-size:30px; font-weight: 700; margin-bottom:0; margin-top:30px; color:#fff;}
 .campus_tab_list {display: flex; align-items: center; justify-content: center; gap:20px; text-align:center; cursor:pointer; margin-top:20px;}
 .campus_tab_list li.active {color:var(--primary-color); font-weight: 700; cursor:pointer;}
 .campus_tab_list li {width:100px;}
@@ -32,16 +32,22 @@
 .link_board_details {cursor:pointer;}
 .profil_imgbox {display: flex; align-items: center; gap:20px;}
 .profil_img {position: relative; width:40px; height:40px; flex:none;  overflow: hidden;}
-.profil_img img {position: absolute; top:50%; left:50%; transform: translate(-50%,-50%); width:40px; height:40px; border-radius: 50%;}
+.profil_img img {position: absolute; top:50%; left:50%; transform: translate(-50%,-50%); width:40px; height:40px; border-radius: 50%; border:1px solid #8f8c8c;}
+.no_back {background: transparent}
 
 .board_title_class, .nowrapbox {width:100%; max-width:450px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.board_title_class span {color:#212121;}
+.board_writer span {color:#212121;}
+
 .community_tab {display:flex; justify-content:center; align-items:center; gap:20px;}
 .community_tab li {border:1px solid #ededed; border-radius: 10px; padding:10px; cursor:pointer;}
 .community_tab li.active {background: var(--primary-color); color:#fff;}
 
+
+
 /* 취준생 */
 .community_table_wrap {width:100%; border-collapse: collapse;}
-.community_table {width:100%; background: #fff;}
+.community_table {width:100%;}
 .community_table th, td {text-align: center; padding:10px; border:1px solid #ededed;}
 .community_table tbody tr:hover {background: #dddbdb;}
 
