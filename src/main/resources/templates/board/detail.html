@@ -203,8 +203,8 @@
             <!-- 작성: 로그인만 -->
             <div class="input-group my-3" sec:authorize="isAuthenticated()">
                 <span class="input-group-text" id="cmtWriter">[[${#authentication.name}]]</span>
-                <input type="text" id="cmtText" class="form-control" placeholder="Add Comment...">
-                <button type="button" id="cmtAddBtn" class="btn btn-primary">post</button>
+                <input type="text" id="cmtText" class="form-control" placeholder="댓글을 입력하세요.">
+                <button type="button" id="cmtAddBtn" class="btn btn-primary">댓글 등록</button>
             </div>
 
             <!-- 비로그인 안내 -->
@@ -223,7 +223,7 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="cmtWriterMod">Tester</h5>
+                            <h5 class="modal-title" id="cmtWriterMod"></h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
