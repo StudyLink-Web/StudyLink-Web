@@ -1,4 +1,5 @@
-.life_campus {text-align: center; font-size:30px; font-weight: 700; margin-bottom:0; margin-top:30px; color:#fff;}
+.life_campus {text-align: center; font-size:30px; font-weight: 700; margin-bottom:0; margin-top:30px;}
+body.dark .life_campus { color:#fff;}
 .campus_tab_list {display: flex; align-items: center; justify-content: center; gap:20px; text-align:center; cursor:pointer; margin-top:20px;}
 .campus_tab_list li.active {color:var(--primary-color); font-weight: 700; cursor:pointer;}
 .campus_tab_list li {width:100px;}
@@ -6,6 +7,7 @@
 
 .board_list_box {margin-top:20px; border:1px solid var(--border-color); border-radius: 10px;}
 .register_campus_link {text-align: right; padding-right:20px; font-weight: 700; font-size:20px; color:var(--primary-color); margin-bottom:20px;}
+body.dark .register_campus_link a { color:#fff;}
 .register_campus_link span {cursor:pointer;}
 .board_img img {width:100%;  height:150px; display: block; margin:0 auto; object-fit: cover;}
 .board_img { border-bottom:1px solid var(--border-color); padding:20px 0;}
@@ -49,7 +51,7 @@
 .community_table_wrap {width:100%; border-collapse: collapse;}
 .community_table {width:100%;}
 .community_table th, td {text-align: center; padding:10px; border:1px solid #ededed;}
-.community_table a {color:#fff; font-weight: 700;}
+body.dark .community_table a {color:#fff; font-weight: 700;}
 
 /* 문의하기 */
 .text-right {text-align: right;}
@@ -59,7 +61,7 @@
 .page-item a { color:#212121;}
 .no_file {color:crimson}
 .col_red { color:crimson}
-.col_white { color:#fff;}
+body.dark .col_white { color:#fff;}
 .comment_alert {cursor:inherit; background:#797979; color:#fff; border:1px solid #797979}
 .comment_alert span {cursor:inherit;}
 #cmtListArea li {border-radius: 6px; margin-bottom:10px;}
