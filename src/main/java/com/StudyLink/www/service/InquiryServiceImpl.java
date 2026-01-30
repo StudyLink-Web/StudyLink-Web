@@ -1,22 +1,32 @@
 package com.StudyLink.www.service;
 
+import com.StudyLink.www.dto.AdminInquiryDTO;
 import com.StudyLink.www.dto.InquiryDTO;
+import com.StudyLink.www.dto.UsersDTO;
 import com.StudyLink.www.entity.Inquiry;
+import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.BoardRepository;
 import com.StudyLink.www.repository.InquiryRepository;
 import com.StudyLink.www.repository.PushTokenRepository;
+import com.StudyLink.www.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InquiryServiceImpl implements InquiryService {
 
     private final InquiryRepository inquiryRepository;
+    private final UserRepository userRepository;
 
     /* ===================== 목록(검색 포함) ===================== */
     @Override
@@ -88,6 +98,47 @@ public class InquiryServiceImpl implements InquiryService {
     public void updateStatus(Long qno, String status) {
         Inquiry inquiry = inquiryRepository.findById(qno).orElseThrow();
         inquiry.setStatus(status);
+    }
+
+    /* ===================== 관리자 문의내역 검색 ===================== */
+    @Override
+    public Page<AdminInquiryDTO> searchInquiryList(String choose, String status, String username, LocalDate startDate, LocalDate endDate, Pageable sortedPageable) {
+        LocalDateTime startDateTime = (startDate != null)
+                ? startDate.atStartOfDay()
+                : null;
+
+        LocalDateTime endDatePlus = (endDate != null)
+                ? endDate.plusDays(1).atStartOfDay()
+                : null;
+
+        Page<Inquiry> inquiryPage = inquiryRepository.searchInquiries(
+                choose,
+                status,
+                username,
+                startDateTime,
+                endDatePlus,
+                sortedPageable
+        );
+
+        List<AdminInquiryDTO> dtoList = new ArrayList<>();
+
+        for (Inquiry inquiry : inquiryPage.getContent()) {
+
+            InquiryDTO inquiryDTO = convertEntityToDto(inquiry);
+            Users users = userRepository.findByUsername(inquiry.getWriterEmail())
+                    .orElse(null);
+
+            UsersDTO usersDTO = (users != null) ? new UsersDTO(users) : null;
+
+            AdminInquiryDTO adminInquiryDTO = AdminInquiryDTO.builder()
+                    .inquiryDTO(inquiryDTO)
+                    .usersDTO(usersDTO)
+                    .build();
+
+            dtoList.add(adminInquiryDTO);
+        }
+
+        return new PageImpl<>(dtoList, sortedPageable, inquiryPage.getTotalElements());
     }
 
     /* ===================== Entity → DTO ===================== */

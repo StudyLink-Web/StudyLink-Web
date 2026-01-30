@@ -51,7 +51,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     @Query(value = "DELETE FROM rooms WHERE status IN ('TEMP', 'PENDING') AND in_progressed_at <= NOW() - INTERVAL 24 HOUR", nativeQuery = true)
     void deleteOldTempAndPendingRooms();
 
-    @Query(value = "SELECT * FROM room r WHERE r.status = 'IN_PROGRESS' AND r.in_progressed_at <= NOW() - INTERVAL '20 minutes'", nativeQuery = true)
+    @Query(value = "SELECT * FROM rooms r WHERE r.status = 'IN_PROGRESS' AND r.in_progressed_at <= NOW() - INTERVAL 20 MINUTE", nativeQuery = true)
     List<Room> findExpiredRooms();
 
     @Query(value = "SELECT * FROM rooms WHERE status IN ('TEMP', 'PENDING') AND in_progressed_at <= NOW() - INTERVAL 24 HOUR", nativeQuery = true)

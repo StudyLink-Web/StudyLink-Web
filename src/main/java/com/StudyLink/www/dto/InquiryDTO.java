@@ -1,5 +1,6 @@
 package com.StudyLink.www.dto;
 
+import com.StudyLink.www.entity.Inquiry;
 import lombok.*;
 
 import java.time.LocalDateTime;
