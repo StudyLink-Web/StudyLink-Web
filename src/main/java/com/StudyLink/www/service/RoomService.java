@@ -30,4 +30,8 @@ public interface RoomService {
     void deleteRoom(long roomId);
 
     Page<RoomDTO> getMyQuizList(long userId, Room.Status status, String subject, LocalDate startDate, LocalDate endDate, Pageable sortedPageable);
+
+    void deleteExpiredRooms();
+
+    void deleteOldTempAndPendingRooms();
 }

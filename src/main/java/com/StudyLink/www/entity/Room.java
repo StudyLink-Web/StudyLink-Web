@@ -32,6 +32,9 @@ public class Room {
     @CreatedDate
     private LocalDateTime createdAt;
 
+    @Column()
+    private LocalDateTime inProgressedAt;
+
     @Column(columnDefinition = "TINYINT(1) DEFAULT 1")
     private Boolean isPublic;
 
@@ -81,6 +84,7 @@ public class Room {
         this.studentId = dto.getStudentId();
         this.mentorId = dto.getMentorId();
         this.createdAt = dto.getCreatedAt();
+        this.inProgressedAt = dto.getInProgressedAt();
         this.isPublic = dto.getIsPublic();
         this.status = Status.valueOf(dto.getStatus().name());
         this.point = dto.getPoint();
