@@ -4,7 +4,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
 
-<div layout:fragment="content" class="content_box">
+<div layout:fragment="content" class="content_box no_back ">
 
     <link rel="stylesheet" th:href="@{/css/board.css}">
 
@@ -92,14 +92,18 @@
                                th:attr="data-qno=${q.qno}">
                             </a>
 
-                            <span th:if="${q.isPublic == 'N'}"
-                                  class="badge bg-secondary ms-2">비공개</span>
+                            <div th:if="${q.isPublic == 'N'}"
+                                  class="badge ms-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="crimson" class="bi bi-lock" viewBox="0 0 16 16">
+                                  <path fill-rule="evenodd" d="M8 0a4 4 0 0 1 4 4v2.05a2.5 2.5 0 0 1 2 2.45v5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 13.5v-5a2.5 2.5 0 0 1 2-2.45V4a4 4 0 0 1 4-4M4.5 7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7zM8 1a3 3 0 0 0-3 3v2h6V4a3 3 0 0 0-3-3"/>
+                                </svg>
+                            </div>
                         </td>
 
                         <td th:switch="${q.status}">
-                            <span th:case="'PENDING'" class="text-success">PENDING</span>
-                            <span th:case="'READY'" class="text-success">READY</span>
-                            <span th:case="'COMPLETE'" class="text-danger">COMPLETE</span>
+                            <span th:case="'PENDING'" class="text-success font-bold">접수완료</span>
+                            <span th:case="'READY'" class="text-primary font-bold">답변중</span>
+                            <span th:case="'COMPLETE'" class="text-danger font-bold">답변완료</span>
                             <span th:case="*">-</span>
                         </td>
 
@@ -156,7 +160,7 @@
         window.IS_ADMIN = /*[[${#authorization.expression("hasAnyAuthority('ADMIN','ROLE_ADMIN')")}]]*/ false;
     </script>
     <script th:src="@{/js/inquiry.js}"></script>
-
+    <script th:src="@{/js/community.js}"></script>
 </div>
 
 </html>

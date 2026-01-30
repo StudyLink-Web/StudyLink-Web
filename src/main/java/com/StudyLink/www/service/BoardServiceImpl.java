@@ -5,27 +5,39 @@ import com.StudyLink.www.dto.BoardFileDTO;
 import com.StudyLink.www.dto.FileDTO;
 import com.StudyLink.www.entity.Board;
 import com.StudyLink.www.entity.File;
+import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.BoardRepository;
 import com.StudyLink.www.repository.FileRepository;
+import com.StudyLink.www.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BoardServiceImpl implements BoardService {
 
     private final BoardRepository boardRepository;
     private final FileRepository fileRepository;
+    private final UserRepository userRepository;
 
     private boolean isThumb(File f) {
         if (f == null) return false;
         String u = f.getUuid();
         String n = f.getFileName();
         return (u != null && u.startsWith("_th_")) || (n != null && n.contains("_th_"));
+    }
+
+    private void attachThumb(BoardDTO dto, Long postId) {
+        if (dto == null || postId == null) return;
+        fileRepository.findFirstByPostIdAndFileTypeOrderByCreatedAtAsc(postId, 1)
+                .filter(img -> !isThumb(img))
+                .ifPresent(img -> dto.setThumbPath("/board/file/" + img.getUuid()));
     }
 
     @Override
@@ -41,16 +53,17 @@ public class BoardServiceImpl implements BoardService {
             throw new IllegalArgumentException("boardFileDTO/boardDTO is null");
         }
 
-        Board saved = boardRepository.save(convertDtoToEntity(boardFileDTO.getBoardDTO()));
+        BoardDTO dto = boardFileDTO.getBoardDTO();
+        Users user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("user not found"));
+
+        Board saved = boardRepository.save(convertDtoToEntity(dto, user));
         Long postId = saved.getPostId();
 
         List<FileDTO> files = boardFileDTO.getFileDTOList();
-        if (files != null && !files.isEmpty()) {
+        if (files != null) {
             for (FileDTO f : files) {
-                if (f == null) continue;
-
-                if (f.isThumbnail()) continue;
-
+                if (f == null || f.isThumbnail()) continue;
                 f.setPostId(postId);
                 fileRepository.save(convertDtoToEntity(f));
             }
@@ -62,16 +75,12 @@ public class BoardServiceImpl implements BoardService {
     @Transactional(readOnly = true)
     public Page<BoardDTO> getList(int pageNo, String type, String keyword) {
 
-        final int size = 12;
-        final int pageIndex = Math.max(pageNo - 1, 0);
+        int size = 12;
+        int pageIndex = Math.max(pageNo - 1, 0);
 
-        Sort sort;
-        if ("view".equalsIgnoreCase(type)) {
-            sort = Sort.by(Sort.Direction.DESC, "viewCount")
-                    .and(Sort.by(Sort.Direction.DESC, "postId"));
-        } else {
-            sort = Sort.by(Sort.Direction.DESC, "postId");
-        }
+        Sort sort = "view".equalsIgnoreCase(type)
+                ? Sort.by(Sort.Direction.DESC, "viewCount").and(Sort.by(Sort.Direction.DESC, "postId"))
+                : Sort.by(Sort.Direction.DESC, "postId");
 
         Pageable pageable = PageRequest.of(pageIndex, size, sort);
         String kw = (keyword == null) ? "" : keyword.trim();
@@ -81,10 +90,15 @@ public class BoardServiceImpl implements BoardService {
         return page.map(board -> {
             BoardDTO dto = convertEntityToDto(board);
 
-            fileRepository.findFirstByPostIdAndFileTypeOrderByCreatedAtAsc(board.getPostId(), 1)
-                    .filter(img -> !isThumb(img))
-                    .ifPresent(img -> dto.setThumbPath("/board/file/" + img.getUuid()));
+            // ✅ 작성자 프로필 이미지 URL (특정 유저)
+            dto.setWriterProfileImageUrl(
+                    board.getUser() != null ? board.getUser().getProfileImageUrl() : null
+            );
 
+            // ✅ 썸네일
+            attachThumb(dto, board.getPostId());
+
+            log.info(">>>> {}", dto);
             return dto;
         });
     }
@@ -104,15 +118,23 @@ public class BoardServiceImpl implements BoardService {
 
         List<File> flist = fileRepository.findByPostId(postId);
 
-        List<FileDTO> dtoList = (flist == null || flist.isEmpty())
-                ? List.of()
-                : flist.stream()
-                .filter(f -> f != null)
-                .filter(f -> !isThumb(f))
-                .map(this::convertEntityToDto)
-                .toList();
+        List<FileDTO> dtoList = (flist == null) ? List.of() :
+                flist.stream()
+                        .filter(f -> f != null && !isThumb(f))
+                        .map(this::convertEntityToDto)
+                        .toList();
 
-        return new BoardFileDTO(convertEntityToDto(board), dtoList);
+        BoardDTO dto = convertEntityToDto(board);
+
+        // ✅ 작성자 프로필 이미지 URL (특정 유저)
+        dto.setWriterProfileImageUrl(
+                board.getUser() != null ? board.getUser().getProfileImageUrl() : null
+        );
+
+        // ✅ 썸네일(상세에서 필요하면)
+        attachThumb(dto, postId);
+
+        return new BoardFileDTO(dto, dtoList);
     }
 
     @Override
@@ -121,29 +143,24 @@ public class BoardServiceImpl implements BoardService {
         if (boardFileDTO == null || boardFileDTO.getBoardDTO() == null) {
             throw new IllegalArgumentException("boardFileDTO/boardDTO is null");
         }
-        if (boardFileDTO.getBoardDTO().getPostId() == null) {
-            throw new IllegalArgumentException("postId is null (modify)");
-        }
 
-        Long postId = boardFileDTO.getBoardDTO().getPostId();
+        BoardDTO dto = boardFileDTO.getBoardDTO();
+        Users user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("user not found"));
 
-        Board saved = boardRepository.save(convertDtoToEntity(boardFileDTO.getBoardDTO()));
-        postId = saved.getPostId();
+        Board saved = boardRepository.save(convertDtoToEntity(dto, user));
+        Long postId = saved.getPostId();
 
         fileRepository.deleteByPostId(postId);
 
         List<FileDTO> files = boardFileDTO.getFileDTOList();
-        if (files != null && !files.isEmpty()) {
+        if (files != null) {
             for (FileDTO f : files) {
-                if (f == null) continue;
-
-                if (f.isThumbnail()) continue;
-
+                if (f == null || f.isThumbnail()) continue;
                 f.setPostId(postId);
                 fileRepository.save(convertDtoToEntity(f));
             }
         }
-
         return postId;
     }
 
@@ -165,7 +182,7 @@ public class BoardServiceImpl implements BoardService {
         Long postId = file.getPostId();
         fileRepository.deleteById(uuid);
 
-        return (postId == null) ? 0L : postId;
+        return postId == null ? 0L : postId;
     }
 
     @Override
@@ -180,12 +197,10 @@ public class BoardServiceImpl implements BoardService {
     @Transactional(readOnly = true)
     public List<FileDTO> getTodayFileList(String today) {
         List<File> list = fileRepository.findBySaveDir(today);
-        return (list == null || list.isEmpty())
-                ? List.of()
-                : list.stream()
-                .filter(f -> f != null)
-                .filter(f -> !isThumb(f))
-                .map(this::convertEntityToDto)
-                .toList();
+        return (list == null) ? List.of() :
+                list.stream()
+                        .filter(f -> f != null && !isThumb(f))
+                        .map(this::convertEntityToDto)
+                        .toList();
     }
 }

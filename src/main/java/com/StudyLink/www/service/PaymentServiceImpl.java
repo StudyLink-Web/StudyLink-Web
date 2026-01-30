@@ -451,7 +451,7 @@ public class PaymentServiceImpl implements PaymentService {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
-        return exchangeRequestRepository.countByCreatedAtBetween(startOfDay, startOfNextDay);
+        return exchangeRequestRepository.countByStatusAndCreatedAtBetween(ExchangeStatus.APPROVED, startOfDay, startOfNextDay);
     }
 
     @Override
@@ -460,7 +460,7 @@ public class PaymentServiceImpl implements PaymentService {
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
 
-        Long amountSum = exchangeRequestRepository.sumAmountByCreatedAtBetween(startOfDay, startOfNextDay);
+        Long amountSum = exchangeRequestRepository.sumAmountByCreatedAtBetween(ExchangeStatus.APPROVED, startOfDay, startOfNextDay);
         return amountSum != null ? amountSum : 0L;
     }
 

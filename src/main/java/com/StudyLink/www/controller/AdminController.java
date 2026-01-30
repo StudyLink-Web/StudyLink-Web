@@ -4,6 +4,7 @@ import com.StudyLink.www.dto.*;
 import com.StudyLink.www.entity.ExchangeStatus;
 import com.StudyLink.www.entity.PaymentStatus;
 import com.StudyLink.www.entity.Role;
+import com.StudyLink.www.service.InquiryService;
 import com.StudyLink.www.service.PaymentService;
 import com.StudyLink.www.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import java.time.LocalDate;
 public class AdminController {
     private final PaymentService paymentService;
     private final UserService userService;
+    private final InquiryService inquiryService;
 
     @GetMapping("/admin")
     public void admin(Model model) {
@@ -214,4 +216,38 @@ public class AdminController {
         model.addAttribute("currentMenu", "notice");
         return "admin/notice";
     }
+
+    @GetMapping("inquiry")
+    public void exchange(
+            @RequestParam(required = false) String choose,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "desc") String sort,
+            @PageableDefault(size = 10) Pageable pageable,
+            Model model) {
+        choose = (choose != null && choose.isBlank()) ? null : choose;
+        status = (status != null && status.isBlank()) ? null : status;
+        username = (username != null && username.isBlank()) ? null : username;
+
+        Sort sortOption = null;
+        sortOption = sort.equals("asc")
+                ? Sort.by("createdAt").ascending()
+                : Sort.by("createdAt").descending();
+
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOption);
+
+        Page<AdminInquiryDTO> page = inquiryService.searchInquiryList(choose, status, username, startDate, endDate, sortedPageable);
+        log.info(">>> adminInquiryDTOList {}", page.getContent());
+        model.addAttribute("adminInquiryDTOList", page.getContent());
+        model.addAttribute("page", page);
+        model.addAttribute("choose", choose);
+        model.addAttribute("status", status);
+        model.addAttribute("username", username);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("sort", sort);
+        model.addAttribute("currentMenu", "inquiry");
+    };
 }

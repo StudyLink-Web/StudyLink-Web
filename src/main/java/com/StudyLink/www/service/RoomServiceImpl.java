@@ -3,13 +3,12 @@ package com.StudyLink.www.service;
 import com.StudyLink.www.dto.RoomDTO;
 import com.StudyLink.www.dto.RoomFileDTO;
 import com.StudyLink.www.dto.SubjectDTO;
+import com.StudyLink.www.entity.MentorProfile;
 import com.StudyLink.www.entity.Room;
+import com.StudyLink.www.entity.StudentProfile;
 import com.StudyLink.www.entity.Subject;
 import com.StudyLink.www.handler.RoomFileHandler;
-import com.StudyLink.www.repository.MessageRepository;
-import com.StudyLink.www.repository.RoomFileRepository;
-import com.StudyLink.www.repository.RoomRepository;
-import com.StudyLink.www.repository.SubjectRepository;
+import com.StudyLink.www.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +31,8 @@ public class RoomServiceImpl implements RoomService{
     private final SubjectRepository subjectRepository;
     private final RoomFileRepository roomFileRepository;
     private final RoomFileHandler roomFileHandler;
+    private final StudentProfileRepository studentProfileRepository;
+    private final MentorProfileRepository mentorProfileRepository;
 
     @Override
     public List<SubjectDTO> getSubjectDTOList() {
@@ -71,7 +72,7 @@ public class RoomServiceImpl implements RoomService{
     @Transactional
     @Override
     public int updateStatusIfPending(long roomId, long userId, Room.Status newStatus) {
-        return roomRepository.updateStatusIfPending(roomId, userId, newStatus);
+        return roomRepository.updateStatusIfPending(roomId, userId, newStatus, LocalDateTime.now());
     }
 
     @Transactional
@@ -122,5 +123,53 @@ public class RoomServiceImpl implements RoomService{
         Page<Room> rooms = roomRepository.findByFilters(userId, status, subjectId, startDateTime, endDatePlus, sortedPageable);
 
         return rooms.map(RoomDTO::new);
+    }
+
+    @Transactional
+    @Override
+    public void deleteExpiredRooms() {
+        List<Room> expiredRooms = roomRepository.findExpiredRooms();
+        // 삭제전 처리해야할 로직 작성
+        if (!expiredRooms.isEmpty()) {
+            for (Room room : expiredRooms) {
+                try {
+                    StudentProfile studentProfile = studentProfileRepository.findById(room.getStudentId())
+                            .orElseThrow(() -> new EntityNotFoundException("삭제할 방의 학생 프로필이 없습니다."));
+                    // 학생 포인트 환불
+                    studentProfile.setChargedPoint(studentProfile.getChargedPoint() + room.getPoint());
+
+
+                    MentorProfile mentorProfile = mentorProfileRepository.findById(room.getMentorId())
+                            .orElseThrow(() -> new EntityNotFoundException("삭제할 방의 멘토 프로필이 없습니다."));
+                    // 멘토 패널티 포인트 차감
+                    mentorProfile.setPoint(mentorProfile.getPoint() - 50);
+                } catch (EntityNotFoundException e) {
+                    System.out.println("프로필 없음, 방 ID: " + room.getRoomId() + " - " + e.getMessage());
+                }
+            }
+        }
+        roomRepository.deleteExpiredRooms();
+    }
+
+    @Transactional
+    @Override
+    public void deleteOldTempAndPendingRooms() {
+        List<Room> expiredRooms = roomRepository.findOldTempAndPendingRooms();
+        // 삭제전 처리해야할 로직 작성
+        if (!expiredRooms.isEmpty()) {
+            for (Room room : expiredRooms) {
+                if (room.getStatus() == Room.Status.PENDING) {
+                    try {
+                        StudentProfile studentProfile = studentProfileRepository.findById(room.getStudentId())
+                                .orElseThrow(() -> new EntityNotFoundException("삭제할 방의 학생 프로필이 없습니다."));
+                        // 학생 포인트 환불
+                        studentProfile.setChargedPoint(studentProfile.getChargedPoint() + room.getPoint());
+                    } catch (EntityNotFoundException e) {
+                        System.out.println("프로필 없음, 방 ID: " + room.getRoomId() + " - " + e.getMessage());
+                    }
+                }
+            }
+        }
+        roomRepository.deleteOldTempAndPendingRooms();
     }
 }

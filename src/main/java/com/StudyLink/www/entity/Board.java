@@ -5,7 +5,7 @@ import lombok.*;
 
 @Getter
 @Setter
-@ToString
+@ToString(exclude = "user")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -18,11 +18,9 @@ public class Board extends TimeBase {
     @Column(name = "post_id")
     private Long postId;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    @Column(name = "writer", nullable = false, length = 200)
-    private String writer;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private Users user;
 
     @Column(name = "department", length = 100)
     private String department;
@@ -33,6 +31,6 @@ public class Board extends TimeBase {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Column(name = "view_count", columnDefinition = "int default 0")
+    @Column(name = "view_count", nullable = false)
     private int viewCount;
 }

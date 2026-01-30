@@ -42,28 +42,38 @@
 		<!-- Main -->
 		<main class="col-10 p-4">
 			<div class="d-flex justify-content-between align-items-center mb-4">
-				<h4 class="fw-bold">환전 요청 내역</h4>
+				<h4 class="fw-bold">문의 내역</h4>
 			</div>
 
 			<!-- 검색 -->
 			<div class="card mb-4 shadow-sm">
 				<div class="card-body">
-					<form method="get" th:action="@{/admin/exchange}" class="row g-1 align-items-end" style="max-width: 1100px; margin:auto;">
+					<form method="get" th:action="@{/admin/inquiry}" class="row g-1 align-items-end" style="max-width: 1100px; margin:auto;">
 						<div class="col-md-1">
-							<label class="form-label">환전 상태</label>
-							<select class="form-select" name="status">
-								<option value="" th:selected="${status == null}">전체</option>
-								<option th:each="stat : ${statuses}"
-										th:value="${stat.name()}"
-										th:text="${stat.displayName}"
-										th:selected="${stat == status}">
-								</option>
+							<label class="form-label">카테고리</label>
+							<select class="form-select" name="choose">
+								<option value="" th:selected="${choose == null}">전체</option>
+								<option value="계정" th:selected='${choose == "계정"}'>계정</option>
+								<option value="결제" th:selected='${choose == "결제"}'>결제</option>
+								<option value="기능" th:selected='${choose == "기능"}'>기능</option>
+								<option value="오류" th:selected='${choose == "오류"}'>오류</option>
+								<option value="기타" th:selected='${choose == "기타"}'>기타</option>
 							</select>
 						</div>
 
 						<div class="col-md-2">
-							<label class="form-label">회원 이메일</label>
-							<input type="text" name="email" class="form-control" th:value="${email}">
+							<label class="form-label">문의 상태</label>
+							<select class="form-select" name="status">
+								<option value="" th:selected="${status == null}">전체</option>
+								<option value="PENDING" th:selected='${status == "PENDING"}'>접수 완료</option>
+								<option value="READY" th:selected='${status == "READY"}'>답변 중</option>
+								<option value="COMPLETE" th:selected='${status == "COMPLETE"}'>답변 완료</option>
+							</select>
+						</div>
+
+						<div class="col-md-2">
+							<label class="form-label">회원명</label>
+							<input type="text" name="username" class="form-control" th:value="${username}">
 						</div>
 
 						<div class="col-md-2">
@@ -74,14 +84,6 @@
 						<div class="col-md-2">
 							<label class="form-label">종료일</label>
 							<input type="date" name="endDate" class="form-control" th:value="${endDate}">
-						</div>
-
-						<div class="col-md-2">
-							<label class="form-label">기준</label>
-							<select name="basis" class="form-select">
-								<option value="createdAt" th:selected="${basis == 'createdAt'}">요청일</option>
-								<option value="processedAt" th:selected="${basis == 'processedAt'}">승인/거부일</option>
-							</select>
 						</div>
 
 						<div class="col-md-2">
@@ -102,66 +104,62 @@
 			<!-- 테이블 -->
 			<div class="card shadow-sm">
 				<div class="card-header fw-bold text-center">
-					환전 내역
+					문의 내역
 				</div>
 
 				<div class="card-body p-0">
 					<table class="table table-hover mb-0">
-						<thead class="table-light">
+						<thead class="table-light text-center">
 						<tr>
 							<th>ID</th>
 							<th>회원</th>
-							<th>금액</th>
-							<th>은행</th>
-							<th>계좌 번호</th>
-							<th>예금주</th>
+							<th>카테고리</th>
+							<th>공개여부</th>
 							<th>상태</th>
-							<th>요청일</th>
-							<th>승인/거부일</th>
-							<th class="text-center">관리</th>
+							<th>등록일</th>
+							<th class="text-center">상세</th>
 						</tr>
 						</thead>
 
 						<tbody>
-						<tr th:each="exchange : ${adminExchangeRequestDTOList}">
-							<td th:text="${exchange.exchangeRequestDTO.Id}">1</td>
-							<td th:text="${exchange.usersDTO.email}">user@test.com</td>
-							<td th:text="|₩${#numbers.formatInteger(exchange.exchangeRequestDTO.point, 3, 'COMMA')}|">₩100,000</td>
-							<td th:text="${exchange.exchangeRequestDTO.bankName}">국민은행</td>
-							<td th:text="${exchange.exchangeRequestDTO.account}">123-456-7890</td>
-							<td th:text="${exchange.exchangeRequestDTO.accountHolder}">홍길동</td>
+						<tr th:each="inquiry : ${adminInquiryDTOList}" class="text-center">
+							<td th:text="${inquiry.inquiryDTO.qno}">1</td>
+							<td th:text="${inquiry.usersDTO != null ? inquiry.usersDTO.username : ''}">유저명</td>
+							<td th:text="${inquiry.inquiryDTO.choose}">카테고리</td>
+
 							<td>
-								<span th:switch="${exchange.exchangeRequestDTO.status}">
-								<span th:case="${T(com.StudyLink.www.entity.ExchangeStatus).PENDING}"
-									  class="badge bg-warning">대기</span>
-								<span th:case="${T(com.StudyLink.www.entity.ExchangeStatus).APPROVED}"
-									  class="badge bg-success">승인</span>
-								<span th:case="${T(com.StudyLink.www.entity.ExchangeStatus).REJECTED}"
-									  class="badge bg-danger">거부</span>
-								</span>
+								<span th:if="${inquiry.inquiryDTO.isPublic}" class="badge bg-success">공개</span>
+								<span th:unless="${inquiry.inquiryDTO.isPublic}" class="badge bg-secondary">비공개</span>
 							</td>
-							<td th:text="${exchange.exchangeRequestDTO.createdAt != null
-								? #temporals.format(exchange.exchangeRequestDTO.createdAt, 'yyyy-MM-dd HH:mm')
-								: '-'}">
-								-
+
+							<td>
+					<span th:switch="${inquiry.inquiryDTO.status}">
+						<span th:case="PENDING"
+							  class="badge bg-warning">접수 완료</span>
+						<span th:case="READY"
+							  class="badge bg-success">답변 중</span>
+						<span th:case="COMPLETE"
+							  class="badge bg-secondary">답변 완료</span>
+					</span>
 							</td>
-							<td th:text="${exchange.exchangeRequestDTO.processedAt != null
-								? #temporals.format(exchange.exchangeRequestDTO.processedAt, 'yyyy-MM-dd HH:mm')
+
+							<td th:text="${inquiry.inquiryDTO.createdAt != null
+								? #temporals.format(inquiry.inquiryDTO.createdAt, 'yyyy-MM-dd HH:mm')
 								: '-'}">
 								-
 							</td>
 
 							<td class="text-center">
-								<a th:href="@{/admin/exchange/{id}(id=${exchange.exchangeRequestDTO.Id})}"
+								<a th:href="@{/admin/inquiry/{id}(id=${inquiry.inquiryDTO.qno})}"
 								   class="btn btn-sm btn-outline-secondary">
 									상세
 								</a>
 							</td>
 						</tr>
 
-						<tr th:if="${#lists.isEmpty(adminExchangeRequestDTOList)}">
-							<td colspan="9" class="text-center py-4 text-muted">
-								환전 요청 내역이 없습니다.
+						<tr th:if="${#lists.isEmpty(adminInquiryDTOList)}">
+							<td colspan="7" class="text-center py-4 text-muted">
+								문의 내역이 없습니다.
 							</td>
 						</tr>
 						</tbody>
@@ -169,19 +167,18 @@
 				</div>
 			</div>
 
-
-			<!-- Pagination -->
 			<nav class="mt-4" th:if="${page.totalPages > 1}">
 				<ul class="pagination justify-content-center">
+
 					<li class="page-item" th:classappend="${page.first} ? 'disabled'">
 						<a class="page-link"
-						    th:href="@{/admin/exchange(
+						    th:href="@{/admin/inquiry(
 							page=${page.number - 1},
+							choose=${choose},
 							status=${status},
-							email=${email},
+							username=${username},
 							startDate=${startDate},
-							endDate=${endDate},
-							sort=${sort}
+							endDate=${endDate}
 							)}">
 							이전
 						</a>
@@ -190,32 +187,34 @@
 					<li class="page-item"
 						th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
 						th:classappend="${i == page.number} ? 'active'">
+
 						<a class="page-link"
 						    th:text="${i + 1}"
-						    th:href="@{/admin/exchange(
+						    th:href="@{/admin/inquiry(
 							page=${i},
+							choose=${choose},
 							status=${status},
-							email=${email},
+							username=${username},
 							startDate=${startDate},
-							endDate=${endDate},
-							sort=${sort}
+							endDate=${endDate}
 							)}">
 						</a>
 					</li>
 
 					<li class="page-item" th:classappend="${page.last} ? 'disabled'">
 						<a class="page-link"
-						    th:href="@{/admin/exchange(
+						    th:href="@{/admin/inquiry(
 							page=${page.number + 1},
+							choose=${choose},
 							status=${status},
-							email=${email},
+							username=${username},
 							startDate=${startDate},
-							endDate=${endDate},
-							sort=${sort}
+							endDate=${endDate}
 							)}">
 							다음
 						</a>
 					</li>
+
 				</ul>
 			</nav>
 		</main>

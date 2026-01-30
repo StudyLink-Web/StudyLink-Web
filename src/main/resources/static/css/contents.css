@@ -109,7 +109,6 @@ button:disabled {background: #ededed; border:none }
 .content_box {
     flex: 1;
     height: 100%;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     width:100%;
     max-width:1200px;
     margin:30px auto;

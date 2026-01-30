@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
@@ -46,4 +47,22 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
                          @Param("status") String status,
                          @Param("keyword") String keyword,
                          Pageable pageable);
+
+    @Query("""
+        SELECT i
+        FROM Inquiry i
+        WHERE (:choose IS NULL OR i.choose = :choose)
+        AND (:status IS NULL OR i.status = :status)
+        AND (:username IS NULL OR i.writerEmail LIKE %:username%)
+        AND (:startDateTime IS NULL OR i.createdAt >= :startDateTime)
+        AND (:endDatePlus IS NULL OR i.createdAt < :endDatePlus)
+    """)
+    Page<Inquiry> searchInquiries(
+            @Param("choose") String choose,
+            @Param("status") String status,
+            @Param("username") String username,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDatePlus") LocalDateTime endDatePlus,
+            Pageable pageable
+    );
 }

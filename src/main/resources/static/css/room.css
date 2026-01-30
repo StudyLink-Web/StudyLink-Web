@@ -58,6 +58,35 @@
     display: none;
 }
 
+#inputDiv {
+    position: relative;
+    border-top: 1px solid #ddd;
+}
+
+/* 파일 입력 버튼 */
+.file-button {
+    position: absolute;
+    left: 5px;
+    bottom: 10px;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border: none;
+    user-select: none;
+}
+
+/* 파일 미리보기 */
+#previewContainer {
+  display: flex;
+  justify-content: center; /* 가로 중앙 */
+  align-items: center;    /* 세로 중앙 */
+  gap: 10px;              /* 이미지들 사이 간격 */
+  flex-wrap: wrap;        /* 여러 이미지일 때 줄바꿈 */
+}
+
 /* 채팅창 이미지 크기 */
 .chat-image {
     max-width: 100px;      /* 이미지 가로 최대 크기 */

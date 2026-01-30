@@ -1,20 +1,32 @@
 package com.StudyLink.www.service;
 
+import com.StudyLink.www.dto.AdminInquiryDTO;
 import com.StudyLink.www.dto.InquiryDTO;
+import com.StudyLink.www.dto.UsersDTO;
 import com.StudyLink.www.entity.Inquiry;
+import com.StudyLink.www.entity.Users;
+import com.StudyLink.www.repository.BoardRepository;
 import com.StudyLink.www.repository.InquiryRepository;
+import com.StudyLink.www.repository.PushTokenRepository;
+import com.StudyLink.www.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InquiryServiceImpl implements InquiryService {
 
     private final InquiryRepository inquiryRepository;
+    private final UserRepository userRepository;
 
     /* ===================== 목록(검색 포함) ===================== */
     @Override
@@ -43,6 +55,7 @@ public class InquiryServiceImpl implements InquiryService {
         }
 
         Inquiry inquiry = convertDtoToEntity(inquiryDTO);
+        inquiry.setWriterEmail(loginEmail);
         inquiryRepository.save(inquiry);
     }
 
@@ -87,6 +100,47 @@ public class InquiryServiceImpl implements InquiryService {
         inquiry.setStatus(status);
     }
 
+    /* ===================== 관리자 문의내역 검색 ===================== */
+    @Override
+    public Page<AdminInquiryDTO> searchInquiryList(String choose, String status, String username, LocalDate startDate, LocalDate endDate, Pageable sortedPageable) {
+        LocalDateTime startDateTime = (startDate != null)
+                ? startDate.atStartOfDay()
+                : null;
+
+        LocalDateTime endDatePlus = (endDate != null)
+                ? endDate.plusDays(1).atStartOfDay()
+                : null;
+
+        Page<Inquiry> inquiryPage = inquiryRepository.searchInquiries(
+                choose,
+                status,
+                username,
+                startDateTime,
+                endDatePlus,
+                sortedPageable
+        );
+
+        List<AdminInquiryDTO> dtoList = new ArrayList<>();
+
+        for (Inquiry inquiry : inquiryPage.getContent()) {
+
+            InquiryDTO inquiryDTO = convertEntityToDto(inquiry);
+            Users users = userRepository.findByUsername(inquiry.getWriterEmail())
+                    .orElse(null);
+
+            UsersDTO usersDTO = (users != null) ? new UsersDTO(users) : null;
+
+            AdminInquiryDTO adminInquiryDTO = AdminInquiryDTO.builder()
+                    .inquiryDTO(inquiryDTO)
+                    .usersDTO(usersDTO)
+                    .build();
+
+            dtoList.add(adminInquiryDTO);
+        }
+
+        return new PageImpl<>(dtoList, sortedPageable, inquiryPage.getTotalElements());
+    }
+
     /* ===================== Entity → DTO ===================== */
     private InquiryDTO convertEntityToDto(Inquiry inquiry) {
         return InquiryDTO.builder()
@@ -94,7 +148,8 @@ public class InquiryServiceImpl implements InquiryService {
                 .title(inquiry.getTitle())
                 .userContent(inquiry.getUserContent())
                 .adminContent(inquiry.getAdminContent())
-                .category(inquiry.getCategory())
+                .category(inquiry.getChoose())
+                .choose(inquiry.getChoose())
                 .status(inquiry.getStatus())
                 .isPublic(inquiry.getIsPublic())
                 .password(inquiry.getPassword())
@@ -110,7 +165,8 @@ public class InquiryServiceImpl implements InquiryService {
                 .title(dto.getTitle())
                 .userContent(dto.getUserContent())
                 .adminContent(dto.getAdminContent())
-                .category(dto.getCategory())
+                .category(dto.getChoose())
+                .choose(dto.getChoose())
                 .status(dto.getStatus())
                 .isPublic(dto.getIsPublic())
                 .password(dto.getPassword())
@@ -118,4 +174,11 @@ public class InquiryServiceImpl implements InquiryService {
                 .answerAt(dto.getAnswerAt())
                 .build();
     }
+
+
+
+    private final NotificationService notificationService;
+    private final FCMService fcmService;
+    private final BoardRepository boardRepository; // 게시글 작성자를 찾기 위함
+    private final PushTokenRepository pushTokenRepository; // FCM 토큰을 찾기 위함
 }

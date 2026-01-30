@@ -1,5 +1,6 @@
 package com.StudyLink.www.dto;
 
+import com.StudyLink.www.entity.Inquiry;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public class InquiryDTO {
     private String userContent;
     private String adminContent;
 
+    private String choose;
     private String category;
     private String status;
 

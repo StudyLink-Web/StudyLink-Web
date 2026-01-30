@@ -19,6 +19,7 @@ public class RoomDTO {
     private Long studentId;
     private Long mentorId;
     private LocalDateTime createdAt;
+    private LocalDateTime inProgressedAt;
     private Boolean isPublic;
     private Status status;
     private Integer point;
@@ -38,6 +39,7 @@ public class RoomDTO {
         this.studentId = room.getStudentId();
         this.mentorId = room.getMentorId();
         this.createdAt = room.getCreatedAt();
+        this.inProgressedAt = room.getInProgressedAt();
         this.isPublic = room.getIsPublic();
         this.status = Status.valueOf(room.getStatus().name()); // Enum 매핑
         this.point = room.getPoint();

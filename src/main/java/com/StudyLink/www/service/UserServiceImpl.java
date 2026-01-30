@@ -29,9 +29,23 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public Long findUserIdByUsername(String username) {
-        Users user = userRepository.findByUsername(username)
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 없음 username=" + username))
+                .getUserId();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Users findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 없음 email=" + email));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Users findByUsername(String username) {
+        return userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음 username=" + username));
-        return user.getUserId();
     }
 
     @Override
@@ -39,7 +53,6 @@ public class UserServiceImpl implements UserService {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
-
         return userRepository.countByCreatedAtBetween(startOfDay, startOfNextDay);
     }
 
@@ -57,10 +70,7 @@ public class UserServiceImpl implements UserService {
         List<Integer> cumulative = new ArrayList<>();
 
         LocalDate startDate = LocalDate.now().minusDays(days - 1);
-
-        int sum = userRepository.countBefore(
-                startDate.atStartOfDay()
-        );
+        int sum = userRepository.countBefore(startDate.atStartOfDay());
 
         for (int i = days - 1; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
@@ -81,17 +91,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<AdminUserDTO> search(String email, Role role, Boolean isActive, LocalDate startDate, LocalDate endDate, Pageable sortedPageable) {
-        LocalDateTime startDateTime = null;
-        LocalDateTime endDatePlus = null;
+    public Page<AdminUserDTO> search(String email,
+                                     Role role,
+                                     Boolean isActive,
+                                     LocalDate startDate,
+                                     LocalDate endDate,
+                                     Pageable sortedPageable) {
 
-        if (startDate != null) {
-            startDateTime = startDate.atStartOfDay();
-        }
-
-        if (endDate != null) {
-            endDatePlus = endDate.plusDays(1).atStartOfDay();
-        }
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime endDatePlus = endDate != null ? endDate.plusDays(1).atStartOfDay() : null;
 
         return userRepository.searchByCreatedAt(
                 email,
@@ -112,6 +120,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UsersDTO getUserDetail(Long id) {
-        return new UsersDTO(userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("유저가 없습니다.")));
+        Users user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("유저가 없습니다."));
+        return new UsersDTO(user);
     }
 }

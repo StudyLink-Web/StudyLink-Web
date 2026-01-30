@@ -22,7 +22,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -212,7 +214,19 @@ public class RoomController {
         model.addAttribute("point", 1500);
         //log.info(">>> point {}", point);
 
+        if (roomDTO.getStatus() == RoomDTO.Status.IN_PROGRESS) {
+            LocalDateTime startedAt = roomDTO.getInProgressedAt();
+            LocalDateTime now = LocalDateTime.now();
 
+            long elapsedSeconds = Duration.between(startedAt, now).getSeconds(); // 경과 시간(초)
+            int totalSeconds = 20 * 60; // 제한시간 20분
+
+            int timeLeft = (int)(totalSeconds - elapsedSeconds);
+            if (timeLeft < 0) {
+                timeLeft = 0; // 음수 방지
+            }
+            model.addAttribute("timeLeft", timeLeft);
+        }
         return "/room/room";
     }
 

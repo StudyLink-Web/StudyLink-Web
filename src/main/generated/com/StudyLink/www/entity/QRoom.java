@@ -24,6 +24,8 @@ public class QRoom extends EntityPathBase<Room> {
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
+    public final DateTimePath<java.time.LocalDateTime> inProgressedAt = createDateTime("inProgressedAt", java.time.LocalDateTime.class);
+
     public final BooleanPath isPublic = createBoolean("isPublic");
 
     public final NumberPath<Long> mentorId = createNumber("mentorId", Long.class);
