@@ -31,7 +31,7 @@ const NotificationCenter = React.forwardRef<HTMLDivElement, NotificationCenterPr
 }, ref) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(false);
-    const [isAdminMode, setIsAdminMode] = useState(false);
+    const [isAdminMode] = useState(false);
 
     const fetchNotifications = useCallback(async () => {
         setLoading(true);
@@ -235,7 +235,7 @@ const NotificationCenter = React.forwardRef<HTMLDivElement, NotificationCenterPr
                     )}
                 </div>
 
-                {/* Footer Toggle */}
+                {/* Footer Toggle - Commented out for now
                 <div className="p-4 border-t border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
                     <button 
                         onClick={() => setIsAdminMode(!isAdminMode)}
@@ -248,6 +248,7 @@ const NotificationCenter = React.forwardRef<HTMLDivElement, NotificationCenterPr
                         {isAdminMode ? '알림 목록 보기' : '관리자 도구 열기'}
                     </button>
                 </div>
+                */}
             </div>
         </div>
     );
