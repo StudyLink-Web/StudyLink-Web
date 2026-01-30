@@ -24,6 +24,7 @@ public class InquiryDTO {
 
     private String isPublic;
     private String password;
+    private String writerEmail;
 
     private LocalDateTime createdAt;
     private LocalDateTime answerAt;

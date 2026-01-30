@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content" class="container-md">
+	<div class="row">
+		<!-- Sidebar -->
+		<nav class="col-2 adminSidebar p-0">
+			<h5 class="text-white text-center py-3 border-bottom">ADMIN</h5>
+			<a th:href="@{/admin/admin}"
+			   th:classappend="${currentMenu == 'admin'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				대시보드
+			</a>
+			<a th:href="@{/admin/user}"
+			   th:classappend="${currentMenu == 'user'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				회원 관리
+			</a>
+			<a th:href="@{/admin/payment}"
+			   th:classappend="${currentMenu == 'payment'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				결제 내역
+			</a>
+			<a th:href="@{/admin/exchange}"
+			   th:classappend="${currentMenu == 'exchange'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				환전 관리
+			</a>
+			<a th:href="@{/admin/notice}"
+			   th:classappend="${currentMenu == 'notice'} ? 'active' : ''"
+			   class="adminSidebarMenu">알림 / 공지
+			</a>
+			<a th:href="@{/admin/inquiry}"
+			   th:classappend="${currentMenu == 'inquiry'} ? 'active' : ''"
+			   class="adminSidebarMenu">
+				문의 내역
+			</a>
+		</nav>
+
+		<!-- Main -->
+		<main class="col-10 p-4">
+			<div class="d-flex justify-content-between align-items-center mb-4">
+				<h4 class="fw-bold">문의 내역 상세</h4>
+			</div>
+
+			<!-- 문의 정보 카드 -->
+			<div class="card mb-4 shadow-sm">
+				<div class="card-body">
+					<h5 class="card-title mb-3" th:text="${inquiry.title}">문의 제목</h5>
+
+					<div class="row mb-2">
+						<div class="col-md-4">
+							<strong>ID:</strong>
+							<span th:text="${inquiry.qno}">1</span>
+						</div>
+						<div class="col-md-4">
+							<strong>회원:</strong>
+							<span th:text="${inquiry.writerEmail}">회원</span>
+						</div>
+						<div class="col-md-4">
+							<strong>카테고리:</strong>
+							<span th:text="${inquiry.category}">결제</span>
+						</div>
+					</div>
+
+					<div class="row mb-2">
+						<div class="col-md-4">
+							<strong>상태:</strong>
+							<span class="badge bg-secondary"
+								  th:text="${inquiry.status}">대기</span>
+						</div>
+						<div class="col-md-4">
+							<strong>공개여부:</strong>
+							<span th:text="${inquiry.isPublic == 'Y' ? '공개' : '비공개'}"></span>
+						</div>
+						<div class="col-md-4">
+							<strong>등록일:</strong>
+							<span th:text="${#temporals.format(inquiry.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
+						</div>
+					</div>
+
+					<hr>
+					<div class="mb-3">
+						<strong>제목</strong>
+						<div class="border rounded p-3 bg-light"
+							th:text="${inquiry.title}">
+							제목
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<strong>문의 내용</strong>
+						<div class="border rounded p-3 bg-light"
+							 th:text="${inquiry.userContent}">
+							 문의 내용입니다.
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 관리자 답변 -->
+			<div class="card shadow-sm">
+				<div class="card-header fw-bold">
+					관리자 답변
+				</div>
+				<div class="card-body">
+					<input type="hidden" name="qno" th:value="${inquiry.qno}"/>
+
+					<div class="mb-3">
+						<textarea class="form-control"
+								  name="adminContent"
+								  rows="6"
+								  placeholder="답변을 입력하세요"
+								  th:text="${inquiry.adminContent}">
+						</textarea>
+					</div>
+
+					<div class="d-flex justify-content-end">
+						<button type="submit" id="inquiryFormBtn" class="btn btn-primary" style="margin-right: 10px">
+							답변 저장
+						</button>
+						<a th:href="@{/admin/inquiry}"
+							class="btn btn-secondary">
+							나가기
+						</a>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
+	<script>
+		document.getElementById("inquiryFormBtn").addEventListener("click", function () {
+			const qno = document.querySelector("input[name='qno']").value;
+			const adminContent = document.querySelector("textarea[name='adminContent']").value;
+			console.log(adminContent.trim());
+
+			const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        	const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+			if (!adminContent.trim()) {
+				alert("답변 내용을 입력하세요.");
+				return;
+			}
+
+			fetch("/admin/inquiryAnswer", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/x-www-form-urlencoded",
+					[csrfHeader]: csrfToken
+				},
+				body: new URLSearchParams({
+					qno: qno,
+					adminContent: adminContent
+				})
+			})
+			.then(res => {
+				if (!res.ok) throw new Error("저장 실패");
+				return res;
+			})
+			.then(() => {
+				alert("답변이 저장되었습니다.");
+				location.reload();
+			})
+			.catch(err => {
+				console.error(err);
+				alert("오류가 발생했습니다.");
+			});
+		});
+	</script>
+</div>
