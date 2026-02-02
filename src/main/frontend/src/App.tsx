@@ -8,6 +8,8 @@ import NotificationCenter from "./components/NotificationCenter";
 // [Vercel Best Practice 1.5] 다이나믹 import를 통해 무거운 컴포넌트를 렌더링 전에 로딩
 const AdmissionEssayPage = lazy(() => import("./pages/AdmissionEssayPage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
+const MentorListPage = lazy(() => import("./pages/MentorListPage"));
+const MentorDetailPage = lazy(() => import("./pages/MentorDetailPage"));
 
 // 스크롤 시 불필요한 재렌더링을 방지하기 위해 메모이제이션된 컴포넌트로 추출
 const MentorSection = memo(lazy(() => import("./components/MentorSection")));
@@ -183,6 +185,7 @@ function App() {
 
   const isCoverLetter = window.location.pathname.startsWith("/cover");
   const isPricing = window.location.pathname === "/pricing";
+  const isMentorList = window.location.pathname === "/mentors";
 
   if (isCoverLetter) {
     return (
@@ -198,6 +201,28 @@ function App() {
     return (
       <Suspense fallback={<div className="min-h-screen bg-white dark:bg-[#0d1117]" />}>
         <PricingPage />
+      </Suspense>
+    );
+  }
+
+  if (isMentorList) {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-white dark:bg-[#030014]" />}>
+        <MentorListPage />
+      </Suspense>
+    );
+  }
+
+  // 멘토 상세 페이지 라우팅 처리 (기존 라우터 구조가 React Router Dom이 아닌 것으로 추정되거나 혼용 중이라 수동 분기 처리 필요)
+  // 하지만 App.tsx 내용을 보니 react-router-dom을 안 쓰고 window.location 기반 수동 라우팅을 하고 있음 (isCoverLetter, isPricing, isMentorList 등)
+  // 따라서 isMentorDetail 분기를 추가해야 함.
+
+  const isMentorDetail = window.location.pathname.startsWith("/mentors/") && window.location.pathname.split("/").length === 3;
+
+  if (isMentorDetail) {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-white dark:bg-[#030014]" />}>
+        <MentorDetailPage />
       </Suspense>
     );
   }

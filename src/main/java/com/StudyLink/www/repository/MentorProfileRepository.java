@@ -23,16 +23,33 @@ public interface MentorProfileRepository extends JpaRepository<MentorProfile, Lo
     Optional<MentorProfile> findByUser_UserId(Long userId);
 
     /**
-     * 인증된 모든 멘토 조회
-     * ✅ 추가됨
+     * 검증된 멘토 조회 (관리자 승인 OR 학생증 인증 OR 학교 이메일 인증)
      */
+    @Query("SELECT m FROM MentorProfile m JOIN m.user u WHERE (m.isVerified = true OR u.isStudentVerified = true OR u.isVerifiedStudent = true) AND m.university IS NOT NULL AND m.major IS NOT NULL")
     List<MentorProfile> findByIsVerifiedTrue();
+
+    /**
+     * 평점이 높은 순으로 상위 멘토 조회
+     */
+    /**
+     * 평점이 높은 순으로 상위 멘토 조회 (검증된 멘토 기준 확장)
+     */
+    @Query("SELECT m FROM MentorProfile m JOIN m.user u WHERE (m.isVerified = true OR u.isStudentVerified = true OR u.isVerifiedStudent = true) AND m.university IS NOT NULL AND m.major IS NOT NULL ORDER BY m.averageRating DESC")
+    List<MentorProfile> findTop8ByIsVerifiedTrueOrderByAverageRatingDesc();
+
+    /**
+     * 특정 수만큼 인증된 멘토 조회 (정렬 포함)
+     */
+    /**
+     * 특정 수만큼 인증된 멘토 조회 (정렬 포함)
+     */
+    @Query("SELECT m FROM MentorProfile m JOIN m.user u WHERE (m.isVerified = true OR u.isStudentVerified = true OR u.isVerifiedStudent = true) AND m.university IS NOT NULL AND m.major IS NOT NULL ORDER BY m.averageRating DESC")
+    List<MentorProfile> findTop4ByIsVerifiedTrueOrderByAverageRatingDesc();
 
     /**
      * 미인증 멘토 조회 (선택사항)
      */
     List<MentorProfile> findByIsVerifiedFalse();
-
 
     /**
      * 멘토의 수업 횟수 조회

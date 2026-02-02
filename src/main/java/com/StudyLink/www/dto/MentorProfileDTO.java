@@ -19,7 +19,7 @@ public class MentorProfileDTO {
 
     private Long userId;
 
-    private UsersDTO usersDTO;       // Users 엔티티를 DTO로 포함
+    private UsersDTO usersDTO; // Users 엔티티를 DTO로 포함
 
     private Long univId;
     private Long deptId;
@@ -37,14 +37,14 @@ public class MentorProfileDTO {
     private LocalDateTime updatedAt;
 
     // 프로필 수정용
-    private String firstName;      // Users.name
-    private String nickname;       // Users.nickname
-    private String phone;          // Users.phone
-    private String bio;            // introduction과 같은 내용
+    private String firstName; // Users.name
+    private String nickname; // Users.nickname
+    private String phone; // Users.phone
+    private String bio; // introduction과 같은 내용
 
     // 수업 정보
-    private List<String> subjects;       // JSON: ["math", "korean"]
-    private List<String> grades;         // JSON: ["high", "adult"]
+    private List<String> subjects; // JSON: ["math", "korean"]
+    private List<String> grades; // JSON: ["high", "adult"]
     private Integer pricePerHour;
     private Double minLessonHours;
     private String lessonType;
@@ -62,12 +62,12 @@ public class MentorProfileDTO {
     private Boolean notificationReview;
 
     // 엔티티 → DTO 변환용
-    private String university;      // 대학교 이름
-    private String major;           // 학과 이름
+    private String university; // 대학교 이름
+    private String major; // 학과 이름
     private Integer entranceYear;
     private Integer graduationYear;
     private String credentials;
-    private String profileImageUrl;  // 프로필 이미지 URL
+    private String profileImageUrl; // 프로필 이미지 URL
 
     private Long lessonCount;
     private Long reviewCount;
@@ -80,7 +80,10 @@ public class MentorProfileDTO {
         this.univId = profile.getUnivId();
         this.deptId = profile.getDeptId();
         this.studentCardImg = profile.getStudentCardImg();
-        this.isVerified = profile.getIsVerified();
+        // ✅ 멘토 인증 or 학생 인증 or 학교 이메일 인증 중 하나라도 되면 "검증된 멘토"
+        this.isVerified = Boolean.TRUE.equals(profile.getIsVerified())
+                || Boolean.TRUE.equals(profile.getUser().getIsStudentVerified())
+                || Boolean.TRUE.equals(profile.getUser().getIsVerifiedStudent());
         this.introduction = profile.getIntroduction();
         this.averageRating = profile.getAverageRating();
         this.quizCount = profile.getQuizCount();
@@ -106,6 +109,7 @@ public class MentorProfileDTO {
         this.entranceYear = profile.getEntranceYear();
         this.graduationYear = profile.getGraduationYear();
         this.credentials = profile.getCredentials();
+        this.profileImageUrl = usersDTO.getProfileImageUrl(); // ✅ 프로필 이미지 연동 (수정됨)
 
     }
 }
