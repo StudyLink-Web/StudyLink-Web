@@ -101,13 +101,11 @@ function setupProfileDropdown() {
     document.addEventListener('click', function(e) {
         // 🎯 탭 버튼이면 완전히 무시 (아무것도 하지 않음)
         if (e.target.closest('.tab-btn')) {
-            console.log('✅ 탭 버튼 - 처리 안 함');
             return;
         }
 
         // mypage 영역도 무시
         if (e.target.closest('.mypage-container')) {
-            console.log('📌 mypage 영역 - 처리 안 함');
             return;
         }
 
