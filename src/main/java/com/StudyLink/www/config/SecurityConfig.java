@@ -81,8 +81,10 @@ public class SecurityConfig {
 
                         .requestMatchers("/error", "/error/**").permitAll()
 
-                        .requestMatchers("/board/register", "/board/register/**").hasRole("MENTOR")
-                        .requestMatchers("/community/register", "/community/register/**").hasRole("STUDENT")
+                        .requestMatchers("/board/register", "/board/register/**")
+                        .hasAnyRole("MENTOR", "ADMIN")
+                        .requestMatchers("/community/register", "/community/register/**")
+                        .hasAnyRole("STUDENT", "ADMIN")
 
                         .requestMatchers("/room/myQuiz").authenticated()
                         .requestMatchers("/mentor/firebase-config").authenticated()
