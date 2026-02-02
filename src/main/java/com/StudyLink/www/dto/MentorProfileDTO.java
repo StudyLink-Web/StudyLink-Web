@@ -73,6 +73,8 @@ public class MentorProfileDTO {
     private Long reviewCount;
     private String mentorNickname;
 
+    private Boolean phoneVerified; // 이번 요청에서 전화번호 인증 여부
+
     // 🔹 엔티티 -> DTO 생성자
     public MentorProfileDTO(MentorProfile profile, UsersDTO usersDTO) {
         this.userId = profile.getUserId();

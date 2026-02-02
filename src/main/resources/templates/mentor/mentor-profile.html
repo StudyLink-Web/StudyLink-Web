@@ -151,28 +151,49 @@
 
                             <div class="form-group">
                                 <label class="form-label">전화번호
-                                    <!-- <span class="required-mark">*</span> -->
+                                    <span class="required-mark">*</span>
                                 </label>
+
                                 <div class="phone-auth-group">
-                                    <input type="tel" class="form-control" id="phone" name="phone"
+                                    <input type="tel"
+                                           class="form-control"
+                                           id="phone"
+                                           name="phone"
                                            th:value="${mentor != null && user != null ? user.phone : ''}"
-                                           placeholder="010-0000-0000" maxlength="13">
-                                    <button type="button" class="btn btn-secondary" id="sendAuthBtn"
-                                            onclick="requestPhoneAuth()">
+                                           placeholder="010-0000-0000"
+                                           maxlength="13"
+                                           th:readonly="${user != null && user.phone != null && !#strings.isEmpty(user.phone)}">
+
+                                    <!-- 이미 저장된 번호면 '인증번호 받기' 버튼 숨김 -->
+                                    <button type="button"
+                                            class="btn btn-secondary"
+                                            id="sendAuthBtn"
+                                            onclick="requestPhoneAuth()"
+                                            th:if="${user == null || user.phone == null || #strings.isEmpty(user.phone)}">
                                         인증번호 받기
                                     </button>
                                 </div>
 
+                                <!-- ✅ 이미 저장된 번호면 안내문 노출 -->
+                                <div class="form-hint"
+                                     th:if="${user != null && user.phone != null && !#strings.isEmpty(user.phone)}">
+                                </div>
+
+                                <!-- 인증 여부(클라이언트에서 채움) -->
+                                <input type="hidden" id="phoneVerified" name="phoneVerified" value="false">
+
                                 <div id="recaptcha-container"></div>
 
 
-                                <!-- 인증번호 입력 (숨겨진 상태) -->
-                                <div id="authCodeSection" class="auth-section" >
+                                <!-- 인증번호 입력(기본 숨김) -->
+                                <div id="authCodeSection" class="auth-section" style="display:none;">
                                     <div class="auth-input-group">
                                         <input type="text" class="form-control" id="authCode"
                                                placeholder="인증번호 6자리" maxlength="6"
                                                oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                                        <button type="button" class="btn btn-primary" onclick="verifyPhoneAuth()">
+
+                                        <!-- ✅ JS에서 찾는 id가 없어서 지금 코드가 제대로 disable 못함 → id 추가 -->
+                                        <button type="button" class="btn btn-primary" id="verifyAuthBtn" onclick="verifyPhoneAuth()">
                                             인증하기
                                         </button>
                                     </div>
@@ -648,3 +669,4 @@
 </body>
 
 </html>
+

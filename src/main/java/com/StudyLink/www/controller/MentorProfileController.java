@@ -103,6 +103,7 @@ public class MentorProfileController {
             @RequestParam(value = "firstName", required = false) String firstName,
             @RequestParam(value = "nickname", required = false) String nickname,
             @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "phoneVerified", required = false) String phoneVerified,
             @RequestParam(value = "bio", required = false) String bio,
             @RequestParam(value = "university", required = false) String university,
             @RequestParam(value = "major", required = false) String major,
@@ -182,6 +183,7 @@ public class MentorProfileController {
                     .firstName(firstName)
                     .nickname(nickname)
                     .phone(phone)
+                    .phoneVerified("true".equalsIgnoreCase(phoneVerified))
                     .bio(bio)
                     .university(university)
                     .major(major)

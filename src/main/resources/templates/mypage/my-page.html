@@ -436,6 +436,10 @@
 <div id="toast-container"></div>
 
 <!-- Scripts -->
-<script th:src="@{/js/mypage.js}"></script>
+<th:block layout:fragment="page-script">
+    <script th:src="@{/js/mypage.js}"></script>
+</th:block>
+
+
 </body>
 </html>

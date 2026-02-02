@@ -194,9 +194,26 @@ public class MentorProfileService {
             if (dto.getNickname() != null && !dto.getNickname().isEmpty()) {
                 user.setNickname(dto.getNickname());
             }
-            if (dto.getPhone() != null && !dto.getPhone().isEmpty()) {
-                user.setPhone(dto.getPhone());
+            // ✅ 전화번호 저장 정책
+            // 1) 이미 DB에 phone이 있으면: 이 API(/mentor/update)에서는 변경 금지 (환경설정에서만 변경)
+            // 2) DB에 phone이 없으면: 이번 요청에서 phoneVerified=true 일 때만 저장
+            String currentPhone = user.getPhone();
+            String newPhone = dto.getPhone();
+            Boolean phoneVerified = dto.getPhoneVerified();
+
+            if (currentPhone != null && !currentPhone.trim().isEmpty()) {
+                // 이미 저장된 번호가 있으면 무시 (변경은 환경설정 API에서)
+                log.info("📵 전화번호는 이미 저장되어 있어 /mentor/update 에서 변경 불가: userId={}", user.getUserId());
+            } else {
+                if (Boolean.TRUE.equals(phoneVerified) && newPhone != null && !newPhone.trim().isEmpty()) {
+                    // (선택) 형식 검증까지 하고 싶으면 여기서 정규식 검사 가능
+                    user.setPhone(newPhone);
+                    log.info("✅ 전화번호 최초 저장 완료: userId={}, phone={}", user.getUserId(), newPhone);
+                } else {
+                    log.info("📵 전화번호 인증 미완료로 저장 무시: userId={}", user.getUserId());
+                }
             }
+
 
             if (profileImage != null && !profileImage.isEmpty()) {
                 log.info("📸 프로필 이미지 처리 시작: size={} bytes", profileImage.getSize());
