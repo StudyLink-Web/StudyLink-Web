@@ -1,12 +1,20 @@
 package com.StudyLink.www.controller;
 
+import com.StudyLink.www.dto.MentorProfileDTO;
+import com.StudyLink.www.service.MentorProfileService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.List;
+
 @Controller
+@RequiredArgsConstructor
 public class HomeController {
+
+    private final MentorProfileService mentorProfileService;
 
     /**
      * 홈 페이지 렌더링
@@ -23,6 +31,11 @@ public class HomeController {
             model.addAttribute("isAuthenticated", false);
             System.out.println("비로그인 사용자");
         }
+
+        // 🏆 상위 멘토 4명 조회 및 모델 추가
+        List<MentorProfileDTO> topMentors = mentorProfileService.getTopMentorDTOs(4);
+        model.addAttribute("topMentors", topMentors);
+
         return "modern_index";
     }
 
@@ -73,7 +86,7 @@ public class HomeController {
     /**
      * AI 대입 자소서 페이지 (리액트 라우팅 대응)
      */
-    @GetMapping({ "/cover-letter", "/cover_letter", "/pricing" })
+    @GetMapping({ "/cover-letter", "/cover_letter", "/pricing", "/mentors", "/mentors/**" })
     public String coverLetter(Authentication authentication, Model model) {
         if (authentication != null && authentication.isAuthenticated()) {
             model.addAttribute("user", authentication.getPrincipal());

@@ -1,6 +1,7 @@
 package com.StudyLink.www.service;
 
 import com.StudyLink.www.dto.MentorProfileDTO;
+import com.StudyLink.www.dto.UsersDTO;
 import com.StudyLink.www.entity.MentorProfile;
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.MentorProfileRepository;
@@ -73,9 +74,12 @@ public class MentorProfileService {
         MentorProfile profile = mentorProfileRepository.findByUser_UserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("멘토 프로필을 찾을 수 없습니다."));
 
-        if (univId != null) profile.setUnivId(univId);
-        if (deptId != null) profile.setDeptId(deptId);
-        if (introduction != null) profile.setIntroduction(introduction);
+        if (univId != null)
+            profile.setUnivId(univId);
+        if (deptId != null)
+            profile.setDeptId(deptId);
+        if (introduction != null)
+            profile.setIntroduction(introduction);
 
         return mentorProfileRepository.save(profile);
     }
@@ -97,7 +101,33 @@ public class MentorProfileService {
      */
     @Transactional(readOnly = true)
     public List<MentorProfile> getVerifiedMentors() {
-        return mentorProfileRepository.findByIsVerifiedTrue();  // ✅ 이제 메서드 존재
+        return mentorProfileRepository.findByIsVerifiedTrue();
+    }
+
+    /**
+     * 메인 화면용 상위 멘토 목록 조회 (평점순)
+     */
+    @Transactional(readOnly = true)
+    public List<MentorProfileDTO> getTopMentorDTOs(int limit) {
+        log.info("🏠 메인 화면용 상위 멘토 조회: limit={}", limit);
+        List<MentorProfile> mentors;
+        if (limit <= 4) {
+            mentors = mentorProfileRepository.findTop4ByIsVerifiedTrueOrderByAverageRatingDesc();
+        } else {
+            mentors = mentorProfileRepository.findTop8ByIsVerifiedTrueOrderByAverageRatingDesc();
+        }
+
+        return mentors.stream()
+                .map(profile -> {
+                    UsersDTO usersDTO = new UsersDTO(profile.getUser());
+                    MentorProfileDTO dto = new MentorProfileDTO(profile, usersDTO);
+                    // 이미지 경로 보정 (프로필 이미지가 없으면 기본 이미지)
+                    if (dto.getProfileImageUrl() == null || dto.getProfileImageUrl().isEmpty()) {
+                        dto.setProfileImageUrl("/img/default-profile.png");
+                    }
+                    return dto;
+                })
+                .toList();
     }
 
     /**

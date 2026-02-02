@@ -1,5 +1,7 @@
 package com.StudyLink.www.controller;
 
+import com.StudyLink.www.dto.MentorProfileDTO;
+import com.StudyLink.www.dto.UsersDTO;
 import com.StudyLink.www.entity.MentorProfile;
 import com.StudyLink.www.service.MentorProfileService;
 import lombok.RequiredArgsConstructor;
@@ -47,8 +49,7 @@ public class MentorProfileApiController {
                     "univId", profile.getUnivId(),
                     "deptId", profile.getDeptId(),
                     "introduction", profile.getIntroduction(),
-                    "isVerified", profile.getIsVerified()
-            ));
+                    "isVerified", profile.getIsVerified()));
 
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
@@ -63,10 +64,13 @@ public class MentorProfileApiController {
     /**
      * 멘토 프로필 조회
      */
+    /**
+     * 멘토 프로필 조회
+     */
     @GetMapping("/{userId}")
     public ResponseEntity<Map<String, Object>> getMentorProfile(@PathVariable Long userId) {
         try {
-            log.info("🔍 멘토 프로필 조회: userId={}", userId);
+            log.info("멘토 프로필 조회: userId={}", userId);
 
             Optional<MentorProfile> profileOpt = mentorProfileService.getMentorProfile(userId);
 
@@ -78,22 +82,21 @@ public class MentorProfileApiController {
             }
 
             MentorProfile profile = profileOpt.get();
+            UsersDTO usersDTO = new UsersDTO(profile.getUser());
+            MentorProfileDTO dto = new MentorProfileDTO(profile, usersDTO);
+
+            // 기본 이미지 처리
+            if (dto.getProfileImageUrl() == null || dto.getProfileImageUrl().isEmpty()) {
+                dto.setProfileImageUrl("/img/default_profile.png");
+            }
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("data", Map.of(
-                    "userId", profile.getUser().getUserId(),
-                    "univId", profile.getUnivId(),
-                    "deptId", profile.getDeptId(),
-                    "introduction", profile.getIntroduction(),
-                    "isVerified", profile.getIsVerified(),
-                    "averageRating", profile.getAverageRating(),
-                    "point", profile.getPoint(),
-                    "exp", profile.getExp()
-            ));
+            response.put("data", dto);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("❌ 프로필 조회 실패: {}", e.getMessage());
+            log.error("프로필 조회 실패: {}", e.getMessage());
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
             error.put("message", e.getMessage());
@@ -111,18 +114,17 @@ public class MentorProfileApiController {
 
             List<MentorProfile> mentors = mentorProfileService.getVerifiedMentors();
 
-            List<Map<String, Object>> mentorList = new ArrayList<>();
-            for (MentorProfile mentor : mentors) {
-                Map<String, Object> mentorMap = new HashMap<>();
-                mentorMap.put("userId", mentor.getUser().getUserId());
-                mentorMap.put("univId", mentor.getUnivId());
-                mentorMap.put("deptId", mentor.getDeptId());
-                mentorMap.put("introduction", mentor.getIntroduction());
-                mentorMap.put("averageRating", mentor.getAverageRating());
-                mentorMap.put("point", mentor.getPoint());
-                mentorMap.put("exp", mentor.getExp());
-                mentorList.add(mentorMap);
-            }
+            List<MentorProfileDTO> mentorList = mentors.stream()
+                    .map(mentor -> {
+                        UsersDTO usersDTO = new UsersDTO(mentor.getUser());
+                        MentorProfileDTO dto = new MentorProfileDTO(mentor, usersDTO);
+                        // 기본 이미지 처리
+                        if (dto.getProfileImageUrl() == null || dto.getProfileImageUrl().isEmpty()) {
+                            dto.setProfileImageUrl("/img/default-profile.png");
+                        }
+                        return dto;
+                    })
+                    .toList();
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -154,8 +156,7 @@ public class MentorProfileApiController {
             response.put("message", "멘토가 인증되었습니다");
             response.put("data", Map.of(
                     "userId", profile.getUser().getUserId(),
-                    "isVerified", profile.getIsVerified()
-            ));
+                    "isVerified", profile.getIsVerified()));
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -184,8 +185,7 @@ public class MentorProfileApiController {
             response.put("message", "경험치가 추가되었습니다");
             response.put("data", Map.of(
                     "userId", profile.getUser().getUserId(),
-                    "exp", profile.getExp()
-            ));
+                    "exp", profile.getExp()));
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -214,8 +214,7 @@ public class MentorProfileApiController {
             response.put("message", "포인트가 추가되었습니다");
             response.put("data", Map.of(
                     "userId", profile.getUser().getUserId(),
-                    "point", profile.getPoint()
-            ));
+                    "point", profile.getPoint()));
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
