@@ -112,6 +112,9 @@
     overflow-wrap: break-word;       /* ⭐ 추가: 단어 단위 자동 줄바꿈 */
     max-width: 150px;                /* ⭐ 추가: 최대 너비 제한 */
     line-height: 1.4;                /* ⭐ 추가: 줄 높이 조정 */
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* ⭐ 추가: 긴 닉네임용 추가 클래스 */
