@@ -56,4 +56,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
 
     @Query(value = "SELECT * FROM rooms WHERE status IN ('TEMP', 'PENDING') AND in_progressed_at <= NOW() - INTERVAL 24 HOUR", nativeQuery = true)
     List<Room> findOldTempAndPendingRooms();
+
+    @Query("SELECT AVG(r.rating) FROM Room r WHERE r.mentorId = :mentorId AND r.rating IS NOT NULL")
+    Double findAverageRatingByMentor(@Param("mentorId") Long mentorId);
 }

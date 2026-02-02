@@ -615,6 +615,7 @@ let isDrawing = false;
 let lastPoint = null;
 const DRAW_STEP = 20; // px (작을수록 촘촘), 선 길이 조절
 let currentPointer = null;
+let currentColor = '#000000';
 
 // 지우기 관련
 const ERASE_STEP = 5; // 지우기 점 간격
@@ -640,9 +641,9 @@ let currentAction = null; // 현재 드래그 중인 액션
 let undoRedoQueue = Promise.resolve();
 
 // 툴 선택
-document.getElementById('btnradio1').addEventListener('click', () => selectTool('draw'));
-document.getElementById('btnradio2').addEventListener('click', () => selectTool('erase'));
-document.getElementById('btnradio3').addEventListener('click', (e) => {
+document.getElementById('penBtn').addEventListener('click', () => selectTool('draw'));
+document.getElementById('eraseBtn').addEventListener('click', () => selectTool('erase'));
+document.getElementById('selectionBtn').addEventListener('click', (e) => {
     if (isSelectLocked) {
         alert("다른 사람이 선택 모드를 사용 중입니다.");
         e.preventDefault(); // 체크 변경 막기
@@ -651,8 +652,40 @@ document.getElementById('btnradio3').addEventListener('click', (e) => {
     selectTool('select');
 });
 
-document.getElementById('btnradio4').addEventListener('click', () => safeUndoRedo('undo'));
-document.getElementById('btnradio5').addEventListener('click', () => safeUndoRedo('redo'));
+document.getElementById('undoBtn').addEventListener('click', () => safeUndoRedo('undo'));
+document.getElementById('redoBtn').addEventListener('click', () => safeUndoRedo('redo'));
+
+document.addEventListener('click', (e)=>{
+    console.log(e.target);
+})
+
+// 색상 선택
+const customColorInput = document.getElementById('customColor');
+
+// 팔레트 클릭
+document.querySelectorAll('.color-box').forEach(box => {
+    box.addEventListener('click', () => {
+        currentColor = box.dataset.color;
+        customColorInput.value = currentColor; // 🔥 커스텀 컬러도 변경
+        setSelected(box);
+    });
+});
+
+// 커스텀 컬러 변경
+customColorInput.addEventListener('input', (e) => {
+    currentColor = e.target.value;
+    clearSelected(); // 팔레트 선택 해제
+});
+
+function setSelected(el) {
+    clearSelected();
+    el.classList.add('selected');
+}
+
+function clearSelected() {
+    document.querySelectorAll('.color-box')
+        .forEach(b => b.classList.remove('selected'));
+}
 
 // 초기화 함수
 function resetCanvasStateForSync() {
@@ -823,7 +856,7 @@ function loop() {
     if (isDrawing && currentPointer && lastPoint) {
         const smooth = stabilize(lastPoint, currentPointer);
         if (selectedTool === 'draw') {
-            drawInterpolatedLine({x1: lastPoint.x, y1: lastPoint.y, x2: smooth.x, y2: smooth.y});
+            drawInterpolatedLine({x1: lastPoint.x, y1: lastPoint.y, x2: smooth.x, y2: smooth.y}, currentColor);
         }
         if (selectedTool === 'erase') {
             eraseInterpolated({x1: lastPoint.x, y1: lastPoint.y, x2: smooth.x, y2: smooth.y});
@@ -917,7 +950,7 @@ function drawLine(msg){
     if (msg.x1 === msg.x2 && msg.y1 === msg.y2) return;
     const line = new fabric.Line([msg.x1, msg.y1, msg.x2, msg.y2], {
         uuid: msg.uuid,
-        stroke: '#000',
+        stroke: msg.stroke || "#000",
         strokeWidth: 2,
         selectable: false,
         evented: false,
@@ -941,7 +974,7 @@ function drawLine(msg){
 }
 
 // 선 보간 함수
-function drawInterpolatedLine(msg) {
+function drawInterpolatedLine(msg, stroke) {
     const p1 = {x: msg.x1, y:msg.y1}
     const p2 = {x: msg.x2, y:msg.y2}
     const dx = p2.x - p1.x;
@@ -961,7 +994,7 @@ function drawInterpolatedLine(msg) {
         const x = p1.x + stepX * i;
         const y = p1.y + stepY * i;
         const newObjectId = generateUUID();
-        drawLine({x1: prevX, y1: prevY, x2: x, y2: y, uuid: newObjectId});
+        drawLine({x1: prevX, y1: prevY, x2: x, y2: y, uuid: newObjectId, stroke: stroke});
         prevX = x;
         prevY = y;
         message = {
@@ -971,7 +1004,8 @@ function drawInterpolatedLine(msg) {
             x1: lastPoint.x,
             y1: lastPoint.y,
             x2: currentPointer.x,
-            y2: currentPointer.y
+            y2: currentPointer.y,
+            stroke: stroke
         }
         safeSend("/app/draw", message);
     }
@@ -1263,7 +1297,7 @@ function loadCanvas(drawDataList) {
     drawDataList.forEach(data => {
         const line = new fabric.Line([data.x1, data.y1, data.x2, data.y2], {
             uuid: data.uuid,
-            stroke: '#000',
+            stroke: data.stroke,
             strokeWidth: 2,
             selectable: false,
             evented: false,
@@ -1476,6 +1510,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // DB 저장
                     await saveCanvasActionToDB(actionCopy.type, actionCopy.targets.map(t => ({
                         uuid: t.uuid,
+                        stroke: t.stroke,
                         x1: t.x1,
                         y1: t.y1,
                         x2: t.x2,

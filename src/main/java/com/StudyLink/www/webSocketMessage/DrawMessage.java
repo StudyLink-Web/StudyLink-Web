@@ -11,6 +11,7 @@ public class DrawMessage {
     private long senderId;
     private int seq;
     private String uuid;
+    private String stroke;
     private double x1;
     private double y1;
     private double x2;

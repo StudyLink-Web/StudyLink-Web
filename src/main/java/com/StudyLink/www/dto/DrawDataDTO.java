@@ -14,6 +14,7 @@ public class DrawDataDTO {
     private long roomId;
     private long senderId;
     private String uuid;
+    private String stroke;
     private double x1;
     private double y1;
     private double x2;
@@ -24,6 +25,7 @@ public class DrawDataDTO {
         this.roomId = drawData.getRoomId();
         this.senderId = drawData.getSenderId();
         this.uuid = drawData.getUuid();
+        this.stroke = drawData.getStroke();
         this.x1 = drawData.getX1();
         this.y1 = drawData.getY1();
         this.x2 = drawData.getX2();

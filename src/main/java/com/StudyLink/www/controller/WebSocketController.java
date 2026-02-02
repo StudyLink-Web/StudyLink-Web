@@ -249,6 +249,7 @@ public class WebSocketController {
                             .roomId(request.getRoomId())
                             .senderId(request.getSenderId())
                             .uuid((String) line.get("uuid"))
+                            .stroke((String) line.get("stroke"))
                             .x1(Double.parseDouble(line.get("x1").toString()))
                             .y1(Double.parseDouble(line.get("y1").toString()))
                             .x2(Double.parseDouble(line.get("x2").toString()))
