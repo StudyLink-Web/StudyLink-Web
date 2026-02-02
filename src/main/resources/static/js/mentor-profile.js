@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ⭐ 즉시 실행
 console.log('🚀 탭 시스템 즉시 초기화');
 
-const tabButtons = document.querySelectorAll('.tab-btn');
+let tabButtons = document.querySelectorAll('.tab-btn');
 console.log('탭 버튼 개수:', tabButtons.length);
 
 tabButtons.forEach(btn => {
@@ -176,7 +176,7 @@ let authTimer = null;
 let authTimeRemaining = 300;
 
 function startAuthTimer() {
-    authTimeRemaining = 300;
+    authTimeRemaining = 300; // 5분
     const timerEl = document.querySelector('#authTimer span');
 
     if (authTimer) clearInterval(authTimer);
@@ -187,11 +187,24 @@ function startAuthTimer() {
         const min = String(Math.floor(authTimeRemaining / 60)).padStart(2, '0');
         const sec = String(authTimeRemaining % 60).padStart(2, '0');
 
-        if (timerEl) timerEl.textContent = `${min}:${sec}`;
+        if (timerEl) {
+            timerEl.textContent = `${min}:${sec}`;
+        }
 
+        // ⏰ 인증 시간 만료
         if (authTimeRemaining <= 0) {
             clearInterval(authTimer);
-            showAuthMessage('인증 시간이 만료되었습니다.', 'error');
+            authTimer = null;
+
+            showAuthMessage('인증 시간이 만료되었습니다. 인증번호를 다시 받아주세요.', 'error');
+
+            const sendBtn = document.getElementById('sendAuthBtn');
+
+            // ✅ 재전송 쿨다운이 끝났을 때만 버튼 활성화
+            if (sendBtn && typeof resendRemaining !== 'undefined' && resendRemaining <= 0) {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '인증번호 재전송';
+            }
         }
     }, 1000);
 }
@@ -200,6 +213,37 @@ function startAuthTimer() {
    🔐 전화번호 인증 상태
 ========================= */
 let phoneAuthVerified = false;
+
+/* =========================
+   🔁 재전송 쿨다운(버튼 연타 방지)
+========================= */
+let resendInterval = null;
+let resendRemaining = 0;
+
+function startResendCooldown(seconds) {
+    const sendBtn = document.getElementById('sendAuthBtn');
+    if (!sendBtn) return;
+
+    if (resendInterval) clearInterval(resendInterval);
+
+    resendRemaining = seconds;
+    sendBtn.disabled = true;
+    sendBtn.textContent = `재전송 (${resendRemaining}s)`;
+
+    resendInterval = setInterval(() => {
+        resendRemaining--;
+
+        if (resendRemaining <= 0) {
+            clearInterval(resendInterval);
+            resendInterval = null;
+            sendBtn.disabled = false;
+            sendBtn.textContent = '인증번호 재전송';
+            return;
+        }
+        sendBtn.textContent = `재전송 (${resendRemaining}s)`;
+    }, 1000);
+}
+
 
 /* =========================
    📱 인증번호 요청
@@ -217,22 +261,40 @@ async function requestPhoneAuth() {
     console.log('📱 전화번호 인증 요청:', phoneNumber);
 
     const sendBtn = document.getElementById('sendAuthBtn');
+
+    // ✅ 쿨다운 중이면 무시
+    if (sendBtn.disabled && resendRemaining > 0) {
+        showAuthMessage(`잠시만요! ${resendRemaining}초 후 재전송할 수 있어요.`, 'error');
+        return;
+    }
+
     sendBtn.disabled = true;
     sendBtn.textContent = '발송 중...';
 
     try {
         await window.sendFirebasePhoneCode(phoneNumber);
+
         document.getElementById('authCodeSection').style.display = 'block';
         showAuthMessage('인증번호가 발송되었습니다.', 'success');
+
         startAuthTimer();
+
+        // ✅ 정상 발송 후 최소 60초는 재전송 막기
+        startResendCooldown(60);
+
     } catch (error) {
         console.error(error);
-        showAuthMessage('인증번호 발송에 실패했습니다.', 'error');
-    } finally {
-        sendBtn.disabled = false;
-        sendBtn.textContent = '인증번호 재전송';
+
+        if (error?.code === 'auth/too-many-requests') {
+            showAuthMessage('요청이 너무 많아 잠시 차단되었습니다. 5분 후 다시 시도해주세요.', 'error');
+            startResendCooldown(300);
+        } else {
+            showAuthMessage('인증번호 발송에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
+            startResendCooldown(60);
+        }
     }
 }
+
 
 /* =========================
    🔐 인증번호 확인
