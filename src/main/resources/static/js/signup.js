@@ -1,6 +1,60 @@
 // ============================================
 // StudyLink 회원가입 JavaScript
+// signup.js
 // ============================================
+
+
+// ============================================
+// ✅ CSRF 유틸 (추가)
+// ============================================
+
+/**
+ * Thymeleaf meta 태그에서 CSRF 토큰/헤더명 읽어서 반환
+ * signup.html에 아래 meta가 있어야 동작:
+ * <meta name="_csrf" th:content="${_csrf.token}">
+ * <meta name="_csrf_header" th:content="${_csrf.headerName}">
+ */
+function getCsrfHeaders() {
+    const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+    const headerName = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
+    if (!token || !headerName) return {};
+    return { [headerName]: token };
+}
+
+/**
+ * fetch 응답을 안전하게 JSON으로 파싱
+ * - 서버가 403.html 같은 HTML을 내려주면 json()이 터지므로 방어
+ */
+async function parseJsonSafely(response) {
+    const contentType = response.headers.get('content-type') || '';
+
+    // JSON이면 JSON 파싱
+    if (contentType.includes('application/json')) {
+        return await response.json();
+    }
+
+    // JSON이 아니면 텍스트로 읽고 에러 메시지에 활용
+    const text = await response.text();
+    const snippet = text?.slice(0, 200) || '';
+    throw new Error(`Non-JSON response (HTTP ${response.status}): ${snippet}`);
+}
+
+/**
+ * 공통 fetch 옵션 생성 (CSRF + JSON 헤더)
+ */
+function buildJsonPostOptions(bodyObj) {
+    return {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            ...getCsrfHeaders()
+        },
+        body: JSON.stringify(bodyObj)
+    };
+}
+
 
 // API 기본 URL
 //const API_BASE_URL = 'http://localhost:8088';
@@ -32,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('✅ 회원가입 폼 초기화 완료');
 
-    // ⭐ 드롭다운 강제 닫기 (시간을 1000ms로 늘림)
+    // 드롭다운 강제 닫기 (시간을 1000ms로 늘림)
     setTimeout(() => {
         const dropdownMenu = document.querySelector('.dropdown-menu');
         if (dropdownMenu) {
@@ -98,14 +152,21 @@ async function checkEmailAvailability() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/check-email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
-        });
+        const response = await fetch(
+            `${API_BASE_URL}/api/auth/check-email`,
+            buildJsonPostOptions({ email })
+        );
 
         console.log('✅ check-email response status:', response.status);
-        const data = await response.json();
+
+        // ✅ 403/500 등 에러면 먼저 처리 (json 파싱 전에!)
+        if (!response.ok) {
+            const text = await response.text(); // 403.html 같은 내용 확인 가능
+            console.error('check-email non-ok response:', response.status, text.slice(0, 200));
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await parseJsonSafely(response);
         console.log('✅ check-email response data:', data);
 
         if (!data.available) {
@@ -153,13 +214,21 @@ async function checkNicknameAvailability() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/check-nickname`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nickname })
-        });
+        const response = await fetch(
+            `${API_BASE_URL}/api/auth/check-nickname`,
+            buildJsonPostOptions({ nickname })
+        );
 
-        const data = await response.json();
+        console.log('✅ check-nickname response status:', response.status);
+
+        // ✅ 403/500 등 에러면 먼저 처리
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('check-nickname non-ok response:', response.status, text.slice(0, 200));
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await parseJsonSafely(response);
 
         if (!data.available) {
             nicknameError.textContent = '❌ 이미 사용 중인 닉네임입니다.';
@@ -251,23 +320,38 @@ async function handleSignup(e) {
     submitBtn.textContent = '⏳ 가입 중...';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, name: name.trim(), nickname, role })
-        });
+        const response = await fetch(
+            `${API_BASE_URL}/api/auth/signup`,
+            buildJsonPostOptions({ email, password, name: name.trim(), nickname, role })
+        );
 
-        const data = await response.json();
+        console.log('✅ signup response status:', response.status);
 
-        if (response.ok) {
-            showSuccess('✅ 회원가입이 완료되었습니다! 로그인 페이지로 이동합니다...');
-            setTimeout(() => { window.location.href = '/login'; }, 2000);
-        } else {
-            let errorMessage = data.message || '회원가입 실패';
-            showError('❌ 회원가입 실패: ' + errorMessage);
+        // ✅ 에러면 json 파싱 전에 처리 (403/500/HTML 방어)
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('signup non-ok response:', response.status, text.slice(0, 200));
+            // 서버가 JSON 에러 메시지를 내려주는 경우가 있어서, 가능하면 JSON도 한번 시도
+            // (하지만 content-type이 JSON일 때만)
+            let serverMsg = '';
+            try {
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    const errJson = await response.json();
+                    serverMsg = errJson?.message || '';
+                }
+            } catch (_) {}
+            showError('❌ 회원가입 실패' + (serverMsg ? (': ' + serverMsg) : ` (HTTP ${response.status})`));
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
+            return;
         }
+
+        const data = await parseJsonSafely(response);
+
+        // 성공 처리
+        showSuccess('✅ 회원가입이 완료되었습니다! 로그인 페이지로 이동합니다...');
+        setTimeout(() => { window.location.href = '/login'; }, 2000);
     } catch (error) {
         console.error('회원가입 오류:', error);
         showError('❌ 회원가입 중 오류가 발생했습니다.');

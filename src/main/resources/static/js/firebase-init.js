@@ -52,7 +52,7 @@ async function ensureRecaptcha(containerId = "recaptcha-container") {
     // ✅ 핵심: window.firebaseAuth 말고 "auth 변수"를 그대로 넣는다
     recaptchaVerifier = new RecaptchaVerifier(
         auth,
-        containerId,
+        container,   // ✅ 문자열(containerId) 말고 실제 DOM element
         {
             size: "normal",
             callback: () => console.log("✅ reCAPTCHA 인증 완료 (normal)"),
