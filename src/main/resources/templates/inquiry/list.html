@@ -26,21 +26,23 @@
             <div class="form_board_box">
                 <select class="form-select" name="category" aria-label="카테고리">
                     <option value="" th:selected="${param.category == null or param.category[0] == ''}">전체</option>
-                    <option value="CAT1" th:selected="${param.category != null and param.category[0] == 'CAT1'}">카테고리1</option>
-                    <option value="CAT2" th:selected="${param.category != null and param.category[0] == 'CAT2'}">카테고리2</option>
+                    <option value="계정" th:selected="${param.category != null and param.category[0] == '계정'}">계정</option>
+                    <option value="결제" th:selected="${param.category != null and param.category[0] == '결제'}">결제</option>
+                    <option value="기능 문의" th:selected="${param.category != null and param.category[0] == '기능 문의'}">결제</option>
+                    <option value="오류/버그" th:selected="${param.category != null and param.category[0] == '오류/버그'}">오류/버그</option>
+                    <option value="기타" th:selected="${param.category != null and param.category[0] == '기타'}">결제</option>
                 </select>
 
                 <select class="form-select" name="status" aria-label="답변 상태">
                     <option value="" th:selected="${param.status == null or param.status[0] == ''}">전체</option>
-                    <option value="PENDING" th:selected="${param.status != null and param.status[0] == 'PENDING'}">PENDING</option>
-                    <option value="READY" th:selected="${param.status != null and param.status[0] == 'READY'}">READY</option>
-                    <option value="COMPLETE" th:selected="${param.status != null and param.status[0] == 'COMPLETE'}">COMPLETE</option>
+                    <option value="PENDING" th:selected="${param.status != null and param.status[0] == 'PENDING'}">접수완료</option>
+                    <option value="READY" th:selected="${param.status != null and param.status[0] == 'READY'}">확인중</option>
+                    <option value="COMPLETE" th:selected="${param.status != null and param.status[0] == 'COMPLETE'}">답변 완료</option>
                 </select>
 
                 <input class="form-control" type="search" name="keyword"
                        th:value="${param.keyword != null ? param.keyword[0] : ''}"
                        placeholder="검색" aria-label="검색어를 입력하세요."/>
-
                 <input type="hidden" name="pageNo" value="1">
             </div>
 
@@ -70,7 +72,7 @@
 
                 <tbody>
                 <tr th:if="${ph == null or ph.list == null or #lists.isEmpty(ph.list)}">
-                    <td colspan="5" class="text-center">데이터가 없습니다.</td>
+                    <td colspan="5" class="text-center">문의 내역이 없습니다.</td>
                 </tr>
 
                 <th:block th:if="${ph != null and ph.list != null and !#lists.isEmpty(ph.list)}">
