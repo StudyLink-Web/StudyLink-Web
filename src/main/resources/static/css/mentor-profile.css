@@ -1371,6 +1371,39 @@ textarea.form-control {
     background: rgba(var(--color-error-rgb), 0.2);
 }
 
+/* =========================
+   ✅ mentor-profile 전화번호 입력 톤 통일
+   - email(disabled)과 동일하게 #E9ECEF 적용
+========================= */
+
+/* 전화번호가 readonly일 때 (현재 너 코드) */
+#phone[readonly] {
+    background-color: #E9ECEF !important;
+    color: #6C757D !important;
+    opacity: 1 !important;
+    -webkit-text-fill-color: #6C757D !important; /* 크롬/사파리 텍스트색 보정 */
+    border-color: var(--color-border) !important;
+    pointer-events: none; /* 클릭/포커스 자체 차단 */
+}
+
+/* 인증번호 입력이 disabled일 때 */
+#authCode:disabled {
+    background-color: #E9ECEF !important;
+    color: #6C757D !important;
+    opacity: 1 !important;
+    -webkit-text-fill-color: #6C757D !important;
+}
+
+/* 버튼 disabled 톤 */
+#sendAuthBtn:disabled,
+#verifyAuthBtn:disabled {
+    background-color: #E9ECEF !important;
+    border-color: #E9ECEF !important;
+    color: #6C757D !important;
+    opacity: 1 !important;
+    cursor: not-allowed;
+}
+
 /* 전화번호 인증 관련 스타일 */
 .phone-auth-group {
     display: flex;

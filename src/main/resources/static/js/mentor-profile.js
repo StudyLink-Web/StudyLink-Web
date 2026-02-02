@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ⭐ 즉시 실행
 console.log('🚀 탭 시스템 즉시 초기화');
 
-const tabButtons = document.querySelectorAll('.tab-btn');
+let tabButtons = document.querySelectorAll('.tab-btn');
 console.log('탭 버튼 개수:', tabButtons.length);
 
 tabButtons.forEach(btn => {
@@ -176,7 +176,7 @@ let authTimer = null;
 let authTimeRemaining = 300;
 
 function startAuthTimer() {
-    authTimeRemaining = 300;
+    authTimeRemaining = 300; // 5분
     const timerEl = document.querySelector('#authTimer span');
 
     if (authTimer) clearInterval(authTimer);
@@ -187,11 +187,24 @@ function startAuthTimer() {
         const min = String(Math.floor(authTimeRemaining / 60)).padStart(2, '0');
         const sec = String(authTimeRemaining % 60).padStart(2, '0');
 
-        if (timerEl) timerEl.textContent = `${min}:${sec}`;
+        if (timerEl) {
+            timerEl.textContent = `${min}:${sec}`;
+        }
 
+        // ⏰ 인증 시간 만료
         if (authTimeRemaining <= 0) {
             clearInterval(authTimer);
-            showAuthMessage('인증 시간이 만료되었습니다.', 'error');
+            authTimer = null;
+
+            showAuthMessage('인증 시간이 만료되었습니다. 인증번호를 다시 받아주세요.', 'error');
+
+            const sendBtn = document.getElementById('sendAuthBtn');
+
+            // ✅ 재전송 쿨다운이 끝났을 때만 버튼 활성화
+            if (sendBtn && typeof resendRemaining !== 'undefined' && resendRemaining <= 0) {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '인증번호 재전송';
+            }
         }
     }, 1000);
 }
@@ -202,9 +215,46 @@ function startAuthTimer() {
 let phoneAuthVerified = false;
 
 /* =========================
+   🔁 재전송 쿨다운(버튼 연타 방지)
+========================= */
+let resendInterval = null;
+let resendRemaining = 0;
+
+function startResendCooldown(seconds) {
+    const sendBtn = document.getElementById('sendAuthBtn');
+    if (!sendBtn) return;
+
+    if (resendInterval) clearInterval(resendInterval);
+
+    resendRemaining = seconds;
+    sendBtn.disabled = true;
+    sendBtn.textContent = `재전송 (${resendRemaining}s)`;
+
+    resendInterval = setInterval(() => {
+        resendRemaining--;
+
+        if (resendRemaining <= 0) {
+            clearInterval(resendInterval);
+            resendInterval = null;
+            sendBtn.disabled = false;
+            sendBtn.textContent = '인증번호 재전송';
+            return;
+        }
+        sendBtn.textContent = `재전송 (${resendRemaining}s)`;
+    }, 1000);
+}
+
+
+/* =========================
    📱 인증번호 요청
 ========================= */
 async function requestPhoneAuth() {
+
+    if (phoneAuthVerified) {
+        showAuthMessage('이미 전화번호 인증이 완료되었습니다.', 'success');
+        return;
+    }
+
     const phoneInput = document.getElementById('phone');
     const rawPhone = phoneInput.value.replace(/\D/g, '');
 
@@ -217,154 +267,283 @@ async function requestPhoneAuth() {
     console.log('📱 전화번호 인증 요청:', phoneNumber);
 
     const sendBtn = document.getElementById('sendAuthBtn');
+
+    // ✅ 쿨다운 중이면 무시
+    if (sendBtn.disabled && resendRemaining > 0) {
+        showAuthMessage(`잠시만요! ${resendRemaining}초 후 재전송할 수 있어요.`, 'error');
+        return;
+    }
+
     sendBtn.disabled = true;
     sendBtn.textContent = '발송 중...';
 
     try {
         await window.sendFirebasePhoneCode(phoneNumber);
+
         document.getElementById('authCodeSection').style.display = 'block';
         showAuthMessage('인증번호가 발송되었습니다.', 'success');
+
         startAuthTimer();
+
+        // ✅ 정상 발송 후 최소 60초는 재전송 막기
+        startResendCooldown(60);
+
     } catch (error) {
         console.error(error);
-        showAuthMessage('인증번호 발송에 실패했습니다.', 'error');
-    } finally {
-        sendBtn.disabled = false;
-        sendBtn.textContent = '인증번호 재전송';
+
+        if (error?.code === 'auth/too-many-requests') {
+            showAuthMessage('요청이 너무 많아 잠시 차단되었습니다. 5분 후 다시 시도해주세요.', 'error');
+            startResendCooldown(300);
+        } else {
+            showAuthMessage('인증번호 발송에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
+            startResendCooldown(60);
+        }
     }
 }
 
+
 /* =========================
-   🔐 인증번호 확인
+   🔐 인증번호 확인 (중복 클릭 방지 강화)
 ========================= */
+let isVerifyingPhoneCode = false;
+
 async function verifyPhoneAuth() {
-    const code = document.getElementById('authCode').value;
+    // ✅ 이미 인증 완료면 더 이상 실행 안 함
+    if (phoneAuthVerified) {
+        showAuthMessage('이미 전화번호 인증이 완료되었습니다.', 'success');
+        return;
+    }
+
+    // ✅ 인증 처리 중 연타 방지
+    if (isVerifyingPhoneCode) return;
+
+    const codeEl = document.getElementById('authCode');
+    const verifyBtn = document.getElementById('verifyAuthBtn');
+    const sendBtn = document.getElementById('sendAuthBtn');
+    const phoneEl = document.getElementById('phone');
+    const authSection = document.getElementById('authCodeSection');
+    const phoneVerifiedEl = document.getElementById('phoneVerified');
+
+    const code = (codeEl?.value || '').trim();
 
     if (code.length !== 6) {
         showAuthMessage('인증번호 6자리를 입력해주세요.', 'error');
         return;
     }
 
-    const result = await window.verifyFirebasePhoneCode(code);
+    try {
+        isVerifyingPhoneCode = true;
 
-    if (result.success) {
-        phoneAuthVerified = true;
-        showAuthMessage('전화번호 인증이 완료되었습니다.', 'success');
+        // UI 잠금 (연타 방지)
+        if (verifyBtn) {
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = '확인 중...';
+        }
 
-        document.getElementById('phone').disabled = true;
-        document.getElementById('sendAuthBtn').disabled = true;
-        document.getElementById('authCode').disabled = true;
+        const result = await window.verifyFirebasePhoneCode(code);
 
-        clearInterval(authTimer);
+        if (result?.success) {
+            phoneAuthVerified = true;
+            showAuthMessage('전화번호 인증이 완료되었습니다. 저장하기를 눌러야 최종 저장이 됩니다', 'success');
+
+            // ✅ (안전) 필요한 엘리먼트 다시 조회 (변수 미선언으로 인한 에러 방지)
+            const phoneEl = document.getElementById('phone');
+            const phoneVerifiedEl = document.getElementById('phoneVerified');
+            const codeEl = document.getElementById('authCode');
+            const verifyBtn = document.getElementById('verifyAuthBtn');
+            const sendBtn = document.getElementById('sendAuthBtn');
+            const authSection = document.getElementById('authCodeSection');
+
+            // ✅ 서버로 "인증완료" 값을 같이 보내기 (hidden input)
+            if (phoneVerifiedEl) phoneVerifiedEl.value = 'true';
+
+            // ✅ phone은 disabled ❌ / readOnly ✅ (FormData에 포함되게)
+            if (phoneEl) phoneEl.readOnly = true;
+
+            // ✅ 인증번호 입력칸 잠금
+            if (codeEl) codeEl.disabled = true;
+
+            // ✅ 인증하기 버튼: 숨김(연타 방지 + UX 깔끔)
+            if (verifyBtn) {
+                verifyBtn.disabled = true;
+                verifyBtn.textContent = '인증 완료';
+                verifyBtn.style.display = 'none';
+            }
+
+            // ✅ 인증번호 받기 버튼도 더 이상 필요 없으면 숨김/잠금
+            if (sendBtn) {
+                sendBtn.disabled = true;
+                sendBtn.style.display = 'none';
+            }
+
+            // ✅ 인증 영역 전체를 접고 싶으면(선택) - 기본은 유지
+            // if (authSection) authSection.style.display = 'none';
+
+            // ✅ 타이머 정리 (네 원래 기능 유지)
+            if (authTimer) {
+                clearInterval(authTimer);
+                authTimer = null;
+            }
+
     } else {
-        showAuthMessage('인증번호가 올바르지 않습니다.', 'error');
+            showAuthMessage('인증번호가 올바르지 않습니다.', 'error');
+
+            // 실패면 다시 입력/시도 가능하게 복구
+            if (verifyBtn) {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '인증하기';
+            }
+        }
+
+    } catch (error) {
+        console.error('❌ 인증 실패:', error);
+
+        // Firebase 에러별 메시지
+        if (error?.code === 'auth/code-expired') {
+            showAuthMessage('인증번호가 만료되었습니다. 인증번호를 다시 받아주세요.', 'error');
+        } else if (error?.code === 'auth/invalid-verification-code') {
+            showAuthMessage('인증번호가 올바르지 않습니다.', 'error');
+        } else {
+            showAuthMessage('인증에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
+        }
+
+        // 에러면 다시 시도 가능하게 복구
+        if (!phoneAuthVerified && verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = '인증하기';
+        }
+
+    } finally {
+        isVerifyingPhoneCode = false;
     }
 }
 
-window.requestPhoneAuth = requestPhoneAuth;
-window.verifyPhoneAuth = verifyPhoneAuth;
-
 
 /* =========================
-   ✅ 프로필 저장 전 필수 입력 검증
-   - 전화번호 인증은 현재 필수 아님
+  새로고침/재접속 시 DB 번호가 있으면 인증 UI가 “자동으로 막힘 + 안내문”
 ========================= */
+
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('profileForm');
-    if (!form) return;
+    const phoneEl = document.getElementById('phone');
+    if (!phoneEl) return;
 
-    form.addEventListener('submit', async function (e) {
-        e.preventDefault();
+    const hasPhoneFromDB = (phoneEl.value || '').trim().length > 0;
 
-        const requiredFields = [
-            { id: 'firstName', name: '이름' },
-            { id: 'nickname', name: '닉네임' },
-            { id: 'university', name: '대학교' },
-            { id: 'major', name: '전공' },
-            { id: 'entranceYear', name: '입학년도' },
-            { id: 'graduationYear', name: '졸업년도' },
-            { id: 'pricePerHour', name: '시간당 수업료' }
-        ];
+    const sendBtn = document.getElementById('sendAuthBtn');
+    const verifyBtn = document.getElementById('verifyAuthBtn');
+    const authSection = document.getElementById('authCodeSection');
+    const recaptcha = document.getElementById('recaptcha-container');
 
-        for (const field of requiredFields) {
-            const el = document.getElementById(field.id);
-            if (!el || !el.value.trim()) {
-                alert(`❗ ${field.name}을(를) 입력해주세요.`);
-                el?.focus();
-                return;
-            }
+    // ✅ 안내문을 "전화번호 입력 영역 아래"에 달기 위한 기준점(가까운 form-group)
+    const phoneFormGroup = phoneEl.closest('.form-group');
+
+    // 안내문 엘리먼트 생성/재사용
+    const hintId = 'phoneSettingHint';
+    let hintEl = document.getElementById(hintId);
+
+    function showSettingHint() {
+        if (!phoneFormGroup) return;
+
+        if (!hintEl) {
+            hintEl = document.createElement('div');
+            hintEl.id = hintId;
+            hintEl.className = 'form-hint';
+            hintEl.textContent = '전화번호는 환경설정에서 변경할 수 있습니다';
+            // 전화번호 입력칸 바로 아래에 붙이기
+            phoneFormGroup.appendChild(hintEl);
+        } else {
+            hintEl.style.display = 'block';
         }
+    }
 
-        const allSubjects = document.querySelectorAll(
-            '.checkbox-group input[type="checkbox"][name="subjects"]'
-        );
-        const checkedSubjects = Array.from(allSubjects).filter((cb) => cb.checked);
+    function hideSettingHint() {
+        if (hintEl) hintEl.style.display = 'none';
+    }
 
-        if (checkedSubjects.length === 0) {
-            alert('❗ 최소 1개 이상의 과목을 선택해주세요.');
-            document.getElementById('teaching').scrollIntoView({ behavior: 'smooth' });
-            return;
-        }
+    if (hasPhoneFromDB) {
+        // ✅ DB에 전화번호 있으면: 여기선 변경 불가 UX
+        phoneEl.readOnly = true;     // disabled ❌ / readOnly ✅ (값 전송 유지)
 
-        console.log('✅ 선택된 과목:', checkedSubjects.map(cb => cb.value));
+        // 인증 UI 전부 숨김
+        if (sendBtn) sendBtn.style.display = 'none';
+        if (verifyBtn) verifyBtn.style.display = 'none';
+        if (authSection) authSection.style.display = 'none';
+        if (recaptcha) recaptcha.style.display = 'none';
 
-        /*
-        const gradesChecked = document.querySelectorAll(
-            '#teaching input[type="checkbox"][id^="grade"]:checked'
-        );
-        if (gradesChecked.length === 0) {
-            alert('❗ 수업 대상 학년을 최소 1개 선택해주세요.');
-            return;
-        }
-        */
+        // 안내문 표시
+        showSettingHint();
 
-        const lessonType = document.querySelector('input[name="lessonType"]:checked');
-        if (!lessonType) {
-            alert('❗ 수업 방식을 선택해주세요.');
-            return;
-        }
+    } else {
+        // ✅ DB에 번호 없으면: 인증 UI 사용 가능
+        phoneEl.readOnly = false;
 
-        /*
-        // 🔒 전화번호 인증을 다시 필수로 만들 경우 사용
-        if (!phoneAuthVerified) {
-            alert('❗ 전화번호 인증을 완료해주세요.');
-            return;
-        }
-        */
+        if (sendBtn) sendBtn.style.display = '';
+        // verifyBtn은 authSection 안에 있으니 authSection이 열릴 때 보이게 됨
+        if (recaptcha) recaptcha.style.display = '';
 
-        // ✅ 전화번호 인증 여부는 검사하지 않음
-        try {
-            const formData = new FormData(form);
-
-            console.log('📤 프로필 저장 중...');
-            console.log('📋 선택된 과목:', checkedSubjects.map(cb => cb.value));
-
-            const res = await fetch(form.action, {
-                method: 'POST',
-                body: formData
-            });
-
-            const contentType = res.headers.get('content-type');
-
-            if (!contentType || !contentType.includes('application/json')) {
-                const text = await res.text();
-                console.error('❌ JSON 아님, 서버 응답:', text);
-                throw new Error('서버가 JSON이 아닌 응답을 반환했습니다.');
-            }
-
-            const data = await res.json();
-
-            alert(data.message || '✅ 프로필이 저장되었습니다.');
-
-            // ✅ 저장된 값이 반영된 멘토 페이지 다시 로드
-            location.reload();
-
-        } catch (err) {
-            console.error('❌ 프로필 저장 실패:', err);
-            alert('프로필 저장 중 오류가 발생했습니다.');
-        }
-    });
+        hideSettingHint();
+    }
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const phoneEl = document.getElementById('phone');
+    if (!phoneEl) return;
+
+    const hasPhoneFromDB = (phoneEl.value || '').trim().length > 0;
+
+    const sendBtn = document.getElementById('sendAuthBtn');
+    const verifyBtn = document.getElementById('verifyAuthBtn');
+    const authSection = document.getElementById('authCodeSection');
+    const recaptcha = document.getElementById('recaptcha-container');
+
+    const phoneFormGroup = phoneEl.closest('.form-group');
+
+    // 안내문 생성/재사용
+    const hintId = 'phoneSettingHint';
+    let hintEl = document.getElementById(hintId);
+
+    const showSettingHint = () => {
+        if (!phoneFormGroup) return;
+
+        if (!hintEl) {
+            hintEl = document.createElement('div');
+            hintEl.id = hintId;
+            hintEl.className = 'form-hint';
+            hintEl.textContent = '전화번호는 환경설정에서 변경할 수 있습니다';
+            phoneFormGroup.appendChild(hintEl);
+        } else {
+            hintEl.style.display = 'block';
+        }
+    };
+
+    const hideSettingHint = () => {
+        if (hintEl) hintEl.style.display = 'none';
+    };
+
+    if (hasPhoneFromDB) {
+        // ✅ DB 값이 있으면: 이 페이지에서는 변경/인증 불가
+        phoneEl.readOnly = true; // disabled ❌
+
+        if (sendBtn) sendBtn.style.display = 'none';
+        if (verifyBtn) verifyBtn.style.display = 'none';
+        if (authSection) authSection.style.display = 'none';
+        if (recaptcha) recaptcha.style.display = 'none';
+
+        // 인증상태도 "이미 완료"처럼 처리(UX용)
+        phoneAuthVerified = true;
+
+        showSettingHint();
+    } else {
+        // ✅ DB 값이 없으면: 인증 가능
+        phoneEl.readOnly = false;
+
+        if (sendBtn) sendBtn.style.display = '';
+        if (recaptcha) recaptcha.style.display = '';
+
+        hideSettingHint();
+    }
+});
+
 
 // 전역 함수로 노출
 window.debugSubjects = {
@@ -386,3 +565,62 @@ window.debugSubjects = {
 };
 
 console.log('🎯 디버깅 명령어: debugSubjects.validate(), debugSubjects.log(), debugSubjects.init()');
+
+
+/* =========================
+   ✅ 저장하기: 기본 submit 막고(fetch) 저장 후 새로고침
+========================= */
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('profileForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();      // ✅ 페이지 이동 막기 (핵심)
+        e.stopPropagation();
+
+        // (선택) 버튼 연타 방지
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = '저장 중...';
+        }
+
+        try {
+            const formData = new FormData(form);
+
+            const res = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'fetch'
+                }
+            });
+
+            // 서버가 JSON이 아니면 에러 처리
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                const text = await res.text();
+                console.error('❌ JSON 아님, 서버 응답:', text);
+                alert('서버 응답이 올바르지 않습니다.');
+                return;
+            }
+
+            const data = await res.json();
+
+            alert(data.message || '✅ 프로필이 저장되었습니다.');
+
+            // ✅ 저장된 값 화면에 반영
+            location.reload();
+
+        } catch (err) {
+            console.error('❌ 프로필 저장 실패:', err);
+            alert('프로필 저장 중 오류가 발생했습니다.');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✓ 저장하기';
+            }
+        }
+    });
+});

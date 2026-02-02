@@ -36,6 +36,7 @@ async function resetRecaptcha(containerId = "recaptcha-container") {
 
     const el = document.getElementById(containerId);
     if (el) el.innerHTML = "";
+    el.style.display = "block"; // 다시 보이게
 }
 
 async function ensureRecaptcha(containerId = "recaptcha-container") {
@@ -48,22 +49,27 @@ async function ensureRecaptcha(containerId = "recaptcha-container") {
 
     // 새로 만들기 직전에만 비우기
     container.innerHTML = "";
+    container.style.display = "block"; // 혹시 이전에 숨겼다면 다시 보이게
 
-    // ✅ 핵심: window.firebaseAuth 말고 "auth 변수"를 그대로 넣는다
     recaptchaVerifier = new RecaptchaVerifier(
         auth,
-        container,   // ✅ 문자열(containerId) 말고 실제 DOM element
+        container,
         {
-            size: "normal",
-            callback: () => console.log("✅ reCAPTCHA 인증 완료 (normal)"),
+            // ✅ 핵심: normal -> invisible
+            size: "invisible",
+
+            callback: () => console.log("✅ reCAPTCHA 인증 완료 (invisible)"),
             "expired-callback": () => console.warn("⚠️ reCAPTCHA 만료됨"),
         }
     );
 
+    // render는 1번만 (recaptchaVerifier 캐시로 이미 보장됨)
     await recaptchaVerifier.render();
-    console.log("🧩 reCAPTCHA render 완료");
+    console.log("🧩 reCAPTCHA render 완료 (invisible)");
+
     return recaptchaVerifier;
 }
+
 
 // 외부에서 호출하는 함수들(window에 노출)
 window.sendFirebasePhoneCode = async function (phoneNumber) {
@@ -85,11 +91,19 @@ window.sendFirebasePhoneCode = async function (phoneNumber) {
         const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, verifier);
         window.confirmationResult = confirmationResult;
 
+        // ✅ 성공하면 같은 페이지에서 reCAPTCHA 다시 안 보이게
+        const c = document.getElementById("recaptcha-container");
+        if (c) c.style.display = "none";
+
         console.log("📨 인증 문자 발송 성공:", phoneNumber);
         return true;
 
     } catch (error) {
         console.error("❌ 문자 발송 실패", error);
+
+        // ✅ 실패 → reCAPTCHA 다시 보이게
+        const c = document.getElementById("recaptcha-container");
+        if (c) c.style.display = "block";
 
         // 캡챠/credential 계열은 리셋 후 재시도 가능하게
         if (
