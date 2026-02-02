@@ -73,6 +73,12 @@ public class MentorProfile {
     private Double averageRating = 0.0;
 
     /**
+     * 푼 문제 수
+     */
+    @Column(name = "quiz_count")
+    private Integer quizCount = 0;
+
+    /**
      * 포인트 (현금으로 출금 가능)
      */
     @Column(name = "point", nullable = false)
@@ -226,6 +232,7 @@ public class MentorProfile {
         if (this.point == null) this.point = 0L;
         if (this.exp == null) this.exp = 0L;
         if (this.averageRating == null) this.averageRating = 0.0;
+        if (this.quizCount == null) this.averageRating = 0.0;
         if (this.isVerified == null) this.isVerified = false;
         if (this.notificationLesson == null) this.notificationLesson = true;
         if (this.notificationMessage == null) this.notificationMessage = true;
@@ -247,6 +254,7 @@ public class MentorProfile {
         this.isVerified = dto.getIsVerified() != null ? dto.getIsVerified() : false;
         this.introduction = dto.getIntroduction();
         this.averageRating = dto.getAverageRating() != null ? dto.getAverageRating() : 0.0;
+        this.quizCount = dto.getQuizCount() != null ? dto.getQuizCount() : 0;
         this.point = dto.getPoint() != null ? dto.getPoint() : 0L;
         this.exp = dto.getExp() != null ? dto.getExp() : 0L;
         this.createdAt = dto.getCreatedAt();

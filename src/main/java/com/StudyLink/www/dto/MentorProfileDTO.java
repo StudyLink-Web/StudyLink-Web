@@ -29,6 +29,7 @@ public class MentorProfileDTO {
     private String introduction;
 
     private Double averageRating;
+    private Integer quizCount;
     private Long point;
     private Long exp;
 
@@ -82,6 +83,7 @@ public class MentorProfileDTO {
         this.isVerified = profile.getIsVerified();
         this.introduction = profile.getIntroduction();
         this.averageRating = profile.getAverageRating();
+        this.quizCount = profile.getQuizCount();
         this.point = profile.getPoint();
         this.exp = profile.getExp();
         this.createdAt = profile.getCreatedAt();
