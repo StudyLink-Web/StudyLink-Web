@@ -2,6 +2,8 @@
 
 package com.StudyLink.www.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.UserRepository;
 import com.StudyLink.www.service.AccountService;
@@ -12,8 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.StudyLink.www.service.StudentVerificationService;
+
 
 /**
  * AccountController (계정 관리 API 컨트롤러)
@@ -38,10 +45,16 @@ public class AccountController {
 
     private final AccountService accountService;
     private final UserRepository userRepository;
+    private final StudentVerificationService studentVerificationService;
 
     @GetMapping("/ping")
     public String ping() {
         return "pong";
+    }
+
+    @GetMapping("/debug/hello")
+    public String debugHello() {
+        return "HELLO";
     }
 
     /**
@@ -209,9 +222,6 @@ public class AccountController {
         }
     }
 
-
-
-
     /**
      * 이메일 변경
      * POST /api/account/change-email
@@ -264,6 +274,40 @@ public class AccountController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+
+    // 이메일 변경 confirm (메일 링크 클릭 시 여기로 들어옴)
+    @GetMapping("/change-email/confirm")
+    public void confirmChangeEmail(
+            @RequestParam("token") String token,
+            @RequestParam("username") String username,
+            HttpServletResponse response
+    ) throws Exception {
+        try {
+            // 토큰 검증 + 실제 이메일 변경 처리
+            String newEmail = accountService.confirmEmailChange(token, username);
+
+            // 대학 이메일이면 학생/멘토 인증 페이지로
+            if (studentVerificationService.isSchoolEmailDomainAllowed(newEmail)) {
+                String url = "/auth/student-verification?email="
+                        + URLEncoder.encode(newEmail, StandardCharsets.UTF_8)
+                        + "&from=email-change";
+                response.sendRedirect(url);
+                return;
+            }
+
+            // 일반 이메일이면 성공 페이지(또는 마이페이지)로
+            response.sendRedirect("/my-page?msg=email_changed");
+
+        } catch (IllegalArgumentException e) {
+            // 토큰 만료/유효하지 않음 등
+            response.sendRedirect("/error/400");
+
+        } catch (Exception e) {
+            // 서버 오류
+            response.sendRedirect("/error/500");
+        }
+    }
+
 
     /**
      * 휴대폰 번호 변경
@@ -695,5 +739,6 @@ public class AccountController {
         public String getCurrentPassword() { return currentPassword; }
         public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
     }
+
 
 }

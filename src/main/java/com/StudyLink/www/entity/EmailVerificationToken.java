@@ -1,3 +1,5 @@
+/* EmailVerificationToken.java */
+
 package com.StudyLink.www.entity;
 
 import jakarta.persistence.*;
@@ -49,10 +51,10 @@ public class EmailVerificationToken {
     private String requestedUsername;
 
     /**
-     * 6자리 인증 코드
-     * 예: "123456"
+     * 이메일 인증 토큰 (랜덤 문자열 / UUID 등)
      */
-    @Column(name = "verification_code", nullable = false, length = 10)
+    @Lob
+    @Column(name = "verification_code", nullable = false, columnDefinition = "TEXT")
     private String verificationCode;
 
     /**

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>이메일 변경 완료</title>
+</head>
+<body>
+<h1 th:text="${title}">이메일이 변경되었습니다.</h1>
+<p th:text="'변경된 이메일: ' + ${maskedEmail}"></p>
+
+<div th:if="${isUniversityEmail}">
+    <h2>🎓 대학 이메일로 확인되었습니다</h2>
+    <p>멘토 인증을 완료하면 멘토로 활동할 수 있어요.</p>
+    <a href="/auth/student-verification?from=email-change">멘토 인증 하러가기</a>
+</div>
+
+<a href="/my-page">마이페이지로 이동</a>
+</body>
+</html>
