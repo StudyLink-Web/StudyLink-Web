@@ -26,8 +26,13 @@ myQuizList.forEach(room => {
     pointP.textContent = `${room.point || 0}p`;
     pointP.className = 'point';
 
+    const statusP = document.createElement('p');
+    statusP.textContent = statusMap[room.status] || '알 수 없는 상태';
+    statusP.className = 'status';
+
     link.appendChild(subjectP);
     link.appendChild(pointP);
+    link.appendChild(statusP);
 
     link.addEventListener('click', (e) => {
         if (room.status === 'IN_PROGRESS' && roleStrings.includes("ROLE_STUDENT")) {

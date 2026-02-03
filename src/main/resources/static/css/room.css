@@ -415,10 +415,45 @@ input:disabled + label {
 
 
 
+#shapeDiv {
+    text-align: center;
+    margin-left: 60px;
+    margin-top: 4px;
+    padding: 10px;
+}
 
+.shape-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 11px;
+    justify-items: center;
+}
+
+#shapeDiv P {
+    margin-top: 10px;
+    margin-bottom: 0px;
+}
+
+#shapeDiv .icon {
+    width: 16px;
+    height: 16px;
+    padding: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#shapeDiv .icon.active {
+    background: #e0e0e0;
+    border-radius: 2px;
+}
 
 
 .btn {
+    cursor: pointer;
+}
+
+.icon {
     cursor: pointer;
 }
 

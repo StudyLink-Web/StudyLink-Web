@@ -153,6 +153,17 @@ public class WebSocketController {
         messagingTemplate.convertAndSend(destination, message);
     }
 
+    @MessageMapping("/rectangle/{roomId")
+    public void rectangleMessage(@DestinationVariable long roomId, RectangleMessage message) {
+        String destination = "/topic/rectangle/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
+    }
+
+    @MessageMapping("/finalizeRectangle/{roomId")
+    public void finalizeRectangleMessage(@DestinationVariable long roomId, RectangleMessage message) {
+        String destination = "/topic/finalizeRectangle/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
+    }
 
 
 
