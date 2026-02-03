@@ -8,6 +8,7 @@ console.log('🔥 mypage.js 로드됨 - PW_FIX_VERSION_001');
 
 const API_BASE = '/api';
 const TOAST_DURATION = 3000; // 3초
+let changingPassword = false; // ✅ 비번 변경 중복 호출 방지
 
 // ========== 초기화 ==========
 
@@ -53,14 +54,6 @@ function initializeEventListeners() {
     document.getElementById('check-nickname-btn')?.addEventListener('click', handleCheckNickname);
 
     // 계정 탭
-    // ========== 비밀번호 변경 submit (이벤트 위임) ==========
-    document.addEventListener('submit', function (e) {
-        const form = e.target;
-
-        if (form && form.id === 'change-password-form') {
-            handleChangePassword(e);
-        }
-    });
     document.getElementById('change-email-form')?.addEventListener('submit', handleChangeEmail);
     document.getElementById('change-phone-form')?.addEventListener('submit', handleChangePhone);
     document.getElementById('delete-account-btn')?.addEventListener('click', handleDeleteAccountClick);
@@ -146,6 +139,8 @@ function handleChangePassword(e) {
     console.log('🔥 비밀번호 변경 submit 발생');
     e.preventDefault();
 
+    if (changingPassword) return;
+
     const currentPassword = document.getElementById('current-password').value;
     const newPassword = document.getElementById('new-password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
@@ -180,6 +175,7 @@ function handleChangePassword(e) {
         return;
     }
 
+    changingPassword = true;
 
     showLoading();
 
@@ -197,6 +193,7 @@ function handleChangePassword(e) {
         .then(res => res.json())
         .then(data => {
             hideLoading();
+
             if (data.success) {
                 document.getElementById('change-password-form').reset();
 
@@ -220,6 +217,9 @@ function handleChangePassword(e) {
             hideLoading();
             console.error('❌ 비밀번호 변경 오류:', error);
             showToast('변경 중 오류가 발생했습니다', 'error');
+        })
+        .finally(() => {
+            changingPassword = false; // ✅ 성공/실패/에러 상관없이 잠금 해제
         });
 }
 
@@ -260,7 +260,7 @@ function handleChangeEmail(e) {
             hideLoading();
             if (data.success) {
                 document.getElementById('change-email-form').reset();
-                showToast('이메일이 변경되었습니다. 새 이메일로 확인 메시지가 발송되었습니다', 'success');
+                showToast('메일이 전송되었습니다. 확인해주세요.', 'success');
             } else {
                 showToast(data.message || '변경 실패', 'error');
             }
@@ -778,16 +778,16 @@ function clearHint(el) {
 
 
 /**
- * 토스트 알림 표시
+ * 토스트 알림 표시 (toast-container 없으면 자동 생성)
  */
 function showToast(message, type = 'info', duration = TOAST_DURATION) {
     let container = document.getElementById('toast-container');
 
     // ✅ 없으면 만들어서 body에 붙임 (이렇게 하면 어디서 호출해도 안 터짐)
     if (!container) {
-        // toast-container 없으면 화면에라도 알려주기
-        console.warn('toast-container 없음. message:', message);
-        return;
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
     }
 
     const toast = document.createElement('div');
