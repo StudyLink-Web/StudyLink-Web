@@ -5,7 +5,9 @@ import com.StudyLink.www.dto.UsersDTO;
 import com.StudyLink.www.entity.MentorProfile;
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.MentorProfileRepository;
+import com.StudyLink.www.repository.RoomRepository;
 import com.StudyLink.www.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +29,7 @@ public class MentorProfileService {
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
     private final PasswordEncoder passwordEncoder;
+    private final RoomRepository roomRepository;
 
     /**
      * 멘토 프로필 생성
@@ -412,5 +415,26 @@ public class MentorProfileService {
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
         return getMentorProfileWithStats(user.getUserId());
+    }
+
+    @Transactional
+    public void plusQuizCount(Long mentorId) {
+        MentorProfile profile = mentorProfileRepository.findById(mentorId).orElseThrow(() -> new EntityNotFoundException("해당 멘토가 없습니다."));
+        profile.setQuizCount(profile.getQuizCount() + 1);
+    }
+
+    @Transactional
+    public void updateAverageRating(Long mentorId) {
+
+        // DB에서 현재 평균 평점 조회
+        Double avg = roomRepository.findAverageRatingByMentor(mentorId);
+
+        // 평점이 하나도 없으면 0
+        double average = (avg != null) ? avg : 0.0;
+
+        MentorProfile profile = mentorProfileRepository.findById(mentorId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 멘토가 없습니다."));
+
+        profile.setAverageRating(average);
     }
 }

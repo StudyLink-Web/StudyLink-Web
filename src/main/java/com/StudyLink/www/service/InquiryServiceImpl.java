@@ -87,6 +87,12 @@ public class InquiryServiceImpl implements InquiryService {
         inquiry.setAdminContent(adminContent);
         inquiry.setAnswerAt(LocalDateTime.now());
         inquiry.setStatus("COMPLETE");
+
+        long userId = userRepository.findByUsername(inquiry.getWriterEmail())
+                .orElseThrow(() -> new EntityNotFoundException("해당 회원이 없습니다,")).getUserId();
+
+        // 알림
+        notificationService.createNotification(userId, "ANSWER_RECEIVED", "관리자가 문의내역에 답변을 달았습니다.", null);
     }
 
     /* ===================== 상태 변경 ===================== */

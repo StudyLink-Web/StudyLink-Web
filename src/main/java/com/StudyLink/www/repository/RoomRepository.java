@@ -48,12 +48,15 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     void deleteExpiredRooms();
 
     @Modifying
-    @Query(value = "DELETE FROM rooms WHERE status IN ('TEMP', 'PENDING') AND in_progressed_at <= DATE_SUB(NOW(), INTERVAL 24 HOUR)", nativeQuery = true)
+    @Query(value = "DELETE FROM rooms WHERE status IN ('TEMP', 'PENDING') AND created_at <= DATE_SUB(NOW(), INTERVAL 24 HOUR)", nativeQuery = true)
     void deleteOldTempAndPendingRooms();
 
     @Query(value = "SELECT * FROM rooms r WHERE r.status = 'IN_PROGRESS' AND r.in_progressed_at <= NOW() - INTERVAL 20 MINUTE", nativeQuery = true)
     List<Room> findExpiredRooms();
 
-    @Query(value = "SELECT * FROM rooms WHERE status IN ('TEMP', 'PENDING') AND in_progressed_at <= NOW() - INTERVAL 24 HOUR", nativeQuery = true)
+    @Query(value = "SELECT * FROM rooms WHERE status IN ('TEMP', 'PENDING') AND created_at <= NOW() - INTERVAL 24 HOUR", nativeQuery = true)
     List<Room> findOldTempAndPendingRooms();
+
+    @Query("SELECT AVG(r.rating) FROM Room r WHERE r.mentorId = :mentorId AND r.rating IS NOT NULL")
+    Double findAverageRatingByMentor(@Param("mentorId") Long mentorId);
 }

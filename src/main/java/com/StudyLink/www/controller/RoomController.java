@@ -37,6 +37,7 @@ public class RoomController {
     private final FavoriteService favoriteService;
     private final UserService userService;
     private final StudentProfileService studentProfileService;
+    private final MentorProfileService mentorProfileService;
     private final DrawDataService drawDataService;
     private final NotificationService notificationService;
 
@@ -260,7 +261,7 @@ public class RoomController {
                         redirectAttributes.addFlashAttribute("message", "문제 풀이를 시작했습니다. 제한시간은 20분 입니다.");
 
 
-                        // 학생에게 알림 (선택)
+                        // 알림
                         notificationService.createNotification(roomDTO.getStudentId(), "ANSWER_RECEIVED", "'" + username + "' 멘토가 문제풀이를 시작했습니다.", null);
 
                         return "redirect:/room/enterRoom";
@@ -299,6 +300,9 @@ public class RoomController {
                     roomDTO.setStatus(RoomDTO.Status.ANSWERED);
                     roomService.save(roomDTO);
                     redirectAttributes.addFlashAttribute("message", "문제풀이가 완료되었습니다.");
+
+                    // 알림
+                    notificationService.createNotification(roomDTO.getStudentId(), "ANSWER_RECEIVED", "'" + username + "' 멘토가 문제풀이를 완료했습니다.", null);
                     return "redirect:/room/list";
                 }
             }
@@ -319,6 +323,7 @@ public class RoomController {
                 .collect(Collectors.toList());
         log.info(">>> userRoles {}", userRoles);
 
+        String username = authentication.getName();
         switch (roomDTO.getStatus()){
             case TEMP -> {
                 // 학생이 문제 등록 중 방 나가는 경우
@@ -338,18 +343,24 @@ public class RoomController {
                     roomService.deleteRoom(roomId);
                     drawDataService.removeRoom(roomId);
 
-                    // 포인트 차감 100p
+                    // 포인트 차감 50p
+                    mentorProfileService.addPoint(roomDTO.getMentorId(), -50L);
+
+                    // 알림
+                    notificationService.createNotification(roomDTO.getStudentId(), "ANSWER_RECEIVED", "'" + username + "' 멘토가 문제풀이를 포기했습니다.", null);
 
                     redirectAttributes.addFlashAttribute("message", "문제풀이가 취소되었습니다.");
                     return "redirect:/room/list";
                 } else {
                     // 1대1 문제 일경우
-                    // 삭제 후 학생에게 알림
                     roomService.deleteRoom(roomId);
+
+                    // 알림
+                    notificationService.createNotification(roomDTO.getStudentId(), "ANSWER_RECEIVED", "'" + username + "' 멘토가 문제풀이를 포기했습니다.", null);
+
                     redirectAttributes.addFlashAttribute("message", "1대1 문제풀이가 취소되었습니다.");
                     return "redirect:/room/list";
                 }
-
             }
         }
         return "redirect:/room/list";
@@ -427,8 +438,15 @@ public class RoomController {
         roomDTO.setStatus(RoomDTO.Status.COMPLETED);
         roomDTO.setRating(rating);
         roomService.save(roomDTO);
-        // 멘토에게 포인트 지급
 
+        // 멘토에게 포인트 지급
+        mentorProfileService.addPoint(roomDTO.getMentorId(), roomDTO.getPoint().longValue());
+
+        // 멘토 푼 문제수 1증가
+        mentorProfileService.plusQuizCount(roomDTO.getMentorId());
+
+        // 멘토 평점 갱신
+        mentorProfileService.updateAverageRating(roomDTO.getMentorId());
 
         // addFavoriteMentorCheckbox true면 찜 추가
         try {

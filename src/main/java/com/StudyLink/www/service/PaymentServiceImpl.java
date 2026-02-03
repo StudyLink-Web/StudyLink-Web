@@ -46,6 +46,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final ExchangeRequestRepository exchangeRequestRepository;
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
+    private final NotificationService notificationService;
 
     @Override
     public PaymentPendingResponse createPendingPayment(int productId, Long userId) {
@@ -411,6 +412,9 @@ public class PaymentServiceImpl implements PaymentService {
 
         exchange.setStatus(ExchangeStatus.APPROVED);
         exchange.setProcessedAt(LocalDateTime.now());
+
+        // 알림
+        notificationService.createNotification(exchange.getUser().getUserId(), "ANSWER_RECEIVED", "환전신청이 승인되었습니다.", null);
     }
 
     @Transactional
@@ -427,6 +431,9 @@ public class PaymentServiceImpl implements PaymentService {
         exchange.setStatus(ExchangeStatus.REJECTED);
         exchange.setRejectedReason(adminExchangeRequestRejectDTO.getReason());
         exchange.setProcessedAt(LocalDateTime.now());
+
+        // 알림
+        notificationService.createNotification(exchange.getUser().getUserId(), "ANSWER_RECEIVED", "환전신청이 거부되었습니다.", null);
     }
 
     @Override

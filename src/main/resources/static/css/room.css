@@ -311,3 +311,152 @@ input:disabled + label {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+
+#selectionDiv {
+    margin-left: 120px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 세로 가운데 */
+    align-items: center;     /* 가로 가운데 */
+}
+
+#selectionDiv P {
+    margin-top: 4px;
+    margin-bottom: 0px;
+}
+
+#toolsDiv {
+    margin-left: 60px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 세로 가운데 */
+    align-items: center;     /* 가로 가운데 */
+}
+
+#toolsDiv > div {
+    width: 150px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#toolsDiv P {
+    margin-top: 4px;
+    margin-bottom: 0px;
+}
+
+#historyDiv {
+    margin-left: 60px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 세로 가운데 */
+    align-items: center;     /* 가로 가운데 */
+}
+
+#historyDiv > div {
+    width: 150px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#historyDiv P {
+    margin-top: 4px;
+    margin-bottom: 0px;
+}
+
+#colorDiv {
+    text-align: center;
+    margin-left: 60px;
+    margin-top: 4px;
+    padding: 10px;
+}
+
+.color-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.color-palette {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 6px;
+}
+
+.color-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.color-box.selected {
+    border: 2px solid #333;
+}
+
+#customColor {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+}
+
+#colorDiv P {
+    margin-top: 10px;
+    margin-bottom: 0px;
+}
+
+
+
+#shapeDiv {
+    text-align: center;
+    margin-left: 60px;
+    margin-top: 4px;
+    padding: 10px;
+}
+
+.shape-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 11px;
+    justify-items: center;
+}
+
+#shapeDiv P {
+    margin-top: 10px;
+    margin-bottom: 0px;
+}
+
+#shapeDiv .icon {
+    width: 16px;
+    height: 16px;
+    padding: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#shapeDiv .icon.active {
+    background: #e0e0e0;
+    border-radius: 2px;
+}
+
+
+.btn {
+    cursor: pointer;
+}
+
+.icon {
+    cursor: pointer;
+}
+
+svg {
+    pointer-events: none;
+}

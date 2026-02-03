@@ -19,7 +19,7 @@ public class RoomScheduler {
         log.info(">>> 만료된 방 정리 실행: " + System.currentTimeMillis());
     }
 
-    @Scheduled(fixedDelay = 60000 * 60 * 24) // 24시간 마다 실행
+    @Scheduled(fixedDelay = 60000) // 60초마다 실행
     public void deleteOldTempAndPendingRooms() {
         // 현재 시간 기준으로 temp, pending 상태중 24시간 지난 방 삭제
         roomService.deleteOldTempAndPendingRooms();

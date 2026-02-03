@@ -7,7 +7,7 @@ import lombok.*;
 @ToString
 @Getter
 @Setter
-public class DrawMessage {
+public class RectangleMessage {
     private long senderId;
     private int seq;
     private String uuid;

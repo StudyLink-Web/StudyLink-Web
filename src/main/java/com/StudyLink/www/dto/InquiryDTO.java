@@ -28,4 +28,17 @@ public class InquiryDTO {
 
     private LocalDateTime createdAt;
     private LocalDateTime answerAt;
+
+    public InquiryDTO(Inquiry inquiry) {
+        this.qno = inquiry.getQno();
+        this.title = inquiry.getTitle();
+        this.userContent = inquiry.getUserContent();
+        this.adminContent = inquiry.getAdminContent();
+        this.category = inquiry.getChoose();
+        this.status = inquiry.getStatus();
+        this.isPublic = inquiry.getIsPublic();
+        this.password = inquiry.getPassword();
+        this.createdAt = inquiry.getCreatedAt();
+        this.answerAt = inquiry.getAnswerAt();
+    }
 }

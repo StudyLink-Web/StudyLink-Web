@@ -33,6 +33,7 @@ public class RoomServiceImpl implements RoomService{
     private final RoomFileHandler roomFileHandler;
     private final StudentProfileRepository studentProfileRepository;
     private final MentorProfileRepository mentorProfileRepository;
+    private final NotificationService notificationService;
 
     @Override
     public List<SubjectDTO> getSubjectDTOList() {
@@ -143,6 +144,10 @@ public class RoomServiceImpl implements RoomService{
                             .orElseThrow(() -> new EntityNotFoundException("삭제할 방의 멘토 프로필이 없습니다."));
                     // 멘토 패널티 포인트 차감
                     mentorProfile.setPoint(mentorProfile.getPoint() - 50);
+
+                    // 알림
+                    notificationService.createNotification(room.getStudentId(), "ROOM_EXPIRED", "멘토가 문제풀이에 실패하였습니다.", null);
+                    notificationService.createNotification(room.getMentorId(), "ROOM_EXPIRED", "문제풀이에 실패하였습니다.", null);
                 } catch (EntityNotFoundException e) {
                     System.out.println("프로필 없음, 방 ID: " + room.getRoomId() + " - " + e.getMessage());
                 }
@@ -164,6 +169,9 @@ public class RoomServiceImpl implements RoomService{
                                 .orElseThrow(() -> new EntityNotFoundException("삭제할 방의 학생 프로필이 없습니다."));
                         // 학생 포인트 환불
                         studentProfile.setChargedPoint(studentProfile.getChargedPoint() + room.getPoint());
+
+                        // 알림
+                        notificationService.createNotification(room.getStudentId(), "ROOM_EXPIRED", "장시간 미답변인 문제가 삭제되었습니다.", null);
                     } catch (EntityNotFoundException e) {
                         System.out.println("프로필 없음, 방 ID: " + room.getRoomId() + " - " + e.getMessage());
                     }
