@@ -159,10 +159,14 @@
     </div>
 
     <script th:inline="javascript">
-        window.IS_ADMIN = /*[[${#authorization.expression("hasAnyAuthority('ADMIN','ROLE_ADMIN')")}]]*/ false;
+        window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+        window.USER_ROLE = /*[[${#authorization.expression("hasRole('ADMIN')") ? 'ROLE_ADMIN' :
+                               (#authorization.expression("hasRole('MENTOR')") ? 'ROLE_MENTOR' :
+                               (#authorization.expression("hasRole('STUDENT')") ? 'ROLE_STUDENT' : ''))}]]*/ '';
     </script>
+
     <script th:src="@{/js/inquiry.js}"></script>
-    <script th:src="@{/js/community.js}"></script>
+    <script th:src="@{/js/tab.js}"></script>
 </div>
 
 </html>

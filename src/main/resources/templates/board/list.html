@@ -19,7 +19,7 @@
 
     <div class="search_campus">
 
-        <div class="register_campus_link">
+        <div class="register_campus_link" >
             <span onclick="goRegister();"> 대학생활 등록하기</span>
         </div>
 
@@ -54,7 +54,21 @@
 
         <!-- 데이터 없을 때 -->
         <div th:if="${ph.list == null or #lists.isEmpty(ph.list)}">
-            <div class="board_title_not">등록된 게시글이 없습니다.</div>
+
+            <div class="campus_table_box">
+                <table>
+                    <tr>
+                        <th>No</th>
+                        <th>제목</th>
+                        <th>작성자</th>
+                        <th>학과</th>
+                        <th>등록일</th>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-center board_title_not">등록된 게시글이 없습니다.</td>
+                    </tr>
+                </table>
+            </div>
         </div>
 
         <!-- 목록 -->
@@ -100,10 +114,7 @@
                                 <p th:text="${b.viewCount}"></p>
                             </div>
                         </div>
-
-
                     </div>
-
                 </div>
             </div>
         </div>
@@ -148,7 +159,7 @@
         window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
         window.USER_ROLE = /*[[${#authentication?.authorities[0]?.authority}]]*/ null;
     </script>
-    <script src="/js/community.js"></script>
+    <script src="/js/tab.js"></script>
     <script src="/js/board_list.js"></script>
 </div>
 
