@@ -1,3 +1,5 @@
+/* AccountService */
+
 package com.StudyLink.www.service;
 
 import com.StudyLink.www.entity.Users;
@@ -33,6 +35,21 @@ public class AccountService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // 현재 비밀번호 검증 (blur용)
+    @Transactional(readOnly = true)
+    public boolean verifyCurrentPassword(Long userId, String currentPassword) {
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+
+        log.info("🔎 verifyCurrentPassword userId={}, storedPwPrefix={}",
+                userId,
+                user.getPassword() == null ? "null" : user.getPassword().substring(0, Math.min(7, user.getPassword().length()))
+        );
+
+        return passwordEncoder.matches(currentPassword, user.getPassword());
+    }
+
     /**
      * 계정 정보 조회
      *
@@ -57,6 +74,7 @@ public class AccountService {
 
         log.info("✅ 계정 정보 조회: userId={}", userId);
         return accountInfo;
+
     }
 
     /**

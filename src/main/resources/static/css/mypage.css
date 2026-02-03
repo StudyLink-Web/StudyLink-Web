@@ -117,7 +117,7 @@
     margin-right: auto;
 }
 
-/* ⭐ 추가: 긴 닉네임용 추가 클래스 */
+/* 긴 닉네임용 추가 클래스 */
 .user-nickname--long {
     white-space: normal;             /* 긴 문자도 자동 줄바꿈 */
     word-break: break-word;
@@ -240,6 +240,243 @@
 .tab-content.active {
     display: block;
 }
+
+/* ===== Password UX ===== */
+.password-field {
+    position: relative;
+}
+
+.pw-toggle { pointer-events: auto; }
+.password-field input { padding-right: 48px; } /* 아이콘 공간 확보 */
+
+.pw-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 36px;
+    height: 36px;
+
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+
+    /* ⭐ 이게 중요: SVG가 currentColor를 쓰니까 색을 강제 */
+    color: #666;
+    z-index: 5;
+}
+
+.pw-toggle:hover {
+    color: #111;
+}
+
+.pw-toggle .eye-icon {
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+}
+
+.pw-toggle .eye-icon svg {
+    display: block;       /* inline-svg 줄바꿈/높이 꼬임 방지 */
+    width: 20px;
+    height: 20px;
+}
+
+/* 공통 비번 확인 스타일 */
+.field-hint {
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    opacity: 0;
+    transform: translateY(-2px);
+    animation: hintFadeIn 0.15s ease forwards;
+}
+
+/* 에러상태 (비밀번호 불일치) */
+.field-hint.error {
+    color: #e74c3c;
+}
+
+.field-hint.error::before {
+    content: "✕";
+    font-size: 12px;
+    font-weight: 700;
+    color: #e74c3c;
+}
+
+
+/* 성공상태 (비밀번호 일치) */
+.field-hint.success {
+    color: #27ae60;
+}
+
+.field-hint.success::before {
+    content: "✓";
+    font-size: 12px;
+    font-weight: 700;
+    color: #27ae60;
+}
+
+
+/* 정보, 중립 상태 (입력유도) */
+.field-hint.info {
+    color: #7f8c8d;
+}
+
+.field-hint.info::before {
+    content: "•";
+    font-size: 14px;
+    line-height: 1;
+    color: #bdc3c7;
+}
+
+
+/* 부드러운 등장 애니메이션 */
+@keyframes hintFadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/*
+/////////////////////////////////
+*/
+
+/* 기본은 숨김(입력 시작하면 JS가 show 클래스 붙임) */
+.pw-rules-box {
+    display: none;
+    margin-top: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+}
+
+.pw-rules-box.show {
+    display: block;
+}
+
+/* 룰 리스트 스타일 */
+.pw-rules {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0;
+}
+
+.pw-rules li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin: 6px 0;
+}
+
+/* 점(상태 표시) */
+.pw-rules .rule-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    display: inline-block;
+}
+
+/* 충족되면 색/점 변경 */
+.pw-rules li.ok {
+    color: var(--success-color);
+}
+
+.pw-rules li.ok .rule-dot {
+    background: var(--success-color);
+}
+
+/* 강도 텍스트 */
+.pw-strength {
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.pw-strength.weak { color: var(--danger-color); }
+.pw-strength.medium { color: var(--warning-color); }
+.pw-strength.strong { color: var(--success-color); }
+
+
+/* ===== Field Hint (real-service style) ===== */
+.field-hint {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    min-height: 18px;
+    color: var(--text-muted);
+}
+
+.field-hint.has-message {
+    display: flex; /* 메시지 있을 때만 보이게 */
+}
+
+.field-hint::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-block;
+    flex: 0 0 16px;
+    background: var(--border-color);
+}
+
+.field-hint.success { color: var(--success-color); }
+.field-hint.success::before {
+    content: "✓";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: white;
+    background: var(--success-color);
+}
+
+.field-hint.error { color: var(--danger-color); }
+.field-hint.error::before {
+    content: "!";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 900;
+    color: white;
+    background: var(--danger-color);
+}
+
+.field-hint.loading { color: var(--text-secondary); }
+.field-hint.loading::before {
+    content: "";
+    border: 2px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    background: transparent;
+    border-radius: 50%;
+    animation: hintSpin 0.8s linear infinite;
+}
+
+@keyframes hintSpin {
+    to { transform: rotate(360deg); }
+}
+
 
 @keyframes fadeIn {
     from {

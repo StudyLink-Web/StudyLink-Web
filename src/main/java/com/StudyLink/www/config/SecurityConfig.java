@@ -1,3 +1,5 @@
+/* SecurityConfig */
+
 package com.StudyLink.www.config;
 
 import com.StudyLink.www.handler.RoleBasedLoginSuccessHandler;
@@ -18,6 +20,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -34,9 +38,22 @@ public class SecurityConfig {
     private final UserRepository userRepository;
     private final ObjectProvider<PasswordEncoder> passwordEncoderProvider;
 
+    /*
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+    */
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        DelegatingPasswordEncoder encoder =
+                (DelegatingPasswordEncoder) PasswordEncoderFactories.createDelegatingPasswordEncoder();
+
+        // ✅ DB에 "$2a$..."처럼 prefix 없는 bcrypt가 들어있어도 매칭되게
+        encoder.setDefaultPasswordEncoderForMatches(new BCryptPasswordEncoder());
+
+        return encoder;
     }
 
     @Bean
@@ -65,11 +82,17 @@ public class SecurityConfig {
                                 "/payment/**",
                                 "/map/**",
                                 "/api/cover-letter/**",
-                                "/api/fcm/**"
+                                "/api/fcm/**",
+                                "/api/account/**",
+                                "/api/settings/**",
+                                "/api/profile/**",
+                                "/api/auth/**"
                         )
                 )
 
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(HttpMethod.GET, "/api/account/ping").permitAll()
+
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         .requestMatchers("/mentor/edit-profile").authenticated()
@@ -117,7 +140,6 @@ public class SecurityConfig {
                                 "/static.dist/**",
                                 "/uploads/**",
 
-                                "/api/**",
                                 /* "/api/auth/**", */
                                 "/api/fcm/**",
 

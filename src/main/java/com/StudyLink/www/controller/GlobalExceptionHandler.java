@@ -1,9 +1,15 @@
 package com.StudyLink.www.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @ControllerAdvice
 @Slf4j
@@ -44,5 +50,13 @@ public class GlobalExceptionHandler {
         mav.setViewName("error/500");
         mav.addObject("exception", ex);
         return mav;
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResource(NoResourceFoundException e) {
+        Map<String, Object> res = new HashMap<>();
+        res.put("success", false);
+        res.put("message", "Not Found: " + e.getResourcePath());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
     }
 }
