@@ -153,18 +153,53 @@ public class WebSocketController {
         messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/rectangle/{roomId")
+    @MessageMapping("/rectangle/{roomId}")
     public void rectangleMessage(@DestinationVariable long roomId, RectangleMessage message) {
         String destination = "/topic/rectangle/" + roomId;
         messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/finalizeRectangle/{roomId")
+    @MessageMapping("/finalizeRectangle/{roomId}")
     public void finalizeRectangleMessage(@DestinationVariable long roomId, RectangleMessage message) {
         String destination = "/topic/finalizeRectangle/" + roomId;
         messagingTemplate.convertAndSend(destination, message);
     }
 
+    @MessageMapping("/triangle/{roomId}")
+    public void triangleMessage(@DestinationVariable long roomId, TriangleMessage message) {
+        String destination = "/topic/triangle/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
+    }
+
+    @MessageMapping("/finalizeTriangle/{roomId}")
+    public void finalizeTriangleMessage(@DestinationVariable long roomId, TriangleMessage message) {
+        String destination = "/topic/finalizeTriangle/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
+    }
+
+    @MessageMapping("/line/{roomId}")
+    public void lineMessage(@DestinationVariable long roomId, LineMessage message) {
+        String destination = "/topic/line/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
+    }
+
+    @MessageMapping("/finalizeLine/{roomId}")
+    public void finalizeLineMessage(@DestinationVariable long roomId, LineMessage message) {
+        String destination = "/topic/finalizeLine/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
+    }
+
+    @MessageMapping("/circle/{roomId}")
+    public void circleMessage(@DestinationVariable long roomId, CircleMessage message) {
+        String destination = "/topic/circle/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
+    }
+
+    @MessageMapping("/finalizeCircle/{roomId}")
+    public void finalizeCircleMessage(@DestinationVariable long roomId, CircleMessage message) {
+        String destination = "/topic/finalizeCircle/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
+    }
 
 
 
