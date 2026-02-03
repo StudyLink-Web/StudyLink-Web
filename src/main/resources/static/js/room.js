@@ -272,6 +272,55 @@ function onConnect(frame) {
         scheduleRender();
     });
 
+    // triangle
+    stompClient.subscribe(`/topic/triangle/${roomId}`, function(message){
+        const msg = JSON.parse(message.body);
+        if (msg.senderId === senderId) return;
+        handleMessage(msg, drawPreviewTriangle);
+        scheduleRender();
+    });
+
+    // finalizeTriangle
+        stompClient.subscribe(`/topic/finalizeTriangle/${roomId}`, function(message){
+        const msg = JSON.parse(message.body);
+        if (msg.senderId === senderId) return;
+        handleMessage(msg, finalizeTriangle);
+        scheduleRender();
+    });
+
+    // circle
+    stompClient.subscribe(`/topic/circle/${roomId}`, function(message){
+        const msg = JSON.parse(message.body);
+        if (msg.senderId === senderId) return;
+        handleMessage(msg, drawPreviewCircle);
+        scheduleRender();
+    });
+
+    // finalizeCircle
+        stompClient.subscribe(`/topic/finalizeCircle/${roomId}`, function(message){
+        const msg = JSON.parse(message.body);
+        if (msg.senderId === senderId) return;
+        handleMessage(msg, finalizeCircle);
+        scheduleRender();
+    });
+
+    // line
+    stompClient.subscribe(`/topic/line/${roomId}`, function(message){
+        const msg = JSON.parse(message.body);
+        if (msg.senderId === senderId) return;
+        handleMessage(msg, drawPreviewLine);
+        scheduleRender();
+    });
+
+    // finalizeLine
+    stompClient.subscribe(`/topic/finalizeLine/${roomId}`, function(message){
+        const msg = JSON.parse(message.body);
+        if (msg.senderId === senderId) return;
+        handleMessage(msg, finalizeLine);
+        scheduleRender();
+    });
+
+
     // connect가 비동기함수이므로 연결이 완료된 후 실행되야하는 함수들은 여기 작성(밖에 작성시 연결되기 전에 실행 될 수 있음)
     loadMessage(roomId).then(async result => { // 채팅기록 불러오기
         console.log("💬 로드된 메시지 수:", result.length);
@@ -618,11 +667,24 @@ const SMOOTH_ALPHA = 0.35; // 손떨림 보정(0 ~ 1.0(원본))
 let selectedTool = 'draw';
 let currentShape = null; // rect, circle, triangle, line
 
-let prevShapeCurrentPoint = null;
-let shapeStartPoint = null;
+// 도형
 let shapeCurrentPoint = null;
 let isShapeDrawing = false;
-let previewRect = null; // 사각형 미리보기
+let prevShapeCurrentPoint = null;
+
+let rectStartPoint = null;
+let previewRect = {}; // 사각형 미리보기
+
+let triangleFirstPoint = null;  // 첫 클릭 위치
+let triangleSecondPoint = null;  // 첫 클릭 위치
+let previewTriangle = {};
+
+let circleCenterPoint = null;
+let previewCircle = {};
+
+let lineStartPoint = null;
+let previewLine = {};
+
 
 // 캔버스 이동 관련
 let isPanning = false;
@@ -636,6 +698,7 @@ const RENDER_INTERVAL = 100; // 100ms마다 1번 랜더링
 let isDrawing = false;
 let lastPoint = null;
 const DRAW_STEP = 20; // px (작을수록 촘촘), 선 길이 조절
+const CIRCLE_DRAW_STEP = 5;
 let currentPointer = null;
 let currentColor = '#000000';
 
@@ -676,10 +739,6 @@ document.getElementById('selectionBtn').addEventListener('click', (e) => {
 
 document.getElementById('undoBtn').addEventListener('click', () => safeUndoRedo('undo'));
 document.getElementById('redoBtn').addEventListener('click', () => safeUndoRedo('redo'));
-
-document.addEventListener('click', (e)=>{
-    console.log(e.target);
-})
 
 // 색상 선택
 const customColorInput = document.getElementById('customColor');
@@ -844,16 +903,16 @@ function initializeCurrentAction(msg){
         currentAction = {
             type: type, // 'draw' | 'erase' | 'move' | 'rotate' | 'scale' ...
             targets: [], // 영향을 받은 객체들
-            before: null, // 작업 전 상태
-            after: null // 작업 후 상태
+            before: [], // 작업 전 상태
+            after: [] // 작업 후 상태
         };
     }
     if (type === 'select'){
         currentAction = {
             type: type, // 'draw' | 'erase' | 'move' | 'rotate' | 'scale' ...
             targets: [], // 영향을 받은 객체들
-            before: null, // 작업 전 상태
-            after: null // 작업 후 상태
+            before: [], // 작업 전 상태
+            after: [] // 작업 후 상태
         };
         captureBeforeState();
     }
@@ -946,27 +1005,122 @@ function loop() {
         isTransform = false;
     }
 
-    if (isShapeDrawing && shapeStartPoint && shapeCurrentPoint) {
+    if (isShapeDrawing && shapeCurrentPoint) {
         // 이전 포인터가 없거나 좌표가 달라졌을 때만 처리
-        if (!prevShapeCurrentPoint ||
-            prevShapeCurrentPoint.x !== shapeCurrentPoint.x ||
-            prevShapeCurrentPoint.y !== shapeCurrentPoint.y) {
+        if (currentShape === 'rect' && rectStartPoint) {
+            if (!prevShapeCurrentPoint ||
+                prevShapeCurrentPoint.x !== shapeCurrentPoint.x ||
+                prevShapeCurrentPoint.y !== shapeCurrentPoint.y) {
 
-            message = {
-                senderId: senderId,
-                seq: mySeq++,
-                uuid: generateUUID(),
-                stroke: currentColor,
-                x1: shapeStartPoint.x,
-                y1: shapeStartPoint.y,
-                x2: shapeCurrentPoint.x,
-                y2: shapeCurrentPoint.y
-            };
-            drawPreviewRectangle(message);
-            safeSend("/app/rectangle", message);
-            scheduleRender();
+                message = {
+                    senderId: senderId,
+                    seq: mySeq++,
+                    uuid: generateUUID(),
+                    stroke: currentColor,
+                    x1: rectStartPoint.x,
+                    y1: rectStartPoint.y,
+                    x2: shapeCurrentPoint.x,
+                    y2: shapeCurrentPoint.y
+                };
 
-            prevShapeCurrentPoint = { ...shapeCurrentPoint }; // 좌표 저장
+                drawPreviewRectangle(message);
+                safeSend("/app/rectangle", message);
+                scheduleRender();
+
+                prevShapeCurrentPoint = { ...shapeCurrentPoint }; // 좌표 저장
+            }
+        }
+        if (currentShape === "triangle" && triangleFirstPoint) {
+            if (!prevShapeCurrentPoint ||
+                prevShapeCurrentPoint.x !== shapeCurrentPoint.x ||
+                prevShapeCurrentPoint.y !== shapeCurrentPoint.y) {
+
+                if (!triangleSecondPoint) {
+                    const message = {
+                        senderId,
+                        seq: mySeq++,
+                        uuid: generateUUID(),
+                        stroke: currentColor,
+                        x1: triangleFirstPoint.x,
+                        y1: triangleFirstPoint.y,
+                        x2: shapeCurrentPoint.x,
+                        y2: shapeCurrentPoint.y
+                    };
+
+                    drawPreviewLine(message);
+                    safeSend("/app/line", message);
+                    scheduleRender();
+
+                    prevShapeCurrentPoint = { ...shapeCurrentPoint };
+                } else {
+                    const message = {
+                        senderId,
+                        seq: mySeq++,
+                        uuid: generateUUID(),
+                        stroke: currentColor,
+                        x1: triangleFirstPoint.x,
+                        y1: triangleFirstPoint.y,
+                        x2: triangleSecondPoint.x,
+                        y2: triangleSecondPoint.y,
+                        x3: shapeCurrentPoint.x,
+                        y3: shapeCurrentPoint.y
+                    };
+
+                    drawPreviewTriangle(message);
+                    safeSend("/app/triangle", message);
+                    scheduleRender();
+
+                    prevShapeCurrentPoint = { ...shapeCurrentPoint };
+                }
+            }
+        }
+
+        if (currentShape === "circle" && circleCenterPoint) {
+            if (!prevShapeCurrentPoint ||
+                prevShapeCurrentPoint.x !== shapeCurrentPoint.x ||
+                prevShapeCurrentPoint.y !== shapeCurrentPoint.y) {
+
+                message = {
+                    senderId: senderId,
+                    seq: mySeq++,
+                    uuid: generateUUID(),
+                    stroke: currentColor,
+                    centerX: circleCenterPoint.x,
+                    centerY: circleCenterPoint.y,
+                    x: shapeCurrentPoint.x,
+                    y: shapeCurrentPoint.y
+                };
+
+                drawPreviewCircle(message);
+                safeSend("/app/circle", message);
+                scheduleRender();
+
+                prevShapeCurrentPoint = { ...shapeCurrentPoint }; // 좌표 저장
+            }
+        }
+
+        if (currentShape === "line" && lineStartPoint) {
+            if (!prevShapeCurrentPoint ||
+                prevShapeCurrentPoint.x !== shapeCurrentPoint.x ||
+                prevShapeCurrentPoint.y !== shapeCurrentPoint.y) {
+
+                message = {
+                    senderId: senderId,
+                    seq: mySeq++,
+                    uuid: generateUUID(),
+                    stroke: currentColor,
+                    x1: lineStartPoint.x,
+                    y1: lineStartPoint.y,
+                    x2: shapeCurrentPoint.x,
+                    y2: shapeCurrentPoint.y
+                };
+
+                drawPreviewLine(message);
+                safeSend("/app/line", message);
+                scheduleRender();
+
+                prevShapeCurrentPoint = { ...shapeCurrentPoint }; // 좌표 저장
+            }
         }
     } else {
         prevShapeCurrentPoint = null; // 드로잉 끝나면 초기화
@@ -1072,8 +1226,6 @@ function drawInterpolatedLine(msg, stroke) {
         const y = p1.y + stepY * i;
         const newObjectId = generateUUID();
         drawLine({x1: prevX, y1: prevY, x2: x, y2: y, uuid: newObjectId, stroke: stroke});
-        prevX = x;
-        prevY = y;
         message = {
             senderId: senderId,
             seq: mySeq++,
@@ -1085,6 +1237,9 @@ function drawInterpolatedLine(msg, stroke) {
             stroke: stroke
         }
         safeSend("/app/draw", message);
+
+        prevX = x;
+        prevY = y;
     }
 }
 
@@ -1356,47 +1511,17 @@ function redo() {
 // 사각형 미리보기 그리기
 function drawPreviewRectangle(msg) {
     // 미리보기 사각형이 이미 있으면 제거
-    if (previewRect) {
-        canvas.remove(previewRect);
-        previewRect = null;
+    if (previewRect[msg.senderId]) {
+        canvas.remove(previewRect[msg.senderId]);
+        previewRect[msg.senderId] = null;
     }
-
+    console.log(previewRect);
     const left = Math.min(msg.x1, msg.x2);
     const top = Math.min(msg.y1, msg.y2);
     const width = Math.abs(msg.x2 - msg.x1);
     const height = Math.abs(msg.y2 - msg.y1);
 
-    previewRect = new fabric.Rect({
-        uuid: msg.uuid,
-        left: left,
-        top: top,
-        width: width,
-        height: height,
-        fill: 'transparent',
-        stroke: msg.stroke,
-        strokeWidth: 1,
-        selectable: false,
-        evented: false
-    });
-
-    canvas.add(previewRect);
-    canvas.requestRenderAll();
-}
-
-// 사각형 그리기
-function finalizeRectangle(msg) {
-    // 미리보기 사각형 제거
-    if (previewRect) {
-        canvas.remove(previewRect);
-        previewRect = null;
-    }
-
-    const left = Math.min(msg.x1, msg.x2);
-    const top = Math.min(msg.y1, msg.y2);
-    const width = Math.abs(msg.x2 - msg.x1);
-    const height = Math.abs(msg.y2 - msg.y1);
-
-    const rect = new fabric.Rect({
+    previewRectangle = new fabric.Rect({
         uuid: msg.uuid,
         left: left,
         top: top,
@@ -1405,12 +1530,348 @@ function finalizeRectangle(msg) {
         fill: 'transparent',
         stroke: msg.stroke,
         strokeWidth: 2,
-        selectable: true,
-        objectCaching: false
+        selectable: false,
+        evented: false,
+        strokeLineCap: 'round',
+        strokeLineJoin: 'round'
+    });
+    canvas.add(previewRectangle);
+    previewRect[msg.senderId] = previewRectangle;
+}
+
+// 사각형 그리기
+function finalizeRectangle(msg) {
+    // 미리보기 사각형 제거
+    if (previewRect[msg.senderId]) {
+        canvas.remove(previewRect[msg.senderId]);
+        previewRect[msg.senderId] = null;
+    }
+
+    const left = Math.min(msg.x1, msg.x2);
+    const top = Math.min(msg.y1, msg.y2);
+    const right = Math.max(msg.x1, msg.x2);
+    const bottom = Math.max(msg.y1, msg.y2);
+
+    const corners = [
+        { x: left,  y: top },    // top-left
+        { x: right, y: top },    // top-right
+        { x: right, y: bottom }, // bottom-right
+        { x: left,  y: bottom }  // bottom-left
+    ];
+
+    const lines = [];
+
+    // 4변에 대해 작은 선으로 분할
+    for (let i = 0; i < 4; i++) {
+        const start = corners[i];
+        const end = corners[(i + 1) % 4];
+
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const distance = Math.hypot(dx, dy);
+        const steps = Math.max(Math.floor(distance / DRAW_STEP), 1);
+        const stepX = dx / steps;
+        const stepY = dy / steps;
+
+        for (let j = 0; j < steps; j++) {
+            const x1 = start.x + stepX * j;
+            const y1 = start.y + stepY * j;
+            const x2 = start.x + stepX * (j + 1);
+            const y2 = start.y + stepY * (j + 1);
+
+            const line = new fabric.Line([x1, y1, x2, y2], {
+                uuid: generateUUID(),
+                stroke: msg.stroke,
+                strokeWidth: 2,
+                selectable: false,
+                evented: false,
+                strokeLineCap: 'round',
+                strokeLineJoin: 'round'
+            });
+            //objectCaching: false
+
+            lines.push(line);
+            canvas.add(line);
+        }
+    }
+
+    // currentAction 기록
+    if (currentAction && currentAction.type === 'draw') {
+        lines.forEach((line) => {
+            currentAction.targets.push({
+                uuid: line.uuid,
+                x1: line.x1,
+                y1: line.y1,
+                x2: line.x2,
+                y2: line.y2,
+                stroke: line.stroke,
+                strokeWidth: line.strokeWidth
+            });
+        });
+    }
+}
+
+function drawPreviewTriangle(msg) {
+    if (previewTriangle[msg.senderId]) {
+        canvas.remove(previewTriangle[msg.senderId]);
+        previewTriangle[msg.senderId] = null;
+    }
+
+    if (previewLine[msg.senderId]) {
+        canvas.remove(previewLine[msg.senderId]);
+        previewLine[msg.senderId] = null;
+    }
+
+    previewTri = new fabric.Polygon([
+        { x: msg.x1, y: msg.y1 },
+        { x: msg.x2, y: msg.y2 },
+        { x: msg.x3, y: msg.y3 }
+    ], {
+        fill: 'transparent',
+        stroke: msg.stroke,
+        strokeWidth: 2,
+        selectable: false,
+        evented: false,
+        strokeLineCap: 'round',
+        strokeLineJoin: 'round'
+    });
+    // objectCaching: false
+
+    canvas.add(previewTri);
+    previewTriangle[msg.senderId] = previewTri;
+}
+
+function finalizeTriangle(msg) {
+    // preview 제거
+    if (previewTriangle[msg.senderId]) {
+        canvas.remove(previewTriangle[msg.senderId]);
+        previewTriangle[msg.senderId] = null;
+    }
+
+    if (previewLine[msg.senderId]) {
+        canvas.remove(previewLine[msg.senderId]);
+        previewLine[msg.senderId] = null;
+    }
+
+    const points = [
+        {x: msg.x1, y: msg.y1}, // 첫 클릭
+        {x: msg.x2, y: msg.y2}, // 두 번째 클릭
+        {x: msg.x3, y: msg.y3}  // mouse up 지점
+    ];
+
+    const lines = [];
+
+    // 삼각형의 3변을 순회
+    for (let i = 0; i < 3; i++) {
+        const start = points[i];
+        const end = points[(i + 1) % 3];
+
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const distance = Math.hypot(dx, dy);
+
+        const steps = Math.max(Math.floor(distance / DRAW_STEP), 1);
+        const stepX = dx / steps;
+        const stepY = dy / steps;
+
+        // 한 변을 작은 선들로 분할
+        for (let j = 0; j < steps; j++) {
+            const x1 = start.x + stepX * j;
+            const y1 = start.y + stepY * j;
+            const x2 = start.x + stepX * (j + 1);
+            const y2 = start.y + stepY * (j + 1);
+
+            const line = new fabric.Line([x1, y1, x2, y2], {
+                uuid: generateUUID(),
+                stroke: msg.stroke,
+                strokeWidth: 2,
+                selectable: false,
+                evented: false,
+                strokeLineCap: 'round',
+                strokeLineJoin: 'round'
+            });
+            // objectCaching: false
+
+            canvas.add(line);
+            lines.push(line);
+        }
+    }
+
+    if (currentAction && currentAction.type === 'draw') {
+        lines.forEach(line => {
+            currentAction.targets.push({
+                uuid: line.uuid,
+                x1: line.x1,
+                y1: line.y1,
+                x2: line.x2,
+                y2: line.y2,
+                stroke: line.stroke,
+                strokeWidth: line.strokeWidth
+            });
+        });
+    }
+}
+
+function drawPreviewLine(msg) {
+    // 이전 미리보기 제거
+    if (previewLine[msg.senderId]) {
+        canvas.remove(previewLine[msg.senderId]);
+        previewLine[msg.senderId] = null;
+    }
+
+    // 새로운 선 그리기
+    previewL = new fabric.Line(
+        [msg.x1, msg.y1, msg.x2, msg.y2],
+        {
+            uuid: msg.uuid,
+            stroke: msg.stroke || "#000",
+            strokeWidth: 2,
+            selectable: false,
+            evented: false,
+            strokeLineCap: 'round', // 끝점 둥글게
+            strokeLineJoin: 'round' // 연결점 부드럽게
+        }
+    );
+    canvas.add(previewL);
+    previewLine[msg.senderId] = previewL;
+}
+
+function finalizeLine(msg) {
+    // 미리보기 제거
+    if (previewLine[msg.senderId]) {
+        canvas.remove(previewLine[msg.senderId]);
+        previewLine[msg.senderId] = null;
+    }
+
+    const dx = msg.x2 - msg.x1;
+    const dy = msg.y2 - msg.y1;
+    const distance = Math.hypot(dx, dy);
+
+    const steps = Math.max(Math.floor(distance / DRAW_STEP), 1);
+    const stepX = dx / steps;
+    const stepY = dy / steps;
+
+    const lines = [];
+
+    // DRAW_STEP 단위로 분할
+    for (let j = 0; j < steps; j++) {
+        const x1 = msg.x1 + stepX * j;
+        const y1 = msg.y1 + stepY * j;
+        const x2 = msg.x1 + stepX * (j + 1);
+        const y2 = msg.y1 + stepY * (j + 1);
+
+        const line = new fabric.Line([x1, y1, x2, y2], {
+            uuid: generateUUID(),
+            stroke: msg.stroke || "#000",
+            strokeWidth: 2,
+            selectable: false,
+            evented: false,
+            strokeLineCap: 'round',
+            strokeLineJoin: 'round'
+        });
+
+        canvas.add(line);
+        lines.push(line);
+    }
+
+    // currentAction에 기록
+    if (currentAction && currentAction.type === 'draw') {
+        lines.forEach(line => {
+            currentAction.targets.push({
+                uuid: line.uuid,
+                x1: line.x1,
+                y1: line.y1,
+                x2: line.x2,
+                y2: line.y2,
+                stroke: line.stroke,
+                strokeWidth: line.strokeWidth
+            });
+        });
+    }
+}
+
+// 미리보기 원
+function drawPreviewCircle(msg) {
+    // 이전 미리보기 제거
+    if (previewCircle[msg.senderId]) {
+        canvas.remove(previewCircle[msg.senderId]);
+        previewCircle[msg.senderId] = null;
+    }
+
+    // 반지름 계산
+    const dx = msg.x - msg.centerX;
+    const dy = msg.y - msg.centerY;
+    const radius = Math.hypot(dx, dy);
+
+    previewCir = new fabric.Circle({
+        left: msg.centerX - radius,
+        top: msg.centerY - radius,
+        radius: radius,
+        fill: 'transparent',
+        stroke: msg.stroke || "#000",
+        strokeWidth: 2,
+        selectable: false,
+        evented: false
     });
 
-    canvas.add(rect);
-    canvas.setActiveObject(rect);
+    canvas.add(previewCir);
+    previewCircle[msg.senderId] = previewCir;
+}
+
+// 확정 원
+function finalizeCircle(msg) {
+    // 이전 미리보기 제거
+    if (previewCircle[msg.senderId]) {
+        canvas.remove(previewCircle[msg.senderId]);
+        previewCircle[msg.senderId] = null;
+    }
+
+    const dx = msg.x - msg.centerX;
+    const dy = msg.y - msg.centerY;
+    const radius = Math.hypot(dx, dy);
+
+    const steps = Math.max(Math.floor(2 * Math.PI * radius / CIRCLE_DRAW_STEP), 1); // 원 둘레 DRAW_STEP 단위
+    const angleStep = (2 * Math.PI) / steps;
+
+    const lines = [];
+
+    for (let i = 0; i < steps; i++) {
+        const angle1 = angleStep * i;
+        const angle2 = angleStep * (i + 1);
+
+        const x1 = msg.centerX + radius * Math.cos(angle1);
+        const y1 = msg.centerY + radius * Math.sin(angle1);
+        const x2 = msg.centerX + radius * Math.cos(angle2);
+        const y2 = msg.centerY + radius * Math.sin(angle2);
+
+        const line = new fabric.Line([x1, y1, x2, y2], {
+            uuid: generateUUID(),
+            stroke: msg.stroke || "#000",
+            strokeWidth: 2,
+            selectable: false,
+            evented: false,
+            strokeLineCap: 'round',
+            strokeLineJoin: 'round'
+        });
+
+        canvas.add(line);
+        lines.push(line);
+    }
+
+    // currentAction 기록
+    if (currentAction && currentAction.type === 'draw') {
+        lines.forEach(line => {
+            currentAction.targets.push({
+                uuid: line.uuid,
+                x1: line.x1,
+                y1: line.y1,
+                x2: line.x2,
+                y2: line.y2,
+                stroke: line.stroke,
+                strokeWidth: line.strokeWidth
+            });
+        });
+    }
 }
 
 // undo, redo 메시지 전송
@@ -1593,6 +2054,8 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPointer = lastPoint;
         }
 
+        const pointer = canvas.getPointer(opt.e);
+
         if (isDrawing) {
             initializeCurrentAction({type: selectedTool});
 
@@ -1605,8 +2068,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (selectedTool === 'shape' && currentShape === 'rect') {
-            const pointer = canvas.getPointer(opt.e);
-            shapeStartPoint = pointer;
+            rectStartPoint = pointer;
+            shapeCurrentPoint = pointer;
+            isShapeDrawing = true;
+        }
+
+        if (selectedTool === 'shape' && currentShape === 'triangle') {
+            if (!triangleFirstPoint) {
+                // 첫 클릭: 첫 점 저장
+                isShapeDrawing = true;
+                triangleFirstPoint = pointer;
+            } else if (!triangleSecondPoint) {
+                // 두 번째 클릭: 두 번째 점 저장
+                triangleSecondPoint = pointer;
+            }
+        }
+
+        if (selectedTool === 'shape' && currentShape === 'circle') {
+            circleCenterPoint = pointer;
+            shapeCurrentPoint = pointer;
+            isShapeDrawing = true;
+        }
+
+        if (selectedTool === 'shape' && currentShape === 'line') {
+            lineStartPoint = pointer;
             shapeCurrentPoint = pointer;
             isShapeDrawing = true;
         }
@@ -1635,53 +2120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isDrawing) {
             isDrawing = false;
             currentPointer = null;
-
-            if (currentAction && currentAction.targets.length > 0) {
-                // UI 즉시 반영: undoStack에 push
-                pushToUndoStack();
-
-                // pushToUndoStack 메시지는 UI 즉시 전송
-                const pushMsg = {
-                    senderId: senderId,
-                    seq: mySeq++
-                };
-                safeSend('/app/pushToUndoStack', pushMsg);
-
-                const actionCopy = JSON.parse(JSON.stringify(currentAction));
-
-                const undoRedoStackDTO = {
-                    roomId: roomId,
-                    undoStack: JSON.parse(JSON.stringify(undoStack)),
-                    redoStack: JSON.parse(JSON.stringify(redoStack))
-                };
-
-                undoRedoQueue = undoRedoQueue.then(async () => {
-                    // DB 저장
-                    await saveCanvasActionToDB(actionCopy.type, actionCopy.targets.map(t => ({
-                        uuid: t.uuid,
-                        stroke: t.stroke,
-                        x1: t.x1,
-                        y1: t.y1,
-                        x2: t.x2,
-                        y2: t.y2
-                    })));
-
-                    // undo/redo 스택 DB 저장
-                    await saveUndoRedoStack(undoRedoStackDTO);
-                }).catch(console.error);
-
-                // currentAction 리셋 & 메시지 전송
-                resetCurrentAction();
-
-                const resetMsg = {
-                    senderId: senderId,
-                    seq: mySeq++
-                };
-                safeSend('/app/resetCurrentAction', resetMsg);
-            } else {
-                // currentAction 비어있으면 그냥 리셋
-                resetCurrentAction();
-            }
         }
 
         if (isPanning) {
@@ -1691,36 +2129,185 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isShapeDrawing) {
             const pointer = canvas.getPointer(opt.e);
             shapeCurrentPoint = pointer;
-            isShapeDrawing = false;
 
-            // 도형 확정
-            message = {
-                senderId: senderId,
-                seq: mySeq++,
-                uuid: generateUUID(),
-                stroke: currentColor,
-                x1: shapeStartPoint.x,
-                y1: shapeStartPoint.y,
-                x2: shapeCurrentPoint.x,
-                y2: shapeCurrentPoint.y
+            if (currentShape === "rect" && rectStartPoint) {
+                initializeCurrentAction({type: 'draw'});
+
+                let message = {
+                    senderId: senderId,
+                    seq: mySeq++,
+                    type: 'draw'
+                }
+                safeSend('/app/initializeCurrentAction', message);
+
+                message = {
+                    senderId,
+                    seq: mySeq++,
+                    uuid: generateUUID(),
+                    stroke: currentColor,
+                    x1: rectStartPoint.x,
+                    y1: rectStartPoint.y,
+                    x2: shapeCurrentPoint.x,
+                    y2: shapeCurrentPoint.y
+                };
+
+                finalizeRectangle(message);
+                safeSend("/app/finalizeRectangle", message);
+
+                rectStartPoint = null;
+                isShapeDrawing = false;
             }
-            finalizeRectangle(message);
-            safeSend("/app/finalizeRectangle", message);
 
-            shapeStartPoint = null;
-            shapeCurrentPoint = null;
+            else if (currentShape === "triangle" && triangleFirstPoint && triangleSecondPoint) {
+                initializeCurrentAction({ type: 'draw' });
+
+                let message = {
+                    senderId: senderId,
+                    seq: mySeq++,
+                    type: 'draw'
+                }
+                safeSend('/app/initializeCurrentAction', message);
+
+                message = {
+                    senderId,
+                    seq: mySeq++,
+                    uuid: generateUUID(),
+                    stroke: currentColor,
+                    x1: triangleFirstPoint.x,
+                    y1: triangleFirstPoint.y,
+                    x2: triangleSecondPoint.x,
+                    y2: triangleSecondPoint.y,
+                    x3: shapeCurrentPoint.x,
+                    y3: shapeCurrentPoint.y
+                };
+
+                finalizeTriangle(message);
+                safeSend("/app/finalizeTriangle", message);
+
+                // 삼각형 상태 리셋
+                triangleFirstPoint = null;
+                triangleSecondPoint = null;
+                isShapeDrawing = false;
+            }
+
+            else if (currentShape === "circle" && circleCenterPoint) {
+                initializeCurrentAction({type: 'draw'});
+
+                let message = {
+                    senderId: senderId,
+                    seq: mySeq++,
+                    type: 'draw'
+                }
+                safeSend('/app/initializeCurrentAction', message);
+
+                message = {
+                    senderId,
+                    seq: mySeq++,
+                    uuid: generateUUID(),
+                    stroke: currentColor,
+                    centerX: circleCenterPoint.x,
+                    centerY: circleCenterPoint.y,
+                    x: shapeCurrentPoint.x,
+                    y: shapeCurrentPoint.y
+                };
+
+                finalizeCircle(message);
+                safeSend("/app/finalizeCircle", message);
+
+                circleCenterPoint = null;
+                isShapeDrawing = false;
+            }
+
+            else if (currentShape === "line" && lineStartPoint) {
+                initializeCurrentAction({type: 'draw'});
+
+                let message = {
+                    senderId: senderId,
+                    seq: mySeq++,
+                    type: 'draw'
+                }
+                safeSend('/app/initializeCurrentAction', message);
+
+                message = {
+                    senderId,
+                    seq: mySeq++,
+                    uuid: generateUUID(),
+                    stroke: currentColor,
+                    x1: lineStartPoint.x,
+                    y1: lineStartPoint.y,
+                    x2: shapeCurrentPoint.x,
+                    y2: shapeCurrentPoint.y
+                };
+
+                finalizeLine(message);
+                safeSend("/app/finalizeLine", message);
+
+                lineStartPoint = null;
+                isShapeDrawing = false;
+            }
         }
+
+        // 공통 로직
+        if (currentAction && currentAction.targets.length > 0) {
+            // UI 즉시 반영: undoStack에 push
+            pushToUndoStack();
+
+            // pushToUndoStack 메시지는 UI 즉시 전송
+            const pushMsg = {
+                senderId: senderId,
+                seq: mySeq++
+            };
+            safeSend('/app/pushToUndoStack', pushMsg);
+
+            const actionCopy = JSON.parse(JSON.stringify(currentAction));
+
+            const undoRedoStackDTO = {
+                roomId: roomId,
+                undoStack: JSON.parse(JSON.stringify(undoStack)),
+                redoStack: JSON.parse(JSON.stringify(redoStack))
+            };
+
+            undoRedoQueue = undoRedoQueue.then(async () => {
+                // DB 저장
+                await saveCanvasActionToDB(actionCopy.type, actionCopy.targets.map(t => ({
+                    uuid: t.uuid,
+                    stroke: t.stroke,
+                    x1: t.x1,
+                    y1: t.y1,
+                    x2: t.x2,
+                    y2: t.y2
+                })));
+
+                // undo/redo 스택 DB 저장
+                await saveUndoRedoStack(undoRedoStackDTO);
+            }).catch(console.error);
+
+            // currentAction 리셋 & 메시지 전송
+            resetCurrentAction();
+
+            const resetMsg = {
+                senderId: senderId,
+                seq: mySeq++
+            };
+            safeSend('/app/resetCurrentAction', resetMsg);
+        } else {
+            // currentAction 비어있으면 그냥 리셋
+            resetCurrentAction();
+        }
+
+        shapeCurrentPoint = null;
+        prevShapeCurrentPoint = null;
     });
 
     // select 이벤트
     canvas.on('selection:created', function(e) {
-        initializeCurrentAction({type: selectedTool});
-        const message = {
-            senderId: senderId,
-            seq: mySeq++,
-            type: selectedTool
-        }
-        safeSend('/app/initializeCurrentAction', message);
+//        initializeCurrentAction({type: selectedTool});
+//        const message = {
+//            senderId: senderId,
+//            seq: mySeq++,
+//            type: selectedTool
+//        }
+//        safeSend('/app/initializeCurrentAction', message);
     });
 
     canvas.on('object:moving', function (e) { isTransform = true; });
@@ -1730,42 +2317,42 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.on('object:scaling', function (e) { isTransform = true; });
 
     canvas.on('object:modified', function(e) {
-        if (currentAction && currentAction.targets.length > 0) {
-            pushToUndoStack();
-            const message = {
-                senderId: senderId,
-                seq: mySeq++
-            }
-            safeSend('/app/pushToUndoStack', message);
-
-            saveUndoRedoStack();
-        }
-
-        resetCurrentAction();
-
-        const message = {
-            senderId: senderId,
-            seq: mySeq++
-        }
-        safeSend('/app/resetCurrentAction', message);
-
-        initializeCurrentAction({type: selectedTool});
-
-        const message2 = {
-            senderId: senderId,
-            seq: mySeq++,
-            type: selectedTool
-        }
-        safeSend('/app/initializeCurrentAction', message2);
+//        if (currentAction && currentAction.targets.length > 0) {
+//            pushToUndoStack();
+//            const message = {
+//                senderId: senderId,
+//                seq: mySeq++
+//            }
+//            safeSend('/app/pushToUndoStack', message);
+//
+//            saveUndoRedoStack();
+//        }
+//
+//        resetCurrentAction();
+//
+//        const message = {
+//            senderId: senderId,
+//            seq: mySeq++
+//        }
+//        safeSend('/app/resetCurrentAction', message);
+//
+//        initializeCurrentAction({type: selectedTool});
+//
+//        const message2 = {
+//            senderId: senderId,
+//            seq: mySeq++,
+//            type: selectedTool
+//        }
+//        safeSend('/app/initializeCurrentAction', message2);
     });
 
     canvas.on('selection:cleared', function(e) {
-        resetCurrentAction();
-        const message = {
-            senderId: senderId,
-            seq: mySeq++
-        }
-        safeSend('/app/resetCurrentAction', message);
+//        resetCurrentAction();
+//        const message = {
+//            senderId: senderId,
+//            seq: mySeq++
+//        }
+//        safeSend('/app/resetCurrentAction', message);
     });
 });
 
