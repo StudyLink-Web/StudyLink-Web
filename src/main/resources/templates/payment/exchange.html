@@ -4,80 +4,79 @@
       layout:decorate="~{layout/layout}">
 
 <div layout:fragment="content" class="container-md">
-	<div style="width: 1000px; margin: 0 auto;">
-		<h1 class="exchangeTitle">환전하기</h1>
-		<p class="exchangeDesc">
-			보유한 포인트를 현금으로 환전할 수 있습니다.<br />
-			입력한 계좌 정보로 송금됩니다.
-		</p>
+	<div class="container-narrow">
 
-		<!-- 보유 포인트 -->
-		<div class="exchangeSection">
-			<h2>보유 포인트</h2>
-			<div class="point-box">
-				현재 보유 포인트: <strong>[123,456 P]</strong>
-			</div>
-		</div>
+		<div class="row g-4">
+			<!-- 좌측: 설명 / 포인트 / 안내 -->
+			<div class="col-md-6">
+				<h1 class="exchangeTitle">환전하기</h1>
+				<p class="exchangeDesc">
+					보유한 포인트를 현금으로 환전할 수 있습니다.<br />
+					입력한 계좌 정보로 송금됩니다.
+				</p>
 
-		<!-- 환전 정보 -->
-		<div class="exchangeSection">
-			<h2>환전 정보 입력</h2>
+				<!-- 보유 포인트 -->
+				<div class="exchangeSection">
+					<h2>보유 포인트</h2>
+					<div class="point-box">
+						현재 보유 포인트: <strong>[123,456 P]</strong>
+					</div>
+				</div>
 
-			<div class="exchagneField">
-				<label for="exchangePoint">환전할 포인트</label>
-				<input
-						id="exchangePoint"
-						placeholder="환전할 포인트를 입력하세요"
-				/>
-				<small>최소 환전 포인트: [10,000P]</small>
-				<p id="validMessage"></p>
+				<!-- 안내 문구 -->
+				<div class="exchangeNotice mt-4">
+					· 환전 신청은 영업일 기준 [1~3일] 내 처리됩니다.<br />
+					· 입력한 계좌 정보가 올바르지 않을 경우 환전이 지연될 수 있습니다.<br />
+					· 환전 신청 후에는 취소가 불가능합니다.
+				</div>
 			</div>
 
-			<div class="exchagneField">
-				<label for="bank">은행명</label>
-				<select id="bank">
-					<option value="">은행을 선택하세요</option>
-					<option>국민은행</option>
-					<option>기업은행</option>
-					<option>신한은행</option>
-					<option>우리은행</option>
-					<option>하나은행</option>
-					<option>카카오뱅크</option>
-					<option>토스뱅크</option>
-				</select>
+			<!-- 우측: 입력폼 + 버튼 -->
+			<div class="col-md-6">
+				<div class="exchange-right">
+					<h2>환전 정보 입력</h2>
+
+					<div class="mb-3">
+						<label for="exchangePoint">환전할 포인트</label>
+						<input id="exchangePoint" class="form-control" placeholder="환전할 포인트를 입력하세요" />
+						<small>최소 환전 포인트: [10,000P]</small>
+						<p id="validMessage"></p>
+					</div>
+
+					<div class="mb-3">
+						<label for="bank">은행명</label>
+						<select id="bank" class="form-control">
+							<option value="">은행을 선택하세요</option>
+							<option>국민은행</option>
+							<option>기업은행</option>
+							<option>신한은행</option>
+							<option>우리은행</option>
+							<option>하나은행</option>
+							<option>카카오뱅크</option>
+							<option>토스뱅크</option>
+						</select>
+					</div>
+
+					<div class="mb-3">
+						<label for="accountNumber">계좌번호</label>
+						<input type="text" id="accountNumber" class="form-control" placeholder="계좌번호를 입력하세요" />
+						<small>'-'없이 숫자만 입력하세요</small>
+						<p id="accountValidMessage"></p>
+					</div>
+
+					<div class="mb-3">
+						<label for="accountHolder">예금주명</label>
+						<input type="text" id="accountHolder" class="form-control" placeholder="예금주명을 입력하세요" />
+					</div>
+
+					<!-- 환전 신청 버튼 -->
+					<div class="exchangeActions mt-3">
+						<button type="button" id="exchangeSubmitBtn" class="btn btn-primary w-100">
+							환전 신청하기
+						</button>
+					</div>
+				</div>
 			</div>
-
-			<div class="exchagneField">
-				<label for="accountNumber">계좌번호</label>
-				<input
-						type="text"
-						id="accountNumber"
-						placeholder="계좌번호를 입력하세요"
-				/>
-				<small>'-'없이 숫자만 입력하세요</small>
-				<p id="accountValidMessage"></p>
-			</div>
-
-			<div class="exchagneField">
-				<label for="accountHolder">예금주명</label>
-				<input
-						type="text"
-						id="accountHolder"
-						placeholder="예금주명을 입력하세요"
-				/>
-			</div>
-		</div>
-
-		<!-- 버튼 -->
-		<div class="exchangeActions">
-			<button type="button" id="exchangeSubmitBtn">환전 신청하기</button>
-		</div>
-
-		<!-- 안내 -->
-		<div class="exchangeNotice">
-			· 환전 신청은 영업일 기준 [1~3일] 내 처리됩니다.<br />
-			· 입력한 계좌 정보가 올바르지 않을 경우 환전이 지연될 수 있습니다.<br />
-			· 환전 신청 후에는 취소가 불가능합니다.
 		</div>
 	</div>
 

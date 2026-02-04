@@ -16,7 +16,7 @@
 			<!-- 로그인 전 -->
 			<ul class="header-nav" th:if="${#authorization.expression('isAnonymous()')}">
 				<li>
-					<a th:href="@{/room/list}" class="header-nav-link">문제 리스트</a>
+					<a th:href="@{/room/list}" class="header-nav-link">문제 풀기</a>
 				</li>
 				<li>
 					<a th:href="@{/chatbot}" class="header-nav-link">AI 대입 상담</a>
@@ -35,7 +35,7 @@
 			<!-- 로그인 후 -->
 			<ul class="header-nav" th:if="${#authorization.expression('isAuthenticated()')}">
 				<li>
-					<a th:href="@{/room/list}" class="header-nav-link">문제 리스트</a>
+					<a th:href="@{/room/list}" class="header-nav-link">문제 풀기</a>
 				</li>
 				<li>
 					<a th:href="@{/chatbot}" class="header-nav-link">AI 대입 상담</a>

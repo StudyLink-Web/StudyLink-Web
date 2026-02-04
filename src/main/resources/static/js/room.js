@@ -811,6 +811,43 @@ function resetCanvasStateForSync() {
 
     // 4. DB 큐 초기화
     undoRedoQueue = Promise.resolve();
+
+    canvas.isDrawingMode = false; // 드로잉 모드
+
+    // 도구 선택
+    let selectedTool = 'draw';
+    let currentShape = null; // rect, circle, triangle, line
+
+    // 도형
+    let shapeCurrentPoint = null;
+    let isShapeDrawing = false;
+    let prevShapeCurrentPoint = null;
+
+    let rectStartPoint = null;
+    let previewRect = {}; // 사각형 미리보기
+
+    let triangleFirstPoint = null;  // 첫 클릭 위치
+    let triangleSecondPoint = null;  // 첫 클릭 위치
+    let previewTriangle = {};
+
+    let circleCenterPoint = null;
+    let previewCircle = {};
+
+    let lineStartPoint = null;
+    let previewLine = {};
+
+    // 캔버스 이동 관련
+    let isPanning = false;
+
+    // 랜더링 관련
+    let renderScheduled = false;
+    let lastRenderTime = 0;
+
+    // 그리기 관련
+    let isDrawing = false;
+    let lastPoint = null;
+    let currentPointer = null;
+    let currentColor = '#000000';
 }
 
 function safeUndoRedo(actionType) {
