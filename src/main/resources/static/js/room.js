@@ -199,30 +199,6 @@ function onConnect(frame) {
         scheduleRender();
     });
 
-    // 영역 선택 모드 on/off
-    stompClient.subscribe(`/topic/selectMode/${roomId}`, function(message){
-        const msg = JSON.parse(message.body);
-        if (msg.senderId === senderId) return;
-        if (msg.type === 'selectModeOn') {
-            isSelectLocked = true;
-            if (selectedTool === 'select') {
-                selectedTool = 'draw'; // 내가 select 중이면 강제로 draw로
-                alert("다른 사람이 선택 모드를 사용합니다. select 모드 종료");
-            }
-        } else if (msg.type === 'selectModeOff') {
-            isSelectLocked = false;
-        }
-        updateToolUI(); // 여기서 라디오 버튼 잠금/해제
-    });
-
-    // select
-    stompClient.subscribe(`/topic/select/${roomId}`, function(message){
-        const msg = JSON.parse(message.body);
-        if (msg.senderId === senderId) return;
-        handleMessage(msg, objectUpdate);
-        scheduleRender();
-    });
-
     // currentAction 초기화
     stompClient.subscribe(`/topic/initializeCurrentAction/${roomId}`, function(message){
         const msg = JSON.parse(message.body);
@@ -706,6 +682,9 @@ let previewLine = {};
 
 // 함수 생성 기능
 const GRAPH_SIZE = 200;
+const FUNCTION_DRAW_STEP = 20;
+const LIMIT = 300;
+const STEP = 0.1; // 함수 x값 촘촘한 정도
 
 
 // 캔버스 이동 관련
@@ -765,17 +744,10 @@ document.getElementById('cleanBtn').addEventListener('click', async () => {
 // 툴 선택
 document.getElementById('penBtn').addEventListener('click', () => selectTool('draw'));
 document.getElementById('eraseBtn').addEventListener('click', () => selectTool('erase'));
-document.getElementById('selectionBtn').addEventListener('click', (e) => {
-    if (isSelectLocked) {
-        alert("다른 사람이 선택 모드를 사용 중입니다.");
-        e.preventDefault(); // 체크 변경 막기
-        return;
-    }
-    selectTool('select');
-});
+document.getElementById('selectionBtn').addEventListener('click', (e) => selectTool('select'));
 
-document.getElementById('undoBtn').addEventListener('click', () => safeUndoRedo('undo'));
-document.getElementById('redoBtn').addEventListener('click', () => safeUndoRedo('redo'));
+document.getElementById('undoBtn').addEventListener('click', () => {selectTool('draw'); safeUndoRedo('undo');});
+document.getElementById('redoBtn').addEventListener('click', () => {selectTool('draw'); safeUndoRedo('redo');});
 
 // 색상 선택
 const customColorInput = document.getElementById('customColor');
@@ -830,31 +802,95 @@ function setActiveShape(selected) {
     selected.classList.add('active');
 }
 
-const drawBtn = document.getElementById('drawBtn');
 
-drawBtn.addEventListener('click', () => {
+
+document.getElementById('drawBtn').addEventListener('click', () => {
     if (!getValidatedRangesAndFunction()) return;
 
-    const expr = funcInput.value;
-    const xMin = parseFloat(xRangeLeft.value);
-    const xMax = parseFloat(xRangeRight.value);
-    const yMin = parseFloat(yRangeLeft.value);
-    const yMax = parseFloat(yRangeRight.value);
+    const expr = document.getElementById('funcInput').value;
+    const xMin = parseFloat(document.getElementById('xRangeLeft').value);
+    const xMax = parseFloat(document.getElementById('xRangeRight').value);
+    const yMin = parseFloat(document.getElementById('yRangeLeft').value);
+    const yMax = parseFloat(document.getElementById('yRangeRight').value);
     const showAxes = document.getElementById('showAxes').checked;
 
+    const safeExpr = getSafeFunc(expr);
+    const func = new Function('x', `return ${safeExpr}`);
 
-    const func = new Function('x', `return ${expr}`);
+    initializeCurrentAction({ type: 'draw' });
 
-    drawGraphWithLines(func, xMin, xMax, yMin, yMax, showAxes);
+    let message = {
+        senderId: senderId,
+        seq: mySeq++,
+        type: 'draw'
+    }
+    safeSend('/app/initializeCurrentAction', message);
+
+    drawGraphWithLines(func, xMin, xMax, yMin, yMax, showAxes, currentColor);
+    scheduleRender();
+    selectTool('select');
+
+    if (currentAction && currentAction.targets.length > 0) {
+        // UI 즉시 반영: undoStack에 push
+        pushToUndoStack();
+
+        // pushToUndoStack 메시지는 UI 즉시 전송
+        const pushMsg = {
+            senderId: senderId,
+            seq: mySeq++
+        };
+        safeSend('/app/pushToUndoStack', pushMsg);
+
+        const actionCopy = JSON.parse(JSON.stringify(currentAction));
+
+        const undoRedoStackDTO = {
+            roomId: roomId,
+            undoStack: JSON.parse(JSON.stringify(undoStack)),
+            redoStack: JSON.parse(JSON.stringify(redoStack))
+        };
+
+        undoRedoQueue = undoRedoQueue.then(async () => {
+            // DB 저장
+            await saveCanvasActionToDB(actionCopy.type, actionCopy.targets.map(t => ({
+                uuid: t.uuid,
+                stroke: t.stroke,
+                x1: t.x1,
+                y1: t.y1,
+                x2: t.x2,
+                y2: t.y2
+            })));
+
+            // undo/redo 스택 DB 저장
+            await saveUndoRedoStack(undoRedoStackDTO);
+        }).catch(console.error);
+
+        // currentAction 리셋 & 메시지 전송
+        resetCurrentAction();
+
+        const resetMsg = {
+            senderId: senderId,
+            seq: mySeq++
+        };
+        safeSend('/app/resetCurrentAction', resetMsg);
+    } else {
+        // currentAction 비어있으면 그냥 리셋
+        resetCurrentAction();
+    }
 });
 
+function getSafeFunc(expr) {
+    return expr.replace(/\^/g, '**') // x ^ 2 -> x ** 2
+               .replace(/(\d)(x)/g, '$1*$2') // 2x → 2*x
+               .replace(/\b(sin|cos|tan|asin|acos|atan|log|sqrt|abs|exp)\b/g, 'Math.$1'); // 삼각함수
+}
 
 function getValidatedRangesAndFunction() {
     // ---------- 범위 ----------
-    const xMin = parseFloat(xRangeLeft.value);
-    const xMax = parseFloat(xRangeRight.value);
-    const yMin = parseFloat(yRangeLeft.value);
-    const yMax = parseFloat(yRangeRight.value);
+    const xMin = parseFloat(document.getElementById('xRangeLeft').value);
+    const xMax = parseFloat(document.getElementById('xRangeRight').value);
+    const yMin = parseFloat(document.getElementById('yRangeLeft').value);
+    const yMax = parseFloat(document.getElementById('yRangeRight').value);
+    console.log(xMin, xMax, yMin, yMax)
 
     if ([xMin, xMax, yMin, yMax].some(v => Number.isNaN(v))) {
         alert('x, y 범위는 숫자로 입력해주세요.');
@@ -871,7 +907,7 @@ function getValidatedRangesAndFunction() {
         return false;
     }
 
-    const LIMIT = 200;
+
     if (
         Math.abs(xMin) > LIMIT || Math.abs(xMax) > LIMIT ||
         Math.abs(yMin) > LIMIT || Math.abs(yMax) > LIMIT
@@ -881,7 +917,7 @@ function getValidatedRangesAndFunction() {
     }
 
     // ---------- 함수식 ----------
-    const expr = funcInput.value.trim();
+    const expr = document.getElementById('funcInput').value.trim();
     if (!expr) {
         alert('함수식을 입력해주세요.');
         return false;
@@ -890,7 +926,7 @@ function getValidatedRangesAndFunction() {
     let func;
     try {
         // ^ → ** 변환 (지수 연산 지원)
-        const safeExpr = expr.replace(/\^/g, '**');
+        const safeExpr = getSafeFunc(expr);
         func = new Function('x', `return ${safeExpr}`);
     } catch (e) {
         alert('함수식 문법이 올바르지 않습니다.');
@@ -902,73 +938,176 @@ function getValidatedRangesAndFunction() {
 }
 
 function drawGraphWithLines(func, xMin, xMax, yMin, yMax, showAxes, stroke) {
+    const vp = canvas.viewportTransform;
+    scaleX = vp[0];
+    scaleY = vp[3];
+    const offsetX = vp[4] / scaleX;
+    const offsetY = vp[5] / scaleY;
+    console.log(vp)
     const canvasWidth = canvas.getWidth();
     const canvasHeight = canvas.getHeight();
 
-    // 캔버스 중앙 기준
-    const centerX = canvasWidth / 2;
-    const centerY = canvasHeight / 2;
+    const centerX = canvasWidth / 2 / scaleX;
+    const centerY = canvasHeight / 2 / scaleY;
 
-    // 화면 이동(pan) 반영
-    const vp = canvas.viewportTransform; // [scaleX, skewX, skewY, scaleY, translateX, translateY]
-    const offsetX = vp[4];
-    const offsetY = vp[5];
 
-    const lines = [];
+    const lines = []; // 그래프 + 축 전부 담는 배열
+    const messages = [];
+    let prevPoint = null;
 
-    for (let x = xMin; x <= xMax; x += DRAW_STEP) {
-        let y = func(x);
+    // =====================
+    // 그래프 그리기
+    // =====================
 
-        // 범위를 벗어나거나 NaN/Infinity면 건너뜀
-        if (!isFinite(y) || y < yMin || y > yMax) continue;
+    for (let i = Math.ceil(xMin/STEP); i <= Math.floor(xMax/STEP); i++) { // 소수점 오차방지
+        const x = i * STEP;
+        const y = func(x);
 
-        const px = centerX + x + offsetX;
-        const py = centerY - y + offsetY; // canvas y는 위가 0
+        if (!isFinite(y)) {
+            prevPoint = null; // 선 연결 끊기
+            continue;
+        }
 
-        if (lines.length > 0) {
-            const prev = lines[lines.length - 1].points;
-            const line = new fabric.Line([prev.x, prev.y, px, py], {
-                uuid: msg.uuid,
-                stroke: stroke,
-                strokeWidth: 2,
-                selectable: false,
-                evented: false
-            });
-            lines.push({ obj: line, points: { x: px, y: py } });
-            canvas.add(line);
-        } else {
-            lines.push({ points: { x: px, y: py } }); // 첫 점만 저장
+        const px = centerX + x * FUNCTION_DRAW_STEP - offsetX;
+        const py = centerY - y * FUNCTION_DRAW_STEP - offsetY;
+        const currPoint = {x: px, y: py}
+
+        if (prevPoint) {
+            if (x > -1 && x < 1) {
+                console.log(x);
+                console.log(isValidPoint(prevPoint, centerX, centerY, offsetX, offsetY) || isValidPoint(currPoint, centerX, centerY, offsetX, offsetY));
+            }
+
+
+            if (isValidPoint(prevPoint, centerX, centerY, offsetX, offsetY) || isValidPoint(currPoint, centerX, centerY, offsetX, offsetY)) {
+                const { x1, y1, x2, y2 } = clampLine(prevPoint, currPoint, centerX, centerY, offsetX, offsetY);
+                const newObjectId = generateUUID();
+                const message = {
+                    uuid: newObjectId,
+                    x1: x1,
+                    y1: y1,
+                    x2: x2,
+                    y2: y2,
+                    stroke: stroke
+                }
+                messages.push(message);
+                const line = drawLine(message);
+                if (line) {
+                    lines.push(line);
+                }
+            }
+        }
+        prevPoint = currPoint;
+    }
+
+    // =====================
+    // 축 그리기 (1 단위, FUNCTION_DRAW_STEP 배 스케일)
+    // =====================
+    if (showAxes) {
+        // =====================
+        // X축 (y = 0)
+        // =====================
+        for (let x = xMin; x <= xMax; x += 1) {
+            const x1 = centerX + x * FUNCTION_DRAW_STEP - offsetX;
+            const x2 = centerX + (x + 1) * FUNCTION_DRAW_STEP - offsetX;
+            const y  = centerY - offsetY;
+
+            const { x1: cx1, y1: cy1, x2: cx2, y2: cy2 } = clampLine(
+                { x: x1, y: y },
+                { x: x2, y: y }, centerX, centerY, offsetX, offsetY
+            );
+            const newObjectId = generateUUID();
+            const message = {
+                uuid: newObjectId,
+                x1: cx1,
+                y1: cy1,
+                x2: cx2,
+                y2: cy2,
+                stroke: '#000000'
+            }
+            messages.push(message);
+            const line = drawLine(message);
+            if (line) {
+                lines.push(line);
+            }
+        }
+
+        // =====================
+        // Y축 (x = 0)
+        // =====================
+        for (let y = yMin; y <= yMax; y += 1) {
+            const y1 = centerY - y * FUNCTION_DRAW_STEP - offsetY;
+            const y2 = centerY - (y + 1) * FUNCTION_DRAW_STEP - offsetY;
+            const x  = centerX - offsetX;
+
+            const { x1: cx1, y1: cy1, x2: cx2, y2: cy2 } = clampLine(
+                { x: x, y: y1 },
+                { x: x, y: y2 }, centerX, centerY, offsetX, offsetY
+            );
+            const newObjectId = generateUUID();
+            const message = {
+                uuid: newObjectId,
+                x1: cx1,
+                y1: cy1,
+                x2: cx2,
+                y2: cy2,
+                stroke: '#000000'
+            }
+            messages.push(message);
+            const line = drawLine(message);
+            if (line) {
+                lines.push(line);
+            }
         }
     }
 
-    // Line 객체만 모아서 그룹으로
-    const groupObjects = lines.filter(l => l.obj).map(l => l.obj);
-    const graphGroup = new fabric.Group(groupObjects, { selectable: true });
-    canvas.add(graphGroup);
+    const activeSelection = new fabric.ActiveSelection(lines, {
+        canvas: canvas
+    });
 
-    // 축 표시
-    if (showAxes) {
-        const axes = [];
+    // 선택 상태로 묶기
+    canvas.setActiveObject(activeSelection);
+}
 
-        // X축
-        const xLine = new fabric.Line([0 + offsetX, centerY + offsetY, canvasWidth + offsetX, centerY + offsetY], {
-            stroke: 'black',
-            strokeWidth: 1,
-            selectable: false
-        });
-        axes.push(xLine);
+function isValidPoint(point, centerX, centerY, offsetX, offsetY) {
+    return !(point.x < centerX - LIMIT - offsetX || point.x > centerX + LIMIT - offsetX
+     || point.y < centerY - LIMIT - offsetY || point.y > centerY + LIMIT - offsetY);
+}
 
-        // Y축
-        const yLine = new fabric.Line([centerX + offsetX, 0 + offsetY, centerX + offsetX, canvasHeight + offsetY], {
-            stroke: 'black',
-            strokeWidth: 1,
-            selectable: false
-        });
-        axes.push(yLine);
+function clampLine(prev, curr, centerX, centerY, offsetX, offsetY) {
+    let x1 = prev.x, y1 = prev.y;
+    let x2 = curr.x, y2 = curr.y;
 
-        const axesGroup = new fabric.Group(axes, { selectable: false });
-        canvas.add(axesGroup);
+    // LIMIT 경계
+    const minX = centerX - LIMIT - offsetX, maxX = centerX + LIMIT - offsetX;
+    const minY = centerY - LIMIT - offsetY, maxY = centerY + LIMIT - offsetY;
+
+    // 직선이 가로로만 영역 벗어난 경우
+    if (x1 < minX || x1 > maxX || x2 < minX || x2 > maxX) {
+        // 직선 방정식 이용해서 x가 경계일 때 y 계산
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        if (dx !== 0) {
+            if (x1 < minX) y1 = y1 + (minX - x1) * dy / dx, x1 = minX;
+            if (x1 > maxX) y1 = y1 + (maxX - x1) * dy / dx, x1 = maxX;
+            if (x2 < minX) y2 = y1 + (minX - x1) * dy / dx, x2 = minX;
+            if (x2 > maxX) y2 = y1 + (maxX - x1) * dy / dx, x2 = maxX;
+        }
     }
+
+    // 세로 방향도 동일하게 처리
+    if (y1 < minY || y1 > maxY || y2 < minY || y2 > maxY) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        if (dy !== 0) {
+            if (y1 < minY) x1 = x1 + (minY - y1) * dx / dy, y1 = minY;
+            if (y1 > maxY) x1 = x1 + (maxY - y1) * dx / dy, y1 = maxY;
+            if (y2 < minY) x2 = x1 + (minY - y1) * dx / dy, y2 = minY;
+            if (y2 > maxY) x2 = x1 + (maxY - y1) * dx / dy, y2 = maxY;
+        }
+    }
+
+    return { x1, y1, x2, y2 };
 }
 
 // 초기화 함수
@@ -1039,33 +1178,26 @@ function safeUndoRedo(actionType) {
 
 // 도구 선택 함수
 function selectTool(tool) {
-    // select 모드 잠금 확인
-    if (tool === 'select' && isSelectLocked) {
-        alert("다른 사람이 선택 모드를 사용 중입니다.");
-        return; // 선택 불가
-    }
     selectedTool = tool;
-    // ui 갱신
-    updateToolUI();
 
     // 박스 선택 도구 선택 시 canvas.selection 활성화
     if (tool === 'select') {
-        canvas.selection = true; // 다중 선택 가능
+        canvas.selection = false; // 다중 선택 가능
         canvas.getObjects('line').forEach(line => {
-            line.selectable = true; // 선택 가능
-            line.evented = true; // 마우스 이벤트 가능
+            line.selectable = false; // 선택 가능
+            line.evented = false; // 마우스 이벤트 가능
         });
-        const message = { senderId: senderId, type: 'selectModeOn' }
-        safeSend('/app/selectMode', message);
     } else {
+        canvas.discardActiveObject();
         canvas.selection = false;
+
+        // 남은 개별 선 객체도 비선택/이벤트 불가로 설정
         canvas.getObjects('line').forEach(line => {
             line.selectable = false;
             line.evented = false;
         });
-        const message = { senderId: senderId, type: 'selectModeOff' }
-        safeSend('/app/selectMode', message);
     }
+    scheduleRender();
 }
 
 // 렌더링 요청이 많아도 화면 렌더링은 일정 프레임에 1회로 제한
@@ -1164,41 +1296,6 @@ function initializeCurrentAction(msg){
             after: [] // 작업 후 상태
         };
     }
-    if (type === 'select'){
-        currentAction = {
-            type: type, // 'draw' | 'erase' | 'move' | 'rotate' | 'scale' ...
-            targets: [], // 영향을 받은 객체들
-            before: [], // 작업 전 상태
-            after: [] // 작업 후 상태
-        };
-        captureBeforeState();
-    }
-}
-
-// 다중 선택 객체 초기 상태 캡쳐
-function captureBeforeState() {
-    const objects = canvas.getActiveObjects();
-    if (!objects.length) return;
-    const activeSelection = canvas.getActiveObject();
-    currentAction.targets = objects.map(obj => obj);
-    currentAction.before = objects.map(obj => {
-        return {
-            left: activeSelection.left + (activeSelection.width / 2) + obj.left,
-            top: activeSelection.top + (activeSelection.height / 2) + obj.top
-        };
-    });
-    console.log(currentAction.before)
-}
-
-// 다중 선택 객체 변화 후 상태 캡쳐
-function captureAfterState() {
-    if (!currentAction.targets.length) return;
-    currentAction.after = currentAction.targets.map(obj => {
-        return {
-            left: activeSelection.left + (activeSelection.width / 2) + obj.left,
-            top: activeSelection.top + (activeSelection.height / 2) + obj.top
-        };
-    });
 }
 
 // currentAction 리셋
@@ -1459,6 +1556,7 @@ function drawLine(msg){
             strokeWidth: line.strokeWidth
         });
     }
+    return line;
 }
 
 // 선 보간 함수
@@ -1576,16 +1674,6 @@ function distancePointToLine(x0, y0, x1, y1, x2, y2) {
     const dx = x0 - xx;
     const dy = y0 - yy;
     return Math.sqrt(dx * dx + dy * dy);
-}
-
-// select
-function objectUpdate(msg){
-    const positions = msg.positions;
-    positions.forEach(pos => {
-        const obj = canvas.getObjects().find(o => o.uuid === pos.uuid);
-        if (!obj) return;
-        obj.set({ top: pos.top, left: pos.left });
-    });
 }
 
 function undo() {
@@ -2158,41 +2246,6 @@ function loadUndoRedo(stack) {
     redoStack = Array.isArray(stack.redoStack) ? stack.redoStack.slice() : [];
 }
 
-
-// 라디오 클릭 방지 + UI 동기화
-document.querySelectorAll('input[name="btnradio"]').forEach(radio => {
-    radio.addEventListener('click', (e) => {
-        if (isSelectLocked && radio.value === 'select') {
-            e.preventDefault();
-            alert("다른 사람이 select 모드를 사용 중입니다.");
-            const drawRadio = document.querySelector('input[name="btnradio"][value="draw"]');
-            if (drawRadio) drawRadio.checked = true;
-            selectedTool = 'draw';
-        }
-    });
-});
-
-// updateToolUI에서 기존 체크 상태 보정
-function updateToolUI() {
-    const radios = document.querySelectorAll('input[name="btnradio"]');
-    radios.forEach(radio => {
-        const label = radio.parentElement;
-        if (isSelectLocked && radio.value === 'select') {
-            radio.disabled = true;
-            label.classList.add('disabled');
-            if (radio.checked) {
-                radio.checked = false;
-                const drawRadio = document.querySelector('input[name="btnradio"][value="draw"]');
-                if (drawRadio) drawRadio.checked = true;
-                selectedTool = 'draw';
-            }
-        } else {
-            radio.disabled = false;
-            label.classList.remove('disabled');
-        }
-    });
-}
-
 /**
  * 로딩 화면 표시
  */
@@ -2280,6 +2333,7 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.on('mouse:down', (opt) => {
         if (opt.e.altKey) { // Alt 누르고 드래그
             isPanning = true;
+            return;
         } else {
             isDrawing = selectedTool === 'draw' || selectedTool === 'erase';
             lastPoint = canvas.getPointer(opt.e);
@@ -2593,6 +2647,8 @@ canvas.on('mouse:wheel', function(opt) {
   canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
   opt.e.preventDefault();
   opt.e.stopPropagation();
+
+  scheduleRender();
 });
 
 // WebSocket 연결

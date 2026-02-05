@@ -117,18 +117,6 @@ public class WebSocketController {
         messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/selectMode/{roomId}")
-    public void selectModeMessage(@DestinationVariable long roomId, SelectModeMessage message) {
-        String destination = "/topic/selectMode/" + roomId;
-        messagingTemplate.convertAndSend(destination, message);
-    }
-
-    @MessageMapping("/select/{roomId}")
-    public void selectMessage(@DestinationVariable long roomId, SelectMessage message) {
-        String destination = "/topic/select/" + roomId;
-        messagingTemplate.convertAndSend(destination, message);
-    }
-
     @MessageMapping("/initializeCurrentAction/{roomId}")
     public void initializeCurrentAction(@DestinationVariable long roomId, InitailizeCurrentActionMessage message) {
         String destination = "/topic/initializeCurrentAction/" + roomId;
@@ -344,11 +332,13 @@ public class WebSocketController {
 
     // 초기화
     @PostMapping("resetCanvas")
-    public void resetCanvas(@RequestBody Map<String, Long> request) {
+    public ResponseEntity<Void> resetCanvas(@RequestBody Map<String, Long> request) {
         try {
             drawDataService.removeRoom(request.get("roomId"));
+            return ResponseEntity.ok().build(); // 200 OK만 반환, body 없음
         } catch (Exception e) {
             e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 실패 시 500
         }
     }
 }
