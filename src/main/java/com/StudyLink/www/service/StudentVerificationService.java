@@ -1,3 +1,5 @@
+/* StudentVerificationService.java */
+
 package com.StudyLink.www.service;
 
 import com.StudyLink.www.entity.Role;
@@ -61,6 +63,7 @@ public class StudentVerificationService {
             "@iseoul.ac.kr",    // 서울시립대
             "@kcu.ac.kr",       // 가톨릭대학교
             "@siswa.um.edu.my",  // 말라야대학교
+            "@siswa-old.um.edu.my",
             "@kcu.ac.kr",
             "@gangseo.ac.kr",
             "@naver.com",
@@ -325,6 +328,15 @@ public class StudentVerificationService {
         }
         return false;
     }
+
+    /**
+     * AccountController 등 외부에서 도메인 허용 여부 확인용
+     * (개발 중 gmail/naver 포함)
+     */
+    public boolean isSchoolEmailDomainAllowed(String email) {
+        return isValidSchoolEmail(email);
+    }
+
 
 
     /**

@@ -97,26 +97,62 @@
 
             <div class="card">
                 <!-- 비밀번호 변경 -->
+                <!-- 비밀번호 변경 -->
                 <div class="form-section">
                     <h3>비밀번호 변경</h3>
-                    <form id="change-password-form">
+
+                    <form id="change-password-form" novalidate>
+
+                        <!-- 현재 비밀번호 -->
                         <div class="form-group">
                             <label for="current-password">현재 비밀번호</label>
-                            <input type="password" id="current-password" class="form-control"
-                                   placeholder="현재 비밀번호를 입력하세요">
+                            <div class="password-field">
+                                <input type="password" id="current-password" class="form-control"
+                                       placeholder="현재 비밀번호를 입력하세요" autocomplete="current-password">
+
+                                <button type="button" class="pw-toggle" data-target="current-password" aria-label="비밀번호 보기/숨기기">
+                                    <span class="eye-icon"></span>
+                                </button>
+                            </div>
+                            <div class="field-hint" id="current-password-hint"></div>
                         </div>
 
+                        <!-- 새 비밀번호 -->
                         <div class="form-group">
                             <label for="new-password">새 비밀번호</label>
-                            <input type="password" id="new-password" class="form-control"
-                                   placeholder="새 비밀번호를 입력하세요">
-                            <small class="form-text text-muted">8자 이상, 숫자와 문자 조합</small>
+                            <div class="password-field">
+                                <input type="password" id="new-password" class="form-control"
+                                       placeholder="새 비밀번호를 입력하세요" autocomplete="new-password">
+
+                                <button type="button" class="pw-toggle" data-target="new-password" aria-label="비밀번호 보기/숨기기">
+                                    <span class="eye-icon"></span>
+                                </button>
+                            </div>
+
+                            <!-- ✅ 실서비스 느낌: 조건 박스 -->
+                            <div class="pw-rules-box" id="pw-rules-box">
+                                <div class="pw-rules-title">비밀번호 조건</div>
+                                <ul class="pw-rules" id="pw-rules">
+                                    <li data-rule="len"><span class="rule-dot"></span>8~100자</li>
+                                    <li data-rule="mix"><span class="rule-dot"></span>영문 + 숫자 포함</li>
+                                    <li data-rule="same"><span class="rule-dot"></span>현재 비밀번호와 다르게</li>
+                                </ul>
+                                <div class="pw-strength" id="pw-strength" aria-live="polite"></div>
+                            </div>
                         </div>
 
+                        <!-- 비밀번호 확인 -->
                         <div class="form-group">
                             <label for="confirm-password">비밀번호 확인</label>
-                            <input type="password" id="confirm-password" class="form-control"
-                                   placeholder="비밀번호를 다시 입력하세요">
+                            <div class="password-field">
+                                <input type="password" id="confirm-password" class="form-control"
+                                       placeholder="비밀번호를 다시 입력하세요" autocomplete="new-password">
+
+                                <button type="button" class="pw-toggle" data-target="confirm-password" aria-label="비밀번호 보기/숨기기">
+                                    <span class="eye-icon"></span>
+                                </button>
+                            </div>
+                            <div class="field-hint" id="confirm-password-hint"></div>
                         </div>
 
                         <button type="submit" class="btn btn-primary">비밀번호 변경</button>
@@ -434,11 +470,6 @@
 
 <!-- 알림 메시지 -->
 <div id="toast-container"></div>
-
-<!-- Scripts -->
-<th:block layout:fragment="page-script">
-    <script th:src="@{/js/mypage.js}"></script>
-</th:block>
 
 
 </body>

@@ -1,4 +1,8 @@
+/* AccountController */
+
 package com.StudyLink.www.controller;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.UserRepository;
@@ -10,8 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.StudyLink.www.service.StudentVerificationService;
+
 
 /**
  * AccountController (계정 관리 API 컨트롤러)
@@ -36,6 +45,17 @@ public class AccountController {
 
     private final AccountService accountService;
     private final UserRepository userRepository;
+    private final StudentVerificationService studentVerificationService;
+
+    @GetMapping("/ping")
+    public String ping() {
+        return "pong";
+    }
+
+    @GetMapping("/debug/hello")
+    public String debugHello() {
+        return "HELLO";
+    }
 
     /**
      * 계정 정보 조회
@@ -47,9 +67,13 @@ public class AccountController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAccountInfo(Authentication authentication) {
         try {
+            /*
             String email = authentication.getName();
             Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+            */
+
+            Users user = getLoginUser(authentication);
 
             Map<String, Object> accountInfo = accountService.getAccountInfo(user.getUserId());
 
@@ -93,9 +117,13 @@ public class AccountController {
                 throw new IllegalArgumentException("비밀번호 확인을 입력하세요");
             }
 
+            /*
             String email = authentication.getName();
             Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+            */
+
+            Users user = getLoginUser(authentication);
 
             Map<String, Object> result = accountService.changePassword(
                     user.getUserId(),
@@ -123,6 +151,77 @@ public class AccountController {
         }
     }
 
+    private Users getLoginUser(Authentication authentication) {
+        if (authentication == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다");
+        }
+
+        String principal = authentication.getName(); // email일 수도, username일 수도 있음
+
+        return userRepository.findByEmail(principal)
+                .or(() -> userRepository.findByUsername(principal))
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+    }
+
+    /**
+     * 현재 비밀번호 검증 (blur용)
+     * POST /api/account/verify-current-password
+     */
+    @PostMapping("/verify-current-password")
+    public ResponseEntity<Map<String, Object>> verifyCurrentPassword(
+            @RequestBody VerifyCurrentPasswordRequest request,
+            Authentication authentication
+    ) {
+        Map<String, Object> res = new HashMap<>();
+
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                res.put("success", false);
+                res.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res);
+            }
+
+            if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+                res.put("success", false);
+                res.put("message", "현재 비밀번호를 입력해 주세요.");
+                return ResponseEntity.badRequest().body(res);
+            }
+
+            Users user = getLoginUser(authentication);
+
+            log.info("🔎 PW-VERIFY principal={}, userId={}, email={}, username={}, oauthProvider={}",
+                    authentication.getName(),
+                    user.getUserId(),
+                    user.getEmail(),
+                    user.getUsername(),
+                    user.getOauthProvider()
+            );
+
+            boolean ok = accountService.verifyCurrentPassword(
+                    user.getUserId(),
+                    request.getCurrentPassword()
+            );
+
+            res.put("success", ok);
+            res.put("message", ok ? "현재 비밀번호가 일치합니다." : "현재 비밀번호가 일치하지 않습니다.");
+            return ResponseEntity.ok(res);
+
+
+        } catch (IllegalArgumentException e) {
+            // ✅ 유저 없음/입력 오류 등은 400으로
+            res.put("success", false);
+            res.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(res);
+
+        } catch (Exception e) {
+            // ✅ 진짜 서버 에러만 500
+            res.put("success", false);
+            res.put("message", "검증 중 오류가 발생했습니다.");
+            log.error("❌ 현재 비밀번호 검증 오류", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+        }
+    }
+
     /**
      * 이메일 변경
      * POST /api/account/change-email
@@ -143,9 +242,13 @@ public class AccountController {
                 throw new IllegalArgumentException("비밀번호를 입력하세요");
             }
 
+            /*
             String email = authentication.getName();
             Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+             */
+
+            Users user = getLoginUser(authentication);
 
             Map<String, Object> result = accountService.changeEmail(
                     user.getUserId(),
@@ -172,6 +275,40 @@ public class AccountController {
         }
     }
 
+    // 이메일 변경 confirm (메일 링크 클릭 시 여기로 들어옴)
+    @GetMapping("/change-email/confirm")
+    public void confirmChangeEmail(
+            @RequestParam("token") String token,
+            @RequestParam("username") String username,
+            HttpServletResponse response
+    ) throws Exception {
+        try {
+            // 토큰 검증 + 실제 이메일 변경 처리
+            String newEmail = accountService.confirmEmailChange(token, username);
+
+            // 대학 이메일이면 학생/멘토 인증 페이지로
+            if (studentVerificationService.isSchoolEmailDomainAllowed(newEmail)) {
+                String url = "/auth/student-verification?email="
+                        + URLEncoder.encode(newEmail, StandardCharsets.UTF_8)
+                        + "&from=email-change";
+                response.sendRedirect(url);
+                return;
+            }
+
+            // 일반 이메일이면 성공 페이지(또는 마이페이지)로
+            response.sendRedirect("/my-page?msg=email_changed");
+
+        } catch (IllegalArgumentException e) {
+            // 토큰 만료/유효하지 않음 등
+            response.sendRedirect("/error/400");
+
+        } catch (Exception e) {
+            // 서버 오류
+            response.sendRedirect("/error/500");
+        }
+    }
+
+
     /**
      * 휴대폰 번호 변경
      * POST /api/account/change-phone
@@ -192,9 +329,12 @@ public class AccountController {
                 throw new IllegalArgumentException("비밀번호를 입력하세요");
             }
 
+            /*
             String email = authentication.getName();
             Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+            */
+            Users user = getLoginUser(authentication);
 
             Map<String, Object> result = accountService.changePhone(
                     user.getUserId(),
@@ -231,9 +371,14 @@ public class AccountController {
     @PostMapping("/activate")
     public ResponseEntity<Map<String, Object>> activateAccount(Authentication authentication) {
         try {
+
+            /*
             String email = authentication.getName();
             Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+            */
+
+            Users user = getLoginUser(authentication);
 
             Map<String, Object> result = accountService.activateAccount(user.getUserId());
 
@@ -273,9 +418,13 @@ public class AccountController {
                 throw new IllegalArgumentException("비밀번호를 입력하세요");
             }
 
+            /*
             String email = authentication.getName();
             Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+            */
+
+            Users user = getLoginUser(authentication);
 
             Map<String, Object> result = accountService.deactivateAccount(
                     user.getUserId(),
@@ -318,16 +467,20 @@ public class AccountController {
                 throw new IllegalArgumentException("비밀번호를 입력하세요");
             }
 
+            /*
             String email = authentication.getName();
             Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+            */
+
+            Users user = getLoginUser(authentication);
 
             Map<String, Object> result = accountService.deleteAccount(
                     user.getUserId(),
                     request.getPassword()
             );
 
-            log.info("✅ 계정 삭제 (탈퇴): userId={}, email={}", user.getUserId(), email);
+            log.info("✅ 계정 삭제 (탈퇴): userId={}, email={}", user.getUserId(), user.getEmail());
             return ResponseEntity.ok(result);
 
         } catch (IllegalArgumentException e) {
@@ -356,9 +509,12 @@ public class AccountController {
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getAccountStatus(Authentication authentication) {
         try {
+            /*
             String email = authentication.getName();
             Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+            */
+            Users user = getLoginUser(authentication);
 
             Map<String, Object> status = accountService.getAccountStatus(user.getUserId());
 
@@ -428,9 +584,12 @@ public class AccountController {
             @RequestBody VerifyEmailRequest request,
             Authentication authentication) {
         try {
+            /*
             String email = authentication.getName();
             Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+            */
+            Users user = getLoginUser(authentication);
 
             Map<String, Object> result = accountService.updateEmailVerificationStatus(
                     user.getUserId(),
@@ -570,4 +729,16 @@ public class AccountController {
         public String getVerificationCode() { return verificationCode; }
         public void setVerificationCode(String verificationCode) { this.verificationCode = verificationCode; }
     }
+
+    /**
+     * 현재 비밀번호 검증 요청 (blur용)
+     */
+    public static class VerifyCurrentPasswordRequest {
+        private String currentPassword;
+
+        public String getCurrentPassword() { return currentPassword; }
+        public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
+    }
+
+
 }

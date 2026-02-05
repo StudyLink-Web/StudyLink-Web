@@ -2,11 +2,13 @@
  * mypage.js - 마이페이지 JavaScript
  * 마이페이지의 모든 기능을 관리하는 메인 스크립트
  */
+console.log('🔥 mypage.js 로드됨 - PW_FIX_VERSION_001');
 
 // ========== 전역 설정 ==========
 
 const API_BASE = '/api';
 const TOAST_DURATION = 3000; // 3초
+let changingPassword = false; // ✅ 비번 변경 중복 호출 방지
 
 // ========== 초기화 ==========
 
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initializeEventListeners();
     loadInitialData();
+    initPasswordRulesLive_B();
 });
 
 // ========== 이벤트 리스너 초기화 ==========
@@ -51,7 +54,6 @@ function initializeEventListeners() {
     document.getElementById('check-nickname-btn')?.addEventListener('click', handleCheckNickname);
 
     // 계정 탭
-    document.getElementById('change-password-form')?.addEventListener('submit', handleChangePassword);
     document.getElementById('change-email-form')?.addEventListener('submit', handleChangeEmail);
     document.getElementById('change-phone-form')?.addEventListener('submit', handleChangePhone);
     document.getElementById('delete-account-btn')?.addEventListener('click', handleDeleteAccountClick);
@@ -134,7 +136,10 @@ function loadInitialData() {
  * 비밀번호 변경
  */
 function handleChangePassword(e) {
+    console.log('🔥 비밀번호 변경 submit 발생');
     e.preventDefault();
+
+    if (changingPassword) return;
 
     const currentPassword = document.getElementById('current-password').value;
     const newPassword = document.getElementById('new-password').value;
@@ -142,7 +147,18 @@ function handleChangePassword(e) {
 
     // 검증
     if (!currentPassword || !newPassword || !confirmPassword) {
-        showToast('모든 항목을 입력하세요', 'warning');
+        const currentHint = document.getElementById('current-password-hint');
+        const confirmHint = document.getElementById('confirm-password-hint');
+
+        if (!currentPassword && currentHint) {
+            setHint(currentHint, '현재 비밀번호를 입력해 주세요.', 'error');
+        }
+
+        if ((!confirmPassword || newPassword !== confirmPassword) && confirmHint) {
+            setHint(confirmHint, '새 비밀번호를 한 번 더 정확히 입력해 주세요.', 'error');
+        }
+
+
         return;
     }
 
@@ -152,9 +168,14 @@ function handleChangePassword(e) {
     }
 
     if (newPassword !== confirmPassword) {
-        showToast('새 비밀번호가 일치하지 않습니다', 'warning');
+        const confirmHint = document.getElementById('confirm-password-hint');
+        if (confirmHint) {
+            setHint(confirmHint, '새 비밀번호가 일치하지 않습니다.', 'error');
+        }
         return;
     }
+
+    changingPassword = true;
 
     showLoading();
 
@@ -172,10 +193,23 @@ function handleChangePassword(e) {
         .then(res => res.json())
         .then(data => {
             hideLoading();
+
             if (data.success) {
                 document.getElementById('change-password-form').reset();
+
+                // reset 후 안내 초기화
+                document.getElementById('current-password-hint').textContent = '';
+                document.getElementById('confirm-password-hint').textContent = '';
+                document.getElementById('pw-strength').textContent = '';
+                document.querySelectorAll('#pw-rules li').forEach(li => li.classList.remove('ok'));
+
                 showToast('비밀번호가 변경되었습니다', 'success');
             } else {
+                // ✅ 서버 메시지를 안내문에도 출력
+                const hint = document.getElementById('current-password-hint');
+                if (hint) {
+                    setHint(hint, data.message || '변경 실패', 'error');
+                }
                 showToast(data.message || '변경 실패', 'error');
             }
         })
@@ -183,6 +217,9 @@ function handleChangePassword(e) {
             hideLoading();
             console.error('❌ 비밀번호 변경 오류:', error);
             showToast('변경 중 오류가 발생했습니다', 'error');
+        })
+        .finally(() => {
+            changingPassword = false; // ✅ 성공/실패/에러 상관없이 잠금 해제
         });
 }
 
@@ -223,7 +260,7 @@ function handleChangeEmail(e) {
             hideLoading();
             if (data.success) {
                 document.getElementById('change-email-form').reset();
-                showToast('이메일이 변경되었습니다. 새 이메일로 확인 메시지가 발송되었습니다', 'success');
+                showToast('메일이 전송되었습니다. 확인해주세요.', 'success');
             } else {
                 showToast(data.message || '변경 실패', 'error');
             }
@@ -720,11 +757,38 @@ function handleResetSettings() {
 
 // ========== 유틸리티 함수 ==========
 
+function setHint(el, message = '', state = '') {
+    if (!el) return;
+
+    if (!message) {
+        // 메시지 없으면 완전 숨김
+        el.className = 'field-hint';
+        el.textContent = '';
+        return;
+    }
+
+    // 메시지 있으면 노출 + 상태 반영
+    el.className = `field-hint has-message ${state}`.trim();
+    el.textContent = message;
+}
+
+function clearHint(el) {
+    setHint(el, '', '');
+}
+
+
 /**
- * 토스트 알림 표시
+ * 토스트 알림 표시 (toast-container 없으면 자동 생성)
  */
 function showToast(message, type = 'info', duration = TOAST_DURATION) {
-    const container = document.getElementById('toast-container');
+    let container = document.getElementById('toast-container');
+
+    // ✅ 없으면 만들어서 body에 붙임 (이렇게 하면 어디서 호출해도 안 터짐)
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
 
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
@@ -734,11 +798,10 @@ function showToast(message, type = 'info', duration = TOAST_DURATION) {
 
     setTimeout(() => {
         toast.classList.add('removing');
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
+        setTimeout(() => toast.remove(), 300);
     }, duration);
 }
+
 
 /**
  * 로딩 상태 표시
@@ -808,3 +871,295 @@ window.addEventListener('error', function(event) {
 // ========== 초기화 완료 ==========
 
 console.log('✅ mypage.js 로드 완료');
+
+
+// ========== 비번 눈 열고 닫기 ==========
+// ========== 비번 눈 열고 닫기 (이벤트 위임 + 자동 주입) ==========
+(() => {
+    const EYE_CLOSED_SVG = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+    width="20" height="20" fill="none" stroke="#666"
+    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20
+             c-5 0-9.27-3.11-11-7.5
+             a11.05 11.05 0 0 1 5.17-5.81"/>
+    <path d="M1 1l22 22"/>
+    <path d="M9.53 9.53A3.5 3.5 0 0 0 12 15.5
+             a3.5 3.5 0 0 0 2.47-5.97"/>
+  </svg>`;
+
+    const EYE_OPEN_SVG = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+    width="20" height="20" fill="none" stroke="#666"
+    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>`;
+
+    function ensureIcons() {
+        document.querySelectorAll('.pw-toggle').forEach((btn) => {
+            btn.setAttribute('type', 'button');
+
+            let icon = btn.querySelector('.eye-icon');
+            if (!icon) {
+                icon = document.createElement('span');
+                icon.className = 'eye-icon';
+                btn.appendChild(icon);
+            }
+
+            // 다른 스크립트가 비워버려도 다시 채움
+            if (!icon.innerHTML || icon.innerHTML.trim().length === 0) {
+                icon.innerHTML = EYE_CLOSED_SVG;
+            }
+        });
+    }
+
+    // 1) DOM 준비되면 한 번 채우기
+    document.addEventListener('DOMContentLoaded', () => {
+        ensureIcons();
+
+        // 2) 다른 JS가 나중에 DOM 갈아치우는 경우 대비(한 박자 뒤에도 재주입)
+        setTimeout(ensureIcons, 0);
+        setTimeout(ensureIcons, 200);
+    });
+
+    // 3) “이벤트 위임”: 버튼이 나중에 생기거나 DOM이 교체되어도 클릭은 항상 잡힘
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.pw-toggle');
+        if (!btn) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const targetId = btn.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        if (!input) return;
+
+        // 클릭 직전에 아이콘이 비어있으면 다시 채움
+        ensureIcons();
+
+        const icon = btn.querySelector('.eye-icon');
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        icon.innerHTML = isHidden ? EYE_OPEN_SVG : EYE_CLOSED_SVG;
+    });
+
+    // 4) DOM이 통째로 바뀌는 경우(탭 렌더 등)도 자동 재주입
+    const mo = new MutationObserver(() => ensureIcons());
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+})();
+
+// ========== PASSWORD 알람 ==========
+// ========== 비밀번호 알람 ==========
+function initPasswordRulesLive_B() {
+    const currentEl = document.getElementById('current-password');
+    const newEl = document.getElementById('new-password');
+    const confirmEl = document.getElementById('confirm-password');
+
+    const rulesBox = document.getElementById('pw-rules-box');
+    const rules = document.getElementById('pw-rules');
+    const strengthEl = document.getElementById('pw-strength');
+    const confirmHint = document.getElementById('confirm-password-hint');
+
+    if (!currentEl || !newEl || !confirmEl || !rulesBox || !rules || !strengthEl) return;
+
+    const ruleLen = rules.querySelector('[data-rule="len"]');
+    const ruleMix = rules.querySelector('[data-rule="mix"]');
+    const ruleSame = rules.querySelector('[data-rule="same"]');
+
+    function hasLetter(s) { return /[A-Za-z]/.test(s); }
+    function hasDigit(s) { return /\d/.test(s); }
+
+    function computeStrength(pw) {
+        let score = 0;
+        if (pw.length >= 8) score++;
+        if (pw.length >= 12) score++;
+        if (hasLetter(pw) && hasDigit(pw)) score++;
+        if (/[!@#$%^&*()_\-+={}[\]:;"'<>,.?/\\|~`]/.test(pw)) score++;
+
+        if (pw.length === 0) return { cls: '', text: '' };
+        if (score <= 1) return { cls: 'weak', text: '보안 강도: 약함' };
+        if (score <= 3) return { cls: 'medium', text: '보안 강도: 보통' };
+        return { cls: 'strong', text: '보안 강도: 강함' };
+    }
+
+    // 룰 박스 숨기기/보이기 상태를 “사용자 입력 흐름”대로 제어하기 위한 플래그
+    let userStartedTyping = false;
+
+    function render() {
+        const cur = currentEl.value || '';
+        const pw = newEl.value || '';
+        const cf = confirmEl.value || '';
+
+        // 입력 시작 여부
+        if (pw.length > 0) userStartedTyping = true;
+
+        // ✅ 룰 체크
+        const okLen = pw.length >= 8 && pw.length <= 100;
+        const okMix = hasLetter(pw) && hasDigit(pw);
+        const okSame = pw.length > 0 && cur.length > 0 && pw !== cur;
+        const okConfirm = pw.length > 0 && cf.length > 0 && pw === cf;
+
+        ruleLen?.classList.toggle('ok', okLen);
+        ruleMix?.classList.toggle('ok', okMix);
+        ruleSame?.classList.toggle('ok', okSame);
+
+        // ✅ 강도
+        const s = computeStrength(pw);
+        strengthEl.className = `pw-strength ${s.cls}`;
+        strengthEl.textContent = s.text;
+
+        // ✅ 확인 비밀번호 실시간 안내
+        if (confirmHint) {
+            if (cf.length === 0) {
+                confirmHint.className = 'field-hint info';
+                confirmHint.textContent = '';
+            } else if (pw !== cf) {
+                confirmHint.className = 'field-hint error';
+                confirmHint.textContent = '비밀번호가 일치하지 않습니다.';
+            } else {
+                confirmHint.className = 'field-hint success';
+                confirmHint.textContent = '비밀번호가 일치합니다.';
+            }
+        }
+
+        // ✅ B안 핵심: 입력 시작하면 박스 표시, 다 만족하면 자동으로 접힘
+        const allOk = okLen && okMix && okSame && okConfirm;
+
+        if (!userStartedTyping || pw.length === 0) {
+            // 아직 입력 전/비운 상태면 숨김
+            rulesBox.classList.remove('show');
+        } else if (allOk) {
+            // 조건 다 맞으면 자동으로 접기
+            // rulesBox.classList.remove('show');
+        } else {
+            // 입력 중인데 아직 조건 미달이면 보여줌
+            rulesBox.classList.add('show');
+        }
+    }
+
+    currentEl.addEventListener('input', render);
+    newEl.addEventListener('input', render);
+    confirmEl.addEventListener('input', render);
+
+    // 포커스 들어오면(이미 입력이 조금이라도 있으면) 박스 보여주는 UX도 흔함
+    newEl.addEventListener('focus', () => {
+        if ((newEl.value || '').length > 0) rulesBox.classList.add('show');
+    });
+
+    // 초기 렌더
+    render();
+}
+
+
+
+// ========== [FIX] change-password-form 이벤트 강제 바인딩 (캡처링) ==========
+(function bindChangePasswordFormHard() {
+
+    function log(...args) { console.log('[PW-FIX]', ...args); }
+
+    // 1) submit 이벤트를 "캡처링 단계"에서 잡음 (누가 stopPropagation 해도 잡힘)
+    document.addEventListener('submit', function (e) {
+        const form = e.target;
+        if (form && form.id === 'change-password-form') {
+            log('✅ submit 캡처됨');
+            handleChangePassword(e); // 기존 함수 재사용
+        }
+    }, true);
+
+    // 2) 어떤 스크립트가 버튼 click에서 preventDefault로 submit 막는 경우를 대비
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('#change-password-form button[type="submit"]');
+        if (!btn) return;
+
+        const form = btn.closest('form');
+        if (!form) return;
+
+        log('✅ submit 버튼 클릭 캡처됨');
+
+        // 다른 JS가 submit 막아도 여기서 직접 실행
+        // (submit 이벤트가 아예 안 발생하는 케이스 커버)
+        e.preventDefault();
+        e.stopPropagation();
+
+        // handleChangePassword는 submit 이벤트를 가정하니까,
+        // fake event 형태로 넘김(최소한 preventDefault만 제공)
+        handleChangePassword({
+            preventDefault() {},
+            target: form
+        });
+    }, true);
+
+    log('바인딩 완료');
+
+})();
+
+// ========== 현재 비밀번호 blur 검증 ==========
+// ========== 현재 비밀번호 실시간 검증 (input + debounce) ==========
+(function bindCurrentPasswordLiveVerify() {
+    const input = document.getElementById('current-password');
+    const hint = document.getElementById('current-password-hint');
+    if (!input || !hint) return;
+
+    let timer = null;
+    let controller = null;
+
+    async function verify(value) {
+        // 이전 요청 취소
+        if (controller) controller.abort();
+        controller = new AbortController();
+
+        setHint(hint, '확인 중...', 'loading');
+
+        try {
+            const res = await fetch('/api/account/verify-current-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword: value }),
+                signal: controller.signal
+            });
+
+            // ✅ 400/500도 json으로 내려오니까 파싱
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                // 서버가 400을 내려준 경우(빈 값 등)
+                setHint(hint, data.message || '검증 실패', 'error');
+                return;
+            }
+
+            if (data.success) {
+                setHint(hint, data.message || '현재 비밀번호가 일치합니다.', 'success');
+            } else {
+                setHint(hint, data.message || '현재 비밀번호가 일치하지 않습니다.', 'error');
+            }
+
+        } catch (err) {
+            // abort는 정상 흐름이라 표시 안 함
+            if (err?.name === 'AbortError') return;
+
+            console.error('❌ 현재 비밀번호 검증 실패:', err);
+            setHint(hint, '검증 중 오류가 발생했습니다.', 'error');
+        }
+    }
+
+    input.addEventListener('input', () => {
+        const value = input.value.trim();
+
+        // 값 비면 힌트 숨김 + 요청 취소
+        if (!value) {
+            if (controller) controller.abort();
+            clearHint(hint);
+            return;
+        }
+
+        // 너무 짧을 때는 UX상 굳이 서버 안 때리기(선택)
+        if (value.length < 4) {
+            setHint(hint, '4글자 이상 입력시 확인 가능 합니다.', 'info');
+            return;
+        }
+
+        clearTimeout(timer);
+        timer = setTimeout(() => verify(value), 400); // 0.4초 멈추면 호출
+    });
+})();

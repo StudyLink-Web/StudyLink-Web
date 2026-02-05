@@ -1,3 +1,5 @@
+/* mentor-profile.js */
+
 console.log('📋 mentor-profile.js 로드됨');
 
 /* =========================
@@ -57,39 +59,69 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// ⭐ 즉시 실행
-console.log('🚀 탭 시스템 즉시 초기화');
+// ✅ 탭 시스템: layout에 있어도 "멘토 프로필 페이지에서만" 작동하도록 스코프 제한
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ 탭 시스템 DOMContentLoaded 초기화');
 
-let tabButtons = document.querySelectorAll('.tab-btn');
-console.log('탭 버튼 개수:', tabButtons.length);
+    // ✅ 멘토 프로필 페이지에만 있는 컨테이너(없으면 종료)
+    const root = document.querySelector('.profile-grid .main-content');
+    if (!root) {
+        console.log('⏭️ 멘토 프로필 탭 영역 없음 -> 탭 시스템 스킵');
+        return;
+    }
 
-tabButtons.forEach(btn => {
-    console.log('탭 버튼 등록:', btn.dataset.tab);
-    btn.onclick = function (e) {
-        console.log('🔵 탭 클릭:', this.dataset.tab);
-        e.preventDefault();
-        e.stopPropagation();
+    const tabButtons = root.querySelectorAll('.tab-btn');
+    const tabContents = root.querySelectorAll('.tab-content');
 
-        const tabName = this.dataset.tab;
-        const tabElement = document.getElementById(tabName);
+    console.log('탭 버튼 개수:', tabButtons.length);
+    console.log('탭 콘텐츠 개수:', tabContents.length);
 
+    if (tabButtons.length === 0 || tabContents.length === 0) {
+        console.log('⏭️ 탭 버튼/콘텐츠 없음 -> 스킵');
+        return;
+    }
+
+    function activateTab(tabName) {
+        const tabElement = root.querySelector(`#${tabName}`);
         if (!tabElement) {
             console.error('탭 없음:', tabName);
-            return false;
+            return;
         }
 
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => {
+            c.classList.remove('active');
+            // ✅ CSS 충돌 대비: 확실히 숨김
+            c.style.display = 'none';
+        });
 
-        this.classList.add('active');
+        const btn = root.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+        if (btn) btn.classList.add('active');
+
         tabElement.classList.add('active');
+        // ✅ CSS 충돌 대비: 확실히 표시
+        tabElement.style.display = 'block';
 
-        console.log('✅ 탭 변경:', tabName);
-        return false;
-    };
+        console.log('✅ 탭 활성화:', tabName);
+    }
+
+    // 클릭 이벤트 등록
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            activateTab(btn.dataset.tab);
+        });
+    });
+
+    // ✅ 첫 화면 강제 표시
+    const initialTab = root.querySelector('.tab-btn.active')?.dataset.tab || 'basic';
+    activateTab(initialTab);
+
+    // ✅ 뒤로가기(bfcache)로 복귀했을 때도 다시 표시 (특히 모바일/사파리에서 도움됨)
+    window.addEventListener('pageshow', () => activateTab(initialTab));
 });
 
-console.log('✅ 탭 시스템 준비 완료');
 
 // ================================================
 // 🔄 토글 라벨 시스템 초기화 (새로운 구조)

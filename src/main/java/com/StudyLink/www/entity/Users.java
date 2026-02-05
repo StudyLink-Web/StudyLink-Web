@@ -1,3 +1,5 @@
+/* entity/Users */
+
 package com.StudyLink.www.entity;
 
 import com.StudyLink.www.dto.UsersDTO;

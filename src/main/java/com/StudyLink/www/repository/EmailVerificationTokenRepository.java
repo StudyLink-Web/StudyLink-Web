@@ -1,4 +1,12 @@
+/* EmailVerificationTokenRepository.java */
+
 package com.StudyLink.www.repository;
+
+// EmailVerificationTokenRepository.java
+import java.time.LocalDateTime;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.StudyLink.www.entity.EmailVerificationToken;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -50,4 +58,13 @@ public interface EmailVerificationTokenRepository extends JpaRepository<EmailVer
      * @return Optional 토큰
      */
     Optional<EmailVerificationToken> findByEmail(String email);
+
+    // token + username 으로 조회 (권장)
+    Optional<EmailVerificationToken> findByVerificationCodeAndRequestedUsername(String verificationCode, String requestedUsername);
+
+    // 만료 토큰 청소용
+    @Modifying
+    @Transactional
+    @Query("delete from EmailVerificationToken t where t.expiresAt < :now")
+    void deleteExpiredTokens(LocalDateTime now);
 }
