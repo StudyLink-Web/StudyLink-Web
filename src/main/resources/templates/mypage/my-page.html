@@ -97,7 +97,6 @@
 
             <div class="card">
                 <!-- 비밀번호 변경 -->
-                <!-- 비밀번호 변경 -->
                 <div class="form-section">
                     <h3>비밀번호 변경</h3>
 
@@ -155,8 +154,8 @@
                             <div class="field-hint" id="confirm-password-hint"></div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">비밀번호 변경</button>
-                    </form>
+                        <button type="submit" class="btn btn-primary" id="pw-submit-btn">비밀번호 변경</button>
+                        <div class="field-hint" id="pw-change-hint"></div>                    </form>
                 </div>
 
                 <!-- 이메일 변경 -->
@@ -181,27 +180,43 @@
                                    placeholder="비밀번호를 입력하세요">
                         </div>
 
-                        <button type="submit" class="btn btn-primary">이메일 변경</button>
+                        <button type="submit" class="btn btn-primary" id="email-submit-btn">이메일 변경</button>
+                        <small class="form-text text-muted" id="email-hint"></small>
                     </form>
                 </div>
 
                 <!-- 휴대폰 번호 변경 -->
                 <div class="form-section">
                     <h3>휴대폰 번호 변경</h3>
-                    <form id="change-phone-form">
+
+                    <form id="change-phone-form" novalidate>
+                        <!-- 새 휴대폰 번호 + 버튼(인풋 안쪽) -->
                         <div class="form-group">
                             <label for="new-phone">새 휴대폰 번호</label>
-                            <input type="tel" id="new-phone" class="form-control"
-                                   placeholder="010-0000-0000">
+
+                            <div class="input-with-btn">
+                                <input type="tel" id="new-phone" class="form-control" placeholder="010-0000-0000" autocomplete="tel">
+                                <button type="button" class="btn-in-input" id="send-sms-btn" disabled>인증번호 받기</button>
+                            </div>
+
+                            <small class="form-text text-muted" id="phone-hint"></small>
                         </div>
 
+                        <!-- Firebase reCAPTCHA -->
+                        <div id="recaptcha-container"></div>
+
+                        <!-- 인증번호 입력 -->
                         <div class="form-group">
-                            <label for="phone-password">비밀번호</label>
-                            <input type="password" id="phone-password" class="form-control"
-                                   placeholder="비밀번호를 입력하세요">
+                            <label for="sms-code">인증번호</label>
+                            <input type="text" id="sms-code" class="form-control" placeholder="6자리" inputmode="numeric" autocomplete="one-time-code">
                         </div>
 
-                        <button type="submit" class="btn btn-primary">휴대폰 번호 변경</button>
+                        <!-- 인증 완료 및 변경 -->
+                        <div class="form-group">
+                            <button type="button" class="btn btn-primary" id="verify-and-change-phone-btn">
+                                인증 완료 및 변경
+                            </button>
+                        </div>
                     </form>
                 </div>
 
