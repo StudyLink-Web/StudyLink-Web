@@ -1,15 +1,13 @@
-/* SecurityConfig */
+// SecurityConfig
 
 package com.StudyLink.www.config;
 
 import com.StudyLink.www.handler.RoleBasedLoginSuccessHandler;
-import com.StudyLink.www.repository.UserRepository;
 import com.StudyLink.www.service.CustomOAuth2UserService;
 import com.StudyLink.www.service.CustomOidcUserService;
 import com.StudyLink.www.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,9 +17,6 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -35,8 +30,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomOidcUserService customOidcUserService;
-    private final UserRepository userRepository;
-    private final ObjectProvider<PasswordEncoder> passwordEncoderProvider;
+    private final PasswordEncoder passwordEncoder;
 
     /*
     @Bean
@@ -46,23 +40,12 @@ public class SecurityConfig {
     */
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        DelegatingPasswordEncoder encoder =
-                (DelegatingPasswordEncoder) PasswordEncoderFactories.createDelegatingPasswordEncoder();
-
-        // ✅ DB에 "$2a$..."처럼 prefix 없는 bcrypt가 들어있어도 매칭되게
-        encoder.setDefaultPasswordEncoderForMatches(new BCryptPasswordEncoder());
-
-        return encoder;
-    }
-
-    @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder =
                 http.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder
                 .userDetailsService(userDetailsService)
-                .passwordEncoder(passwordEncoder());
+                .passwordEncoder(passwordEncoder);
         return authenticationManagerBuilder.build();
     }
 
