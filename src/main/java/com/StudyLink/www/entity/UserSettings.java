@@ -111,16 +111,26 @@ public class UserSettings {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        if (this.themeMode == null) this.themeMode = "LIGHT";
-        if (this.language == null) this.language = "KO";
-        if (this.notificationsEnabled == null) this.notificationsEnabled = true;
-        if (this.emailNotifications == null) this.emailNotifications = true;
-        if (this.pushNotifications == null) this.pushNotifications = true;
-        if (this.smsNotifications == null) this.smsNotifications = false;
-        if (this.marketingAgree == null) this.marketingAgree = false;
-        if (this.privacyPolicyAgree == null) this.privacyPolicyAgree = true;
-        if (this.termsOfServiceAgree == null) this.termsOfServiceAgree = true;
-        if (this.profilePublic == null) this.profilePublic = true;
+        if (this.themeMode == null)
+            this.themeMode = "LIGHT";
+        if (this.language == null)
+            this.language = "KO";
+        if (this.notificationsEnabled == null)
+            this.notificationsEnabled = true;
+        if (this.emailNotifications == null)
+            this.emailNotifications = true;
+        if (this.pushNotifications == null)
+            this.pushNotifications = true;
+        if (this.smsNotifications == null)
+            this.smsNotifications = false;
+        if (this.marketingAgree == null)
+            this.marketingAgree = false;
+        if (this.privacyPolicyAgree == null)
+            this.privacyPolicyAgree = true;
+        if (this.termsOfServiceAgree == null)
+            this.termsOfServiceAgree = true;
+        if (this.profilePublic == null)
+            this.profilePublic = true;
     }
 
     @PreUpdate

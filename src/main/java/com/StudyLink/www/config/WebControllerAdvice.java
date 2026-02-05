@@ -81,6 +81,38 @@ public class WebControllerAdvice {
     }
 
     /**
+     * 모든 뷰에 멤버십 등급 추가
+     */
+    @ModelAttribute("membership")
+    public String getMembership() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            return "FREE";
+        }
+        String username = extractUsername(authentication);
+        return userRepository.findByUsername(username)
+                .map(user -> user.getMembership().name())
+                .orElse("FREE");
+    }
+
+    /**
+     * 모든 뷰에 멤버십 만료일 추가
+     */
+    @ModelAttribute("membershipExpiresAt")
+    public java.time.LocalDateTime getMembershipExpiresAt() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            return null;
+        }
+        String username = extractUsername(authentication);
+        return userRepository.findByUsername(username)
+                .map(user -> user.getMembershipExpiresAt())
+                .orElse(null);
+    }
+
+    /**
      * Authentication 객체에서 username 통합 추출
      */
     private String extractUsername(Authentication authentication) {

@@ -135,10 +135,7 @@ public class MentorProfile {
      * 예: ["math", "korean", "english"]
      */
     @ElementCollection
-    @CollectionTable(
-            name = "mentor_subjects",
-            joinColumns = @JoinColumn(name = "user_id")
-    )
+    @CollectionTable(name = "mentor_subjects", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "subject")
     private List<String> subjects;
 
@@ -147,10 +144,7 @@ public class MentorProfile {
      * 예: ["middle", "high", "adult"]
      */
     @ElementCollection
-    @CollectionTable(
-            name = "mentor_grades",
-            joinColumns = @JoinColumn(name = "user_id")
-    )
+    @CollectionTable(name = "mentor_grades", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "grade")
     private List<String> grades;
 
@@ -229,14 +223,22 @@ public class MentorProfile {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        if (this.point == null) this.point = 0L;
-        if (this.exp == null) this.exp = 0L;
-        if (this.averageRating == null) this.averageRating = 0.0;
-        if (this.quizCount == null) this.averageRating = 0.0;
-        if (this.isVerified == null) this.isVerified = false;
-        if (this.notificationLesson == null) this.notificationLesson = true;
-        if (this.notificationMessage == null) this.notificationMessage = true;
-        if (this.notificationReview == null) this.notificationReview = true;
+        if (this.point == null)
+            this.point = 0L;
+        if (this.exp == null)
+            this.exp = 0L;
+        if (this.averageRating == null)
+            this.averageRating = 0.0;
+        if (this.quizCount == null)
+            this.averageRating = 0.0;
+        if (this.isVerified == null)
+            this.isVerified = false;
+        if (this.notificationLesson == null)
+            this.notificationLesson = true;
+        if (this.notificationMessage == null)
+            this.notificationMessage = true;
+        if (this.notificationReview == null)
+            this.notificationReview = true;
     }
 
     @PreUpdate

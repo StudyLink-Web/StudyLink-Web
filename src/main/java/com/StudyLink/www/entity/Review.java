@@ -74,7 +74,8 @@ public class Review {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        if (this.isPublic == null) this.isPublic = true;
+        if (this.isPublic == null)
+            this.isPublic = true;
     }
 
     @PreUpdate

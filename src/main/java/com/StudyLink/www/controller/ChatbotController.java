@@ -1,6 +1,7 @@
 package com.StudyLink.www.controller;
 
 import com.StudyLink.www.dto.ChatbotDTO;
+import com.StudyLink.www.entity.MembershipType;
 import com.StudyLink.www.entity.StudentScore;
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.StudentScoreRepository;
@@ -41,7 +42,21 @@ public class ChatbotController {
     @ResponseBody
     public ChatbotDTO.Response send(@RequestBody ChatbotDTO.Request request, Principal principal) {
         log.info("요청 수신 - Session ID: {}, Query: {}", request.getSessionId(), request.getQuery());
-        
+
+        // 0. 멤버십 체크
+        if (principal != null) {
+            String identifier = principal.getName();
+            Users foundUser = userRepository.findByEmail(identifier)
+                    .orElseGet(() -> userRepository.findByUsername(identifier).orElse(null));
+
+            if (foundUser != null && foundUser.getMembership() == MembershipType.FREE) {
+                log.warn("🚫 [Chatbot] 멤버십 부족: {} (Free)", identifier);
+                return ChatbotDTO.Response.builder()
+                        .answer("죄송합니다. AI 상담 기능은 Standard 또는 Premium PASS 요금제 이용 시 가능합니다.")
+                        .build();
+            }
+        }
+
         // 1. 대화 내역 저장 (사용자 질문)
         if (request.getSessionId() != null) {
             sessionService.saveMessage(request.getSessionId(), "USER", request.getQuery());
@@ -61,7 +76,8 @@ public class ChatbotController {
                     .orElseGet(() -> userRepository.findByUsername(identifier).orElse(null));
 
             if (foundUser != null) {
-                List<StudentScore> dbScores = studentScoreRepository.findByUser_UserIdAndScoreRecordIsNull(foundUser.getUserId());
+                List<StudentScore> dbScores = studentScoreRepository
+                        .findByUser_UserIdAndScoreRecordIsNull(foundUser.getUserId());
                 if (!dbScores.isEmpty()) {
                     List<ChatbotDTO.UserScore> dtoScores = dbScores.stream()
                             .map(score -> ChatbotDTO.UserScore.builder()
@@ -82,7 +98,7 @@ public class ChatbotController {
         // 4. 대화 내역 저장 (AI 응답)
         if (request.getSessionId() != null && response != null && response.getAnswer() != null) {
             sessionService.saveMessage(request.getSessionId(), "BOT", response.getAnswer());
-            
+
             // [추가] AI가 생성한 제목이 있다면 세션 제목 업데이트
             if (response.getTitle() != null && !response.getTitle().isEmpty()) {
                 sessionService.updateSessionTitle(request.getSessionId(), response.getTitle());
@@ -94,11 +110,11 @@ public class ChatbotController {
             String username = principal.getName();
             List<com.StudyLink.www.entity.PushToken> tokens = pushTokenRepository.findAllByUsername(username);
             log.info("🔔 알림 발송 시도 - 사용자: {}, 등록된 기기 수: {}", username, tokens.size());
-            
+
             tokens.forEach(tokenEntity -> {
-                fcmService.sendNotification(tokenEntity.getToken(), 
-                    "🤖 StudyLink AI 답변 도착", 
-                    "질문하신 내용에 대한 답변이 생성되었습니다!");
+                fcmService.sendNotification(tokenEntity.getToken(),
+                        "🤖 StudyLink AI 답변 도착",
+                        "질문하신 내용에 대한 답변이 생성되었습니다!");
             });
         }
 

@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
 import type { FC } from "react";
-import { Check, ArrowUpRight, Crown, Zap } from "lucide-react";
+import { Check, ArrowUpRight, Crown, Zap, Lock } from "lucide-react";
+
+interface FeatureItem {
+  text: string;
+  locked?: boolean;
+}
 
 interface PlanProps {
   name: string;
   price: string;
   description: string;
-  features: string[];
+  features: (string | FeatureItem)[];
   buttonText: string;
   highlight?: boolean;
   freeTrial?: boolean;
@@ -115,18 +120,30 @@ const PlanCard: FC<PlanProps> = ({
           <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
             What's included
           </div>
-          {features.map((feature: string, i: number) => (
-            <div key={i} className="flex items-start gap-3 group/item">
-              <div className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
-                highlight ? "bg-blue-500/10 text-blue-500" : "bg-slate-100 dark:bg-white/5 text-slate-400"
-              }`}>
-                <Check width={12} height={12} strokeWidth={3} />
+          {features.map((feature, i) => {
+            const isString = typeof feature === "string";
+            const text = isString ? feature : feature.text;
+            const locked = !isString && feature.locked;
+
+            return (
+              <div key={i} className={`flex items-start gap-3 group/item ${locked ? "opacity-50" : ""}`}>
+                <div className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
+                  locked 
+                    ? "bg-slate-200 dark:bg-white/10 text-slate-400" 
+                    : highlight ? "bg-blue-500/10 text-blue-500" : "bg-slate-100 dark:bg-white/5 text-slate-400"
+                }`}>
+                  {locked ? <Lock width={10} height={10} /> : <Check width={12} height={12} strokeWidth={3} />}
+                </div>
+                <span className={`text-sm font-semibold transition-colors ${
+                  locked 
+                    ? "text-slate-400 line-through" 
+                    : "text-slate-700 dark:text-slate-200 group-hover/item:text-slate-900 dark:group-hover/item:text-white"
+                }`}>
+                  {text}
+                </span>
               </div>
-              <span className="text-sm text-slate-700 dark:text-slate-200 font-semibold group-hover/item:text-slate-900 dark:group-hover/item:text-white transition-colors">
-                {feature}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
@@ -139,6 +156,8 @@ const PricingPage: FC = () => {
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
   const [widgets, setWidgets] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const currentUserMembership = (window as any).__INITIAL_DATA__?.user?.membership;
 
   // 1. 요금제 선택 시 초기 데이터 및 Toss 위젯 로드
   const handlePlanSelect = async (productId: number) => {
@@ -298,45 +317,49 @@ const PricingPage: FC = () => {
           <PlanCard
             name="Free"
             price="Free"
-            description="입시 준비의 시작을 위한 베이직 플랜"
-            buttonText="시작하기"
+            description="입시 준비의 기초 데이터와 뉴스를 확인해보세요."
+            buttonText={currentUserMembership === "FREE" || !currentUserMembership ? "현재 이용 중" : "시작하기"}
             productId={0} 
             onClick={() => window.location.href = "/login"}
+            highlight={currentUserMembership === "FREE" || !currentUserMembership}
             features={[
               "최신 대학 입시 뉴스 구독",
               "기본 입시 데이터 조회 (일 5회)",
               "공개 멘토링 게시판 읽기 권한",
-              "AI 상담 기초 답변 (일 3회)",
+              "입시 커뮤니티 기본 이용",
+              { text: "AI 자소서 메이커 (미지원)", locked: true },
+              { text: "AI 대입 상담 (미지원)", locked: true },
             ]}
           />
 
           <PlanCard
-            highlight
+            highlight={currentUserMembership === "STANDARD"}
             name="Standard"
             price="₩19,900"
-            description="효율적인 합격 전략을 위한 인기 플랜."
-            buttonText="구독 시작하기"
+            description="합격을 부르는 AI의 명쾌한 자소서 첨삭과 예측 데이터!"
+            buttonText={currentUserMembership === "STANDARD" ? "현재 이용 중" : "구독 시작하기"}
             productId={1} 
-            onClick={handlePlanSelect}
+            onClick={currentUserMembership === "STANDARD" ? undefined : handlePlanSelect}
             features={[
-              "AI 자소서 분석 (월 10회)",
+              "AI 자소서 분석/첨삭 (월 10회)",
+              "AI 대입 상담 챗봇 (월 30회)",
               "대학별 합격 예측 데이터 조회",
               "맞춤형 입시 리포트 제공",
-              "AI 모의면접 체험 (월 3회)",
               "프리미엄 게시판 접근 권한",
             ]}
           />
 
           <PlanCard
+            highlight={currentUserMembership === "PREMIUM"}
             name="Premium PASS"
             price="₩49,900"
-            description="완벽한 합격을 위한 모든 권한과 데이터"
-            buttonText="PASS 구매하기"
+            description="완벽한 합격을 위한 모든 유료 데이터와 무제한 AI 서비스!"
+            buttonText={currentUserMembership === "PREMIUM" ? "현재 이용 중" : "PASS 구매하기"}
             productId={2} 
-            onClick={handlePlanSelect}
+            onClick={currentUserMembership === "PREMIUM" ? undefined : handlePlanSelect}
             features={[
               "전년도 합격자 생기부 원본 열람",
-              "AI 자소서/면접 분석 무제한",
+              "AI 자소서/상담/면접 무제한",
               "1:1 입시 멘토링 우선 매칭",
               "전용 Q&A 라운지 입장 권한",
               "실시간 전문 컨설턴트 상담 연동",

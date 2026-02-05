@@ -1,5 +1,7 @@
 package com.StudyLink.www.dto;
 
+import com.StudyLink.www.entity.MembershipType;
+
 import com.StudyLink.www.entity.Users;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +23,8 @@ public class UsersDTO {
     private String nickname;
     private String username;
     private String role;
+    private String membership;
+    private LocalDateTime membershipExpiresAt;
 
     private Boolean emailVerified;
     private Boolean isStudentVerified;
@@ -57,5 +61,7 @@ public class UsersDTO {
         this.gradeYear = user.getGradeYear();
         this.interests = user.getInterests();
         this.phone = user.getPhone();
+        this.membership = String.valueOf(user.getMembership());
+        this.membershipExpiresAt = user.getMembershipExpiresAt();
     }
 }

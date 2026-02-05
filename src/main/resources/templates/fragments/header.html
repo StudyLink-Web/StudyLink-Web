@@ -6,6 +6,57 @@
 	<link rel="stylesheet" th:href="@{/css/header-style.css}">
 	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
 
+	<style>
+		/* 멤버십 뱃지 스타일 */
+		.membership-badge {
+			display: inline-flex;
+			align-items: center;
+			padding: 2px 8px;
+			border-radius: 12px;
+			font-size: 0.75rem;
+			font-weight: 700;
+			margin-left: 6px;
+			text-transform: uppercase;
+			vertical-align: middle;
+		}
+		.badge-free {
+			background-color: #f1f5f9;
+			color: #64748b;
+			border: 1px solid #e2e8f0;
+		}
+		.badge-standard {
+			background-color: #eff6ff;
+			color: #2563eb;
+			border: 1px solid #dbeafe;
+		}
+		.badge-premium {
+			background-color: #fffbeb;
+			color: #d97706;
+			border: 1px solid #fef3c7;
+			box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
+		}
+		.d-day-text {
+			font-size: 0.7rem;
+			color: #ef4444;
+			margin-left: 4px;
+			font-weight: 600;
+		}
+		.role-badge {
+			display: inline-flex;
+			align-items: center;
+			padding: 1px 6px;
+			border-radius: 4px;
+			font-size: 0.65rem;
+			font-weight: 600;
+			margin-left: 4px;
+			background-color: #f8fafc;
+			color: #64748b;
+			border: 1px solid #e2e8f0;
+			vertical-align: middle;
+			text-transform: uppercase;
+		}
+	</style>
+
 	<div class="header">
 		<div class="header-inner">
 
@@ -95,11 +146,24 @@
 						-->
 
 
-						<span th:if="${userName != null}"
-							  th:text="|${userName} [${userRole}]|"></span>
+						<span th:if="${userName != null}">
+							<span th:text="${userName}"></span>
+							<!-- 역할 뱃지 -->
+							<span th:if="${userRole != null && userRole != 'GUEST'}" 
+								  class="role-badge" 
+								  th:text="${userRole}">
+							</span>
+							<!-- 멤버십 뱃지 -->
+							<span th:if="${membership != null}" 
+								  th:class="'membership-badge badge-' + ${membership.toLowerCase()}"
+								  th:text="${membership}">
+							</span>
+							<!-- D-Day 표시 -->
+							<span th:if="${membershipExpiresAt != null}" id="membershipDDay" class="d-day-text"></span>
+						</span>
 
 						<span th:if="${userName == null}">
-							Guest [GUEST]
+							Guest
 						</span>
 
 					</a>
@@ -119,8 +183,6 @@
 					</ul>
 				</li>
 
-				<!-- 환전 페이지 이동(임시) -->
-				<a href="/payment/exchange">환전하기</a>
 			</ul>
 
 
@@ -167,5 +229,30 @@
 
 		</div>
 	</div>
+
+	<script th:inline="javascript">
+		/* 멤버십 D-Day 계산 */
+		document.addEventListener('DOMContentLoaded', function() {
+			const expiresAtStr = /*[[${membershipExpiresAt}]]*/ null;
+			if (expiresAtStr) {
+				const expiresAt = new Date(expiresAtStr);
+				const now = new Date();
+				const diffTime = expiresAt - now;
+				const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+				
+				const dDayElement = document.getElementById('membershipDDay');
+				if (dDayElement) {
+					if (diffDays > 0) {
+						dDayElement.innerText = '(D-' + diffDays + ')';
+					} else if (diffDays === 0) {
+						dDayElement.innerText = '(D-Day)';
+					} else {
+						dDayElement.innerText = '(만료)';
+						dDayElement.style.color = '#94a3b8';
+					}
+				}
+			}
+		});
+	</script>
 </header>
 

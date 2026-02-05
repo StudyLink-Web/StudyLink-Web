@@ -214,6 +214,23 @@ public class PaymentServiceImpl implements PaymentService {
 
                 // 저장
                 paymentRepository.save(payment);
+
+                // 유저 멤버십 업데이트
+                Users user = payment.getUser();
+                if (user != null) {
+                    Product product = productRepository.findById(payment.getProductId())
+                            .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+                    if (product.getProductId() == 1) {
+                        user.setMembership(MembershipType.STANDARD);
+                        user.setMembershipExpiresAt(LocalDateTime.now().plusMonths(1));
+                    } else if (product.getProductId() == 2) {
+                        user.setMembership(MembershipType.PREMIUM);
+                        user.setMembershipExpiresAt(LocalDateTime.now().plusMonths(1));
+                    }
+                    userRepository.save(user);
+                    log.info("✅ 유저 멤버십 업데이트 완료: {} (ID: {}, 만료일: {})",
+                            user.getMembership(), user.getUserId(), user.getMembershipExpiresAt());
+                }
             } else {
                 // 결제 승인 실패 로직
                 // DB payment REQUESTED -> FAILED로 변경
