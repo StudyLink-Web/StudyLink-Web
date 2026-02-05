@@ -2,6 +2,8 @@ package com.StudyLink.www.service;
 
 import com.StudyLink.www.dto.NotificationDTO;
 import com.StudyLink.www.entity.UserNotification;
+import com.StudyLink.www.entity.Users;
+import com.StudyLink.www.repository.PushTokenRepository;
 import com.StudyLink.www.repository.UserNotificationRepository;
 import com.StudyLink.www.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,8 @@ public class NotificationService {
 
     private final UserNotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final PushTokenRepository pushTokenRepository;
+    private final FCMService fcmService;
 
     /**
      * 특정 사용자의 모든 알림 조회
@@ -74,7 +78,36 @@ public class NotificationService {
                     .build();
             notificationRepository.save(notification);
             log.info("Notification created for user {}: {}", userId, message);
+
+            // 🚀 푸시 알림 발송 추가
+            String pushTitle = getPushTitle(type);
+            var tokens = pushTokenRepository.findAllByUsername(user.getUsername());
+            log.info("🚀 User {} (id: {}) has {} push tokens. Sending push...", user.getUsername(), userId,
+                    tokens.size());
+
+            tokens.forEach(tokenEntity -> {
+                try {
+                    fcmService.sendNotification(tokenEntity.getToken(), pushTitle, message);
+                } catch (Exception e) {
+                    log.error("❌ Failed to send push to token for user {}: {}", user.getUsername(), e.getMessage());
+                }
+            });
         });
+    }
+
+    private String getPushTitle(String type) {
+        return switch (type) {
+            case "EXCHANGE_COMPLETED" -> "환전 승인 완료";
+            case "EXCHANGE_REJECTED" -> "환전 신청 반려";
+            case "EXCHANGE_REQUESTED" -> "환전 신청 알림";
+            case "ROOM_EXPIRED" -> "방 만료 알림";
+            case "ANSWER_RECEIVED" -> "새로운 답변";
+            case "COMMENT_RECEIVED" -> "새로운 댓글";
+            case "FOLLOW_RECEIVED" -> "새로운 팔로우";
+            case "PAYMENT_COMPLETED" -> "결제 완료";
+            case "SYSTEM" -> "StudyLink 공지사항";
+            default -> "StudyLink 알림";
+        };
     }
 
     private NotificationDTO convertToDTO(UserNotification notification) {

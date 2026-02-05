@@ -7,6 +7,7 @@ import {
   Users,
   ArrowRight,
   Sparkles,
+  Coins,
 } from "lucide-react";
 import type { FC } from "react";
 
@@ -73,6 +74,15 @@ const actions = [
     color: "bg-amber-500",
     lightColor: "text-amber-600 dark:text-amber-400",
     bgColor: "bg-amber-50 dark:bg-amber-500/10",
+  },
+  {
+    title: "포인트 환전",
+    description: "적립된 포인트를 현금으로 환전",
+    icon: Coins,
+    href: "/payment/exchange",
+    color: "bg-rose-500",
+    lightColor: "text-rose-600 dark:text-rose-400",
+    bgColor: "bg-rose-50 dark:bg-rose-500/10",
   },
 ];
 

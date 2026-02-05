@@ -24,6 +24,9 @@ import java.util.UUID;
 import com.StudyLink.www.repository.EmailVerificationTokenRepository;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseToken;
+
 
 /**
  * AccountService (계정 관리 서비스)
@@ -761,5 +764,61 @@ public class AccountService {
         return local.substring(0, 2) + "***" + domain;
     }
 
+    @Transactional
+    public Map<String, Object> changePhoneWithFirebase(Long userId, String idToken, String newPhoneOptional) {
 
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        // 1) Firebase 토큰 검증
+        final FirebaseToken decoded;
+        try {
+            decoded = FirebaseAuth.getInstance().verifyIdToken(idToken);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("유효하지 않은 인증 토큰입니다. 다시 인증해 주세요.");
+        }
+
+        // 2) phone_number는 claims에서 추출
+        Object phoneClaim = decoded.getClaims().get("phone_number");
+
+        if (phoneClaim == null) {
+            throw new IllegalArgumentException("인증된 전화번호를 확인할 수 없습니다.");
+        }
+
+        String verifiedPhoneE164 = phoneClaim.toString();
+
+        String provider = (String) ((Map<?, ?>) decoded.getClaims().get("firebase")).get("sign_in_provider");
+        if (!"phone".equals(provider)) {
+            throw new IllegalArgumentException("전화번호 인증 토큰이 아닙니다.");
+        }
+
+        // 3) (선택) 프론트가 보낸 newPhone과 토큰의 phone이 같은지 검증
+        //    - 권장: 프론트는 그냥 UI용, 서버는 verifiedPhoneE164만 저장
+        //    - 그래도 안전하게 체크하려면 아래 유지
+        if (newPhoneOptional != null && !newPhoneOptional.isBlank()) {
+            if (!normalizePhone(newPhoneOptional).equals(normalizePhone(verifiedPhoneE164))) {
+                throw new IllegalArgumentException("인증된 번호와 입력한 번호가 일치하지 않습니다.");
+            }
+        }
+
+        // 4) 기존 번호와 동일 체크
+        if (user.getPhone() != null && normalizePhone(user.getPhone()).equals(normalizePhone(verifiedPhoneE164))) {
+            throw new IllegalArgumentException("새 휴대폰 번호는 현재 번호와 달라야 합니다");
+        }
+
+        // 5) 저장 (권장: E.164 통일)
+        user.setPhone(verifiedPhoneE164);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "휴대폰 번호가 변경되었습니다");
+        response.put("newPhone", verifiedPhoneE164);
+        return response;
+    }
+
+    private String normalizePhone(String s) {
+        return s == null ? "" : s.replaceAll("[^0-9+]", "");
+    }
 }

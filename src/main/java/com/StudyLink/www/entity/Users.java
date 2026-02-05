@@ -48,6 +48,13 @@ public class Users {
     @Column(length = 20, nullable = false)
     private Role role = Role.STUDENT;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private MembershipType membership = MembershipType.FREE;
+
+    @Column(name = "membership_expires_at")
+    private LocalDateTime membershipExpiresAt;
+
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
@@ -115,10 +122,16 @@ public class Users {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        if (this.emailVerified == null) this.emailVerified = false;
-        if (this.isStudentVerified == null) this.isStudentVerified = false;
-        if (this.isVerifiedStudent == null) this.isVerifiedStudent = false;
-        if (this.isActive == null) this.isActive = true;
+        if (this.emailVerified == null)
+            this.emailVerified = false;
+        if (this.isStudentVerified == null)
+            this.isStudentVerified = false;
+        if (this.isVerifiedStudent == null)
+            this.isVerifiedStudent = false;
+        if (this.isActive == null)
+            this.isActive = true;
+        if (this.membership == null)
+            this.membership = MembershipType.FREE;
     }
 
     @PreUpdate
@@ -143,5 +156,7 @@ public class Users {
         this.gradeYear = usersDTO.getGradeYear();
         this.interests = usersDTO.getInterests();
         this.phone = usersDTO.getPhone();
+        this.membership = usersDTO.getMembership() != null ? MembershipType.valueOf(usersDTO.getMembership())
+                : MembershipType.FREE;
     }
 }

@@ -94,3 +94,4 @@ src/main/resources/service-account.json
 
 # AI Reference Folder (Private)
 .reference/
+!.reference/kjw.reference/

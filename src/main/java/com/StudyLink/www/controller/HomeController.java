@@ -1,7 +1,9 @@
 package com.StudyLink.www.controller;
 
 import com.StudyLink.www.dto.MentorProfileDTO;
+import com.StudyLink.www.service.AuthService;
 import com.StudyLink.www.service.MentorProfileService;
+import com.StudyLink.www.entity.Users;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -10,11 +12,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
 
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 public class HomeController {
 
     private final MentorProfileService mentorProfileService;
+    private final AuthService authService;
 
     /**
      * 홈 페이지 렌더링
@@ -24,7 +29,10 @@ public class HomeController {
     public String home(Authentication authentication, Model model) {
         // 현재 로그인한 사용자 정보를 모델에 추가
         if (authentication != null && authentication.isAuthenticated()) {
-            model.addAttribute("user", authentication.getPrincipal());
+            String email = authentication.getName();
+            authService.getUserByEmail(email).ifPresent(user -> {
+                model.addAttribute("user", user);
+            });
             model.addAttribute("isAuthenticated", true);
             System.out.println("✅ 로그인 사용자: " + authentication.getName());
         } else {

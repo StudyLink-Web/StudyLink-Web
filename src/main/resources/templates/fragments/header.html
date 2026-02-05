@@ -6,6 +6,57 @@
 	<link rel="stylesheet" th:href="@{/css/header-style.css}">
 	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
 
+	<style>
+		/* 멤버십 뱃지 스타일 */
+		.membership-badge {
+			display: inline-flex;
+			align-items: center;
+			padding: 2px 8px;
+			border-radius: 12px;
+			font-size: 0.75rem;
+			font-weight: 700;
+			margin-left: 6px;
+			text-transform: uppercase;
+			vertical-align: middle;
+		}
+		.badge-free {
+			background-color: #f1f5f9;
+			color: #64748b;
+			border: 1px solid #e2e8f0;
+		}
+		.badge-standard {
+			background-color: #eff6ff;
+			color: #2563eb;
+			border: 1px solid #dbeafe;
+		}
+		.badge-premium {
+			background-color: #fffbeb;
+			color: #d97706;
+			border: 1px solid #fef3c7;
+			box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
+		}
+		.d-day-text {
+			font-size: 0.7rem;
+			color: #ef4444;
+			margin-left: 4px;
+			font-weight: 600;
+		}
+		.role-badge {
+			display: inline-flex;
+			align-items: center;
+			padding: 1px 6px;
+			border-radius: 4px;
+			font-size: 0.65rem;
+			font-weight: 600;
+			margin-left: 4px;
+			background-color: #f8fafc;
+			color: #64748b;
+			border: 1px solid #e2e8f0;
+			vertical-align: middle;
+			text-transform: uppercase;
+		}
+	</style>
+
 	<div class="header">
 		<div class="header-inner">
 
@@ -45,63 +96,17 @@
 				</li>
 				<li><a th:href="@{/dashboard}" class="header-nav-link">대시보드</a></li>
 
-				<li class="dropdown">
+				<!-- 사용자 이름 드롭다운 (원래 위치) -->
+				<li class="dropdown" th:if="${#authorization.expression('isAuthenticated()')}">
 					<a href="#"
 					   class="header-nav-link dropdown-toggle"
 					   id="userDropdown"
 					   role="button"
 					   data-toggle="dropdown"
 					   aria-expanded="false"
-					   style="cursor: pointer;" >
-
-						<!-- 👤 <span th:text="${#authentication.principal.attributes['name']}"></span> --->
-						<!-- 👤 <span th:text="${#authentication.name}"></span> -->
-
-						<!-- OAuth2 로그인(Google/Kakao/Naver)에서는 name, 로컬 폼 로그인에서는 username 사용 -->
-						<!--
-						<span th:with="userName=${
-							#authentication.principal.attributes != null && #authentication.principal.attributes['name'] != null
-								? #authentication.principal.attributes['name']
-								: #authentication.name
-						}" th:text="${userName}">
-						</span>
-						-->
-
-						<!-- 이름 (소셜 로그인 패치 완료) -->
-						<!--
-						👤 <span th:text="${
-							   #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
-								 ? #authentication.principal.attributes['name']
-								 : #authentication.name
-							}">
-							</span>
-						-->
-
-						<!-- 이름 + ROLE -->
-						<!--
-						👤 <span th:text="${
-						   #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
-							? #authentication.principal.attributes['name'] + ' [' + #authentication.principal.attributes.get('role') + ']'
-							: #authentication.name + ' [' + #authentication.principal.authorities[0].authority.substring(5) + ']'
-						}">
-						</span>
-						-->
-
-						<!-- 사용자 정보 표시
-						<span th:text="|${userName} [${userRole}]|"></span>
-
-						<p th:text="'DEBUG userName = ' + ${userName}"></p>
-						<p th:text="'DEBUG userRole = ' + ${userRole}"></p>
-						-->
-
-
-						<span th:if="${userName != null}"
-							  th:text="|${userName} [${userRole}]|"></span>
-
-						<span th:if="${userName == null}">
-							Guest [GUEST]
-						</span>
-
+					   style="cursor: pointer;">
+						<span th:if="${userName != null}" th:text="${userName}"></span>
+						<span th:if="${userName == null}">Guest</span>
 					</a>
 
 					<ul class="dropdown-menu dropdown-menu-right">
@@ -118,15 +123,10 @@
 						</li>
 					</ul>
 				</li>
-
-				<!-- 환전 페이지 이동(임시) -->
-				<a href="/payment/exchange">환전하기</a>
 			</ul>
 
-
-
 			<!-- 알림 및 테마 도구 -->
-			<div class="header-tools">
+			<div class="header-tools" style="display: flex; align-items: center; gap: 0.8rem; flex-grow: 1;">
 				<!-- 테마 토글 (모든 유저) -->
 				<button id="themeToggle" class="tool-btn" title="테마 변경">
 					<span class="theme-icon sun-icon">☀️</span>
@@ -155,17 +155,55 @@
 						</div>
 					</div>
 				</div>
-			</div>
 
-			<!-- D-Day -->
-			<div class="header-buttons">
-				<div class="dday">
-					<p>수능까지 </p>
-					<span th:attr="data-dday=${dday}" th:text="${dday}"></span>
+				<!-- 뱃지 영역 -->
+				<div class="header-badges" th:if="${#authorization.expression('isAuthenticated()')}" style="display: flex; align-items: center; gap: 4px;">
+					<!-- 역할 뱃지 -->
+					<span th:if="${userRole != null && userRole != 'GUEST'}" 
+						  class="role-badge" 
+						  th:text="${userRole}">
+					</span>
+					<!-- 멤버십 뱃지 -->
+					<span th:if="${membership != null}" 
+						  th:class="'membership-badge badge-' + ${membership.toLowerCase()}"
+						  th:text="${membership}">
+					</span>
+					<!-- 멤버십 D-Day -->
+					<span th:if="${membershipExpiresAt != null}" id="membershipDDay" class="d-day-text"></span>
+				</div>
+
+				<!-- 수능 D-Day (맨 오른쪽 고정) -->
+				<div class="dday" style="margin-left: auto !important; margin-right: 0 !important; display: flex; align-items: center; gap: 4px; padding-left: 12px; order: 999;">
+					<p style="margin: 0; font-weight: bold; color: #666; font-size: 0.85rem;">수능까지 </p>
+					<span th:attr="data-dday=${dday}" th:text="${dday}" style="color: crimson; font-weight: 700; font-size: 1rem;"></span>
 				</div>
 			</div>
-
 		</div>
 	</div>
+
+	<script th:inline="javascript">
+		/* 멤버십 D-Day 계산 */
+		document.addEventListener('DOMContentLoaded', function() {
+			const expiresAtStr = /*[[${membershipExpiresAt}]]*/ null;
+			if (expiresAtStr) {
+				const expiresAt = new Date(expiresAtStr);
+				const now = new Date();
+				const diffTime = expiresAt - now;
+				const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+				
+				const dDayElement = document.getElementById('membershipDDay');
+				if (dDayElement) {
+					if (diffDays > 0) {
+						dDayElement.innerText = '(D-' + diffDays + ')';
+					} else if (diffDays === 0) {
+						dDayElement.innerText = '(D-Day)';
+					} else {
+						dDayElement.innerText = '(만료)';
+						dDayElement.style.color = '#94a3b8';
+					}
+				}
+			}
+		});
+	</script>
 </header>
 

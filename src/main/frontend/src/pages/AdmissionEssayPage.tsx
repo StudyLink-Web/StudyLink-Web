@@ -8,6 +8,7 @@ import {
   Loader2,
   Clipboard,
   FileText,
+  Lock,
 } from "lucide-react";
 
 interface CoverLetter {
@@ -25,6 +26,7 @@ const AdmissionEssayPage: React.FC = () => {
   const [essays, setEssays] = useState<CoverLetter[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [membership, setMembership] = useState<string>("FREE");
 
   // Form State
   const [formData, setFormData] = useState({
@@ -53,6 +55,7 @@ const AdmissionEssayPage: React.FC = () => {
 
   useEffect(() => {
     const initData = async () => {
+      setMembership((window as any).__INITIAL_DATA__?.user?.membership || "FREE");
       await Promise.all([fetchEssays(), fetchProfile()]);
     };
     initData();
@@ -208,7 +211,7 @@ const AdmissionEssayPage: React.FC = () => {
               AI 대입 자소서 메이커
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2">
-              나의 경험 키워드를 바탕으로 합격 자소서 초안을 만듭니다.
+              나의 경험 키워드를 바탕으로 합격 자소서 초안을 만듭니다. <span className="text-purple-500 font-bold">(Standard/Premium PASS 전용)</span>
             </p>
           </div>
           {view === "list" ? (
@@ -301,10 +304,20 @@ const AdmissionEssayPage: React.FC = () => {
                     1. 정보 및 키워드 입력
                   </h2>
                   <button
-                    onClick={() => setIsExtractModalOpen(true)}
-                    className="text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-200 dark:border-purple-500/20 hover:bg-purple-100 transition-all"
+                    onClick={() => {
+                        if (membership === "FREE") {
+                            window.location.href = "/pricing";
+                        } else {
+                            setIsExtractModalOpen(true);
+                        }
+                    }}
+                    className={`text-xs font-bold px-3 py-1.5 rounded-lg border flex items-center gap-1.5 transition-all ${
+                        membership === "FREE" 
+                        ? "text-slate-400 bg-slate-100 border-slate-200 cursor-pointer hover:bg-slate-200" 
+                        : "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20 hover:bg-purple-100"
+                    }`}
                   >
-                    ✨ 생기부로 키워드 생성
+                    {membership === "FREE" ? <Lock size={12} /> : "✨"} 생기부로 키워드 생성
                   </button>
                 </div>
 
@@ -422,21 +435,27 @@ const AdmissionEssayPage: React.FC = () => {
 
                   <button
                     disabled={generating}
-                    onClick={generateAI}
+                    onClick={() => {
+                        if (membership === "FREE") {
+                            window.location.href = "/pricing";
+                        } else {
+                            generateAI();
+                        }
+                    }}
                     style={{
-                      backgroundColor: generating ? "#9ca3af" : "#4f46e5",
+                      backgroundColor: generating ? "#9ca3af" : (membership === "FREE" ? "#64748b" : "#4f46e5"),
                     }}
                     className="w-full py-4 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 disabled:cursor-not-allowed transition-all"
                   >
                     {generating ? (
                       <Loader2 className="animate-spin" color="white" />
                     ) : (
-                      <Sparkles size={20} color="white" />
+                      membership === "FREE" ? <Lock size={20} color="white" /> : <Sparkles size={20} color="white" />
                     )}
                     <span className="text-white">
                       {generating
                         ? "AI가 자소서를 집필 중입니다..."
-                        : "AI 초안 생성하기"}
+                        : (membership === "FREE" ? "Standard 플랜부터 이용 가능 (업그레이드)" : "AI 초안 생성하기")}
                     </span>
                   </button>
                 </div>

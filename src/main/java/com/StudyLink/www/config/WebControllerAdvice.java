@@ -1,3 +1,5 @@
+// WebControllerAdvice
+
 package com.StudyLink.www.config;
 
 import com.StudyLink.www.entity.Users;
@@ -78,6 +80,38 @@ public class WebControllerAdvice {
         return userRepository.findByUsername(username)
                 .map(user -> user.getName() != null ? user.getName() : user.getNickname())
                 .orElse("Guest");
+    }
+
+    /**
+     * 모든 뷰에 멤버십 등급 추가
+     */
+    @ModelAttribute("membership")
+    public String getMembership() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            return "FREE";
+        }
+        String username = extractUsername(authentication);
+        return userRepository.findByUsername(username)
+                .map(user -> user.getMembership().name())
+                .orElse("FREE");
+    }
+
+    /**
+     * 모든 뷰에 멤버십 만료일 추가
+     */
+    @ModelAttribute("membershipExpiresAt")
+    public java.time.LocalDateTime getMembershipExpiresAt() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            return null;
+        }
+        String username = extractUsername(authentication);
+        return userRepository.findByUsername(username)
+                .map(user -> user.getMembershipExpiresAt())
+                .orElse(null);
     }
 
     /**

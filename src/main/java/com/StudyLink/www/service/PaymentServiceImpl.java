@@ -60,7 +60,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         // orderId 생성
         String orderId = "ORD-" + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) +
-                         "-" + UUID.randomUUID().toString().substring(0, 8);
+                "-" + UUID.randomUUID().toString().substring(0, 8);
 
         // 결제(PENDING) 생성
         Users user = userRepository.getReferenceById(userId);
@@ -214,6 +214,23 @@ public class PaymentServiceImpl implements PaymentService {
 
                 // 저장
                 paymentRepository.save(payment);
+
+                // 유저 멤버십 업데이트
+                Users user = payment.getUser();
+                if (user != null) {
+                    Product product = productRepository.findById(payment.getProductId())
+                            .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+                    if (product.getProductId() == 1) {
+                        user.setMembership(MembershipType.STANDARD);
+                        user.setMembershipExpiresAt(LocalDateTime.now().plusMonths(1));
+                    } else if (product.getProductId() == 2) {
+                        user.setMembership(MembershipType.PREMIUM);
+                        user.setMembershipExpiresAt(LocalDateTime.now().plusMonths(1));
+                    }
+                    userRepository.save(user);
+                    log.info("✅ 유저 멤버십 업데이트 완료: {} (ID: {}, 만료일: {})",
+                            user.getMembership(), user.getUserId(), user.getMembershipExpiresAt());
+                }
             } else {
                 // 결제 승인 실패 로직
                 // DB payment REQUESTED -> FAILED로 변경
@@ -279,6 +296,10 @@ public class PaymentServiceImpl implements PaymentService {
                     .accountHolder(request.getAccountHolder())
                     .build();
             exchangeRequestRepository.save(exchangeRequest);
+
+            // 알림 생성
+            notificationService.createNotification(userId, "EXCHANGE_REQUESTED", "환전 신청이 완료되었습니다.", null);
+
             return 1;
         } catch (Exception e) {
             // 저장 실패 시 롤백
@@ -294,8 +315,7 @@ public class PaymentServiceImpl implements PaymentService {
             String email,
             LocalDate startDate,
             LocalDate endDate,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         LocalDateTime startDateTime = null;
         LocalDateTime endDatePlus = null;
 
@@ -313,8 +333,7 @@ public class PaymentServiceImpl implements PaymentService {
                 email,
                 startDateTime,
                 endDatePlus,
-                pageable
-        );
+                pageable);
 
         List<AdminPaymentDTO> dtoList = page.getContent().stream()
                 .map(payment -> {
@@ -334,7 +353,8 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public AdminPaymentDetailDTO getPaymentDetail(Long id) {
         Payment payment = paymentRepository.findById(id).orElseThrow(() -> new EntityNotFoundException());
-        Product product = productRepository.findById(payment.getProductId()).orElseThrow(() -> new EntityNotFoundException());
+        Product product = productRepository.findById(payment.getProductId())
+                .orElseThrow(() -> new EntityNotFoundException());
         Users user = payment.getUser();
 
         return AdminPaymentDetailDTO.builder()
@@ -347,8 +367,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public Page<AdminExchangeRequestDTO> searchExchangeRequests(
             ExchangeStatus status, String email, LocalDate startDate,
-            LocalDate endDate, String basis, Pageable pageable
-    ) {
+            LocalDate endDate, String basis, Pageable pageable) {
         LocalDateTime startDateTime = null;
         LocalDateTime endDatePlus = null;
 
@@ -362,35 +381,35 @@ public class PaymentServiceImpl implements PaymentService {
 
         Page<ExchangeRequest> page;
 
-
         if ("createdAt".equals(basis)) {
             return exchangeRequestRepository.searchByCreatedAt(
                     status,
                     email,
                     startDateTime,
                     endDatePlus,
-                    pageable
-            ).map(exchangeRequest -> AdminExchangeRequestDTO.builder()
-                    .exchangeRequestDTO(new ExchangeRequestDTO(exchangeRequest))
-                    .usersDTO(new UsersDTO(exchangeRequest.getUser()))
-                    .build());
+                    pageable).map(
+                            exchangeRequest -> AdminExchangeRequestDTO.builder()
+                                    .exchangeRequestDTO(new ExchangeRequestDTO(exchangeRequest))
+                                    .usersDTO(new UsersDTO(exchangeRequest.getUser()))
+                                    .build());
         } else {
             return exchangeRequestRepository.searchByProcessedAt(
                     status,
                     email,
                     startDateTime,
                     endDatePlus,
-                    pageable
-            ).map(exchangeRequest -> AdminExchangeRequestDTO.builder()
-                    .exchangeRequestDTO(new ExchangeRequestDTO(exchangeRequest))
-                    .usersDTO(new UsersDTO(exchangeRequest.getUser()))
-                    .build());
+                    pageable).map(
+                            exchangeRequest -> AdminExchangeRequestDTO.builder()
+                                    .exchangeRequestDTO(new ExchangeRequestDTO(exchangeRequest))
+                                    .usersDTO(new UsersDTO(exchangeRequest.getUser()))
+                                    .build());
         }
     }
 
     @Override
     public AdminExchangeRequestDetailDTO getExchangeRequestDetail(Long id) {
-        ExchangeRequest exchangeRequest = exchangeRequestRepository.findById(id).orElseThrow(() -> new EntityNotFoundException());
+        ExchangeRequest exchangeRequest = exchangeRequestRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException());
         Users user = exchangeRequest.getUser();
 
         return AdminExchangeRequestDetailDTO.builder()
@@ -414,7 +433,8 @@ public class PaymentServiceImpl implements PaymentService {
         exchange.setProcessedAt(LocalDateTime.now());
 
         // 알림
-        notificationService.createNotification(exchange.getUser().getUserId(), "ANSWER_RECEIVED", "환전신청이 승인되었습니다.", null);
+        notificationService.createNotification(exchange.getUser().getUserId(), "EXCHANGE_COMPLETED", "환전신청이 승인되었습니다.",
+                null);
     }
 
     @Transactional
@@ -433,7 +453,8 @@ public class PaymentServiceImpl implements PaymentService {
         exchange.setProcessedAt(LocalDateTime.now());
 
         // 알림
-        notificationService.createNotification(exchange.getUser().getUserId(), "ANSWER_RECEIVED", "환전신청이 거부되었습니다.", null);
+        notificationService.createNotification(exchange.getUser().getUserId(), "EXCHANGE_REJECTED", "환전신청이 거부되었습니다.",
+                null);
     }
 
     @Override
@@ -458,7 +479,8 @@ public class PaymentServiceImpl implements PaymentService {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
-        return exchangeRequestRepository.countByStatusAndCreatedAtBetween(ExchangeStatus.APPROVED, startOfDay, startOfNextDay);
+        return exchangeRequestRepository.countByStatusAndCreatedAtBetween(ExchangeStatus.APPROVED, startOfDay,
+                startOfNextDay);
     }
 
     @Override
@@ -467,7 +489,8 @@ public class PaymentServiceImpl implements PaymentService {
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
 
-        Long amountSum = exchangeRequestRepository.sumAmountByCreatedAtBetween(ExchangeStatus.APPROVED, startOfDay, startOfNextDay);
+        Long amountSum = exchangeRequestRepository.sumAmountByCreatedAtBetween(ExchangeStatus.APPROVED, startOfDay,
+                startOfNextDay);
         return amountSum != null ? amountSum : 0L;
     }
 
@@ -475,8 +498,7 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentChartDTO getPaymentChart() {
         return new PaymentChartDTO(
                 getPaymentChartByDays(7),
-                getPaymentChartByDays(30)
-        );
+                getPaymentChartByDays(30));
     }
 
     private PaymentChartPeriodDTO getPaymentChartByDays(int days) {
@@ -487,16 +509,14 @@ public class PaymentServiceImpl implements PaymentService {
         LocalDate startDate = LocalDate.now().minusDays(days - 1);
 
         long sum = paymentRepository.sumAmountBefore(
-                startDate.atStartOfDay()
-        );
+                startDate.atStartOfDay());
 
         for (int i = days - 1; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
 
             long amount = paymentRepository.sumAmountByDate(
                     date.atStartOfDay(),
-                    date.plusDays(1).atStartOfDay()
-            );
+                    date.plusDays(1).atStartOfDay());
 
             sum += amount;
 
@@ -512,8 +532,7 @@ public class PaymentServiceImpl implements PaymentService {
     public ExchangeChartDTO getExchangeChart() {
         return new ExchangeChartDTO(
                 getExchangeChartByDays(7),
-                getExchangeChartByDays(30)
-        );
+                getExchangeChartByDays(30));
     }
 
     private ExchangeChartPeriodDTO getExchangeChartByDays(int days) {
@@ -525,8 +544,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         long sum = exchangeRequestRepository.sumAmountBefore(
                 startDate.atStartOfDay(),
-                ExchangeStatus.APPROVED
-        );
+                ExchangeStatus.APPROVED);
 
         for (int i = days - 1; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
@@ -534,8 +552,7 @@ public class PaymentServiceImpl implements PaymentService {
             long amount = exchangeRequestRepository.sumAmountByDate(
                     date.atStartOfDay(),
                     date.plusDays(1).atStartOfDay(),
-                    ExchangeStatus.APPROVED
-            );
+                    ExchangeStatus.APPROVED);
 
             sum += amount;
 

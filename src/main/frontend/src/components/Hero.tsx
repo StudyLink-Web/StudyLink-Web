@@ -65,7 +65,7 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center mt-[-5vh]">
+      <div className="relative z-30 max-w-5xl mx-auto px-4 sm:px-6 text-center mt-[-5vh]">
         {/* Badge */}
         <div className="inline-flex items-center justify-center mb-8 animate-fade-in-up">
           <div className="group cursor-pointer relative">
@@ -111,14 +111,15 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up [animation-delay:600ms]">
           <a
             href="/room/list"
-            className="group relative w-full sm:w-auto overflow-hidden rounded-full bg-slate-900 dark:bg-indigo-600 px-8 py-4 text-base font-bold text-white transition-all transform hover:scale-105 active:scale-95 shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(79,70,229,0.2)] no-underline hover:no-underline flex items-center justify-center gap-2"
+            className="group relative w-full sm:w-auto overflow-hidden rounded-full bg-indigo-600 dark:bg-indigo-500 px-8 py-4 text-base font-bold text-white transition-all transform hover:scale-105 active:scale-95 shadow-[0_20px_50px_rgba(79,70,229,0.4)] dark:shadow-[0_20px_50px_rgba(79,70,229,0.3)] no-underline hover:no-underline flex items-center justify-center gap-2"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-teal-500/20 to-teal-400/20 dark:from-white/10 dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center justify-center gap-2">
-              <span>문제 풀러가기</span>
+              <span className="text-white">문제 풀러가기</span>
               <ArrowRight
                 width={18}
                 height={18}
+                color="white"
                 className="group-hover:translate-x-1 transition-transform"
               />
             </div>
@@ -126,12 +127,12 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
 
           <a
             href="/chatbot"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-full font-medium text-slate-700 dark:text-white border border-slate-300 dark:border-white/10 bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10 backdrop-blur-sm transition-all hover:border-slate-400 dark:hover:border-white/20 shadow-md no-underline hover:no-underline"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-full font-bold text-slate-800 dark:text-white border-2 border-slate-400 dark:border-white/20 bg-white/90 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 backdrop-blur-md transition-all shadow-lg no-underline hover:no-underline"
           >
             <Sparkles
-              className="text-teal-600 dark:text-purple-400"
-              width={16}
-              height={16}
+              className="text-indigo-600 dark:text-purple-400"
+              width={18}
+              height={18}
             />
             <span>AI 무료 상담</span>
           </a>
@@ -139,7 +140,7 @@ const Hero: FC<HeroProps> = ({ scrollProgress = 0 }) => {
       </div>
 
       {/* 하단 페이드아웃 오버레이: 다음 섹션과 자연스럽게 연결하기 위한 긴 그라데이션 */}
-      <div className="absolute bottom-0 left-0 w-full h-80 bg-gradient-to-t from-white via-white/80 to-transparent z-20 pointer-events-none dark:from-[#030014] dark:to-transparent" />
+      <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-white via-white/80 to-transparent z-20 pointer-events-none dark:from-[#030014] dark:to-transparent" />
     </section>
   );
 };
