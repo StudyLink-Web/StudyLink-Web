@@ -96,76 +96,17 @@
 				</li>
 				<li><a th:href="@{/dashboard}" class="header-nav-link">대시보드</a></li>
 
-				<li class="dropdown">
+				<!-- 사용자 이름 드롭다운 (원래 위치) -->
+				<li class="dropdown" th:if="${#authorization.expression('isAuthenticated()')}">
 					<a href="#"
 					   class="header-nav-link dropdown-toggle"
 					   id="userDropdown"
 					   role="button"
 					   data-toggle="dropdown"
 					   aria-expanded="false"
-					   style="cursor: pointer;" >
-
-						<!-- 👤 <span th:text="${#authentication.principal.attributes['name']}"></span> --->
-						<!-- 👤 <span th:text="${#authentication.name}"></span> -->
-
-						<!-- OAuth2 로그인(Google/Kakao/Naver)에서는 name, 로컬 폼 로그인에서는 username 사용 -->
-						<!--
-						<span th:with="userName=${
-							#authentication.principal.attributes != null && #authentication.principal.attributes['name'] != null
-								? #authentication.principal.attributes['name']
-								: #authentication.name
-						}" th:text="${userName}">
-						</span>
-						-->
-
-						<!-- 이름 (소셜 로그인 패치 완료) -->
-						<!--
-						👤 <span th:text="${
-							   #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
-								 ? #authentication.principal.attributes['name']
-								 : #authentication.name
-							}">
-							</span>
-						-->
-
-						<!-- 이름 + ROLE -->
-						<!--
-						👤 <span th:text="${
-						   #authentication.principal instanceof T(org.springframework.security.oauth2.core.user.DefaultOAuth2User)
-							? #authentication.principal.attributes['name'] + ' [' + #authentication.principal.attributes.get('role') + ']'
-							: #authentication.name + ' [' + #authentication.principal.authorities[0].authority.substring(5) + ']'
-						}">
-						</span>
-						-->
-
-						<!-- 사용자 정보 표시
-						<span th:text="|${userName} [${userRole}]|"></span>
-
-						<p th:text="'DEBUG userName = ' + ${userName}"></p>
-						<p th:text="'DEBUG userRole = ' + ${userRole}"></p>
-						-->
-
-
-						<span th:if="${userName != null}">
-							<span th:text="${userName}"></span>
-							<!-- 역할 뱃지 -->
-							<span th:if="${userRole != null && userRole != 'GUEST'}" 
-								  class="role-badge" 
-								  th:text="${userRole}">
-							</span>
-							<!-- 멤버십 뱃지 -->
-							<span th:if="${membership != null}" 
-								  th:class="'membership-badge badge-' + ${membership.toLowerCase()}"
-								  th:text="${membership}">
-							</span>
-							<!-- D-Day 표시 -->
-							<span th:if="${membershipExpiresAt != null}" id="membershipDDay" class="d-day-text"></span>
-						</span>
-
-						<span th:if="${userName == null}">
-							Guest
-						</span>
-
+					   style="cursor: pointer;">
+						<span th:if="${userName != null}" th:text="${userName}"></span>
+						<span th:if="${userName == null}">Guest</span>
 					</a>
 
 					<ul class="dropdown-menu dropdown-menu-right">
@@ -182,13 +123,10 @@
 						</li>
 					</ul>
 				</li>
-
 			</ul>
 
-
-
 			<!-- 알림 및 테마 도구 -->
-			<div class="header-tools">
+			<div class="header-tools" style="display: flex; align-items: center; gap: 0.8rem; flex-grow: 1;">
 				<!-- 테마 토글 (모든 유저) -->
 				<button id="themeToggle" class="tool-btn" title="테마 변경">
 					<span class="theme-icon sun-icon">☀️</span>
@@ -217,16 +155,29 @@
 						</div>
 					</div>
 				</div>
-			</div>
 
-			<!-- D-Day -->
-			<div class="header-buttons">
-				<div class="dday">
-					<p>수능까지 </p>
-					<span th:attr="data-dday=${dday}" th:text="${dday}"></span>
+				<!-- 뱃지 영역 -->
+				<div class="header-badges" th:if="${#authorization.expression('isAuthenticated()')}" style="display: flex; align-items: center; gap: 4px;">
+					<!-- 역할 뱃지 -->
+					<span th:if="${userRole != null && userRole != 'GUEST'}" 
+						  class="role-badge" 
+						  th:text="${userRole}">
+					</span>
+					<!-- 멤버십 뱃지 -->
+					<span th:if="${membership != null}" 
+						  th:class="'membership-badge badge-' + ${membership.toLowerCase()}"
+						  th:text="${membership}">
+					</span>
+					<!-- 멤버십 D-Day -->
+					<span th:if="${membershipExpiresAt != null}" id="membershipDDay" class="d-day-text"></span>
+				</div>
+
+				<!-- 수능 D-Day (맨 오른쪽 고정) -->
+				<div class="dday" style="margin-left: auto !important; margin-right: 0 !important; display: flex; align-items: center; gap: 4px; padding-left: 12px; order: 999;">
+					<p style="margin: 0; font-weight: bold; color: #666; font-size: 0.85rem;">수능까지 </p>
+					<span th:attr="data-dday=${dday}" th:text="${dday}" style="color: crimson; font-weight: 700; font-size: 1rem;"></span>
 				</div>
 			</div>
-
 		</div>
 	</div>
 
