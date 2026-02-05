@@ -79,5 +79,4 @@ public class DrawDataServiceImpl implements DrawDataService {
                         .redoStack(new ArrayList<>())
                         .build());
     }
-
 }

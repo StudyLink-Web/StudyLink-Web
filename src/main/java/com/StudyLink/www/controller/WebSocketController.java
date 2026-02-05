@@ -159,21 +159,9 @@ public class WebSocketController {
         messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/finalizeRectangle/{roomId}")
-    public void finalizeRectangleMessage(@DestinationVariable long roomId, RectangleMessage message) {
-        String destination = "/topic/finalizeRectangle/" + roomId;
-        messagingTemplate.convertAndSend(destination, message);
-    }
-
     @MessageMapping("/triangle/{roomId}")
     public void triangleMessage(@DestinationVariable long roomId, TriangleMessage message) {
         String destination = "/topic/triangle/" + roomId;
-        messagingTemplate.convertAndSend(destination, message);
-    }
-
-    @MessageMapping("/finalizeTriangle/{roomId}")
-    public void finalizeTriangleMessage(@DestinationVariable long roomId, TriangleMessage message) {
-        String destination = "/topic/finalizeTriangle/" + roomId;
         messagingTemplate.convertAndSend(destination, message);
     }
 
@@ -183,21 +171,21 @@ public class WebSocketController {
         messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/finalizeLine/{roomId}")
-    public void finalizeLineMessage(@DestinationVariable long roomId, LineMessage message) {
-        String destination = "/topic/finalizeLine/" + roomId;
-        messagingTemplate.convertAndSend(destination, message);
-    }
-
     @MessageMapping("/circle/{roomId}")
     public void circleMessage(@DestinationVariable long roomId, CircleMessage message) {
         String destination = "/topic/circle/" + roomId;
         messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/finalizeCircle/{roomId}")
-    public void finalizeCircleMessage(@DestinationVariable long roomId, CircleMessage message) {
-        String destination = "/topic/finalizeCircle/" + roomId;
+    @MessageMapping("/drawLines/{roomId}")
+    public void drawLinesMessage(@DestinationVariable long roomId, DrawLinesMessage message) {
+        String destination = "/topic/drawLines/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
+    }
+
+    @MessageMapping("/removePreview/{roomId}")
+    public void removePreviewMessage(@DestinationVariable long roomId, SenderMessage message) {
+        String destination = "/topic/removePreview/" + roomId;
         messagingTemplate.convertAndSend(destination, message);
     }
 
@@ -351,6 +339,16 @@ public class WebSocketController {
         } catch (Exception e) {
             log.info(">>> error {}", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    // 초기화
+    @PostMapping("resetCanvas")
+    public void resetCanvas(@RequestBody Map<String, Long> request) {
+        try {
+            drawDataService.removeRoom(request.get("roomId"));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

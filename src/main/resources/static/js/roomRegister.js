@@ -278,7 +278,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const favoriteCheckbox = document.getElementById('addFavoriteMentorCheckbox');
 
     // roomDTO.mentorId가 이미 favoriteList에 있는지 확인
-    const isFavorited = favoriteList.some(fav => fav.mentorId === roomDTO.mentorId);
+    let isFavorited = null;
+    if (favoriteList) {
+        isFavorited = favoriteList.some(fav => fav.mentorId === roomDTO.mentorId);
+    }
+
 
     if (isFavorited) {
         favoriteCheckbox.disabled = true;  // 체크박스 비활성화
