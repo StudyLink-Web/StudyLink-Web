@@ -18,28 +18,18 @@ public class FCMService {
                                 .setBody(body)
                                 .build();
 
-                // 📍 iOS(APNS) 전용 설정 강화
-                com.google.firebase.messaging.ApnsConfig apnsConfig = com.google.firebase.messaging.ApnsConfig.builder()
-                                .setAps(com.google.firebase.messaging.Aps.builder()
-                                                .setSound("default")
-                                                .setBadge(1)
-                                                .setContentAvailable(true)
-                                                .build())
-                                .putHeader("apns-priority", "10") // 즉시 발송 우선순위
-                                .build();
-
+                // 📍 호환성 문제 방지를 위해 기본 설정으로 단순화
                 Message message = Message.builder()
                                 .setToken(token)
-                                .setNotification(notification) // 📍 100% 발송 보장을 위해 복구
-                                .putData("title", title) // 📍 데이터도 함께 유지
+                                .setNotification(notification)
+                                .putData("title", title)
                                 .putData("body", body)
-                                .setApnsConfig(apnsConfig)
-                                .setAndroidConfig(com.google.firebase.messaging.AndroidConfig.builder()
-                                                .setPriority(com.google.firebase.messaging.AndroidConfig.Priority.HIGH)
-                                                .build())
                                 .build();
 
                 try {
+                        log.info("🚀 [FCMService] Sending notification to token: {}...",
+                                        token.substring(0, Math.min(token.length(), 20)));
+                        log.info("🚀 [FCMService] Title: {}, Body: {}", title, body);
                         String response = FirebaseMessaging.getInstance().send(message);
                         log.info("✅ 푸시 알림 전송 성공: " + response);
                         return response;

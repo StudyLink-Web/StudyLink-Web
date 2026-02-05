@@ -14,11 +14,10 @@ import java.time.LocalDateTime;
  * 알림 유형별 활성화/비활성화 설정
  */
 @Entity
-@Table(name = "user_notification",
-        indexes = {
-                @Index(name = "idx_user_id", columnList = "user_id"),
-                @Index(name = "idx_notification_type", columnList = "notification_type")
-        })
+@Table(name = "user_notification", indexes = {
+        @Index(name = "idx_user_id", columnList = "user_id"),
+        @Index(name = "idx_notification_type", columnList = "notification_type")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -42,6 +41,9 @@ public class UserNotification {
      * QUESTION_ANSWERED: 질문에 답변이 달림
      * PAYMENT_COMPLETED: 결제 완료
      * WITHDRAWAL_COMPLETED: 환급 완료
+     * ROOM_EXPIRED: 방 만료 (멘토 미답변 또는 시간 초과)
+     * EXCHANGE_COMPLETED: 환전 승인 완료
+     * EXCHANGE_REJECTED: 환전 신청 거부
      * SYSTEM: 시스템 공지
      */
     @Column(name = "notification_type", length = 50, nullable = false)
@@ -92,7 +94,9 @@ public class UserNotification {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-        if (this.isEnabled == null) this.isEnabled = true;
-        if (this.isRead == null) this.isRead = false;
+        if (this.isEnabled == null)
+            this.isEnabled = true;
+        if (this.isRead == null)
+            this.isRead = false;
     }
 }

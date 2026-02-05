@@ -8,12 +8,14 @@ import com.StudyLink.www.service.FCMService;
 import com.StudyLink.www.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -29,9 +31,15 @@ public class FCMController {
     // 📍 토큰 등록 및 갱신 API
     @PostMapping("/token")
     public String registerToken(@RequestBody Map<String, String> payload,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            Authentication authentication) {
         String token = payload.get("token");
-        String username = (userDetails != null) ? userDetails.getUsername() : "anonymous";
+        log.info("[FCM] Token registration request received. Token length: {}", token != null ? token.length() : 0);
+
+        String username = getCurrentUserId(authentication)
+                .flatMap(userId -> userRepository.findById(userId).map(Users::getUsername))
+                .orElse("anonymous");
+
+        log.info("[FCM] Mapping token to username: {}", username);
 
         pushTokenRepository.findByToken(token)
                 .ifPresentOrElse(
@@ -53,7 +61,7 @@ public class FCMController {
     // 📍 즉시 알림 테스트 API (현재 기기 전용)
     @PostMapping("/test")
     public String testPush(@RequestBody Map<String, String> payload,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            Authentication authentication) {
         String token = payload.get("token");
         String title = "StudyLink 테스트";
         String message = "나에게 보낸 테스트 알림입니다! 🚀";
@@ -62,11 +70,9 @@ public class FCMController {
         String result = fcmService.sendNotification(token, title, message);
 
         // DB 저장 (로그인 유저인 경우)
-        if (userDetails != null) {
-            userRepository.findByUsername(userDetails.getUsername()).ifPresent(user -> {
-                notificationService.createNotification(user.getUserId(), "TEST", message, null);
-            });
-        }
+        getCurrentUserId(authentication).ifPresent(userId -> {
+            notificationService.createNotification(userId, "TEST", message, null);
+        });
 
         return result;
     }
@@ -100,31 +106,32 @@ public class FCMController {
             return "success";
         } catch (Exception e) {
             log.error("❌ [FCMController] test-all 중 오류 발생", e);
-            return "Fail: " + e.getMessage();
+            java.io.StringWriter sw = new java.io.StringWriter();
+            java.io.PrintWriter pw = new java.io.PrintWriter(sw);
+            e.printStackTrace(pw);
+            return "Fail: " + e.getMessage() + "\nTrace: " + sw.toString();
         }
     }
 
     // 📍 내 계정으로 로그인된 모든 기기에 알림 보내기
     @PostMapping("/test-mine")
-    public String testPushToMine(@AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null)
-            return "Error: 로그인이 필요합니다.";
+    public String testPushToMine(Authentication authentication) {
+        return getCurrentUserId(authentication).map(userId -> {
+            Users user = userRepository.findById(userId).get();
+            String username = user.getUsername();
+            String title = "StudyLink 기기 연동";
+            String message = "[" + username + "] 님으로 로그인된 기기에 전달된 알림입니다! 🔗";
 
-        String username = userDetails.getUsername();
-        String title = "StudyLink 기기 연동";
-        String message = "[" + username + "] 님으로 로그인된 기기에 전달된 알림입니다! 🔗";
+            // 1. 내 모든 기기에 푸시 발송
+            pushTokenRepository.findAllByUsername(username).forEach(tokenEntity -> {
+                fcmService.sendNotification(tokenEntity.getToken(), title, message);
+            });
 
-        // 1. 내 모든 기기에 푸시 발송
-        pushTokenRepository.findAllByUsername(username).forEach(tokenEntity -> {
-            fcmService.sendNotification(tokenEntity.getToken(), title, message);
-        });
+            // 2. 내 알림 내역에 저장
+            notificationService.createNotification(userId, "TEST", message, null);
 
-        // 2. 내 알림 내역에 저장
-        userRepository.findByUsername(username).ifPresent(user -> {
-            notificationService.createNotification(user.getUserId(), "TEST", message, null);
-        });
-
-        return username + " 님의 모든 기기에 발송 및 DB 저장 완료";
+            return username + " 님의 모든 기기에 발송 및 DB 저장 완료";
+        }).orElse("Error: 로그인이 필요합니다.");
     }
 
     // 📍 정식 전체 공지 발송 API
@@ -176,5 +183,31 @@ public class FCMController {
             return "deleted";
         }
         return "fail: no token";
+    }
+
+    private Optional<Long> getCurrentUserId(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated())
+            return Optional.empty();
+
+        String rawId = authentication.getName();
+
+        if (authentication instanceof org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken token) {
+            Map<String, Object> attributes = token.getPrincipal().getAttributes();
+            log.info("📍 [FCM] OAuth2 attributes: {}", attributes);
+            if (attributes.containsKey("email")) {
+                rawId = (String) attributes.get("email");
+            } else if (attributes.get("response") instanceof Map<?, ?> responseMap) {
+                if (responseMap.containsKey("email"))
+                    rawId = (String) responseMap.get("email");
+            } else if (attributes.get("kakao_account") instanceof Map<?, ?> kakaoMap) {
+                if (kakaoMap.containsKey("email"))
+                    rawId = (String) kakaoMap.get("email");
+            }
+        }
+
+        final String finalIdentifier = rawId;
+        log.info("📍 [FCM] Final identifier for lookup: {}", finalIdentifier);
+        return userRepository.findByEmail(finalIdentifier).map(Users::getUserId)
+                .or(() -> userRepository.findByUsername(finalIdentifier).map(Users::getUserId));
     }
 }

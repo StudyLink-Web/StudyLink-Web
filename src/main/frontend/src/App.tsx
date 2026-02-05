@@ -65,16 +65,15 @@ function App() {
     try {
       const token = await requestForToken();
       if (token) {
-        const isNewToken = token !== localStorage.getItem("pushToken");
+        
         setPushToken(token);
         localStorage.setItem("pushToken", token); 
         await saveTokenToServer(token);
         
         setIsPushPanelOpen(true); 
 
-        if (isNewToken) {
-          alert("푸시 알림 권한 승인 및 서버 등록 완료!");
-        }
+        // DB 초기화 이후에는 토큰이 같더라도 서버 입장에선 새로 등록이 필요하므로 알림을 띄워줍니다.
+        alert("푸시 알림 기기 등록이 완료되었습니다! 🚀");
       } else {
         alert("토큰을 가져오지 못했습니다. 브라우저 설정에서 알림 권한을 확인해 주세요.");
       }

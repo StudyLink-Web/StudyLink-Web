@@ -116,7 +116,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
                 attributes.put("username", fixedUsername);
                 attributes.put("nickname", fixedNickname);
-                attributes.put("name", name);  // ⭐ 추가!
+                attributes.put("name", name); // ⭐ 추가!
                 attributes.put("provider", "naver");
                 attributes.put("email", email);
 
@@ -167,8 +167,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             return new DefaultOAuth2User(
                     authorities,
                     attributes,
-                    nameAttributeKey
-            );
+                    nameAttributeKey);
 
         } catch (Exception e) {
             log.error("❌ [ERROR] CustomOAuth2UserService 중 오류: {}", e.getMessage());
@@ -177,7 +176,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private void saveOAuth2User(String username, String email, String profileImage,
-                                String name, String provider, String nickname) {
+            String name, String provider, String nickname) {
         try {
             log.info("🔍 [DEBUG] saveOAuth2User 시작 - username: {}", username);
 

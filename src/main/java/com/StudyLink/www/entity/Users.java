@@ -113,10 +113,14 @@ public class Users {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        if (this.emailVerified == null) this.emailVerified = false;
-        if (this.isStudentVerified == null) this.isStudentVerified = false;
-        if (this.isVerifiedStudent == null) this.isVerifiedStudent = false;
-        if (this.isActive == null) this.isActive = true;
+        if (this.emailVerified == null)
+            this.emailVerified = false;
+        if (this.isStudentVerified == null)
+            this.isStudentVerified = false;
+        if (this.isVerifiedStudent == null)
+            this.isVerifiedStudent = false;
+        if (this.isActive == null)
+            this.isActive = true;
     }
 
     @PreUpdate
