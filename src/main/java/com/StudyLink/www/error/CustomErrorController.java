@@ -1,3 +1,5 @@
+// CustomErrorController
+
 package com.StudyLink.www.error;
 
 import jakarta.servlet.RequestDispatcher;
