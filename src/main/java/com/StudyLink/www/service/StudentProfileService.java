@@ -1,5 +1,6 @@
 package com.StudyLink.www.service;
 
+import com.StudyLink.www.entity.Role;
 import com.StudyLink.www.entity.StudentProfile;
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.repository.StudentProfileRepository;
@@ -29,7 +30,7 @@ public class StudentProfileService {
         Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        if (!"STUDENT".equals(user.getRole())) {
+        if (Role.STUDENT != user.getRole()) {
             throw new IllegalArgumentException("학생 역할만 프로필을 생성할 수 있습니다.");
         }
 

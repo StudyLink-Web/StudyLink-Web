@@ -34,6 +34,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Autowired
     private ObjectProvider<PasswordEncoder> passwordEncoderProvider;
 
+    @Autowired
+    private StudentProfileService studentProfileService;
+
     // 클래스 로딩시 실행
     public CustomOAuth2UserService() {
         log.info("✅ CustomOAuth2UserService 생성됨!!!");
@@ -239,6 +242,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             log.info("💾 사용자 정보 저장 완료: username={}, user_id={}, email={}, role={}",
                     username, savedUser.getUserId(), email, savedUser.getRole());
 
+            // Student_profile 생성
+            studentProfileService.createStudentProfile(savedUser.getUserId(), "", "", "");
         } catch (Exception e) {
             log.error("❌ [ERROR] 사용자 정보 저장 실패: {}", e.getMessage());
             throw new OAuth2AuthenticationException("사용자 저장 중 오류: " + e.getMessage());

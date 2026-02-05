@@ -4,6 +4,7 @@ package com.StudyLink.www.controller;
 
 import com.StudyLink.www.entity.Users;
 import com.StudyLink.www.service.AuthService;
+import com.StudyLink.www.service.StudentProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final StudentProfileService studentProfileService;
 
     /**
      * POST /api/auth/signup - 회원가입 API
@@ -108,6 +110,9 @@ public class AuthController {
             );
 
             log.info("✅ 회원가입 성공: {} (역할: {})", user.getEmail(), user.getRole());
+
+            // student_profile 생성
+            studentProfileService.createStudentProfile(user.getUserId(), "", "", "");
 
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "userId", user.getUserId(),

@@ -47,6 +47,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
     private final NotificationService notificationService;
+    private final StudentProfileService studentProfileService;
 
     @Override
     public PaymentPendingResponse createPendingPayment(int productId, Long userId) {
@@ -223,9 +224,20 @@ public class PaymentServiceImpl implements PaymentService {
                     if (product.getProductId() == 1) {
                         user.setMembership(MembershipType.STANDARD);
                         user.setMembershipExpiresAt(LocalDateTime.now().plusMonths(1));
+
+                        // 포인트 충전
+                        StudentProfile studentProfile = studentProfileService.getStudentProfile(user.getUserId())
+                                .orElseThrow(() -> new EntityNotFoundException("해당 학생 프로필이 없습니다."));
+                        studentProfile.setChargedPoint(studentProfile.getChargedPoint() + 5000);
+
                     } else if (product.getProductId() == 2) {
                         user.setMembership(MembershipType.PREMIUM);
                         user.setMembershipExpiresAt(LocalDateTime.now().plusMonths(1));
+
+                        // 포인트 충전
+                        StudentProfile studentProfile = studentProfileService.getStudentProfile(user.getUserId())
+                                .orElseThrow(() -> new EntityNotFoundException("해당 학생 프로필이 없습니다."));
+                        studentProfile.setChargedPoint(studentProfile.getChargedPoint() + 15000);
                     }
                     userRepository.save(user);
                     log.info("✅ 유저 멤버십 업데이트 완료: {} (ID: {}, 만료일: {})",
