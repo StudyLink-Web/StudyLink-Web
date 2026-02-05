@@ -740,5 +740,56 @@ public class AccountController {
         public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
     }
 
+    /** Request DTO 하나 추가
+    * 내부 static class 쓰고 있으니 동일 패턴
+    * */
+    public static class ChangePhoneFirebaseRequest {
+        private String idToken;     // firebase user idToken
+        private String newPhone;    // (옵션) 프론트가 보내는 번호(검증용)
+        public String getIdToken() { return idToken; }
+        public void setIdToken(String idToken) { this.idToken = idToken; }
+        public String getNewPhone() { return newPhone; }
+        public void setNewPhone(String newPhone) { this.newPhone = newPhone; }
+    }
+
+    /**
+     * 엔드포인트 추가
+     * */
+
+    @PostMapping("/change-phone-firebase")
+    public ResponseEntity<Map<String, Object>> changePhoneFirebase(
+            @RequestBody ChangePhoneFirebaseRequest request,
+            Authentication authentication
+    ) {
+        try {
+            if (request.getIdToken() == null || request.getIdToken().isBlank()) {
+                throw new IllegalArgumentException("인증 토큰이 없습니다. 다시 인증해 주세요.");
+            }
+
+            Users user = getLoginUser(authentication);
+
+            Map<String, Object> result = accountService.changePhoneWithFirebase(
+                    user.getUserId(),
+                    request.getIdToken(),
+                    request.getNewPhone() // optional compare
+            );
+
+            log.info("✅ Firebase 휴대폰 번호 변경 완료: userId={}", user.getUserId());
+            return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "변경 중 오류가 발생했습니다.");
+            log.error("❌ Firebase 휴대폰 번호 변경 오류", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
 
 }

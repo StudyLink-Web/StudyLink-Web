@@ -963,6 +963,38 @@ input:checked + .slider:before {
     animation: toastOut .18s ease forwards;
 }
 
+
+.input-with-btn {
+    position: relative;
+}
+
+.input-with-btn .form-control {
+    padding-right: 140px; /* 버튼 폭만큼 여유 */
+}
+
+.btn-in-input{
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    height:36px; padding:0 12px;
+    border:1px solid #d0d7de; background:#fff; border-radius:8px;
+    font-size:13px; font-weight:600; cursor:pointer;
+}
+.btn-in-input:hover{ background:#f6f8fa; }
+.btn-in-input:disabled{ opacity:.6; cursor:not-allowed; }
+
+#phone-hint { display:block; margin-top:8px; font-size:12px; }
+#phone-hint.ok { color:#1a7f37; }      /* 성공 */
+#phone-hint.warn { color:#9a6700; }    /* 경고 */
+#phone-hint.err { color:#d1242f; }     /* 에러 */
+
+
+#phone-hint.hint-loading,
+#email-hint.hint-loading,
+#pw-change-hint.hint-loading {
+    opacity: .75;
+}
+
+
+
 @keyframes toastIn{
     to { opacity: 1; transform: translateY(0); }
 }

@@ -55,7 +55,7 @@ function initializeEventListeners() {
 
     // 계정 탭
     document.getElementById('change-email-form')?.addEventListener('submit', handleChangeEmail);
-    document.getElementById('change-phone-form')?.addEventListener('submit', handleChangePhone);
+    // document.getElementById('change-phone-form')?.addEventListener('submit', handleChangePhone);
     document.getElementById('delete-account-btn')?.addEventListener('click', handleDeleteAccountClick);
     document.getElementById('confirm-delete-btn')?.addEventListener('click', handleConfirmDelete);
 
@@ -141,6 +141,10 @@ function handleChangePassword(e) {
 
     if (changingPassword) return;
 
+    // ✅ 추가: “비밀번호 변경 결과” 안내문 영역
+    const pwChangeHint = document.getElementById('pw-change-hint');
+    if (pwChangeHint) setHint(pwChangeHint, '', ''); // 이전 메시지 초기화
+
     const currentPassword = document.getElementById('current-password').value;
     const newPassword = document.getElementById('new-password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
@@ -158,12 +162,14 @@ function handleChangePassword(e) {
             setHint(confirmHint, '새 비밀번호를 한 번 더 정확히 입력해 주세요.', 'error');
         }
 
-
+        // ✅ 추가: 폼 전체 안내문도 같이
+        if (pwChangeHint) setHint(pwChangeHint, '모든 항목을 입력해 주세요.', 'error');
         return;
     }
 
     if (newPassword.length < 8) {
         showToast('새 비밀번호는 8자 이상이어야 합니다', 'warning');
+        if (pwChangeHint) setHint(pwChangeHint, '새 비밀번호는 8자 이상이어야 합니다.', 'error');
         return;
     }
 
@@ -172,6 +178,7 @@ function handleChangePassword(e) {
         if (confirmHint) {
             setHint(confirmHint, '새 비밀번호가 일치하지 않습니다.', 'error');
         }
+        if (pwChangeHint) setHint(pwChangeHint, '새 비밀번호가 일치하지 않습니다.', 'error');
         return;
     }
 
@@ -181,14 +188,8 @@ function handleChangePassword(e) {
 
     fetch(`${API_BASE}/account/change-password`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            currentPassword,
-            newPassword,
-            confirmPassword
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
     })
         .then(res => res.json())
         .then(data => {
@@ -204,24 +205,33 @@ function handleChangePassword(e) {
                 document.querySelectorAll('#pw-rules li').forEach(li => li.classList.remove('ok'));
 
                 showToast('비밀번호가 변경되었습니다', 'success');
+                // ✅ 추가: 실서비스 느낌 안내문
+                if (pwChangeHint) setHint(pwChangeHint, '비밀번호가 변경되었습니다', 'success');
+
             } else {
+                const msg = data.message || '변경 실패';
+
                 // ✅ 서버 메시지를 안내문에도 출력
                 const hint = document.getElementById('current-password-hint');
-                if (hint) {
-                    setHint(hint, data.message || '변경 실패', 'error');
-                }
-                showToast(data.message || '변경 실패', 'error');
+                if (hint) setHint(hint, msg, 'error');
+
+                showToast(msg, 'error');
+                // ✅ 추가
+                if (pwChangeHint) setHint(pwChangeHint, msg, 'error');
             }
         })
         .catch(error => {
             hideLoading();
             console.error('❌ 비밀번호 변경 오류:', error);
             showToast('변경 중 오류가 발생했습니다', 'error');
+            // ✅ 추가
+            if (pwChangeHint) setHint(pwChangeHint, '변경 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.', 'error');
         })
         .finally(() => {
-            changingPassword = false; // ✅ 성공/실패/에러 상관없이 잠금 해제
+            changingPassword = false;
         });
 }
+
 
 /**
  * 이메일 변경
@@ -229,48 +239,137 @@ function handleChangePassword(e) {
 function handleChangeEmail(e) {
     e.preventDefault();
 
-    const newEmail = document.getElementById('new-email').value.trim();
-    const password = document.getElementById('email-password').value;
+    const emailInput = document.getElementById('new-email');
+    const pwInput = document.getElementById('email-password');
+    const hintEl = document.getElementById('email-hint');
+    const btn = document.getElementById('email-submit-btn');
+
+    const newEmail = (emailInput?.value || '').trim();
+    const password = (pwInput?.value || '').trim();
+
+    // ✅ 힌트 helper (이메일 전용)
+    function setEmailHint(text, type) {
+        if (!hintEl) return;
+        hintEl.textContent = text || '';
+        hintEl.classList.remove('ok', 'warn', 'err', 'hint-loading');
+        if (type) hintEl.classList.add(type);
+    }
+
+    // 사용할 때
+    setEmailHint('이메일을 전송하고 있어요…', 'hint-loading');
+
+    // ✅ 버튼/카운트다운 상태 저장 (window 전역에 붙여서 함수 재호출에도 유지)
+    if (!window.__emailUX) {
+        window.__emailUX = { timerId: null, remain: 0, RESEND_SECONDS: 59 };
+    }
+
+    function fmtMMSS(sec) {
+        const m = String(Math.floor(sec / 60)).padStart(2, "0");
+        const s = String(sec % 60).padStart(2, "0");
+        return `${m}:${s}`;
+    }
+
+    function clearTimer() {
+        const ux = window.__emailUX;
+        if (ux.timerId) clearInterval(ux.timerId);
+        ux.timerId = null;
+        ux.remain = 0;
+    }
+
+    function startResendCountdown() {
+        const ux = window.__emailUX;
+        clearTimer();
+
+        ux.remain = ux.RESEND_SECONDS;
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = `재전송(${fmtMMSS(ux.remain)})`;
+        }
+
+        ux.timerId = setInterval(() => {
+            ux.remain -= 1;
+
+            if (ux.remain <= 0) {
+                clearTimer();
+                if (btn) {
+                    btn.textContent = '이메일 변경';
+                    btn.disabled = false;
+                }
+                return;
+            }
+
+            if (btn) btn.textContent = `재전송(${fmtMMSS(ux.remain)})`;
+        }, 1000);
+    }
+
+    // ✅ 이미 카운트다운 중이면 막기
+    if (window.__emailUX.timerId) return;
 
     // 검증
     if (!newEmail || !password) {
         showToast('모든 항목을 입력하세요', 'warning');
+        setEmailHint('모든 항목을 입력해 주세요.', 'err');
         return;
     }
 
     if (!isValidEmail(newEmail)) {
         showToast('올바른 이메일 형식이 아닙니다', 'warning');
+        setEmailHint('올바른 이메일 형식이 아니에요. 예) studylink@gmail.com', 'err');
         return;
     }
 
+    // 전송 시작
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = '전송중…';
+    }
+    setEmailHint('이메일을 전송하고 있어요…', 'warn');
     showLoading();
 
     fetch(`${API_BASE}/account/change-email`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            newEmail,
-            password
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newEmail, password })
     })
-        .then(res => res.json())
-        .then(data => {
+        .then(async (res) => {
+            const data = await res.json().catch(() => ({}));
             hideLoading();
-            if (data.success) {
-                document.getElementById('change-email-form').reset();
-                showToast('메일이 전송되었습니다. 확인해주세요.', 'success');
-            } else {
-                showToast(data.message || '변경 실패', 'error');
+
+            if (res.ok && data.success) {
+                document.getElementById('change-email-form')?.reset();
+
+                // ✅ 너가 원하는 문구 1) “이메일이 전송 되었습니다”
+                setEmailHint('이메일이 전송 되었습니다', 'ok');
+                showToast('이메일이 전송 되었습니다', 'success');
+
+                // ✅ 재전송 카운트다운
+                startResendCountdown();
+                return;
+            }
+
+            const msg = data.message || '변경 실패';
+            setEmailHint(msg, 'err');
+            showToast(msg, 'error');
+
+            if (btn) {
+                btn.textContent = '이메일 변경';
+                btn.disabled = false;
             }
         })
         .catch(error => {
             hideLoading();
             console.error('❌ 이메일 변경 오류:', error);
+
+            setEmailHint('변경 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.', 'err');
             showToast('변경 중 오류가 발생했습니다', 'error');
+
+            if (btn) {
+                btn.textContent = '이메일 변경';
+                btn.disabled = false;
+            }
         });
 }
+
 
 /**
  * 휴대폰 번호 변경
@@ -1163,3 +1262,201 @@ function initPasswordRulesLive_B() {
         timer = setTimeout(() => verify(value), 400); // 0.4초 멈추면 호출
     });
 })();
+
+
+// ===== 휴대폰 인증 UX (진짜 사이트 버전) =====
+(() => {
+    const phoneInput = document.getElementById("new-phone");
+    const sendBtn = document.getElementById("send-sms-btn");
+    const hintEl = document.getElementById("phone-hint");
+    const codeInput = document.getElementById("sms-code");
+
+    if (!phoneInput || !sendBtn || !hintEl) return;
+
+    const RESEND_SECONDS = 59;
+    let timerId = null;
+    let remain = 0;
+
+    function setHint(text, type) {
+        hintEl.textContent = text || "";
+        hintEl.classList.remove("ok", "warn", "err", "hint-loading");
+        if (type) hintEl.classList.add(type);
+    }
+
+    function digitsOnly(s) {
+        return (s || "").replace(/\D/g, "");
+    }
+
+    function isValidKoreaMobile(raw) {
+        const d = digitsOnly(raw);
+        return /^01[016789]\d{7,8}$/.test(d);
+    }
+
+    function toE164KR(raw) {
+        const d = digitsOnly(raw);
+        if (!d.startsWith("01")) return null;
+        return "+82" + d.substring(1);
+    }
+
+    function fmtMMSS(sec) {
+        const m = String(Math.floor(sec / 60)).padStart(2, "0");
+        const s = String(sec % 60).padStart(2, "0");
+        return `${m}:${s}`;
+    }
+
+    function clearTimer() {
+        if (timerId) clearInterval(timerId);
+        timerId = null;
+        remain = 0;
+    }
+
+    function refreshSendBtnState() {
+        if (timerId) return; // 카운트다운 중엔 입력으로 활성화 X
+        const raw = phoneInput.value;
+        const ok = isValidKoreaMobile(raw);
+
+        sendBtn.disabled = !ok;
+
+        if (!raw) return setHint("", null);
+        if (!ok) return setHint("휴대폰 번호 형식이 올바르지 않아요. 예) 010-1234-5678", "err");
+        setHint("인증번호를 받을 수 있어요.", "warn");
+    }
+
+    function startResendCountdown() {
+        clearTimer();
+        remain = RESEND_SECONDS;
+        sendBtn.disabled = true;
+        sendBtn.textContent = `재전송(${fmtMMSS(remain)})`;
+
+        timerId = setInterval(() => {
+            remain -= 1;
+            if (remain <= 0) {
+                clearTimer();
+                sendBtn.textContent = "인증번호 받기";
+                refreshSendBtnState(); // 번호 유효하면 다시 활성화
+                return;
+            }
+            sendBtn.textContent = `재전송(${fmtMMSS(remain)})`;
+        }, 1000);
+    }
+
+    phoneInput.addEventListener("input", refreshSendBtnState);
+    phoneInput.addEventListener("blur", refreshSendBtnState);
+
+    sendBtn.addEventListener("click", async () => {
+        if (timerId) return;
+
+        const raw = phoneInput.value.trim();
+        if (!isValidKoreaMobile(raw)) {
+            sendBtn.disabled = true;
+            setHint("휴대폰 번호를 확인해 주세요.", "err");
+            return;
+        }
+
+        const phoneE164 = toE164KR(raw);
+        if (!phoneE164) {
+            setHint("전화번호 변환 중 오류가 발생했어요.", "err");
+            return;
+        }
+
+        try {
+            sendBtn.disabled = true;
+            sendBtn.textContent = "전송중…";
+            setHint("인증번호를 전송하고 있어요…", "warn");
+
+            await window.sendFirebasePhoneCode(phoneE164);
+
+            setHint("인증번호를 발송했어요. 문자로 받은 6자리를 입력해 주세요.", "ok");
+            startResendCountdown();
+
+            // 실서비스 느낌: 성공 후 인증번호 칸 포커스
+            codeInput?.focus();
+
+        } catch (e) {
+            console.error(e);
+            clearTimer();
+            sendBtn.textContent = "인증번호 받기";
+            sendBtn.disabled = !isValidKoreaMobile(phoneInput.value);
+
+            const msg =
+                e?.code === "auth/too-many-requests"
+                    ? "요청이 너무 많아요. 잠시 후 다시 시도해 주세요."
+                    : "인증번호 전송에 실패했어요. 잠시 후 다시 시도해 주세요.";
+
+            setHint(msg, "err");
+        }
+    });
+
+    refreshSendBtnState();
+})();
+
+
+// ✅ 너가 이미 만든 “인증 완료 및 변경” 로직은 그대로 유지
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('verify-and-change-phone-btn')?.addEventListener('click', async () => {
+        const hintEl = document.getElementById("phone-hint");
+
+        function setPhoneHint(text, type) {
+            if (!hintEl) return;
+            hintEl.textContent = text || "";
+            hintEl.classList.remove("ok", "warn", "err", "hint-loading");
+            if (type) hintEl.classList.add(type);
+        }
+
+        try {
+            const code = document.getElementById('sms-code').value.trim();
+            if (!code) {
+                showToast("인증번호를 입력하세요", "warning");
+                setPhoneHint("인증번호를 입력해 주세요.", "err");
+                return;
+            }
+
+            // UX: 진행중 표시
+            setPhoneHint("인증 확인 중이에요…", "hint-loading");
+            showLoading();
+
+            const verified = await window.verifyFirebasePhoneCode(code);
+            if (!verified?.success) {
+                hideLoading();
+                setPhoneHint("인증번호가 올바르지 않아요. 다시 확인해 주세요.", "err");
+                return;
+            }
+
+            setPhoneHint("휴대폰 번호를 변경하고 있어요…", "hint-loading");
+
+            const res = await fetch("/api/account/change-phone-firebase", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    idToken: verified.idToken,
+                    newPhone: verified.phoneNumber
+                })
+            });
+
+            const data = await res.json().catch(() => ({}));
+            hideLoading();
+
+            if (res.ok && data.success) {
+                // ✅ 아래 안내문 + 토스트 둘 다
+                setPhoneHint("휴대전화가 변경되었습니다", "ok");
+                showToast("휴대전화가 변경되었습니다", "success");
+
+                document.getElementById('sms-code').value = "";
+
+                // 선택: 버튼 문구도 실서비스 느낌으로
+                const btn = document.getElementById("verify-and-change-phone-btn");
+                if (btn) btn.textContent = "변경 완료";
+            } else {
+                const msg = data.message || "변경 실패";
+                setPhoneHint(msg, "err");
+                showToast(msg, "error");
+            }
+
+        } catch (e) {
+            hideLoading();
+            console.error(e);
+            setPhoneHint(e.message || "인증/변경 실패", "err");
+            showToast(e.message || "인증/변경 실패", "error");
+        }
+    });
+});
