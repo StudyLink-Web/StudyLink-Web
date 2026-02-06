@@ -6,6 +6,8 @@ import com.StudyLink.www.entity.Role;
 import com.StudyLink.www.entity.Subject;
 import com.StudyLink.www.entity.Users;
 import java.time.LocalDateTime;
+import java.util.Optional;
+
 import com.StudyLink.www.repository.BoardRepository;
 import com.StudyLink.www.repository.ProductRepository;
 import com.StudyLink.www.repository.SubjectRepository;
@@ -210,8 +212,16 @@ public class DataLoader implements CommandLineRunner {
 
         if (userRepository.count() <= 20) {
             for (int i = 0; i < 100; i++) {
-                createMentor.createRandomMentor();
+                createMentor.createRandomMentor(Optional.empty(), Optional.empty(), Optional.empty());
             }
+        }
+
+        if (!userRepository.existsByEmail("mentor1234@naver.com")) {
+            createMentor.createRandomMentor(
+                    Optional.of("mentor1234@naver.com"),
+                    Optional.of("12341234"),
+                    Optional.of(100000L)
+            );
         }
     }
 

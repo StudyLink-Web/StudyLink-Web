@@ -9,6 +9,7 @@ import com.StudyLink.www.service.MentorProfileService;
 import com.StudyLink.www.service.UserService;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 @Slf4j
@@ -30,6 +32,7 @@ public class CreateMentor {
     private final MentorProfileService mentorProfileService;
     private final Random random = new Random();
     private final FileStorageService fileStorageService;
+    private final PasswordEncoder passwordEncoder;
 
     // 더미 데이터용 리스트
     private final List<String> names = List.of("홍길동", "김철수", "이영희", "박민수", "최지우");
@@ -63,21 +66,26 @@ public class CreateMentor {
      */
 
     @Transactional
-    public void createRandomMentor() {
+    public void createRandomMentor(Optional<String> id,
+                                   Optional<String> pwd,
+                                   Optional<Long> point) {
         boolean saved = false;
         int cnt = 0;
         while (!saved) {
             try {
                 // 1️⃣ Users 생성
-                String email = generateRandomEmail();
+                String rawPassword  = pwd.orElse(randomFromList(passwords));
+                long mentorPoint = point.orElse(0L);
+                String email = id.orElse(generateRandomEmail());
                 String username = randomFromList(usernames) + random.nextInt(10000);
                 String nickname = randomFromList(nicknames) + random.nextInt(10000);
+                String encodedPassword = passwordEncoder.encode(rawPassword);
 
                 LocalDateTime createdAt = randomCreatedAt();
 
                 Users user = Users.builder()
                         .email(email)
-                        .password(randomFromList(passwords))
+                        .password(encodedPassword)
                         .name(randomFromList(names))
                         .nickname(nickname)
                         .username(username)
@@ -94,7 +102,7 @@ public class CreateMentor {
                 MentorProfile mentorProfile = MentorProfile.builder()
                         .user(user) // 필수
                         .isVerified(false) // 기본값
-                        .point(0L)       // 기본값
+                        .point(mentorPoint)       // 기본값
                         .exp(0L)         // 기본값
                         .notificationLesson(true)
                         .notificationMessage(true)
