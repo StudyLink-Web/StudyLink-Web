@@ -113,17 +113,20 @@ public class MentorProfileService {
     @Transactional(readOnly = true)
     public List<MentorProfileDTO> getTopMentorDTOs(int limit) {
         log.info("🏠 메인 화면용 상위 멘토 조회: limit={}", limit);
-        List<MentorProfile> mentors;
-        if (limit <= 4) {
-            mentors = mentorProfileRepository.findTop4ByIsVerifiedTrueOrderByAverageRatingDesc();
-        } else {
-            mentors = mentorProfileRepository.findTop8ByIsVerifiedTrueOrderByAverageRatingDesc();
-        }
+        List<MentorProfile> mentors = mentorProfileRepository
+                .findAllVerifiedMentorsOrderByRatingDesc(org.springframework.data.domain.PageRequest.of(0, limit));
 
         return mentors.stream()
                 .map(profile -> {
                     UsersDTO usersDTO = new UsersDTO(profile.getUser());
                     MentorProfileDTO dto = new MentorProfileDTO(profile, usersDTO);
+
+                    // ⭐ 평점 소수점 첫째 자리까지만 제한 (반올림)
+                    if (dto.getAverageRating() != null) {
+                        double rounded = Math.round(dto.getAverageRating() * 10.0) / 10.0;
+                        dto.setAverageRating(rounded);
+                    }
+
                     // 이미지 경로 보정 (프로필 이미지가 없으면 기본 이미지)
                     if (dto.getProfileImageUrl() == null || dto.getProfileImageUrl().isEmpty()) {
                         dto.setProfileImageUrl("/img/default-profile.png");
@@ -246,7 +249,6 @@ public class MentorProfileService {
                     log.info("📵 전화번호 인증 미완료로 저장 무시: userId={}", user.getUserId());
                 }
             }
-
 
             if (profileImage != null && !profileImage.isEmpty()) {
                 log.info("📸 프로필 이미지 처리 시작: size={} bytes", profileImage.getSize());
@@ -419,7 +421,8 @@ public class MentorProfileService {
 
     @Transactional
     public void plusQuizCount(Long mentorId) {
-        MentorProfile profile = mentorProfileRepository.findById(mentorId).orElseThrow(() -> new EntityNotFoundException("해당 멘토가 없습니다."));
+        MentorProfile profile = mentorProfileRepository.findById(mentorId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 멘토가 없습니다."));
         profile.setQuizCount(profile.getQuizCount() + 1);
     }
 
@@ -429,8 +432,8 @@ public class MentorProfileService {
         // DB에서 현재 평균 평점 조회
         Double avg = roomRepository.findAverageRatingByMentor(mentorId);
 
-        // 평점이 하나도 없으면 0
-        double average = (avg != null) ? avg : 0.0;
+        // ⭐ 평점 소수점 첫째 자리까지만 제한 (반올림)
+        double average = (avg != null) ? Math.round(avg * 10.0) / 10.0 : 0.0;
 
         MentorProfile profile = mentorProfileRepository.findById(mentorId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 멘토가 없습니다."));
