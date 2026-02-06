@@ -30,4 +30,6 @@ public interface UserService {
                               Pageable sortedPageable);
 
     UsersDTO getUserDetail(Long id);
+
+    Users saveUser(Users user);
 }
