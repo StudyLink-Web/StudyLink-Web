@@ -122,6 +122,7 @@ public class SecurityConfig {
                                 "/static/**",
                                 "/static.dist/**",
                                 "/uploads/**",
+                                "/_fileUpload/**",
 
                                 /* "/api/auth/**", */
                                 "/api/fcm/**",

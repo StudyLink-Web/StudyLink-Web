@@ -8,9 +8,11 @@ import com.StudyLink.www.handler.FileRemoveHandler;
 import com.StudyLink.www.handler.PageHandler;
 import com.StudyLink.www.service.BoardService;
 import com.StudyLink.www.service.UserService;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,8 +42,25 @@ public class BoardController {
     private final FileHandler fileHandler;
     private final UserService userService;
 
-    private static final String UPLOAD_ROOT =
-            "D:/web_0826_shinjw/_myProject/_java/_fileUpload";
+    @Value("${file.board-dir:./_fileUpload}")
+    private String UP_DIR;
+
+    // ✅ 절대 경로로 변환된 필드
+    private File uploadDirFile;
+
+    // 애플리케이션 시작 시 절대 경로로 변환
+    @PostConstruct
+    public void init() {
+        // 절대 경로로 변환 (상대 경로 제거)
+        uploadDirFile = Paths.get(UP_DIR).toAbsolutePath().toFile();
+
+        log.info("========================================");
+        log.info("📁 Upload Directory (설정값): {}", UP_DIR);
+        log.info("📁 Upload Directory (절대경로): {}", uploadDirFile.getAbsolutePath());
+        log.info("📁 Directory exists: {}", uploadDirFile.exists());
+        log.info("📁 Can write: {}", uploadDirFile.canWrite());
+        log.info("========================================");
+    }
 
     /* ================= 로그인 사용자 공통 주입 ================= */
     @ModelAttribute
@@ -243,7 +263,7 @@ public class BoardController {
         if (fileDTO == null) return ResponseEntity.notFound().build();
 
         String savedName = fileDTO.getUuid() + "_" + fileDTO.getFileName();
-        Path filePath = Paths.get(UPLOAD_ROOT, fileDTO.getSaveDir(), savedName);
+        Path filePath = Paths.get(uploadDirFile.getAbsolutePath(), fileDTO.getSaveDir(), savedName);
 
         Resource resource = new UrlResource(filePath.toUri());
         if (!resource.exists()) return ResponseEntity.notFound().build();

@@ -2,8 +2,10 @@ package com.StudyLink.www.handler;
 
 import com.StudyLink.www.dto.FileDTO;
 import com.StudyLink.www.service.BoardService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -23,8 +25,25 @@ public class FileSweeper {
 
     private final BoardService boardService;
 
-    // 운영환경에선 application.yml로 빼는 걸 추천
-    private static final String BASE_PATH = "D:\\web_0826_shinjw\\_myProject\\_java\\_fileUpload\\";
+    @Value("${file.board-dir:./_fileUpload}")
+    private String BASE_PATH;
+
+    // ✅ 절대 경로로 변환된 필드
+    private File uploadDirFile;
+
+    // 애플리케이션 시작 시 절대 경로로 변환
+    @PostConstruct
+    public void init() {
+        // 절대 경로로 변환 (상대 경로 제거)
+        uploadDirFile = Paths.get(BASE_PATH).toAbsolutePath().toFile();
+
+        log.info("========================================");
+        log.info("📁 Upload Directory (설정값): {}", BASE_PATH);
+        log.info("📁 Upload Directory (절대경로): {}", uploadDirFile.getAbsolutePath());
+        log.info("📁 Directory exists: {}", uploadDirFile.exists());
+        log.info("📁 Can write: {}", uploadDirFile.canWrite());
+        log.info("========================================");
+    }
 
     // cron = 초 분 시 일 월 요일
     @Scheduled(cron = "0 37 17 * * *")
@@ -45,18 +64,18 @@ public class FileSweeper {
         List<String> currFile = new ArrayList<>();
         for (FileDTO fileDTO : dbFileList) {
             String fileName = today + File.separator + fileDTO.getUuid() + "_" + fileDTO.getFileName();
-            currFile.add(BASE_PATH + fileName);
+            currFile.add(uploadDirFile + fileName);
 
             // 이미지 파일이면 썸네일도 포함
             if (fileDTO.getFileType() == 1) {
                 String thFileName = today + File.separator + fileDTO.getUuid() + "_th_" + fileDTO.getFileName();
-                currFile.add(BASE_PATH + thFileName);
+                currFile.add(uploadDirFile + thFileName);
             }
         }
         log.info(">>>> currFile size >> {}", currFile.size());
 
         // 오늘 날짜 폴더
-        Path dirPath = Paths.get(BASE_PATH, today);
+        Path dirPath = Paths.get(uploadDirFile.getAbsolutePath(), today);
 
         // ✅ 폴더가 없으면 종료 (NPE 방지)
         if (!Files.exists(dirPath) || !Files.isDirectory(dirPath)) {
