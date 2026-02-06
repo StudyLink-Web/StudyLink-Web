@@ -43,6 +43,7 @@ public class StudentProfileService {
                 .targetUniversity(targetUniversity)
                 .targetMajor(targetMajor)
                 .regionPreference(regionPreference)
+                .chargedPoint(1500)
                 .createdAt(LocalDateTime.now())  // ✅ 필드 추가 후 사용 가능
                 .updatedAt(LocalDateTime.now())  // ✅ 필드 추가 후 사용 가능
                 .build();
@@ -90,5 +91,12 @@ public class StudentProfileService {
         StudentProfile profile = studentProfileRepository.findByUser_UserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("학생 프로필을 찾을 수 없습니다."));
         return profile.getChargedPoint();
+    }
+
+    public void updatePoint(Long studentId, int point) {
+        StudentProfile profile = studentProfileRepository.findByUser_UserId(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("학생 프로필을 찾을 수 없습니다."));
+        profile.setChargedPoint(profile.getChargedPoint() + point);
+        studentProfileRepository.save(profile);
     }
 }

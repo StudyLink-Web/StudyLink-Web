@@ -48,6 +48,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final ProductRepository productRepository;
     private final NotificationService notificationService;
     private final StudentProfileService studentProfileService;
+    private final MentorProfileService mentorProfileService;
 
     @Override
     public PaymentPendingResponse createPendingPayment(int productId, Long userId) {
@@ -292,9 +293,12 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public int insertExchangeRequest(ExchangeRequestDTO request, Long userId) {
         // db에서 보유포인트와 비교해서 포인트 조작 검증하기
-
+        MentorProfile mentorProfile = mentorProfileService.getMentorProfile(userId).orElseThrow(() -> new EntityNotFoundException("해당 멘토가 없습니다."));
+        if (mentorProfile.getPoint() < request.getPoint()) {
+            return 0;
+        }
         // 잔액 차감 (DB에 반영)
-
+        mentorProfileService.addPoint(userId, -(long) request.getPoint());
         // 계좌번호, 예금주 검증. 사실상 지금 프로젝트에서 불가능
 
         try {
@@ -464,6 +468,9 @@ public class PaymentServiceImpl implements PaymentService {
         exchange.setStatus(ExchangeStatus.REJECTED);
         exchange.setRejectedReason(adminExchangeRequestRejectDTO.getReason());
         exchange.setProcessedAt(LocalDateTime.now());
+
+        // 포인트 반환
+        mentorProfileService.addPoint(exchange.getUser().getUserId(), (long) exchange.getPoint());
 
         // 알림
         notificationService.createNotification(exchange.getUser().getUserId(), "EXCHANGE_REJECTED", "환전신청이 거부되었습니다.",

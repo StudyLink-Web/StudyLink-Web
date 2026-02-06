@@ -89,8 +89,8 @@
 
 /* 채팅창 이미지 크기 */
 .chat-image {
-    max-width: 100px;      /* 이미지 가로 최대 크기 */
-    max-height: 100px;     /* 이미지 세로 최대 크기 */
+    max-width: 240px;      /* 이미지 가로 최대 크기 */
+    max-height: 240px;     /* 이미지 세로 최대 크기 */
     width: auto;           /* 비율 유지 */
     height: auto;          /* 비율 유지 */
     border-radius: 8px;    /* 모서리 살짝 둥글게 */
@@ -105,9 +105,21 @@ input:disabled + label {
 }
 
 
+#registerBtn {
+    border: 1px solid black;
+}
+
+#exitBtn {
+    border: 1px solid black;
+    border-left: none;
+}
 
 
-
+#timerDiv {
+    border-right: 1px solid black;
+    border-left: 1px solid black;
+    border-top: 1px solid black;
+}
 
 
 
@@ -186,7 +198,12 @@ input:disabled + label {
 }
 
 /* 버튼 영역 */
-#btnDiv button {
+.btnDiv {
+    display: flex;
+    gap:10px;
+}
+
+.btnDiv button {
     width: 100%;
     padding: 10px;
     background-color: #4f46e5; /* 보라색 */
@@ -197,7 +214,7 @@ input:disabled + label {
     cursor: pointer;
     transition: background-color 0.2s;
 }
-#btnDiv button:hover {
+.btnDiv button:hover {
     background-color: #4338ca;
 }
 
@@ -238,15 +255,31 @@ input:disabled + label {
     display: flex;
     justify-content: center;
     gap: 5px;
-    margin: 10px 0;
 }
 .star-rating span {
-    font-size: 26px;
+    font-size: 48px;
     color: #ccc;
     transition: color 0.2s;
 }
 .star-rating span.selected {
     color: gold;
+}
+
+.favoriteNotice {
+    background: #f9fafb;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.favoriteDiv {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap:4px;
 }
 
 
@@ -533,6 +566,7 @@ input:disabled + label {
     padding: 3px 5px;      /* 위아래 압축 */
     max-height: 90px;
     overflow-x: auto;
+    width: 380px
 }
 
 /* 1줄: 함수 입력 + 버튼 */
