@@ -36,15 +36,6 @@ public class CoverLetterController {
 
         Users user = userOpt.get();
 
-        // 멤버십 체크 (STANDARD 이상만 가능)
-        if (user.getMembership() == MembershipType.FREE) {
-            log.warn("🚫 [CoverLetter] 멤버십 부족: {} (Free)", user.getEmail());
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "PREMIUM_REQUIRED");
-            errorResponse.put("message", "AI 자소서 생성 기능은 Standard 또는 Premium PASS 요금제 이용 시 가능합니다.");
-            return ResponseEntity.status(403).body(errorResponse);
-        }
-
         String aiContent = coverLetterService.generateAIContent(user, request);
 
         Map<String, String> response = new HashMap<>();
@@ -63,12 +54,6 @@ public class CoverLetterController {
             return ResponseEntity.status(401).build();
 
         Users user = userOpt.get();
-
-        // 멤버십 체크 (STANDARD 이상만 가능)
-        if (user.getMembership() == MembershipType.FREE) {
-            log.warn("🚫 [CoverLetter] 멤버십 부족(추출): {} (Free)", user.getEmail());
-            return ResponseEntity.status(403).build();
-        }
 
         return ResponseEntity.ok(coverLetterService.extractFromRecord(request));
     }

@@ -327,7 +327,7 @@ const PricingPage: FC = () => {
               "기본 입시 데이터 조회 (일 5회)",
               "공개 멘토링 게시판 읽기 권한",
               "입시 커뮤니티 기본 이용",
-              { text: "AI 자소서 메이커 (미지원)", locked: true },
+              "AI 자소서 메이커",
               { text: "AI 대입 상담 (미지원)", locked: true },
             ]}
           />
