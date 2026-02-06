@@ -85,4 +85,10 @@ public class StudentProfileService {
 
         studentProfileRepository.delete(profile);
     }
+
+    public long getPoint(Long userId) {
+        StudentProfile profile = studentProfileRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("학생 프로필을 찾을 수 없습니다."));
+        return profile.getChargedPoint();
+    }
 }

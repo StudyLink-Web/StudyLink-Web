@@ -255,6 +255,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             // 결과 반환용 JSONObject 생성
             JSONObject result = new JSONObject();
+            jsonObject.put("productId", payment.getProductId());
             result.put("jsonObject", jsonObject);
             result.put("code", code);
 

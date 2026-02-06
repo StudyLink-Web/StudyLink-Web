@@ -40,17 +40,15 @@
 			</li>
 		</ul>
 
-		<ul class="features">
-			<li>[이용 가능 기능 1]</li>
-			<li>[이용 가능 기능 2]</li>
-			<li>[이용 가능 기능 3]</li>
+		<ul class="features" id="featureList">
+
 		</ul>
 	</div>
 
 	<!-- 액션 버튼 -->
 	<div class="successActions">
 		<a href="/dashboard" class="btn-primary">내 대시보드로 이동</a>
-		<a href="/" class="btn-secondary">바로 시작하기(핵심 기능 URL 연결하기)</a>
+		<a href="/chatbot" class="btn-secondary">AI 상담 바로 시작하기</a>
 	</div>
 
 	<!-- 안내 -->
@@ -115,6 +113,7 @@
 			const methodElement = document.getElementById("method");
 			const approvedAtElement = document.getElementById("approvedAt");
 			const orderIdElement = document.getElementById("orderId");
+			const featureList = document.getElementById("featureList");
 
 			orderNameElement.textContent = json.orderName;
 			periodElement.textContent = `${formatDate(approvedDate)} ~ ${formatDate(endDate)}`;
@@ -122,6 +121,35 @@
 			methodElement.textContent = json.method;
 			approvedAtElement.textContent = json.approvedAt;
 			orderIdElement.textContent = json.orderId;
+			const productId = json.productId;
+
+			// 기존 내용 초기화
+			featureList.innerHTML = "";
+
+			if (productId === 1) {
+				// 상품 1 기능
+				featureList.innerHTML = `
+					<li>AI 자소서 분석/첨삭 (월 10회)</li>
+					<li>AI 대입 상담 챗봇 (월 30회)</li>
+					<li>대학별 합격 예측 데이터 조회</li>
+					<li>맞춤형 입시 리포트 제공</li>
+					<li>프리미엄 게시판 접근 권한</li>
+				`;
+			} else if (productId === 2) {
+				// 상품 2 기능
+				featureList.innerHTML = `
+					<li>전년도 합격자 생기부 원본 열람</li>
+					<li>AI 자소서/상담/면접 무제한</li>
+					<li>1:1 입시 멘토링 우선 매칭</li>
+					<li>전용 Q&A 라운지 입장 권한</li>
+					<li>실시간 전문 컨설턴트 상담 연동</li>
+				`;
+			} else {
+				// 예외 처리
+				featureList.innerHTML = `
+					<li>알 수 없는 상품입니다.</li>
+				`;
+			}
 		}
 		confirm();
 

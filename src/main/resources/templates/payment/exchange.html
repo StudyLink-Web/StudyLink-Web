@@ -19,12 +19,13 @@
 				<div class="exchangeSection">
 					<h2>보유 포인트</h2>
 					<div class="point-box">
-						현재 보유 포인트: <strong>[123,456 P]</strong>
+						현재 보유 포인트: <strong id="pointArea">[[${point}]]</strong>
 					</div>
 				</div>
 
 				<!-- 안내 문구 -->
 				<div class="exchangeNotice mt-4">
+					· 환전 신청은 멘토만 가능합니다.<br />
 					· 환전 신청은 영업일 기준 [1~3일] 내 처리됩니다.<br />
 					· 입력한 계좌 정보가 올바르지 않을 경우 환전이 지연될 수 있습니다.<br />
 					· 환전 신청 후에는 취소가 불가능합니다.
@@ -38,14 +39,14 @@
 
 					<div class="mb-3">
 						<label for="exchangePoint">환전할 포인트</label>
-						<input id="exchangePoint" class="form-control" placeholder="환전할 포인트를 입력하세요" />
+						<input id="exchangePoint" class="form-control" placeholder="환전할 포인트를 입력하세요" th:disabled="${!isMentor}"/>
 						<small>최소 환전 포인트: [10,000P]</small>
 						<p id="validMessage"></p>
 					</div>
 
 					<div class="mb-3">
 						<label for="bank">은행명</label>
-						<select id="bank" class="form-control">
+						<select id="bank" class="form-control" th:disabled="${!isMentor}">
 							<option value="">은행을 선택하세요</option>
 							<option>국민은행</option>
 							<option>기업은행</option>
@@ -59,19 +60,19 @@
 
 					<div class="mb-3">
 						<label for="accountNumber">계좌번호</label>
-						<input type="text" id="accountNumber" class="form-control" placeholder="계좌번호를 입력하세요" />
+						<input type="text" id="accountNumber" class="form-control" placeholder="계좌번호를 입력하세요"  th:disabled="${!isMentor}"/>
 						<small>'-'없이 숫자만 입력하세요</small>
 						<p id="accountValidMessage"></p>
 					</div>
 
 					<div class="mb-3">
 						<label for="accountHolder">예금주명</label>
-						<input type="text" id="accountHolder" class="form-control" placeholder="예금주명을 입력하세요" />
+						<input type="text" id="accountHolder" class="form-control" placeholder="예금주명을 입력하세요"  th:disabled="${!isMentor}"/>
 					</div>
 
 					<!-- 환전 신청 버튼 -->
 					<div class="exchangeActions mt-3">
-						<button type="button" id="exchangeSubmitBtn" class="btn btn-primary w-100">
+						<button type="button" id="exchangeSubmitBtn" class="btn btn-primary w-100" th:disabled="${!isMentor}">
 							환전 신청하기
 						</button>
 					</div>
@@ -86,7 +87,7 @@
             const validMessage = document.getElementById("validMessage");
 
             const MIN_POINT = 10000;
-            const AVAILABLE_POINT = 123456;
+            const AVAILABLE_POINT = document.getElementById('pointArea').innerText;
 
             exchangePointInput.addEventListener("input", () => {
                 const rawValue = exchangePointInput.value.trim();

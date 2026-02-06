@@ -3,11 +3,11 @@ package com.StudyLink.www.controller;
 import com.StudyLink.www.dto.ExchangeRequestDTO;
 import com.StudyLink.www.dto.PaymentPendingRequest;
 import com.StudyLink.www.dto.PaymentPendingResponse;
-import com.StudyLink.www.entity.Payment;
-import com.StudyLink.www.entity.PaymentStatus;
-import com.StudyLink.www.entity.Product;
+import com.StudyLink.www.entity.*;
 import com.StudyLink.www.repository.ProductRepository;
+import com.StudyLink.www.service.MentorProfileService;
 import com.StudyLink.www.service.PaymentService;
+import com.StudyLink.www.service.StudentProfileService;
 import com.StudyLink.www.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.InputStream;
@@ -41,6 +42,8 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final UserService userService;
     private final ProductRepository productRepository;
+    private final MentorProfileService mentorProfileService;
+    private final StudentProfileService studentProfileService;
 
 
     // ================================================= 결제 =================================================
@@ -122,7 +125,28 @@ public class PaymentController {
     // =============================================== 포인트 환전 =============================================
     // 페이지 이동
     @GetMapping("/exchange")
-    public void exchange(){};
+    public void exchange(Authentication authentication, Model model) {
+
+        boolean isMentor = false;
+        long point = 0L;
+
+        if (authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken)) {
+
+            Users user = userService.findByUsername(authentication.getName());
+
+            if (user.getRole() == Role.MENTOR) {
+                isMentor = true;
+                point = mentorProfileService.getPoint(user.getUserId());
+            } else {
+                point = studentProfileService.getPoint(user.getUserId());
+            }
+        }
+
+        model.addAttribute("isMentor", isMentor);
+        model.addAttribute("point", point);
+    }
 
     @PostMapping("/exchange")
     public ResponseEntity<String> exchange(@RequestBody ExchangeRequestDTO request, Authentication authentication) {

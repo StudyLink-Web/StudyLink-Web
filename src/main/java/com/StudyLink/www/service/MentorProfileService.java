@@ -437,4 +437,10 @@ public class MentorProfileService {
 
         profile.setAverageRating(average);
     }
+
+    public long getPoint(Long userId) {
+        MentorProfile profile = mentorProfileRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 멘토가 없습니다."));
+        return profile.getPoint();
+    }
 }
