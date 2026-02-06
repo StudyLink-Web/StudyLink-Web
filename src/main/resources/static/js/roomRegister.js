@@ -25,11 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 registerBtn.textContent = '등록 취소';
                 exitBtn.textContent = '나가기';
             } else {
-                registerBtn.style.display = 'none';
+                registerBtn.textContent = '등록 취소';
+                registerBtn.style.disabled = 'true';
                 exitBtn.textContent = '나가기';
             }
         } else {
-            registerBtn.style.display = 'none';
+            registerBtn.textContent = '문제풀이 시작';
+            registerBtn.style.disabled = 'true';
             exitBtn.textContent = '나가기';
         }
     } else if (roomDTO.status === 'IN_PROGRESS') {
@@ -37,12 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
             registerBtn.textContent = '문제 풀이 완료';
             exitBtn.textContent = '문제 풀이 포기';
         } else { // 학생
-            registerBtn.style.display = 'none';
+            registerBtn.textContent = '문제 풀이 완료';
+            registerBtn.style.disabled = 'true';
             exitBtn.textContent = '나가기';
         }
     } else if (roomDTO.status === 'ANSWERED') {
         if (roleStrings.includes("ROLE_MENTOR")) {
-            registerBtn.style.display = 'none';
+            registerBtn.textContent = '종료';
+            registerBtn.style.disabled = 'true';
             exitBtn.textContent = '나가기';
         } else {
             registerBtn.textContent = '종료';
@@ -50,10 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     } else { // COMPLETED
         if (roleStrings.includes("ROLE_MENTOR")) {
-            registerBtn.style.display = 'none';
+            registerBtn.textContent = '종료';
+            registerBtn.style.disabled = 'true';
             exitBtn.textContent = '나가기';
         } else {
-            registerBtn.style.display = 'none';
+            registerBtn.textContent = '종료';
+            registerBtn.style.disabled = 'true';
             exitBtn.textContent = '나가기';
         }
     }
@@ -151,19 +157,24 @@ if (roomDTO.status === 'TEMP') {
 
     const points = [500, 1000, 1500];
 
-    points.forEach((point, index) => {
+    points.forEach((pointValue, index) => {
         const label = document.createElement('label');
         const radio = document.createElement('input');
 
         radio.type = 'radio';
         radio.name = 'point';        // 같은 name → 하나만 선택
-        radio.value = point;
+        radio.value = pointValue;
 
-        // 첫 번째 기본 선택
-        if (index === 0) radio.checked = true;
+        // 보유 포인트보다 작으면 활성, 작으면 disabled
+        if (pointValue > userPoint) {
+            radio.disabled = true;
+        } else if (index === 0) {
+            // 첫 번째 선택 가능 포인트를 기본 선택
+            radio.checked = true;
+        }
 
         label.appendChild(radio);
-        label.appendChild(document.createTextNode(` ${point}P`));
+        label.appendChild(document.createTextNode(` ${pointValue}P`));
         label.appendChild(document.createElement('br'));
 
         pointDiv.appendChild(label);
@@ -181,6 +192,17 @@ if (roomDTO.status === 'TEMP') {
     registerForm.appendChild(document.createElement('br'));
     btnDiv.appendChild(submitBtn);
 
+    // 포인트 라디오 전부 disabled인지 체크
+    const pointRadios = pointDiv.querySelectorAll('input[type="radio"]');
+    const allDisabled = Array.from(pointRadios).every(radio => radio.disabled);
+
+    // 모두 disabled면 제출 버튼도 막기
+    if (allDisabled) {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+        submitBtn.style.cursor = 'not-allowed';
+        submitBtn.title = '보유 포인트가 부족합니다.';
+    }
 
     // 취소 버튼
     const cancelBtn = document.createElement('button');

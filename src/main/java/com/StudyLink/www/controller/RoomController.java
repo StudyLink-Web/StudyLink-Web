@@ -5,7 +5,9 @@ import com.StudyLink.www.dto.RoomDTO;
 import com.StudyLink.www.dto.SubjectDTO;
 import com.StudyLink.www.entity.Favorite;
 import com.StudyLink.www.entity.Room;
+import com.StudyLink.www.entity.StudentProfile;
 import com.StudyLink.www.service.*;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -133,11 +135,10 @@ public class RoomController {
         log.info(">>> favoriteList {}", favoriteList);
 
         // 학생 보유 point
-//        StudentProfile studentProfile = studentProfileService.getStudentProfile(studentId)
-//                .orElseThrow(() -> new IllegalArgumentException("학생 프로필을 찾을 수 없습니다."));
-//        int point = studentProfile.getBonusPoint() + studentProfile.getChargedPoint();
-        model.addAttribute("point", 1500);
-        //log.info(">>> point {}", point);
+        StudentProfile studentProfile = studentProfileService.getStudentProfile(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("학생 프로필을 찾을 수 없습니다."));
+        int point = studentProfile.getBonusPoint() + studentProfile.getChargedPoint();
+        model.addAttribute("userPoint", point);
 
         return "/room/room";
     }
@@ -166,6 +167,10 @@ public class RoomController {
         }
         log.info(">>> roomDTO {}", roomDTO);
         roomService.save(roomDTO);
+
+        // 학생 포인트 차감
+        studentProfileService.updatePoint(roomDTO.getStudentId(), -point);
+
         redirectAttributes.addFlashAttribute("message", "문제가 등록되었습니다.");
         return "redirect:/room/list";
     }
@@ -206,14 +211,6 @@ public class RoomController {
             model.addAttribute("favoriteList", favoriteList);
             log.info(">>> favoriteList {}", favoriteList);
         }
-
-
-        // 학생 보유 point
-//        StudentProfile studentProfile = studentProfileService.getStudentProfile(studentId)
-//                .orElseThrow(() -> new IllegalArgumentException("학생 프로필을 찾을 수 없습니다."));
-//        int point = studentProfile.getBonusPoint() + studentProfile.getChargedPoint();
-        model.addAttribute("point", 1500);
-        //log.info(">>> point {}", point);
 
         if (roomDTO.getStatus() == RoomDTO.Status.IN_PROGRESS) {
             LocalDateTime startedAt = roomDTO.getInProgressedAt();
@@ -281,7 +278,7 @@ public class RoomController {
                         // mongodb 캔버스 데이터 삭제
                         drawDataService.removeRoom(roomId);
                         // 포인트 반환하기
-
+                        studentProfileService.updatePoint(roomDTO.getStudentId(), roomDTO.getPoint());
 
                         redirectAttributes.addFlashAttribute("message", "등록이 취소되었습니다.");
                         return "redirect:/room/list";
@@ -311,11 +308,16 @@ public class RoomController {
     }
 
     @GetMapping("/exitRoom")
-    public String exitRoom(Authentication authentication, long roomId, Model model, RedirectAttributes redirectAttributes){
+    public String exitRoom(Authentication authentication, long roomId, Model model, HttpServletRequest request, RedirectAttributes redirectAttributes){
         // roomId -> roomDTO
         log.info(">>> roomId {}", roomId);
         RoomDTO roomDTO = roomService.getRoomDTO(roomId);
         log.info(">>> roomDTO {}", roomDTO);
+
+        String referer = request.getHeader("Referer");
+        log.info(">>> referer {}", referer);
+
+        String redirectUrl = (referer != null) ? "redirect:" + referer : "redirect:/room/list";
 
         List<String> userRoles = authentication.getAuthorities()
                 .stream()
@@ -343,11 +345,11 @@ public class RoomController {
                     roomService.deleteRoom(roomId);
                     drawDataService.removeRoom(roomId);
 
-                    // 포인트 차감 50p
-                    mentorProfileService.addPoint(roomDTO.getMentorId(), -50L);
-
                     // 알림
                     notificationService.createNotification(roomDTO.getStudentId(), "ANSWER_RECEIVED", "'" + username + "' 멘토가 문제풀이를 포기했습니다.", null);
+
+                    // 학생 포인트 반환
+                    studentProfileService.updatePoint(roomDTO.getStudentId(), roomDTO.getPoint());
 
                     redirectAttributes.addFlashAttribute("message", "문제풀이가 취소되었습니다.");
                     return "redirect:/room/list";
@@ -358,12 +360,15 @@ public class RoomController {
                     // 알림
                     notificationService.createNotification(roomDTO.getStudentId(), "ANSWER_RECEIVED", "'" + username + "' 멘토가 문제풀이를 포기했습니다.", null);
 
+                    // 학생 포인트 반환
+                    studentProfileService.updatePoint(roomDTO.getStudentId(), roomDTO.getPoint());
+
                     redirectAttributes.addFlashAttribute("message", "1대1 문제풀이가 취소되었습니다.");
                     return "redirect:/room/list";
                 }
             }
         }
-        return "redirect:/room/list";
+        return redirectUrl;
     }
 
 
