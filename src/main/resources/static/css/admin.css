@@ -24,3 +24,23 @@ color: #ffffff;
 font-size: 0.9rem;
 color: #6c757d;
 }
+
+.detailTable {
+    width: 100%;
+    table-layout: fixed; /* 열 너비 고정 */
+}
+
+.detailTable th,
+.detailTable td {
+    text-align: left;     /* 왼쪽 정렬 (원하면 center로 변경 가능) */
+    vertical-align: middle; /* 세로 중앙 정렬 */
+    word-wrap: break-word;  /* 내용 길면 줄 바꿈 */
+}
+
+.detailTable th {
+    width: 50%; /* 좌측 헤더 고정 비율 */
+}
+
+.detailTable td {
+    width: 50%; /* 우측 내용 칸 */
+}
