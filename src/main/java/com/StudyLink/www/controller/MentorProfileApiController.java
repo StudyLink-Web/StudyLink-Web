@@ -85,6 +85,12 @@ public class MentorProfileApiController {
             UsersDTO usersDTO = new UsersDTO(profile.getUser());
             MentorProfileDTO dto = new MentorProfileDTO(profile, usersDTO);
 
+            // ⭐ 평점 소수점 첫째 자리까지만 제한 (반올림)
+            if (dto.getAverageRating() != null) {
+                double rounded = Math.round(dto.getAverageRating() * 10.0) / 10.0;
+                dto.setAverageRating(rounded);
+            }
+
             // 기본 이미지 처리
             if (dto.getProfileImageUrl() == null || dto.getProfileImageUrl().isEmpty()) {
                 dto.setProfileImageUrl("/img/default_profile.png");
@@ -112,19 +118,7 @@ public class MentorProfileApiController {
         try {
             log.info("📋 인증된 멘토 목록 조회");
 
-            List<MentorProfile> mentors = mentorProfileService.getVerifiedMentors();
-
-            List<MentorProfileDTO> mentorList = mentors.stream()
-                    .map(mentor -> {
-                        UsersDTO usersDTO = new UsersDTO(mentor.getUser());
-                        MentorProfileDTO dto = new MentorProfileDTO(mentor, usersDTO);
-                        // 기본 이미지 처리
-                        if (dto.getProfileImageUrl() == null || dto.getProfileImageUrl().isEmpty()) {
-                            dto.setProfileImageUrl("/img/default-profile.png");
-                        }
-                        return dto;
-                    })
-                    .toList();
+            List<MentorProfileDTO> mentorList = mentorProfileService.getVerifiedMentorDTOs();
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

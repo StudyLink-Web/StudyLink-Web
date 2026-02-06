@@ -141,7 +141,7 @@ const MentorSection: FC = () => {
                           className="text-yellow-400 fill-yellow-400"
                         />
                         <span className="text-xs font-bold text-white">
-                          {mentor.averageRating}
+                          {Number(mentor.averageRating).toFixed(1)}
                         </span>
                       </div>
                       <span className="text-[10px] text-slate-300 dark:text-slate-400">

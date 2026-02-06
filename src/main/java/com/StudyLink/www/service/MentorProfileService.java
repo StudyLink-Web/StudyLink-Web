@@ -99,12 +99,31 @@ public class MentorProfileService {
     }
 
     /**
-     * 모든 인증된 멘토 조회
-     * ✅ List<MentorProfile> 타입 명시
+     * 모든 인증된 멘토 조회 (DTO 리스트 반환)
      */
     @Transactional(readOnly = true)
-    public List<MentorProfile> getVerifiedMentors() {
-        return mentorProfileRepository.findByIsVerifiedTrue();
+    public List<MentorProfileDTO> getVerifiedMentorDTOs() {
+        log.info("📋 모든 인증된 멘토 목록 조회 (DTO)");
+        List<MentorProfile> mentors = mentorProfileRepository.findByIsVerifiedTrue();
+
+        return mentors.stream()
+                .map(profile -> {
+                    UsersDTO usersDTO = new UsersDTO(profile.getUser());
+                    MentorProfileDTO dto = new MentorProfileDTO(profile, usersDTO);
+
+                    // ⭐ 평점 소수점 첫째 자리까지만 제한 (반올림)
+                    if (dto.getAverageRating() != null) {
+                        double rounded = Math.round(dto.getAverageRating() * 10.0) / 10.0;
+                        dto.setAverageRating(rounded);
+                    }
+
+                    // 이미지 경로 보정
+                    if (dto.getProfileImageUrl() == null || dto.getProfileImageUrl().isEmpty()) {
+                        dto.setProfileImageUrl("/img/default-profile.png");
+                    }
+                    return dto;
+                })
+                .toList();
     }
 
     /**
