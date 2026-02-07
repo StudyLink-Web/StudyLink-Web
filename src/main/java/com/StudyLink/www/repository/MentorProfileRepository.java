@@ -29,22 +29,11 @@ public interface MentorProfileRepository extends JpaRepository<MentorProfile, Lo
     List<MentorProfile> findByIsVerifiedTrue();
 
     /**
-     * 평점이 높은 순으로 상위 멘토 조회
-     */
-    /**
-     * 평점이 높은 순으로 상위 멘토 조회 (검증된 멘토 기준 확장)
+     * 특정 수만큼 인증된 멘토 조회 (Pageable 사용)
+     * university와 major가 있는 검증된 멘토만 노출
      */
     @Query("SELECT m FROM MentorProfile m JOIN m.user u WHERE (m.isVerified = true OR u.isStudentVerified = true OR u.isVerifiedStudent = true) AND m.university IS NOT NULL AND m.major IS NOT NULL ORDER BY m.averageRating DESC")
-    List<MentorProfile> findTop8ByIsVerifiedTrueOrderByAverageRatingDesc();
-
-    /**
-     * 특정 수만큼 인증된 멘토 조회 (정렬 포함)
-     */
-    /**
-     * 특정 수만큼 인증된 멘토 조회 (정렬 포함)
-     */
-    @Query("SELECT m FROM MentorProfile m JOIN m.user u WHERE (m.isVerified = true OR u.isStudentVerified = true OR u.isVerifiedStudent = true) AND m.university IS NOT NULL AND m.major IS NOT NULL ORDER BY m.averageRating DESC")
-    List<MentorProfile> findTop4ByIsVerifiedTrueOrderByAverageRatingDesc();
+    List<MentorProfile> findAllVerifiedMentorsOrderByRatingDesc(org.springframework.data.domain.Pageable pageable);
 
     /**
      * 미인증 멘토 조회 (선택사항)

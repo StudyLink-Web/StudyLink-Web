@@ -31,7 +31,7 @@ const actions = [
     bgColor: "bg-purple-50 dark:bg-purple-500/10",
   },
   {
-    title: "문제 리스트",
+    title: "문제 풀기",
     description: "SKY 멘토들의 실시간 풀이",
     icon: ClipboardList,
     href: "/room/list",

@@ -142,8 +142,6 @@ public class RoomServiceImpl implements RoomService{
 
                     MentorProfile mentorProfile = mentorProfileRepository.findById(room.getMentorId())
                             .orElseThrow(() -> new EntityNotFoundException("삭제할 방의 멘토 프로필이 없습니다."));
-                    // 멘토 패널티 포인트 차감
-                    mentorProfile.setPoint(mentorProfile.getPoint() - 50);
 
                     // 알림
                     notificationService.createNotification(room.getStudentId(), "ROOM_EXPIRED", "멘토가 문제풀이에 실패하였습니다.", null);

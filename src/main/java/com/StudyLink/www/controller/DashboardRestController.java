@@ -47,11 +47,12 @@ public class DashboardRestController {
     @GetMapping("/status")
     public ResponseEntity<DashboardDTO.StatusResponse> getStatus(Authentication authentication) {
         Optional<Users> userOpt = getCurrentUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
-        
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(401).build();
+
         Users user = userOpt.get();
         List<StudentScoreDTO> scores = studentScoreService.getScoresByUserId(user.getUserId());
-        
+
         return ResponseEntity.ok(DashboardDTO.StatusResponse.builder()
                 .hasScores(!scores.isEmpty())
                 .build());
@@ -63,8 +64,9 @@ public class DashboardRestController {
     @GetMapping("/data")
     public ResponseEntity<Map<String, Object>> getDashboardData(Authentication authentication) {
         Optional<Users> userOpt = getCurrentUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
-        
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(401).build();
+
         Users user = userOpt.get();
         List<StudentScoreDTO> scores = studentScoreService.getScoresByUserId(user.getUserId());
         Optional<StudentProfile> profile = studentProfileService.getStudentProfile(user.getUserId());
@@ -72,12 +74,12 @@ public class DashboardRestController {
         Map<String, Object> userData = new HashMap<>();
         userData.put("nickname", user.getNickname() != null ? user.getNickname() : "사용자");
         userData.put("name", user.getName() != null ? user.getName() : "이름없음");
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("scores", scores);
         response.put("profile", profile.orElse(null));
         response.put("user", userData);
-        
+
         log.info("[DashboardData] User: {}, Score Count: {}", user.getEmail(), scores.size());
         return ResponseEntity.ok(response);
     }
@@ -87,17 +89,19 @@ public class DashboardRestController {
      */
     @PostMapping("/save")
     public ResponseEntity<Map<String, Object>> saveScores(
-            Authentication authentication, 
+            Authentication authentication,
             @RequestBody List<StudentScoreDTO> scores) {
-        
+
         Optional<Users> userOpt = getCurrentUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
-        
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(401).build();
+
         Users user = userOpt.get();
-        log.info("[ScoreSaveRequest] User: {}, Incoming Count: {}", user.getEmail(), scores != null ? scores.size() : 0);
-        
+        log.info("[ScoreSaveRequest] User: {}, Incoming Count: {}", user.getEmail(),
+                scores != null ? scores.size() : 0);
+
         int savedCount = studentScoreService.saveScores(user.getUserId(), scores);
-        
+
         Map<String, Object> response = new HashMap<>();
         if (savedCount > 0) {
             response.put("success", true);
@@ -117,14 +121,15 @@ public class DashboardRestController {
     public ResponseEntity<Map<String, Object>> saveScoreRecord(
             Authentication authentication,
             @RequestBody Map<String, Object> payload) {
-        
+
         Optional<Users> userOpt = getCurrentUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
-        
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(401).build();
+
         Users user = userOpt.get();
         String title = (String) payload.get("title");
         List<Map<String, Object>> scoreMaps = (List<Map<String, Object>>) payload.get("scores");
-        
+
         // Map list를 DTO list로 변환 (jackson objectMapper 사용 권장되나 여기선 수동 매핑)
         List<StudentScoreDTO> scoreDTOs = scoreMaps.stream().map(m -> StudentScoreDTO.builder()
                 .subjectName((String) m.get("subject_name"))
@@ -132,16 +137,15 @@ public class DashboardRestController {
                 .scoreType((String) m.get("score_type"))
                 .category((String) m.get("category"))
                 .optionalSubject((String) m.get("optional_subject"))
-                .build()
-        ).toList();
+                .build()).toList();
 
         Long recordId = studentScoreService.saveScoreRecord(user.getUserId(), title, scoreDTOs);
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("recordId", recordId);
         response.put("message", "'" + title + "' 성적이 저장되었습니다.");
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -151,8 +155,9 @@ public class DashboardRestController {
     @GetMapping("/records")
     public ResponseEntity<List<java.util.Map<String, Object>>> getScoreRecords(Authentication authentication) {
         Optional<Users> userOpt = getCurrentUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
-        
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(401).build();
+
         Users user = userOpt.get();
         return ResponseEntity.ok(studentScoreService.getScoreRecords(user.getUserId()));
     }
@@ -164,10 +169,11 @@ public class DashboardRestController {
     public ResponseEntity<List<StudentScoreDTO>> loadRecord(
             Authentication authentication,
             @PathVariable("id") Long recordId) {
-        
+
         Optional<Users> userOpt = getCurrentUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
-        
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(401).build();
+
         // 보안상 본인 루틴 체크 필요할 수 있으나 생략 (UserId 기반 필터링은 Service에서 수행 권장)
         return ResponseEntity.ok(studentScoreService.getRecordDetails(recordId));
     }
@@ -179,13 +185,13 @@ public class DashboardRestController {
     public ResponseEntity<Map<String, Object>> deleteRecord(
             Authentication authentication,
             @PathVariable("id") Long recordId) {
-        
+
         studentScoreService.deleteScoreRecord(recordId);
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "성적이 성공적으로 삭제되었습니다.");
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -195,8 +201,9 @@ public class DashboardRestController {
     @GetMapping("/analysis")
     public ResponseEntity<DashboardDTO.AnalysisResponse> getAnalysis(Authentication authentication) {
         Optional<Users> userOpt = getCurrentUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
-        
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(401).build();
+
         Users user = userOpt.get();
         List<StudentScoreDTO> scores = studentScoreService.getScoresByUserId(user.getUserId());
         Optional<StudentProfile> profile = studentProfileService.getStudentProfile(user.getUserId());
@@ -215,7 +222,8 @@ public class DashboardRestController {
 
         try {
             log.info("파이썬 서버 분석 요청 중... URL: {}", pythonApiUrl + "/analyze-dashboard");
-            DashboardDTO.AnalysisResponse response = restTemplate.postForObject(pythonApiUrl + "/analyze-dashboard", request, DashboardDTO.AnalysisResponse.class);
+            DashboardDTO.AnalysisResponse response = restTemplate.postForObject(pythonApiUrl + "/analyze-dashboard",
+                    request, DashboardDTO.AnalysisResponse.class);
             return ResponseEntity.ok(response);
         } catch (org.springframework.web.client.HttpStatusCodeException e) {
             log.error("파이썬 서버 분석 연동 실패 (HTTP {}): {}", e.getStatusCode(), e.getResponseBodyAsString());
@@ -232,8 +240,9 @@ public class DashboardRestController {
     @GetMapping("/analysis/trend")
     public ResponseEntity<DashboardDTO.TrendAnalysisResponse> getTrendAnalysis(Authentication authentication) {
         Optional<Users> userOpt = getCurrentUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
-        
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(401).build();
+
         Users user = userOpt.get();
         List<DashboardDTO.TrendItem> trends = studentScoreService.getAllTrendData(user.getUserId());
 
@@ -251,8 +260,8 @@ public class DashboardRestController {
         try {
             log.info("파이썬 서버 성적 추이 분석 요청 중... URL: {}", pythonApiUrl + "/analyze-trend");
             DashboardDTO.TrendAnalysisResponse response = restTemplate.postForObject(
-                    pythonApiUrl + "/analyze-trend", 
-                    request, 
+                    pythonApiUrl + "/analyze-trend",
+                    request,
                     DashboardDTO.TrendAnalysisResponse.class);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -262,33 +271,36 @@ public class DashboardRestController {
     }
 
     private Optional<Users> getCurrentUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
             log.warn("인증 정보가 없거나 유효하지 않습니다.");
             return Optional.empty();
         }
 
         String rawId = authentication.getName();
-        
+
         if (authentication instanceof org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken token) {
             Map<String, Object> attributes = token.getPrincipal().getAttributes();
             if (attributes.containsKey("email")) {
                 rawId = (String) attributes.get("email");
             } else if (attributes.get("response") instanceof Map<?, ?> responseMap) {
-                if (responseMap.containsKey("email")) rawId = (String) responseMap.get("email");
+                if (responseMap.containsKey("email"))
+                    rawId = (String) responseMap.get("email");
             } else if (attributes.get("kakao_account") instanceof Map<?, ?> kakaoMap) {
-                if (kakaoMap.containsKey("email")) rawId = (String) kakaoMap.get("email");
+                if (kakaoMap.containsKey("email"))
+                    rawId = (String) kakaoMap.get("email");
             }
         }
 
         final String finalIdentifier = rawId;
         log.info("사용자 조회 시도 (Identifier: {})", finalIdentifier);
-        
+
         Optional<Users> userOpt = authService.getUserByEmail(finalIdentifier);
         if (userOpt.isPresent()) {
             log.info("✅ 이메일로 사용자 조회 성공: {}", finalIdentifier);
             return userOpt;
         }
-        
+
         log.warn("⚠️ 이메일 조회 실패, Username으로 재시도: {}", finalIdentifier);
         return userRepository.findByUsername(finalIdentifier);
     }

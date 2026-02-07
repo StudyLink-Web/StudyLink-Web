@@ -124,4 +124,9 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new EntityNotFoundException("유저가 없습니다."));
         return new UsersDTO(user);
     }
+
+    @Override
+    public Users saveUser(Users user) {
+        return userRepository.save(user);
+    }
 }

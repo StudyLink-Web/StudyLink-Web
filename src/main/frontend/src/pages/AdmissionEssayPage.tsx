@@ -8,7 +8,6 @@ import {
   Loader2,
   Clipboard,
   FileText,
-  Lock,
 } from "lucide-react";
 
 interface CoverLetter {
@@ -26,7 +25,7 @@ const AdmissionEssayPage: React.FC = () => {
   const [essays, setEssays] = useState<CoverLetter[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [membership, setMembership] = useState<string>("FREE");
+  const [membership, setMembership] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -55,8 +54,11 @@ const AdmissionEssayPage: React.FC = () => {
 
   useEffect(() => {
     const initData = async () => {
-      setMembership((window as any).__INITIAL_DATA__?.user?.membership || "FREE");
-      await Promise.all([fetchEssays(), fetchProfile()]);
+      // 📍 __INITIAL_DATA__는 참고만 함 (비동기 fetchProfile에서 덮어씌움)
+      const initialData = (window as any).__INITIAL_DATA__;
+      const initialMembershipHint = initialData?.user?.membership || "FREE";
+      
+      await Promise.all([fetchEssays(), fetchProfile(initialMembershipHint)]);
     };
     initData();
   }, []);
@@ -76,11 +78,18 @@ const AdmissionEssayPage: React.FC = () => {
     }
   };
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (hint: string) => {
     try {
       const resp = await fetch("/api/dashboard/data");
       if (resp.ok) {
         const data = await resp.json();
+        // 📍 백엔드 DashboardRestController에서 추가한 membership 필드 확인
+        if (data.user && data.user.membership) {
+          setMembership(data.user.membership);
+        } else {
+          setMembership(hint);
+        }
+
         if (data.profile) {
           setFormData((prev) => ({
             ...prev,
@@ -88,9 +97,12 @@ const AdmissionEssayPage: React.FC = () => {
             targetMajor: data.profile.targetMajor || "",
           }));
         }
+      } else {
+          setMembership(hint);
       }
     } catch {
       console.error("프로필 정보 로드 실패");
+      setMembership(hint);
     }
   };
 
@@ -200,6 +212,17 @@ const AdmissionEssayPage: React.FC = () => {
     }
   };
 
+  if (membership === null) {
+      return (
+          <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#030014]">
+              <div className="flex flex-col items-center gap-4">
+                  <Loader2 className="animate-spin text-purple-500" size={48} />
+                  <p className="text-slate-500 font-medium">사용자 정보를 확인하는 중...</p>
+              </div>
+          </div>
+      );
+  }
+
   return (
     <div className="min-h-screen bg-white dark:bg-[#030014] pt-24 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
@@ -211,7 +234,7 @@ const AdmissionEssayPage: React.FC = () => {
               AI 대입 자소서 메이커
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2">
-              나의 경험 키워드를 바탕으로 합격 자소서 초안을 만듭니다. <span className="text-purple-500 font-bold">(Standard/Premium PASS 전용)</span>
+              나의 경험 키워드를 바탕으로 합격 자소서 초안을 만듭니다.
             </p>
           </div>
           {view === "list" ? (
@@ -304,20 +327,10 @@ const AdmissionEssayPage: React.FC = () => {
                     1. 정보 및 키워드 입력
                   </h2>
                   <button
-                    onClick={() => {
-                        if (membership === "FREE") {
-                            window.location.href = "/pricing";
-                        } else {
-                            setIsExtractModalOpen(true);
-                        }
-                    }}
-                    className={`text-xs font-bold px-3 py-1.5 rounded-lg border flex items-center gap-1.5 transition-all ${
-                        membership === "FREE" 
-                        ? "text-slate-400 bg-slate-100 border-slate-200 cursor-pointer hover:bg-slate-200" 
-                        : "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20 hover:bg-purple-100"
-                    }`}
+                    onClick={() => setIsExtractModalOpen(true)}
+                    className="text-xs font-bold px-3 py-1.5 rounded-lg border flex items-center gap-1.5 transition-all text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20 hover:bg-purple-100"
                   >
-                    {membership === "FREE" ? <Lock size={12} /> : "✨"} 생기부로 키워드 생성
+                    ✨ 생기부로 키워드 생성
                   </button>
                 </div>
 
@@ -435,27 +448,21 @@ const AdmissionEssayPage: React.FC = () => {
 
                   <button
                     disabled={generating}
-                    onClick={() => {
-                        if (membership === "FREE") {
-                            window.location.href = "/pricing";
-                        } else {
-                            generateAI();
-                        }
-                    }}
+                    onClick={generateAI}
                     style={{
-                      backgroundColor: generating ? "#9ca3af" : (membership === "FREE" ? "#64748b" : "#4f46e5"),
+                      backgroundColor: generating ? "#9ca3af" : "#4f46e5",
                     }}
                     className="w-full py-4 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 disabled:cursor-not-allowed transition-all"
                   >
                     {generating ? (
                       <Loader2 className="animate-spin" color="white" />
                     ) : (
-                      membership === "FREE" ? <Lock size={20} color="white" /> : <Sparkles size={20} color="white" />
+                      <Sparkles size={20} color="white" />
                     )}
                     <span className="text-white">
                       {generating
                         ? "AI가 자소서를 집필 중입니다..."
-                        : (membership === "FREE" ? "Standard 플랜부터 이용 가능 (업그레이드)" : "AI 초안 생성하기")}
+                        : "AI 초안 생성하기"}
                     </span>
                   </button>
                 </div>

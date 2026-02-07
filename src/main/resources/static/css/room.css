@@ -89,8 +89,8 @@
 
 /* 채팅창 이미지 크기 */
 .chat-image {
-    max-width: 100px;      /* 이미지 가로 최대 크기 */
-    max-height: 100px;     /* 이미지 세로 최대 크기 */
+    max-width: 240px;      /* 이미지 가로 최대 크기 */
+    max-height: 240px;     /* 이미지 세로 최대 크기 */
     width: auto;           /* 비율 유지 */
     height: auto;          /* 비율 유지 */
     border-radius: 8px;    /* 모서리 살짝 둥글게 */
@@ -105,12 +105,25 @@ input:disabled + label {
 }
 
 
+#registerBtn {
+    border: 1px solid black;
+}
+
+#exitBtn {
+    border: 1px solid black;
+    border-left: none;
+}
+
+
+#timerDiv {
+    border-right: 1px solid black;
+    border-left: 1px solid black;
+    border-top: 1px solid black;
+}
 
 
 
-
-
-
+/* 모달 전체 */
 .modal {
     display: none; /* 처음에는 숨김 */
     position: fixed;
@@ -121,80 +134,152 @@ input:disabled + label {
     height: 100%;
     overflow: auto;
     background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(3px); /* 배경 살짝 흐리게 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
+/* 모달 내용 */
 .modal-content {
     background-color: #fff;
-    margin: 15% auto;
-    padding: 20px;
-    width: 50%;
-    border-radius: 8px;
+    padding: 25px 30px;
+    width: 400px; /* 너비 축소 */
+    max-width: 90%; /* 작은 화면에서도 맞춤 */
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    position: relative;
+    text-align: center;
+    font-family: 'Noto Sans KR', sans-serif;
 }
 
+/* 닫기 버튼 */
 .close {
-    float: right;
-    font-size: 24px;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
     cursor: pointer;
+    color: #555;
+    transition: color 0.2s;
+}
+.close:hover {
+    color: #000;
 }
 
+/* 제목 */
+.modal-content h2 {
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #333;
+}
 
-/*과목선택 select*/
+/* checkbox + select wrapper */
+#assignMentorCheckbox {
+    margin-right: 8px;
+}
+#mentorSelect {
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    background-color: #fafafa;
+}
+
+/* 보유 포인트 */
+#pointDiv, #pointDiv + div {
+    margin: 12px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+/* 버튼 영역 */
+.btnDiv {
+    display: flex;
+    gap:10px;
+}
+
+.btnDiv button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4f46e5; /* 보라색 */
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.btnDiv button:hover {
+    background-color: #4338ca;
+}
+
+/* 커스텀 select */
 .custom-select {
-    width: 220px;
+    width: 100%;
+    margin: 10px 0;
     position: relative;
 }
-
 .custom-select > .selected {
     border: 1px solid #ccc;
-    padding: 8px;
+    padding: 8px 12px;
     cursor: pointer;
     background: #fff;
-    user-select: none;
+    border-radius: 6px;
 }
-
 .options {
     position: absolute;
     width: 100%;
     border: 1px solid #ccc;
     background: #fff;
-    max-height: 180px;        /* 스크롤 영역 */
+    max-height: 150px;
     overflow-y: auto;
     display: none;
+    border-radius: 6px;
     z-index: 1000;
-
-    /* 🔥 스크롤바 숨기기 */
-    scrollbar-width: none;   /* Firefox */
-    -ms-overflow-style: none;/* IE */
 }
-
-.options::-webkit-scrollbar {
-    display: none;           /* Chrome, Safari */
-}
-
 .option {
-    padding: 8px;
+    padding: 8px 12px;
     cursor: pointer;
 }
-
 .option:hover {
-    background: #eee;
+    background-color: #f0f0f0;
 }
 
-/* 만족도 */
+/* 만족도 별 */
 .star-rating {
     display: flex;
+    justify-content: center;
     gap: 5px;
-    cursor: pointer;
 }
-
 .star-rating span {
-    font-size: 24px;
-    color: #ccc; /* 기본 회색 별 */
+    font-size: 48px;
+    color: #ccc;
     transition: color 0.2s;
 }
-
 .star-rating span.selected {
-    color: gold; /* 선택된 별 */
+    color: gold;
+}
+
+.favoriteNotice {
+    background: #f9fafb;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.favoriteDiv {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap:4px;
 }
 
 
@@ -481,6 +566,7 @@ input:disabled + label {
     padding: 3px 5px;      /* 위아래 압축 */
     max-height: 90px;
     overflow-x: auto;
+    width: 380px
 }
 
 /* 1줄: 함수 입력 + 버튼 */

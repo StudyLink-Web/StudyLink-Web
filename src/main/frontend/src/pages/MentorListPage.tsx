@@ -170,7 +170,7 @@ const MentorListPage = () => {
                       <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-white/5">
                         <div className="flex items-center gap-1">
                           <Star className="text-yellow-400 fill-yellow-400" width={14} height={14} />
-                          <span className="text-sm font-bold text-slate-900 dark:text-white">{mentor.averageRating}</span>
+                          <span className="text-sm font-bold text-slate-900 dark:text-white">{Number(mentor.averageRating).toFixed(1)}</span>
                         </div>
                         <span className="text-xs text-slate-500 dark:text-slate-400">
                           퀴즈 {mentor.quizCount}개 해결

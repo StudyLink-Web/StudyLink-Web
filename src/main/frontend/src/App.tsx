@@ -27,18 +27,15 @@ function App() {
   const [scrollY, setScrollY] = useState(0);
   const [pushToken, setPushToken] = useState<string | null>(localStorage.getItem("pushToken"));
   const [isPushPanelOpen, setIsPushPanelOpen] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !sessionStorage.getItem("splash_shown");
+    }
+    return false;
+  });
   const [unreadCount, setUnreadCount] = useState(0); 
   const [theme, setTheme] = useState<'light' | 'dark'>(isDarkInitial ? 'dark' : 'light'); 
   const panelRef = useRef<HTMLDivElement>(null);
-
-  // 📍 인트로 세션 관리 (나중에 다시 활성화할 예정)
-  /* useEffect(() => {
-    const isSplashShown = sessionStorage.getItem("splash_shown");
-    if (!isSplashShown) {
-      setShowSplash(true);
-    }
-  }, []); */
 
   // 테마 감지 로직
   useEffect(() => {
@@ -235,7 +232,7 @@ function App() {
         <Splash 
           key="splash" 
           onComplete={() => {
-            // sessionStorage.setItem("splash_shown", "true"); // 상시 노출을 위해 주석 처리
+            sessionStorage.setItem("splash_shown", "true");
             setShowSplash(false);
           }} 
         />

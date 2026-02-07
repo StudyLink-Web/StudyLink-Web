@@ -245,9 +245,9 @@ const MentorDetailPage = () => {
                 <div className="flex flex-col items-center md:items-start">
                   <div className="flex items-center gap-1 text-yellow-500 font-bold text-lg">
                     <Star width={18} height={18} fill="currentColor" />
-                    {mentor.averageRating}
+                    {Number(mentor.averageRating).toFixed(1)}
                   </div>
-                  <span className="text-slate-400 text-xs">평점 ({mentor.reviewCount})</span>
+                  <span className="text-slate-400 text-xs">평점</span>
                 </div>
                 <div className="w-px h-8 bg-slate-200 dark:bg-white/10"></div>
                 <div className="flex flex-col items-center md:items-start">
