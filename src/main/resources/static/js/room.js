@@ -681,9 +681,9 @@ let lineStartPoint = null;
 let previewLine = {};
 
 // 함수 생성 기능
-const GRAPH_SIZE = 200;
-const FUNCTION_DRAW_STEP = 20;
-const LIMIT = 300;
+const GRAPH_SIZE = 20; // 함수 입력값 범위
+const FUNCTION_DRAW_STEP = 25; // 픽셀 배율
+const LIMIT = GRAPH_SIZE * FUNCTION_DRAW_STEP;
 const STEP = 0.1; // 함수 x값 촘촘한 정도
 
 
@@ -909,8 +909,8 @@ function getValidatedRangesAndFunction() {
 
 
     if (
-        Math.abs(xMin) > LIMIT || Math.abs(xMax) > LIMIT ||
-        Math.abs(yMin) > LIMIT || Math.abs(yMax) > LIMIT
+        Math.abs(xMin) > GRAPH_SIZE || Math.abs(xMax) > GRAPH_SIZE ||
+        Math.abs(yMin) > GRAPH_SIZE || Math.abs(yMax) > GRAPH_SIZE
     ) {
         alert('범위가 너무 큽니다.');
         return false;
@@ -974,10 +974,8 @@ function drawGraphWithLines(func, xMin, xMax, yMin, yMax, showAxes, stroke) {
 
         if (prevPoint) {
             if (x > -1 && x < 1) {
-                console.log(x);
                 console.log(isValidPoint(prevPoint, centerX, centerY, offsetX, offsetY) || isValidPoint(currPoint, centerX, centerY, offsetX, offsetY));
             }
-
 
             if (isValidPoint(prevPoint, centerX, centerY, offsetX, offsetY) || isValidPoint(currPoint, centerX, centerY, offsetX, offsetY)) {
                 const { x1, y1, x2, y2 } = clampLine(prevPoint, currPoint, centerX, centerY, offsetX, offsetY);
@@ -1007,7 +1005,7 @@ function drawGraphWithLines(func, xMin, xMax, yMin, yMax, showAxes, stroke) {
         // =====================
         // X축 (y = 0)
         // =====================
-        for (let x = xMin; x <= xMax; x += 1) {
+        for (let x = -LIMIT; x <= LIMIT; x += 1) {
             const x1 = centerX + x * FUNCTION_DRAW_STEP - offsetX;
             const x2 = centerX + (x + 1) * FUNCTION_DRAW_STEP - offsetX;
             const y  = centerY - offsetY;
@@ -1035,7 +1033,7 @@ function drawGraphWithLines(func, xMin, xMax, yMin, yMax, showAxes, stroke) {
         // =====================
         // Y축 (x = 0)
         // =====================
-        for (let y = yMin; y <= yMax; y += 1) {
+        for (let y = -LIMIT; y <= LIMIT; y += 1) {
             const y1 = centerY - y * FUNCTION_DRAW_STEP - offsetY;
             const y2 = centerY - (y + 1) * FUNCTION_DRAW_STEP - offsetY;
             const x  = centerX - offsetX;
@@ -1060,6 +1058,8 @@ function drawGraphWithLines(func, xMin, xMax, yMin, yMax, showAxes, stroke) {
             }
         }
     }
+
+    safeSend("/app/drawLines", messages);
 
     const activeSelection = new fabric.ActiveSelection(lines, {
         canvas: canvas
