@@ -65,12 +65,14 @@ function App() {
         
         setPushToken(token);
         localStorage.setItem("pushToken", token); 
-        await saveTokenToServer(token);
+        const result = await saveTokenToServer(token);
         
         setIsPushPanelOpen(true); 
 
-        // DB 초기화 이후에는 토큰이 같더라도 서버 입장에선 새로 등록이 필요하므로 알림을 띄워줍니다.
-        alert("푸시 알림 기기 등록이 완료되었습니다! 🚀");
+        // 신규 등록(CREATED)인 경우에만 팝업을 띄워줍니다.
+        if (result === "CREATED") {
+          alert("푸시 알림 기기 등록이 완료되었습니다! 🚀");
+        }
       } else {
         alert("토큰을 가져오지 못했습니다. 브라우저 설정에서 알림 권한을 확인해 주세요.");
       }
@@ -86,13 +88,15 @@ function App() {
 
   const saveTokenToServer = async (token: string) => {
     try {
-      await fetch("/api/fcm/token", {
+      const response = await fetch("/api/fcm/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
       });
+      return await response.text();
     } catch (error) {
       console.error("서버 토큰 등록 실패:", error);
+      return "ERROR";
     }
   };
 

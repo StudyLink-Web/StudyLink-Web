@@ -41,6 +41,8 @@ public class FCMController {
 
         log.info("[FCM] Mapping token to username: {}", username);
 
+        boolean isNew = pushTokenRepository.findByToken(token).isEmpty();
+
         pushTokenRepository.findByToken(token)
                 .ifPresentOrElse(
                         existingToken -> {
@@ -55,7 +57,7 @@ public class FCMController {
                             pushTokenRepository.save(newToken);
                         });
 
-        return "success";
+        return isNew ? "CREATED" : "UPDATED";
     }
 
     // 📍 즉시 알림 테스트 API (현재 기기 전용)
