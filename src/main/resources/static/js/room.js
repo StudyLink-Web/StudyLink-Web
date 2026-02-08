@@ -792,26 +792,16 @@ function clearSelected() {
 document.querySelectorAll('#shapeDiv .icon').forEach(icon => {
     icon.addEventListener('click', () => {
 
-        // 도형 모드로
-        selectTool('shape');
-
         // 도형 타입 저장
         if (icon.classList.contains('rect')) currentShape = 'rect';
         if (icon.classList.contains('circle')) currentShape = 'circle';
         if (icon.classList.contains('triangle')) currentShape = 'triangle';
         if (icon.classList.contains('line')) currentShape = 'line';
 
-        // 3) UI 선택 표시
-        setActiveShape(icon);
+        // 도형 모드로
+        selectTool('shape');
     });
 });
-
-function setActiveShape(selected) {
-    document.querySelectorAll('#shapeDiv .icon')
-        .forEach(i => i.classList.remove('active'));
-
-    selected.classList.add('active');
-}
 
 
 
@@ -1239,27 +1229,46 @@ function safeUndoRedo(actionType) {
 }
 
 // 도구 선택 함수
+// 모든 도구 버튼 / 아이콘
+const toolButtons = document.querySelectorAll('#toolsDiv .btn, #selectionDiv .btn, #shapeDiv .icon');
+
 function selectTool(tool) {
     selectedTool = tool;
 
-    // 박스 선택 도구 선택 시 canvas.selection 활성화
+    if (tool !== 'shape') {
+        currentShape = null;
+    }
+
     if (tool === 'select') {
-        canvas.selection = true; // 다중 선택 가능
+        canvas.selection = true;
         canvas.getObjects('line').forEach(line => {
-            line.selectable = true; // 선택 가능
-            line.evented = false; // 마우스 이벤트 가능
+            line.selectable = true;
+            line.evented = false;
         });
     } else {
         canvas.discardActiveObject();
         canvas.selection = false;
-
-        // 남은 개별 선 객체도 비선택/이벤트 불가로 설정
         canvas.getObjects('line').forEach(line => {
             line.selectable = false;
             line.evented = false;
         });
     }
     scheduleRender();
+
+    // === UI 선택 표시 업데이트 ===
+    toolButtons.forEach(btn => {
+        const btnTool = btn.dataset.tool || btn.id;
+
+        // 도형 버튼이면 currentShape 기준
+        if (['rect','circle','triangle','line'].includes(btnTool)) {
+            if (btnTool === currentShape) btn.classList.add('selected');
+            else btn.classList.remove('selected');
+        } else {
+            // 일반 도구 버튼이면 selectedTool 기준
+            if (btnTool === selectedTool) btn.classList.add('selected');
+            else btn.classList.remove('selected');
+        }
+    });
 }
 
 // 렌더링 요청이 많아도 화면 렌더링은 일정 프레임에 1회로 제한
