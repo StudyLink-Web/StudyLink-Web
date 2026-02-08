@@ -524,7 +524,7 @@ input:disabled + label {
 .shape-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 11px;
+    gap: 10px;
     justify-items: center;
 }
 
@@ -536,7 +536,7 @@ input:disabled + label {
 #shapeDiv .icon {
     width: 16px;
     height: 16px;
-    padding: 1px;
+    padding: 2px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -645,6 +645,49 @@ input:disabled + label {
 .axis-toggle input[type="checkbox"] {
     margin: 0;
     cursor: pointer;
+}
+
+#funcHelpBtn {
+    border: none;
+    background-color: white;
+}
+
+.help-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.help-box {
+  background: #fff;
+  padding: 16px 20px;
+  width: 360px;
+  max-width: 90%;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.help-box h4 {
+  margin-top: 0;
+}
+
+.help-box ul {
+  padding-left: 18px;
+}
+
+.help-box pre {
+  background: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.hidden {
+  display: none;
 }
 
 .btn {

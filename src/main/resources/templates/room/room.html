@@ -6,7 +6,7 @@
 <div layout:fragment="content" style="overflow: hidden;">
 	<div class="d-flex flex-column w-100 h-100">
 		<div class="d-flex w-100" style="height:100px; border-bottom: 1px solid #ddd;">
-			<div class="d-flex flex-row w-100" style="height:100px; overflow-x:auto; overflow-y-hidden;">
+			<div class="d-flex flex-row-1 w-100" style="height:100px; overflow-x:auto; overflow-y-hidden;">
 				<div id="cleanDiv">
 					<div id="cleanBtn" class="btn">
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-file" viewBox="0 0 16 16">
@@ -120,6 +120,12 @@
 								<input type="text" id="funcInput">
 							</div>
 							<button id="drawBtn">생성</button>
+							<button id="funcHelpBtn" type="button">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-square" viewBox="0 0 16 16">
+									<path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+									<path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+								</svg>
+							</button>
 						</div>
 
 						<!-- 2줄: x, y 범위 + 축 체크 -->
@@ -150,18 +156,18 @@
 					<p>Function</p>
 				</div>
 			</div>
-			<div class="d-flex flex-column">
-				<div id="timerDiv" class="d-flex flex-shrink-0 justify-content-center align-items-center" style="width: 400px; height: 50px; font-size: 1.5rem; background-color: #f0f0f0;">
+			<div class="d-flex flex-column flex-shrink-0">
+				<div id="timerDiv" class="d-flex justify-content-center align-items-center" style="width: 400px; height: 50px; font-size: 1.5rem; background-color: #f0f0f0;">
 					<span id="timerDisplay">00:00</span>
 				</div>
-				<div class="d-flex flex-shrink-0" style="width: 400px; height: 50px;">
+				<div class="d-flex" style="width: 400px; height: 50px;">
 					<button id="registerBtn" class="w-50 h-100">등록</button>
 					<button id="exitBtn" class="w-50 h-100"><a href="/room/list">나가기</a></button>
 				</div>
 			</div>
 		</div>
 
-		<div class="d-flex w-100 flex-grow-1 overflow-hidden" style="height: 788px;">
+		<div class="d-flex w-100 flex-grow-1 overflow-hidden" style="height: calc(100vh - 100px);">
 			<div class="flex-grow-1">
 				<canvas id="canvas" class="flex-grow-1 d-flex w-100 h-100"></canvas>
 			</div>
@@ -183,6 +189,37 @@
 					</label>
 				</div>
 			</div>
+		</div>
+	</div>
+
+	<div id="funcHelpModal" class="help-modal hidden">
+		<div class="help-box">
+			<div class="d-flex justify-content-between align-items-center">
+				<h4 class="mb-0">함수 입력 안내</h4>
+				<button id="closeHelp" style="border:none;background:none;font-size:18px;line-height:1;">×</button>
+			</div>
+			<ul>
+				<li> - <b>x</b> 하나의 변수만 사용 가능합니다.</li>
+				<li> - <b>x, y</b> 의 범위는 -20 이상 20 이하입니다.</li>
+				<li> - <code>^</code> 는 제곱을 의미합니다. (예: <code>x^2</code>)</li>
+				<li> - <code>2x</code> 형태는 자동으로 <code>2*x</code>로 처리됩니다.</li>
+			</ul>
+
+			<p><b>사용 가능한 함수</b></p>
+			<ul>
+				<li> - 삼각함수: <code>sin(x), cos(x), tan(x)</code></li>
+				<li> - 역삼각함수: <code>asin(x), acos(x), atan(x)</code></li>
+				<li> - 기타: <code>log(x), sqrt(x), abs(x), exp(x)</code></li>
+			</ul>
+
+			<p><b>예시</b></p>
+			<pre>
+x^2
+sin(2x)
+sqrt(x^2 + 1)
+exp(-x)
+abs(cos(x))
+			</pre>
 		</div>
 	</div>
 

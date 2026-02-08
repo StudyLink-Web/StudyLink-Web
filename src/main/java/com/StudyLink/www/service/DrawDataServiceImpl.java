@@ -56,17 +56,28 @@ public class DrawDataServiceImpl implements DrawDataService {
 
     @Override
     public void pushUndoRedoStack(UndoRedoStackDTO undoRedoStackDTO) {
-        UndoRedoStack stack = undoRedoStackRepository.findByRoomId(undoRedoStackDTO.getRoomId())
-                .orElse(UndoRedoStack.builder()
-                        .roomId(undoRedoStackDTO.getRoomId())
-                        .undoStack(new ArrayList<>())
-                        .redoStack(new ArrayList<>())
-                        .build());
+        List<UndoRedoStack> stacks = undoRedoStackRepository.findAllByRoomId(undoRedoStackDTO.getRoomId());
 
-        // undoStack, redoStack 덮어쓰기
+        UndoRedoStack stack;
+        if (stacks.isEmpty()) {
+            stack = UndoRedoStack.builder()
+                    .roomId(undoRedoStackDTO.getRoomId())
+                    .undoStack(new ArrayList<>())
+                    .redoStack(new ArrayList<>())
+                    .build();
+        } else {
+            // 첫 번째 하나만 사용, 나머지는 삭제
+            stack = stacks.get(0);
+            if (stacks.size() > 1) {
+                undoRedoStackRepository.deleteAll(stacks.subList(1, stacks.size()));
+            }
+        }
+
+// undo/redo 덮어쓰기
         stack.setUndoStack(new UndoRedoStack(undoRedoStackDTO).getUndoStack());
         stack.setRedoStack(new UndoRedoStack(undoRedoStackDTO).getRedoStack());
-        // 저장
+
+// 저장
         undoRedoStackRepository.save(stack);
     }
 

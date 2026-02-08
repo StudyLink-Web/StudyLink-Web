@@ -261,7 +261,7 @@ public class RoomController {
                         // 알림
                         notificationService.createNotification(roomDTO.getStudentId(), "ANSWER_RECEIVED", "'" + username + "' 멘토가 문제풀이를 시작했습니다.", null);
 
-                        return "redirect:/room/enterRoom";
+                        return "redirect:/room/enterRoom?roomId=" + roomId;
                     } else {
                         // 업데이트 실패 → 이미 다른 멘토가 시작했거나 PENDING 아님
                         redirectAttributes.addFlashAttribute("message", "다른 멘토가 이미 풀이를 시작했거나 삭제된 문제입니다.");

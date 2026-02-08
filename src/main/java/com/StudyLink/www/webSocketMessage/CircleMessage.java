@@ -12,6 +12,7 @@ public class CircleMessage {
     private int seq;
     private String uuid;
     private String stroke;
+    private double strokeWidth;
     private double centerX;
     private double centerY;
     private double x;

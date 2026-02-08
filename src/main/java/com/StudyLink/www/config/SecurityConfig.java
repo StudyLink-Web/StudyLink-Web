@@ -162,6 +162,7 @@ public class SecurityConfig {
                         .anyRequest().access((auth, context) -> {
                             String ip = context.getRequest().getRemoteAddr();
                             boolean allowed = ip.startsWith("192.168.11.")
+                                    || ip.equals("192.168.47.")
                                     || ip.equals("127.0.0.1")
                                     || ip.equals("0:0:0:0:0:0:0:1")
                                     || ip.equals("::1");
