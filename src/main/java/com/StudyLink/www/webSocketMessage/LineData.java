@@ -4,17 +4,15 @@ import lombok.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 @Getter
 @Setter
-public class LineMessage {
-    private long senderId;
-    private int seq;
+@ToString
+public class LineData {
     private String uuid;
-    private String stroke;
-    private double strokeWidth;
     private double x1;
     private double y1;
     private double x2;
     private double y2;
+    private String stroke;
+    private double strokeWidth;
 }

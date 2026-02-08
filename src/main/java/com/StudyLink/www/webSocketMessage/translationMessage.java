@@ -7,7 +7,7 @@ import lombok.*;
 @ToString
 @Getter
 @Setter
-public class LineMessage {
+public class translationMessage {
     private long senderId;
     private int seq;
     private String uuid;

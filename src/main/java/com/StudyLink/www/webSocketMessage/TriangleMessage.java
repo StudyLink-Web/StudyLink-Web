@@ -12,6 +12,7 @@ public class TriangleMessage {
     private int seq;
     private String uuid;
     private String stroke;
+    private double strokeWidth;
     private double x1;
     private double y1;
     private double x2;

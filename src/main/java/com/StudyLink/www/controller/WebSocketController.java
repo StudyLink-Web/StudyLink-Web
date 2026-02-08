@@ -19,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -174,6 +173,12 @@ public class WebSocketController {
     @MessageMapping("/removePreview/{roomId}")
     public void removePreviewMessage(@DestinationVariable long roomId, SenderMessage message) {
         String destination = "/topic/removePreview/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
+    }
+
+    @MessageMapping("/translation/{roomId}")
+    public void translationMessage(@DestinationVariable long roomId, translationMessage message) {
+        String destination = "/topic/translation/" + roomId;
         messagingTemplate.convertAndSend(destination, message);
     }
 
