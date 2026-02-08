@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ✅ 학생 또는 관리자
   const hasPermission =
-    role === "ROLE_STUDENT" || role === "STUDENT" ||
+    role === "ROLE_MENTOR" || role === "MENTOR" ||
     role === "ROLE_ADMIN"   || role === "ADMIN";
 
   if (hasPermission) {
@@ -30,7 +30,7 @@ function goRegister() {
   const role = (window.USER_ROLE || "").toUpperCase();
 
   const hasPermission =
-    role === "ROLE_STUDENT" || role === "STUDENT" ||
+    role === "ROLE_MENTOR" || role === "MENTOR" ||
     role === "ROLE_ADMIN"   || role === "ADMIN";
 
   if (!hasPermission) {

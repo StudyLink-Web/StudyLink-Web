@@ -90,7 +90,7 @@ public class SecurityConfig {
                         .requestMatchers("/board/register", "/board/register/**")
                         .hasAnyRole("MENTOR", "ADMIN")
                         .requestMatchers("/community/register", "/community/register/**")
-                        .hasAnyRole("STUDENT", "ADMIN")
+                        .hasAnyRole("MENTOR", "ADMIN")
 
                         .requestMatchers("/room/myQuiz").authenticated()
                         .requestMatchers("/mentor/firebase-config").authenticated()
