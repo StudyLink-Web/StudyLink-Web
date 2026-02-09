@@ -29,6 +29,11 @@ public class InquiryServiceImpl implements InquiryService {
     private final InquiryRepository inquiryRepository;
     private final UserRepository userRepository;
 
+    private final NotificationService notificationService;
+    private final FCMService fcmService;
+    private final BoardRepository boardRepository;
+    private final PushTokenRepository pushTokenRepository;
+
     /* ===================== 목록(검색 포함) ===================== */
     @Override
     @Transactional(readOnly = true)
@@ -82,16 +87,17 @@ public class InquiryServiceImpl implements InquiryService {
     @Override
     @Transactional
     public void answer(Long qno, String adminContent) {
-        Inquiry inquiry = inquiryRepository.findById(qno).orElseThrow(() -> new EntityNotFoundException("해당 문의 내역이 없습니다."));
+        Inquiry inquiry = inquiryRepository.findById(qno)
+                .orElseThrow(() -> new EntityNotFoundException("해당 문의 내역이 없습니다."));
 
         inquiry.setAdminContent(adminContent);
         inquiry.setAnswerAt(LocalDateTime.now());
         inquiry.setStatus("COMPLETE");
 
-        long userId = userRepository.findByUsername(inquiry.getWriterEmail())
-                .orElseThrow(() -> new EntityNotFoundException("해당 회원이 없습니다,")).getUserId();
+        long userId = userRepository.findByEmail(inquiry.getWriterEmail())
+                .orElseThrow(() -> new EntityNotFoundException("해당 회원이 없습니다."))
+                .getUserId();
 
-        // 알림
         notificationService.createNotification(userId, "ANSWER_RECEIVED", "관리자가 문의내역에 답변을 달았습니다.", null);
     }
 
@@ -105,14 +111,12 @@ public class InquiryServiceImpl implements InquiryService {
 
     /* ===================== 관리자 문의내역 검색 ===================== */
     @Override
-    public Page<AdminInquiryDTO> searchInquiryList(String choose, String status, String username, LocalDate startDate, LocalDate endDate, Pageable sortedPageable) {
-        LocalDateTime startDateTime = (startDate != null)
-                ? startDate.atStartOfDay()
-                : null;
+    public Page<AdminInquiryDTO> searchInquiryList(String choose, String status, String username,
+                                                   LocalDate startDate, LocalDate endDate,
+                                                   Pageable sortedPageable) {
 
-        LocalDateTime endDatePlus = (endDate != null)
-                ? endDate.plusDays(1).atStartOfDay()
-                : null;
+        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+        LocalDateTime endDatePlus = (endDate != null) ? endDate.plusDays(1).atStartOfDay() : null;
 
         Page<Inquiry> inquiryPage = inquiryRepository.searchInquiries(
                 choose,
@@ -128,17 +132,16 @@ public class InquiryServiceImpl implements InquiryService {
         for (Inquiry inquiry : inquiryPage.getContent()) {
 
             InquiryDTO inquiryDTO = convertEntityToDto(inquiry);
-            Users users = userRepository.findByUsername(inquiry.getWriterEmail())
-                    .orElse(null);
 
+            Users users = userRepository.findByEmail(inquiry.getWriterEmail()).orElse(null);
             UsersDTO usersDTO = (users != null) ? new UsersDTO(users) : null;
 
-            AdminInquiryDTO adminInquiryDTO = AdminInquiryDTO.builder()
-                    .inquiryDTO(inquiryDTO)
-                    .usersDTO(usersDTO)
-                    .build();
-
-            dtoList.add(adminInquiryDTO);
+            dtoList.add(
+                    AdminInquiryDTO.builder()
+                            .inquiryDTO(inquiryDTO)
+                            .usersDTO(usersDTO)
+                            .build()
+            );
         }
 
         return new PageImpl<>(dtoList, sortedPageable, inquiryPage.getTotalElements());
@@ -146,7 +149,10 @@ public class InquiryServiceImpl implements InquiryService {
 
     @Override
     public InquiryDTO findById(Long id) {
-        return convertEntityToDto(inquiryRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("문의 내용을 찾을 수 없습니다.")));
+        return convertEntityToDto(
+                inquiryRepository.findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("문의 내용을 찾을 수 없습니다."))
+        );
     }
 
     /* ===================== Entity → DTO ===================== */
@@ -156,8 +162,8 @@ public class InquiryServiceImpl implements InquiryService {
                 .title(inquiry.getTitle())
                 .userContent(inquiry.getUserContent())
                 .adminContent(inquiry.getAdminContent())
-                .category(inquiry.getChoose())
                 .choose(inquiry.getChoose())
+                .category(inquiry.getCategory())      // ✅ fix
                 .status(inquiry.getStatus())
                 .isPublic(inquiry.getIsPublic())
                 .password(inquiry.getPassword())
@@ -174,8 +180,8 @@ public class InquiryServiceImpl implements InquiryService {
                 .title(dto.getTitle())
                 .userContent(dto.getUserContent())
                 .adminContent(dto.getAdminContent())
-                .category(dto.getChoose())
                 .choose(dto.getChoose())
+                .category(dto.getCategory())          // ✅ fix
                 .status(dto.getStatus())
                 .isPublic(dto.getIsPublic())
                 .password(dto.getPassword())
@@ -184,9 +190,4 @@ public class InquiryServiceImpl implements InquiryService {
                 .writerEmail(dto.getWriterEmail())
                 .build();
     }
-
-    private final NotificationService notificationService;
-    private final FCMService fcmService;
-    private final BoardRepository boardRepository; // 게시글 작성자를 찾기 위함
-    private final PushTokenRepository pushTokenRepository; // FCM 토큰을 찾기 위함
 }

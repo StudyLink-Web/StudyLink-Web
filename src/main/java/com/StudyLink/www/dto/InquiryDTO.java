@@ -34,10 +34,15 @@ public class InquiryDTO {
         this.title = inquiry.getTitle();
         this.userContent = inquiry.getUserContent();
         this.adminContent = inquiry.getAdminContent();
-        this.category = inquiry.getChoose();
+
+        this.choose = inquiry.getChoose();        // ✅ fix
+        this.category = inquiry.getCategory();    // ✅ fix
         this.status = inquiry.getStatus();
+
         this.isPublic = inquiry.getIsPublic();
         this.password = inquiry.getPassword();
+        this.writerEmail = inquiry.getWriterEmail(); // ✅ fix
+
         this.createdAt = inquiry.getCreatedAt();
         this.answerAt = inquiry.getAnswerAt();
     }
