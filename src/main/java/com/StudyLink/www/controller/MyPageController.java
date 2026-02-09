@@ -1,3 +1,4 @@
+// MyPageController
 package com.StudyLink.www.controller;
 
 import com.StudyLink.www.entity.Users;
@@ -9,21 +10,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-
 import org.springframework.web.bind.annotation.*;
-import java.util.Base64;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
 @Controller
-@RequestMapping("/my-page")
+@RequestMapping({"/my-page", "/my-page_en", "/my-page_ja"})
 @RequiredArgsConstructor
 @Slf4j
 public class MyPageController {
@@ -33,11 +27,47 @@ public class MyPageController {
     private final FileStorageService fileStorageService;
 
     /**
+     * ✅ 언어별 템플릿 선택 헬퍼
+     * lang: KO | EN | JA
+     *
+     * ⚠️ 반드시 "mypage/파일명" 형태로 반환해야 templates/mypage/... 에서 찾음
+     */
+    private String resolveMyPageView(String lang) {
+        // ✅ FIX: null이면 기본 템플릿 반환 (재귀 호출 금지)
+        if (lang == null) return "mypage/my-page";
+
+        return switch (lang.toUpperCase()) {
+            case "EN" -> "mypage/my-page_en";
+            case "JA" -> "mypage/my-page_ja";
+            default -> "mypage/my-page";
+        };
+    }
+
+    // ✅ FIX: /my-page_en, /my-page_ja 로 들어와도 lang를 자동으로 맞춰줌 (쿼리 lang가 최우선)
+    private String normalizeLang(String lang, HttpServletRequest request) {
+        if (lang != null && !lang.isBlank()) return lang;
+
+        if (request == null) return "KO";
+
+        String uri = request.getRequestURI();
+        if (uri == null) return "KO";
+
+        if (uri.endsWith("/my-page_en")) return "EN";
+        if (uri.endsWith("/my-page_ja")) return "JA";
+        return "KO";
+    }
+
+    /**
      * 마이페이지 메인 페이지
      * username으로 조회하도록 변경
      */
     @GetMapping
-    public String myPage(Authentication authentication, Model model) {
+    public String myPage(
+            @RequestParam(defaultValue = "") String lang,
+            Authentication authentication,
+            Model model,
+            HttpServletRequest request
+    ) {
         try {
             log.info("════════════════════════════════════════════════════════════");
             log.info("🚀 마이페이지 요청 시작");
@@ -47,6 +77,9 @@ public class MyPageController {
                 log.error("❌ Authentication is null!");
                 return "redirect:/login";
             }
+
+            // ✅ 언어 보정 (경로 방식 /my-page_en, /my-page_ja 지원)
+            lang = normalizeLang(lang, request);
 
             String username = authentication.getName();
             log.info("🔍 authentication.getName(): {}", username);
@@ -125,11 +158,15 @@ public class MyPageController {
             model.addAttribute("userName", user.getName());
             model.addAttribute("userRole", user.getRole().toString());
 
+            // ✅ 언어 유지용
+            model.addAttribute("lang", lang);
+
             log.info("════════════════════════════════════════════════════════════");
             log.info("✅ 마이페이지 접속 성공: userId={}, email={}", user.getUserId(), user.getEmail());
             log.info("════════════════════════════════════════════════════════════");
 
-            return "mypage/my-page";
+            // ✅ 변경 포인트
+            return resolveMyPageView(lang);
 
         } catch (Exception e) {
             log.error("❌ 마이페이지 오류: {}", e.getMessage());
@@ -139,31 +176,38 @@ public class MyPageController {
         }
     }
 
-
     @GetMapping("/profile")
-    public String profileTab(Authentication authentication, Model model) {
+    public String profileTab(
+            @RequestParam(defaultValue = "") String lang,
+            Authentication authentication,
+            Model model,
+            HttpServletRequest request
+    ) {
         try {
+            // ✅ 언어 보정 (경로 방식 /my-page_en, /my-page_ja 지원)
+            lang = normalizeLang(lang, request);
+
             String username = authentication.getName();
-            // OAuth 사용자 지원
             Users user = userRepository.findByUsername(username)
                     .orElseGet(() -> userRepository.findByEmail(username)
                             .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다")));
 
             Map<String, Object> myPageData = myPageService.getMyPageData(user.getUserId());
-
-            // myPageData에 실제 Users 엔티티 객체 저장
             myPageData.put("user", user);
 
             model.addAttribute("user", user);
             model.addAttribute("myPageData", myPageData);
             model.addAttribute("activeTab", "profile");
-
-            // header.html에서 사용할 변수들
             model.addAttribute("userName", user.getName());
             model.addAttribute("userRole", user.getRole().toString());
 
+            // ✅ 언어 유지용
+            model.addAttribute("lang", lang);
+
             log.info("✅ 프로필 탭 접속: userId={}", user.getUserId());
-            return "mypage/my-page";
+
+            // ✅ 변경 포인트
+            return resolveMyPageView(lang);
 
         } catch (Exception e) {
             log.error("❌ 프로필 탭 오류: {}", e.getMessage());
@@ -173,29 +217,37 @@ public class MyPageController {
     }
 
     @GetMapping("/account")
-    public String accountTab(Authentication authentication, Model model) {
+    public String accountTab(
+            @RequestParam(defaultValue = "") String lang,
+            Authentication authentication,
+            Model model,
+            HttpServletRequest request
+    ) {
         try {
+            // ✅ 언어 보정 (경로 방식 /my-page_en, /my-page_ja 지원)
+            lang = normalizeLang(lang, request);
+
             String username = authentication.getName();
-            // OAuth 사용자 지원
             Users user = userRepository.findByUsername(username)
                     .orElseGet(() -> userRepository.findByEmail(username)
                             .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다")));
 
             Map<String, Object> myPageData = myPageService.getMyPageData(user.getUserId());
-
-            // myPageData에 실제 Users 엔티티 객체 저장
             myPageData.put("user", user);
 
             model.addAttribute("user", user);
             model.addAttribute("myPageData", myPageData);
             model.addAttribute("activeTab", "account");
-
-            // header.html에서 사용할 변수들
             model.addAttribute("userName", user.getName());
             model.addAttribute("userRole", user.getRole().toString());
 
+            // ✅ 언어 유지용
+            model.addAttribute("lang", lang);
+
             log.info("✅ 계정 탭 접속: userId={}", user.getUserId());
-            return "mypage/my-page";
+
+            // ✅ 변경 포인트
+            return resolveMyPageView(lang);
 
         } catch (Exception e) {
             log.error("❌ 계정 탭 오류: {}", e.getMessage());
@@ -205,29 +257,37 @@ public class MyPageController {
     }
 
     @GetMapping("/notifications")
-    public String notificationsTab(Authentication authentication, Model model) {
+    public String notificationsTab(
+            @RequestParam(defaultValue = "") String lang,
+            Authentication authentication,
+            Model model,
+            HttpServletRequest request
+    ) {
         try {
+            // ✅ 언어 보정 (경로 방식 /my-page_en, /my-page_ja 지원)
+            lang = normalizeLang(lang, request);
+
             String username = authentication.getName();
-            // OAuth 사용자 지원
             Users user = userRepository.findByUsername(username)
                     .orElseGet(() -> userRepository.findByEmail(username)
                             .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다")));
 
             Map<String, Object> myPageData = myPageService.getMyPageData(user.getUserId());
-
-            // myPageData에 실제 Users 엔티티 객체 저장
             myPageData.put("user", user);
 
             model.addAttribute("user", user);
             model.addAttribute("myPageData", myPageData);
             model.addAttribute("activeTab", "notifications");
-
-            // header.html에서 사용할 변수들
             model.addAttribute("userName", user.getName());
             model.addAttribute("userRole", user.getRole().toString());
 
+            // ✅ 언어 유지용
+            model.addAttribute("lang", lang);
+
             log.info("✅ 알림 설정 탭 접속: userId={}", user.getUserId());
-            return "mypage/my-page";
+
+            // ✅ 변경 포인트
+            return resolveMyPageView(lang);
 
         } catch (Exception e) {
             log.error("❌ 알림 설정 탭 오류: {}", e.getMessage());
@@ -237,29 +297,37 @@ public class MyPageController {
     }
 
     @GetMapping("/settings")
-    public String settingsTab(Authentication authentication, Model model) {
+    public String settingsTab(
+            @RequestParam(defaultValue = "") String lang,
+            Authentication authentication,
+            Model model,
+            HttpServletRequest request
+    ) {
         try {
+            // ✅ 언어 보정 (경로 방식 /my-page_en, /my-page_ja 지원)
+            lang = normalizeLang(lang, request);
+
             String username = authentication.getName();
-            // OAuth 사용자 지원
             Users user = userRepository.findByUsername(username)
                     .orElseGet(() -> userRepository.findByEmail(username)
                             .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다")));
 
             Map<String, Object> myPageData = myPageService.getMyPageData(user.getUserId());
-
-            // myPageData에 실제 Users 엔티티 객체 저장
             myPageData.put("user", user);
 
             model.addAttribute("user", user);
             model.addAttribute("myPageData", myPageData);
             model.addAttribute("activeTab", "settings");
-
-            // header.html에서 사용할 변수들
             model.addAttribute("userName", user.getName());
             model.addAttribute("userRole", user.getRole().toString());
 
+            // ✅ 언어 유지용
+            model.addAttribute("lang", lang);
+
             log.info("✅ 설정 탭 접속: userId={}", user.getUserId());
-            return "mypage/my-page";
+
+            // ✅ 변경 포인트
+            return resolveMyPageView(lang);
 
         } catch (Exception e) {
             log.error("❌ 설정 탭 오류: {}", e.getMessage());
@@ -267,6 +335,10 @@ public class MyPageController {
             return "redirect:/login";
         }
     }
+
+    // ================================
+    // ✅ 아래 /api/** JSON 메서드들은 그대로 둬도 됨 (언어 템플릿 전환과 무관)
+    // ================================
 
     @GetMapping("/api/data")
     @ResponseBody

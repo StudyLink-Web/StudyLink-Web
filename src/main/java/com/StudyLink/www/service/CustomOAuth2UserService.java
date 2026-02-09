@@ -243,10 +243,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     username, savedUser.getUserId(), email, savedUser.getRole());
 
             // Student_profile 생성
-            studentProfileService.createStudentProfile(savedUser.getUserId(), "", "", "");
+            // Student_profile 생성 (없을 때만)
+            studentProfileService.createStudentProfileIfAbsent(savedUser.getUserId(), "", "", "");
         } catch (Exception e) {
             log.error("❌ [ERROR] 사용자 정보 저장 실패: {}", e.getMessage());
-            throw new OAuth2AuthenticationException("사용자 저장 중 오류: " + e.getMessage());
+            throw new OAuth2AuthenticationException(
+                    new org.springframework.security.oauth2.core.OAuth2Error("user_save_failed"),
+                    "사용자 저장 중 오류",
+                    e
+            );
         }
     }
 }

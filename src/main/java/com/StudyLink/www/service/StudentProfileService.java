@@ -99,4 +99,14 @@ public class StudentProfileService {
         profile.setChargedPoint(profile.getChargedPoint() + point);
         studentProfileRepository.save(profile);
     }
+
+    @Transactional
+    public StudentProfile createStudentProfileIfAbsent(Long userId, String targetUniversity,
+                                                       String targetMajor, String regionPreference) {
+        if (studentProfileRepository.existsById(userId)) { // MapsId라 PK=userId라서 이게 제일 단순함
+            return studentProfileRepository.findById(userId).orElseThrow();
+        }
+        return createStudentProfile(userId, targetUniversity, targetMajor, regionPreference);
+    }
+
 }

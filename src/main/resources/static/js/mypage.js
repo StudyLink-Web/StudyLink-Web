@@ -668,24 +668,26 @@ function handleThemeChange(e) {
  * 언어 변경
  */
 function handleLanguageChange(e) {
-    const language = e.target.value;
+    const language = e.target.value; // KO / EN / JA
 
     showLoading();
 
     fetch(`${API_BASE}/settings/language`, {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ language })
     })
         .then(res => res.json())
         .then(data => {
             hideLoading();
+
             if (data.success) {
                 showToast('언어가 변경되었습니다', 'success');
-                // 페이지 새로고침 (선택사항)
-                // location.reload();
+
+                // ✅ 핵심: 지금 페이지(탭 포함) 유지한 채 lang만 바꿔서 이동
+                const url = new URL(window.location.href);
+                url.searchParams.set('lang', language);
+                window.location.href = url.toString();
             } else {
                 showToast(data.message || '변경 실패', 'error');
             }
