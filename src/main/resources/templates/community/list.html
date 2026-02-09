@@ -120,7 +120,7 @@
   <script th:inline="javascript">
     window.IS_LOGIN = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
     window.USER_ROLE = /*[[${#authorization.expression("hasRole('ADMIN')") ? 'ROLE_ADMIN' :
-                           (#authorization.expression("hasRole('STUDENT')") ? 'ROLE_STUDENT' : '')}]]*/ '';
+                           (#authorization.expression("hasRole('MENTOR')") ? 'ROLE_MENTOR' : '')}]]*/ '';
   </script>
   <script th:src="@{/js/tab.js}"></script>
   <script th:src="@{/js/community.js}"></script>
