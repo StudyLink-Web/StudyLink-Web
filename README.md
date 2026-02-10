@@ -32,6 +32,9 @@ StudyLink는 **입시 준비생(STUDENT)**과 **대학생 멘토(MENTOR)**를 �
 
 ![시스템 매크로 아키텍처](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/시스템매크로아키텍처.png)
 ![백엔드 기술 스택 및 구조](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/백엔드기술스택및구조.png)
+![프론트 엔지니어링](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/프론트엔지니어링.png)
+![데이터베이스 모델링](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/데이터베이스모델링.png)
+![ERD 구조](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/ERD.png)
 
 ---
 
@@ -83,9 +86,11 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 인증 메일 재전송에는 **쿨다운 제한**을 두어  
 보안과 남용을 방지했습니다.
 
-<스크린샷: 학교 이메일 인증 화면>  
-<스크린샷: 인증 성공 / 실패 결과 화면>
-![인증 결과 화면](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/email-verification2.png)
+![이메일 인증](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증.png)
+![이메일 전송](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증전송.png)
+![이메일 수신](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/학교이메일수신.png)
+![인증 성공](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증성공.png)
+![인증 실패](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증실패.png)
 
 ---
 
