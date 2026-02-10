@@ -318,12 +318,12 @@ endForm.appendChild(endFormBtnDiv);
 
 // 제출 버튼
 const endFormSubmitBtn = document.createElement('button');
-endFormSubmitBtn.type = 'submit';
+endFormSubmitBtn.type = 'button';
 endFormSubmitBtn.textContent = '제출';
+endFormSubmitBtn.id = "subBtn";
 endForm.appendChild(document.createElement('br'));
 endForm.appendChild(document.createElement('br'));
 endFormBtnDiv.appendChild(endFormSubmitBtn);
-
 
 // 취소 버튼
 const endFormCancelBtn = document.createElement('button');

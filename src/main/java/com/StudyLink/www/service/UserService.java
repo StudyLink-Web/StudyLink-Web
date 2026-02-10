@@ -32,4 +32,8 @@ public interface UserService {
     UsersDTO getUserDetail(Long id);
 
     Users saveUser(Users user);
+
+    boolean existsByEmail(String email);
+
+    Users findById(Long userId);
 }

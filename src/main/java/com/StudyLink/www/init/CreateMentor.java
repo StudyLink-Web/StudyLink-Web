@@ -11,6 +11,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -65,7 +66,7 @@ public class CreateMentor {
     user
      */
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createRandomMentor(Optional<String> id,
                                    Optional<String> pwd,
                                    Optional<Long> point) {

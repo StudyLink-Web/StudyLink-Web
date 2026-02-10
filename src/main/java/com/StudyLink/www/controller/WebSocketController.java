@@ -182,6 +182,12 @@ public class WebSocketController {
         messagingTemplate.convertAndSend(destination, message);
     }
 
+    @MessageMapping("/endRoom/{roomId}")
+    public void endRoomMessage(@DestinationVariable long roomId, SenderMessage message) {
+        String destination = "/topic/endRoom/" + roomId;
+        messagingTemplate.convertAndSend(destination, message);
+    }
+
 
 
     // 비동기 요청

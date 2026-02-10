@@ -129,4 +129,14 @@ public class UserServiceImpl implements UserService {
     public Users saveUser(Users user) {
         return userRepository.save(user);
     }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public Users findById(Long userId) {
+        return userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("해당 회원이 없습니다."));
+    }
 }

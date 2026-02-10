@@ -41,7 +41,6 @@ import java.util.UUID;
 public class PaymentController {
     private final PaymentService paymentService;
     private final UserService userService;
-    private final ProductRepository productRepository;
     private final MentorProfileService mentorProfileService;
     private final StudentProfileService studentProfileService;
 
