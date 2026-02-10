@@ -66,7 +66,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         // 결제(PENDING) 생성
         Users user = userRepository.getReferenceById(userId);
-        log.info(">>> user {}", user);
+
         Payment payment = Payment.builder()
                 .orderId(orderId)
                 .productId(product.getProductId())
@@ -75,7 +75,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .status(PaymentStatus.PENDING)
                 .requestedAt(LocalDateTime.now())
                 .build();
-        log.info(">>> payment {}", payment);
+
         paymentRepository.save(payment);
 
         // customerKey 생성 (보안을 위해 userId와 서비스명을 조합 혹은 암호화)

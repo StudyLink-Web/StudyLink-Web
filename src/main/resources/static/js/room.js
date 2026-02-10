@@ -288,6 +288,13 @@ function onConnect(frame) {
         scheduleRender();
     });
 
+    // endRoom
+    stompClient.subscribe(`/topic/endRoom/${roomId}`, function(message){
+        const msg = JSON.parse(message.body);
+        if (msg.senderId === senderId) return;
+        handleMessage(msg, endRoom);
+    });
+
 
     // connect가 비동기함수이므로 연결이 완료된 후 실행되야하는 함수들은 여기 작성(밖에 작성시 연결되기 전에 실행 될 수 있음)
     loadMessage(roomId).then(async result => { // 채팅기록 불러오기
@@ -1014,7 +1021,7 @@ function drawGraphWithLines(func, xMin, xMax, yMin, yMax, showAxes, stroke) {
 
         if (prevPoint) {
             if (isValidPoint(prevPoint, centerX, centerY, offsetX, offsetY) || isValidPoint(currPoint, centerX, centerY, offsetX, offsetY)) {
-                const { x1, y1, x2, y2 } = clampLine(prevPoint, currPoint, centerX, centerY, offsetX, offsetY);
+                const { x1, y1, x2, y2 } = clampLine(prevPoint, currPoint, centerX, centerY, offsetX, offsetY, xMin, xMax, yMin, yMax);
                 const newObjectId = generateUUID();
                 const message = {
                     senderId: senderId,
@@ -1051,7 +1058,7 @@ function drawGraphWithLines(func, xMin, xMax, yMin, yMax, showAxes, stroke) {
 
             const { x1: cx1, y1: cy1, x2: cx2, y2: cy2 } = clampLine(
                 { x: x1, y: y },
-                { x: x2, y: y }, centerX, centerY, offsetX, offsetY
+                { x: x2, y: y }, centerX, centerY, offsetX, offsetY, xMin, xMax, yMin, yMax
             );
             const newObjectId = generateUUID();
             const message = {
@@ -1082,7 +1089,7 @@ function drawGraphWithLines(func, xMin, xMax, yMin, yMax, showAxes, stroke) {
 
             const { x1: cx1, y1: cy1, x2: cx2, y2: cy2 } = clampLine(
                 { x: x, y: y1 },
-                { x: x, y: y2 }, centerX, centerY, offsetX, offsetY
+                { x: x, y: y2 }, centerX, centerY, offsetX, offsetY, xMin, xMax, yMin, yMax
             );
             const newObjectId = generateUUID();
             const message = {
@@ -1120,13 +1127,15 @@ function isValidPoint(point, centerX, centerY, offsetX, offsetY) {
      || point.y < centerY - LIMIT - offsetY || point.y > centerY + LIMIT - offsetY);
 }
 
-function clampLine(prev, curr, centerX, centerY, offsetX, offsetY) {
+function clampLine(prev, curr, centerX, centerY, offsetX, offsetY, xMin, xMax, yMin, yMax) {
     let x1 = prev.x, y1 = prev.y;
     let x2 = curr.x, y2 = curr.y;
 
     // LIMIT 경계
-    const minX = centerX - LIMIT - offsetX, maxX = centerX + LIMIT - offsetX;
-    const minY = centerY - LIMIT - offsetY, maxY = centerY + LIMIT - offsetY;
+    const minX = centerX + xMin * FUNCTION_DRAW_STEP - offsetX;
+    const maxX = centerX + xMax * FUNCTION_DRAW_STEP - offsetX;
+    const minY = centerY - yMax * FUNCTION_DRAW_STEP - offsetY;
+    const maxY = centerY - yMin * FUNCTION_DRAW_STEP - offsetY;
 
     // 직선이 가로로만 영역 벗어난 경우
     if (x1 < minX || x1 > maxX || x2 < minX || x2 > maxX) {
@@ -3012,3 +3021,16 @@ connect();
 
 // 기본 도구 draw
 selectTool('draw');
+
+
+// 종료시 멘토에게 알리기
+document.getElementById('subBtn').addEventListener('click', ()=>{
+    safeSend('/app/endRoom', {senderId: senderId, seq: mySeq++})
+
+    endForm.submit();
+})
+
+function endRoom() {
+    alert("학생이 문제풀이를 종료했습니다.");
+    window.location.href = "/";
+}

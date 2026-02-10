@@ -69,9 +69,9 @@
 							<label class="form-label">결제 수단</label>
 							<select class="form-select" name="method">
 								<option value="" th:selected="${method == null or method == ''}">전체</option>
-								<option value="CARD" th:selected="${method == 'CARD'}">카드</option>
-								<option value="EASY_PAY" th:selected="${method == 'EASY_PAY'}">간편결제</option>
-								<option value="TRANSFER" th:selected="${method == 'TRANSFER'}">계좌이체</option>
+								<option value="카드" th:selected="${method == 'CARD'}">카드</option>
+								<option value="간편결제" th:selected="${method == 'EASY_PAY'}">간편결제</option>
+								<option value="계좌이체" th:selected="${method == 'TRANSFER'}">계좌이체</option>
 							</select>
 						</div>
 

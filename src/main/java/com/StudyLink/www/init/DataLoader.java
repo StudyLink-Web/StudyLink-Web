@@ -8,10 +8,7 @@ import com.StudyLink.www.entity.Users;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import com.StudyLink.www.repository.BoardRepository;
-import com.StudyLink.www.repository.ProductRepository;
-import com.StudyLink.www.repository.SubjectRepository;
-import com.StudyLink.www.repository.UserRepository;
+import com.StudyLink.www.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,8 +43,15 @@ public class DataLoader implements CommandLineRunner {
     private final ProductRepository productRepository;
     private final BoardRepository boardRepository;
     private final CreateMentor createMentor;
+    private final PaymentRepository paymentRepository;
+    private final createPayment createPayment;
+    private final ExchangeRequestRepository exchangeRequestRepository;
+    private final CreateExchange createExchange;
+    private final CreateInquiry createInquiry;
+    private final InquiryRepository inquiryRepository;
+    private final CreateRoom createRoom;
+    private final RoomRepository roomRepository;
 
-    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public void run(String... args) {
@@ -210,9 +214,13 @@ public class DataLoader implements CommandLineRunner {
         createTestUser("premium@test.com", "테스트_프리미엄", MembershipType.PREMIUM);
         createTestUser("free@test.com", "테스트_프리", MembershipType.FREE);
 
-        if (userRepository.count() <= 20) {
+        if (userRepository.count() < 10) {
             for (int i = 0; i < 100; i++) {
-                createMentor.createRandomMentor(Optional.empty(), Optional.empty(), Optional.empty());
+                try {
+                    createMentor.createRandomMentor(Optional.empty(), Optional.empty(), Optional.empty());
+                } catch (Exception e) {
+                    log.warn(">>> 멘토 {} 생성 실패", i, e);
+                }
             }
         }
 
@@ -222,6 +230,29 @@ public class DataLoader implements CommandLineRunner {
                     Optional.of("12341234"),
                     Optional.of(100000L)
             );
+        }
+
+        if (paymentRepository.count() <= 5) {
+            // 한 번에 100건 생성, 실패해도 나머지 계속
+            createPayment.createRandomPayments(100);
+        }
+
+        if (exchangeRequestRepository.count() <= 5) {
+            for (int i = 0; i < 100; i++) {
+                createExchange.createRandomExchange();
+            }
+        }
+
+        if (inquiryRepository.count() <= 5) {
+            for (int i = 0; i < 100; i++) {
+                createInquiry.createRandomInquiry();
+            }
+        }
+
+        if (roomRepository.count() <= 5) {
+            for (int i = 0; i < 100; i++) {
+                createRoom.createRandomRoom();
+            }
         }
     }
 

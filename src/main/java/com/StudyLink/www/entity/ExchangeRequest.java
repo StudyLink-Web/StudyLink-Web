@@ -51,4 +51,11 @@ public class ExchangeRequest {
 
     @Column(length = 200)
     private String transactionId; // PG사 거래 ID
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+    }
 }
