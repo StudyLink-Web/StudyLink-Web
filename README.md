@@ -518,4 +518,6 @@ StudyLink 프로젝트는 내가 개발자로써 무엇을 할수 있을까 라�
 
 ## 🔗 관련 링크
 - Organization: https://github.com/StudyLink-Web
-- 파이썬 관련: https://github.com/yaimnot23/chatbot_withpy.git 
+- PPT: https://www.canva.com/design/DAG_rSxMrcQ/1ThGfRWSrH-8KqSzgCuB8Q/edit?utm_content=DA[…]m_campaign=designshare&utm_medium=link2&utm_source=sharebutton
+- 파이썬 관련: https://github.com/yaimnot23/chatbot_withpy.git
+- Hugging face & docker: https://huggingface.co/spaces/yaimbot23/chatbot_docker 
