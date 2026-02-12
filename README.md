@@ -391,10 +391,10 @@ AI 상담 기능은 다음 공공 데이터 및 외부 API를 활용합니다.
 - DB 기준 금액 검증
 - 위·변조 및 이중 결제 방지
 
-요금제 선택
+요금제 선택   
 <img width="752" height="686" alt="image" src="https://github.com/user-attachments/assets/adfcb424-c55a-457f-9523-705c3dbbeb8c" />
 
-결제
+결제   
 <img width="1264" height="668" alt="image" src="https://github.com/user-attachments/assets/10104d40-ffbc-4a44-8cfb-ec68af3169a3" />
 <img width="1279" height="668" alt="image" src="https://github.com/user-attachments/assets/7c41bb48-a762-4627-9349-fcd95b3dbfd8" />
 
