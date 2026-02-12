@@ -64,9 +64,9 @@ JWT를 사용하지 않고 **서버 세션 + SecurityContext 기반 인증 유�
 요청 시 서버는 사용자 역할을 확인하여  
 기능 접근 여부를 제어합니다.
 
-권한이 없는 접근은 **403 페이지**로 처리됩니다.
+권한이 없는 접근은 **404 페이지**로 처리됩니다.
+<img width="1277" height="661" alt="image" src="https://github.com/user-attachments/assets/4fdd8de5-5ca3-4cdd-afe2-4c6f55bd61ce" />
 
-<스크린샷: 권한 제한 화면 또는 403 페이지>
 
 ---
 
