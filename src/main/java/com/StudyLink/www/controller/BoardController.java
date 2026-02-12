@@ -1,3 +1,5 @@
+// BoardController
+
 package com.StudyLink.www.controller;
 
 import com.StudyLink.www.dto.BoardDTO;
