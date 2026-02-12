@@ -90,7 +90,7 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 ![이메일 전송](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증전송.png)
 ![이메일 수신](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/학교이메일수신.png)
 ![인증 성공](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증성공.png)
-![인증 실패](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증실패.png)
+<img width="1268" height="659" alt="image" src="https://github.com/user-attachments/assets/ea4583d8-f062-4609-82bf-eaa40d6df9c3" />
 
 ---
 
@@ -103,14 +103,14 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 봇·자동화 요청을 방지하고  
 실제 사용자만 서비스 핵심 기능을 사용할 수 있도록 설계했습니다.
 
-<스크린샷: 전화번호 인증 UI>
-![인증 결과 화면](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/email-verification2.png)
+<img width="1028" height="491" alt="image" src="https://github.com/user-attachments/assets/14097758-d680-4cf3-a81b-5d07a406d6d0" />
+<img width="1040" height="499" alt="image" src="https://github.com/user-attachments/assets/092345bb-09bc-4bb5-97a4-a8f6df9af75f" />
 
 ---
 
-## 👤 마이페이지 & 계정 관리
+## 👤 환경설정 & 계정 관리
 
-사용자는 마이페이지에서 다음 기능을 직접 관리할 수 있습니다.
+사용자는 환경설정(mypage.html)에서 다음 기능을 직접 관리할 수 있습니다.
 
 - 비밀번호 변경
 - 이메일 변경
@@ -121,8 +121,10 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 실제 서비스 운영을 고려하여  
 **본인 확인 절차 및 예외 처리**를 함께 구현했습니다.
 
-<스크린샷: 마이페이지 설정 화면>
-![인증 결과 화면](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/email-verification2.png)
+<img width="1038" height="499" alt="image" src="https://github.com/user-attachments/assets/415a3bc0-1730-4fba-bce6-9d22c09fca0f" />
+<img width="1034" height="494" alt="image" src="https://github.com/user-attachments/assets/353a41fc-bfbe-4ddd-b6d3-2ad14f491b2b" />
+<img width="1037" height="497" alt="image" src="https://github.com/user-attachments/assets/54b56534-fa0a-41f5-97b3-ea926eb504df" />
+<img width="1040" height="498" alt="image" src="https://github.com/user-attachments/assets/e7a53453-d0c9-4122-ab44-a9ab37b9fb9e" />
 
 ---
 
