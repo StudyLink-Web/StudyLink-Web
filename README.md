@@ -97,6 +97,24 @@ AI 상담, 자소서 메이커, 대학생 게시판, 대시보드 등
   <img src="모바일화면_이미지주소" width="40%" />
 </p>
 
+<table>
+  <tr>
+    <td>  <img width="266" height="581" alt="image" src="https://github.com/user-attachments/assets/e02444c7-0804-4626-be78-d1324f4274e1" width="100%" />  </td>
+    <td>  <img width="260" height="545" alt="image" src="https://github.com/user-attachments/assets/f90da424-73db-4b9c-a0b4-9d53b2ad8340" width="100%" />  </td>
+    <td>  <img width="259" height="547" alt="image" src="https://github.com/user-attachments/assets/32779e6c-ce29-4d53-821e-08738b614020" width="100%" />  </td>
+    <td>  <img width="245" height="549" alt="image" src="https://github.com/user-attachments/assets/e218d553-6182-452a-89ef-6facbe4780de" width="100%" />  </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td>  <img width="276" height="551" alt="image" src="https://github.com/user-attachments/assets/800242c7-96fd-4be2-b600-aca8921c466d" width="100%" />  </td>
+    <td>  <img width="269" height="590" alt="image" src="https://github.com/user-attachments/assets/d2966e0e-d4c5-421d-833f-3da882c0e1dd" width="100%" />  </td>
+    <td>  <img width="268" height="593" alt="image" src="https://github.com/user-attachments/assets/534fa5f5-656e-49d3-808c-013cfbc8458d" width="100%" />  </td>
+    <td>  <img width="276" height="554" alt="image" src="https://github.com/user-attachments/assets/809ca4b0-8250-4f42-97eb-71583565efa2" width="100%" />  </td>
+  </tr>
+</table>
+
 ---
 
 ## 🎓 대학생 인증 & 멘토 전환
@@ -114,7 +132,6 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 
 인증 메일 재전송에는 **쿨다운 제한**을 두어  
 보안과 남용을 방지했습니다.ㅤ
-ㅤ    
 ㅤㅤ
 이메일 인증
 ![이메일 인증](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증.png)
