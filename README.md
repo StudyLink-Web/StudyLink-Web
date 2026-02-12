@@ -129,17 +129,17 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 
 인증 메일 재전송에는 **쿨다운 제한**을 두어  
 보안과 남용을 방지했습니다.ㅤ
-ㅤㅤ
+ㅤㅤ              
 이메일 인증
-![이메일 인증](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증.png)
-ㅤ    ㅤ
+<img width="1031" height="500" alt="image" src="https://github.com/user-attachments/assets/39bf82ea-69bd-4a9f-aa1a-310a0b39f2ba" />
+ㅤㅤ              ㅤ
 이메일 전송
-![이메일 전송](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증전송.png)
-ㅤ 
+<img width="1031" height="500" alt="image" src="https://github.com/user-attachments/assets/bcce24ec-3cff-4c94-8c18-9c426dfda50e" />
+ㅤ               
 이메일 수신
 ![이메일 수신](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/학교이메일수신.png)
-ㅤ
-인증 성공
+ㅤ                
+인증 성공                
 ![인증 성공](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증성공.png)
 <img width="1268" height="659" alt="image" src="https://github.com/user-attachments/assets/ea4583d8-f062-4609-82bf-eaa40d6df9c3" />
 
