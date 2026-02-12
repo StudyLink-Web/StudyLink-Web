@@ -67,6 +67,35 @@ JWT를 사용하지 않고 **서버 세션 + SecurityContext 기반 인증 유�
 권한이 없는 접근은 **404 페이지**로 처리됩니다.
 <img width="1277" height="661" alt="image" src="https://github.com/user-attachments/assets/4fdd8de5-5ca3-4cdd-afe2-4c6f55bd61ce" />
 
+---
+
+## 🏠 메인 화면
+
+StudyLink의 메인 화면입니다.  
+AI 상담, 자소서 메이커, 대학생 게시판, 대시보드 등  
+핵심 기능으로 빠르게 접근할 수 있도록 설계했습니다.
+
+<img width="1041" height="524" alt="image" src="https://github.com/user-attachments/assets/7228024f-c328-41cd-a64c-d9f9f63c7fe0" />
+<img width="1268" height="664" alt="image" src="https://github.com/user-attachments/assets/98303432-4d78-4293-b103-e3595c9d57b1" />
+<img width="1266" height="670" alt="image" src="https://github.com/user-attachments/assets/31cb5fa2-8f2e-4e97-96f0-cd8c954437aa" />
+<img width="1267" height="668" alt="image" src="https://github.com/user-attachments/assets/07cc1d99-ef4f-40e5-a5d1-20b70bdfed7d" />
+<img width="1266" height="669" alt="image" src="https://github.com/user-attachments/assets/ea2009a7-ab17-44e1-84c2-8b8362b926b1" />
+<img width="1265" height="601" alt="image" src="https://github.com/user-attachments/assets/7776932e-c4eb-45b3-9a61-5798f8998d41" />
+
+---
+
+## 📱 모바일 화면
+
+모바일 환경에서도 동일한 기능을 제공하도록  
+반응형 UI로 구현하였습니다.
+
+- 반응형 레이아웃 설계
+- 터치 기반 UX 최적화
+- PWA 지원
+
+<p align="center">
+  <img src="모바일화면_이미지주소" width="40%" />
+</p>
 
 ---
 
@@ -173,6 +202,7 @@ https://github.com/yaimnot23/chatbot_withpy.git
 
 대시보드 차트 화면
 <img width="1265" height="666" alt="image" src="https://github.com/user-attachments/assets/b404288b-3965-425f-8744-39d271f525a3" />
+<img width="1031" height="524" alt="image" src="https://github.com/user-attachments/assets/4a1a5103-7d35-4fa1-bc37-72d10385b3de" />
 
 ---
 
@@ -255,6 +285,32 @@ AI 상담 기능은 다음 공공 데이터 및 외부 API를 활용합니다.
 
 ---
 
+## ✍️ AI 대입 자소서 메이커
+
+사용자의 경험 키워드를 기반으로  
+대학 및 학과 맞춤형 자소서 초안을 생성합니다.
+
+### 주요 기능
+
+- 생기부 키워드 자동 추출
+- 대학 / 학과 맞춤 문항 적용
+- AI 초안 자동 생성
+- 생성 결과 저장 및 이력 관리
+- 복사 및 재편집 기능 제공
+
+<img width="1032" height="521" alt="image" src="https://github.com/user-attachments/assets/7cae30b1-d9c2-4ebf-b005-c7ada394a76c" />
+<img width="1030" height="527" alt="image" src="https://github.com/user-attachments/assets/9daf14e9-b4db-4991-9438-0945e0af6a96" />
+<img width="1031" height="527" alt="image" src="https://github.com/user-attachments/assets/7201c7d6-ae91-454d-ba08-b178e15e896c" />
+
+### 📂 자소서 생성 결과 관리
+
+생성된 자소서는 자동 저장되며  
+목록에서 언제든지 다시 확인할 수 있습니다.
+
+<img width="1028" height="518" alt="image" src="https://github.com/user-attachments/assets/26b7e9f5-fa3f-42a6-88d7-d2aa2ef52e01" />
+
+---
+
 ## 🔔 실시간 알림 시스템 (PWA)
 
 - Firebase Cloud Messaging 기반 푸시 알림
@@ -264,8 +320,36 @@ AI 상담 기능은 다음 공공 데이터 및 외부 API를 활용합니다.
 사용자가 이미 해당 화면을 보고 있다면  
 알림을 자동으로 차단하여 UX를 개선했습니다.
 
-<스크린샷: 푸시 알림 수신 화면>
-![인증 결과 화면](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/email-verification2.png)
+푸시 알림 수신 화면 (우측 하단)
+<img width="1035" height="526" alt="image" src="https://github.com/user-attachments/assets/bcb3f30f-fe94-4346-b9b6-b9bf07f1c2fb" />
+
+푸시 알림 수신 화면
+<img width="1028" height="524" alt="image" src="https://github.com/user-attachments/assets/9e5463bb-0659-4369-a87d-46f6e51548c6" />
+
+<table>
+  <tr>
+    <td>  <img width="266" height="580" alt="image" src="https://github.com/user-attachments/assets/af5cbe76-ae47-4206-926c-c1ddfd392ce5" width="100%" />  </td>
+    <td>  <img width="267" height="586" alt="image" src="https://github.com/user-attachments/assets/7ca0fd5a-c0c3-4ed9-b3d9-b6482c67539e" width="100%" />  </td>
+  </tr>
+</table>
+
+---
+
+## 🗺️ 입시 지도 (AI 기반 대학 추천 시스템)
+
+사용자의 등급 입력을 기반으로  
+지원 가능 대학을 지도 위에 시각화하는 기능입니다.
+
+### 주요 기능
+
+- 국어 / 수학 등급 기반 필터링
+- 합격 가능성 분석
+- 지역 재검색 기능
+- 일반 지도 / 위성 지도 전환
+- 학과별 평균 합격 컷 정보 제공
+
+<img width="1037" height="527" alt="image" src="https://github.com/user-attachments/assets/c7824842-70e5-44b3-bf69-bc73b22f5990" />
+<img width="1041" height="523" alt="image" src="https://github.com/user-attachments/assets/0d0e74ab-cf55-43d7-8188-c7441e6d5af7" />
 
 ---
 
@@ -278,8 +362,11 @@ AI 상담 기능은 다음 공공 데이터 및 외부 API를 활용합니다.
 여러 사용자가 동시에 그림을 그려도  
 모든 화면이 실시간으로 동일하게 유지됩니다.
 
-<스크린샷: 실시간 협업 그림판>
-![인증 결과 화면](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/email-verification2.png)
+실시간 협업 그림판 (멘토 화면)
+<img width="1037" height="539" alt="image" src="https://github.com/user-attachments/assets/c78d0bce-b3f4-4ea4-8501-23e5d2b12f91" />
+
+실시간 협업 그림판 (우측 상단: 멘토 화면, 하단: 멘티 화면)
+<img width="1040" height="565" alt="image" src="https://github.com/user-attachments/assets/d2c05c6d-d7b2-4769-bc15-e07c0af4fd8c" />
 
 ---
 
@@ -290,10 +377,15 @@ AI 상담 기능은 다음 공공 데이터 및 외부 API를 활용합니다.
 - DB 기준 금액 검증
 - 위·변조 및 이중 결제 방지
 
-<스크린샷: 결제 화면 또는 결제 완료 화면>
-![인증 결과 화면](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/email-verification2.png)
+요금제 선택
+<img width="752" height="686" alt="image" src="https://github.com/user-attachments/assets/adfcb424-c55a-457f-9523-705c3dbbeb8c" />
+
+결제
+<img width="1264" height="668" alt="image" src="https://github.com/user-attachments/assets/10104d40-ffbc-4a44-8cfb-ec68af3169a3" />
+<img width="1279" height="668" alt="image" src="https://github.com/user-attachments/assets/7c41bb48-a762-4627-9349-fcd95b3dbfd8" />
 
 ---
+
 
 ## 🧱 사이트 개발 기술 스택
 
