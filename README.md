@@ -93,10 +93,6 @@ AI 상담, 자소서 메이커, 대학생 게시판, 대시보드 등
 - 터치 기반 UX 최적화
 - PWA 지원
 
-<p align="center">
-  <img src="모바일화면_이미지주소" width="40%" />
-</p>
-
 <table>
   <tr>
     <td>  <img width="266" height="581" alt="image" src="https://github.com/user-attachments/assets/e02444c7-0804-4626-be78-d1324f4274e1" width="100%" />  </td>
