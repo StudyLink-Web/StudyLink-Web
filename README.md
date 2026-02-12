@@ -129,19 +129,21 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 
 인증 메일 재전송에는 **쿨다운 제한**을 두어  
 보안과 남용을 방지했습니다.ㅤ
-ㅤㅤ                                
+ㅤ                            
 이메일 인증
 <img width="1031" height="500" alt="image" src="https://github.com/user-attachments/assets/39bf82ea-69bd-4a9f-aa1a-310a0b39f2ba" />
-ㅤㅤ              ㅤ
+ㅤ             ㅤ
+ㅤ             ㅤ
 이메일 전송
 <img width="1031" height="500" alt="image" src="https://github.com/user-attachments/assets/bcce24ec-3cff-4c94-8c18-9c426dfda50e" />
-ㅤ               
+ㅤ            ㅤ             ㅤ
+   
 이메일 수신
 ![이메일 수신](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/학교이메일수신.png)
-ㅤ                
+ㅤ             
 인증 성공                
 ![인증 성공](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증성공.png)
-ㅤ                
+ㅤ            
 인증 실패 (토큰 만료)           
 <img width="1268" height="659" alt="image" src="https://github.com/user-attachments/assets/ea4583d8-f062-4609-82bf-eaa40d6df9c3" />
 
@@ -279,25 +281,32 @@ AI 상담 기능은 다음 공공 데이터 및 외부 API를 활용합니다.
 - 답변 상태 자동 변경
 
 실제 고객센터(CS) 운영을 고려한 구조입니다.
-ㅤ
+ㅤㅤ             ㅤ
+ㅤ             ㅤ
 대시보드
 <img width="1266" height="667" alt="image" src="https://github.com/user-attachments/assets/9ee0d1a0-c19e-4685-a859-c5b5f0645be0" />
-ㅤ
+ㅤㅤ             ㅤ
+
 회원 관리
 <img width="1264" height="674" alt="image" src="https://github.com/user-attachments/assets/0cee027a-db94-4bdf-adf2-9265b7760d20" />
-ㅤ
+ㅤㅤ             ㅤ
+
 결제 내역
 <img width="1270" height="673" alt="image" src="https://github.com/user-attachments/assets/9fb54551-619d-41be-8e38-4032e71e5732" />
-ㅤ
+ㅤㅤ             ㅤ
+
 환전 관리
 <img width="1268" height="671" alt="image" src="https://github.com/user-attachments/assets/fe5738e1-30fd-4bc8-bc22-863638848dbd" />
-ㅤ
+ㅤㅤ             ㅤ
+
 알림 / 공지
 <img width="1267" height="669" alt="image" src="https://github.com/user-attachments/assets/991a76ff-b9dc-4939-8964-f2c752cb564d" />
-ㅤ
+ㅤㅤ             ㅤ
+
 문의 게시판 목록    
 <img width="1265" height="671" alt="image" src="https://github.com/user-attachments/assets/b0b62c7d-883f-4f3f-9904-5c916ceebda9" />
-ㅤ
+ㅤㅤ             ㅤ
+
 관리자 문의 상세 + 답변 화면
 <img width="1266" height="671" alt="image" src="https://github.com/user-attachments/assets/dc4d5f3b-3ff5-48b2-8fd8-817e6edf2075" />
 
