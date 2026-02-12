@@ -129,7 +129,7 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 
 인증 메일 재전송에는 **쿨다운 제한**을 두어  
 보안과 남용을 방지했습니다.ㅤ
-ㅤㅤ              
+ㅤㅤ                                
 이메일 인증
 <img width="1031" height="500" alt="image" src="https://github.com/user-attachments/assets/39bf82ea-69bd-4a9f-aa1a-310a0b39f2ba" />
 ㅤㅤ              ㅤ
@@ -141,6 +141,8 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 ㅤ                
 인증 성공                
 ![인증 성공](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증성공.png)
+ㅤ                
+인증 실패 (토큰 만료)           
 <img width="1268" height="659" alt="image" src="https://github.com/user-attachments/assets/ea4583d8-f062-4609-82bf-eaa40d6df9c3" />
 
 ---
@@ -153,13 +155,14 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 
 봇·자동화 요청을 방지하고  
 실제 사용자만 서비스 핵심 기능을 사용할 수 있도록 설계했습니다.
-
+                     
 멘토 페이지 전화번호 인증
 <img width="1028" height="491" alt="image" src="https://github.com/user-attachments/assets/14097758-d680-4cf3-a81b-5d07a406d6d0" />
-ㅤ
+ㅤ            
 환경설정 전화번호 인증
 <img width="1040" height="499" alt="image" src="https://github.com/user-attachments/assets/092345bb-09bc-4bb5-97a4-a8f6df9af75f" />
-
+ㅤ            
+핸드폰 인증 문자 
 <table>
   <tr>
     <td>  <img width="316" height="689" alt="image" src="https://github.com/user-attachments/assets/36dc9961-ff1a-449f-bfb4-03544d722968" width="100%" />  </td>
@@ -181,17 +184,17 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 
 실제 서비스 운영을 고려하여  
 **본인 확인 절차 및 예외 처리**를 함께 구현했습니다.
-
+                 
 환경설정 비밀번호 변경
 <img width="1038" height="499" alt="image" src="https://github.com/user-attachments/assets/415a3bc0-1730-4fba-bce6-9d22c09fca0f" />
-ㅤ
+ㅤ                      
 환경설정 이메일 변경
 <img width="1034" height="494" alt="image" src="https://github.com/user-attachments/assets/353a41fc-bfbe-4ddd-b6d3-2ad14f491b2b" />
-ㅤ
+ㅤ                      
 환경설정 이메일 변경 수신 메일
 <img width="1037" height="497" alt="image" src="https://github.com/user-attachments/assets/54b56534-fa0a-41f5-97b3-ea926eb504df" />
 <img width="1040" height="498" alt="image" src="https://github.com/user-attachments/assets/e7a53453-d0c9-4122-ab44-a9ab37b9fb9e" />
-ㅤ
+ㅤ                            
 환경설정 전화번호 변경
 <img width="1036" height="502" alt="image" src="https://github.com/user-attachments/assets/cee40a14-bc4f-4ada-ba01-d9980c8cd8cd" />
 
@@ -216,7 +219,7 @@ https://github.com/yaimnot23/chatbot_withpy.git
 6. Chart.js 기반 시각화
 
 대시보드 차트 화면
-<img width="1265" height="666" alt="image" src="https://github.com/user-attachments/assets/b404288b-3965-425f-8744-39d271f525a3" />
+<img width="1033" height="526" alt="image" src="https://github.com/user-attachments/assets/cd91cde5-6de7-44ae-a7a8-5b463332c7f4" />
 <img width="1031" height="524" alt="image" src="https://github.com/user-attachments/assets/4a1a5103-7d35-4fa1-bc37-72d10385b3de" />
 
 ---
