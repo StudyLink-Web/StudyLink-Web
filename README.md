@@ -113,8 +113,8 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 5. 역할 변경: `STUDENT → MENTOR`
 
 인증 메일 재전송에는 **쿨다운 제한**을 두어  
-보안과 남용을 방지했습니다.
-ㅤ
+보안과 남용을 방지했습니다.ㅤ
+ㅤ         
 이메일 인증
 ![이메일 인증](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/멘토이메일인증.png)
 ㅤ    ㅤ
