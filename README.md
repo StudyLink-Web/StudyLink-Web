@@ -116,6 +116,13 @@ STUDENT 사용자는 **학교 이메일 인증**을 통해
 환경설정 전화번호 인증
 <img width="1040" height="499" alt="image" src="https://github.com/user-attachments/assets/092345bb-09bc-4bb5-97a4-a8f6df9af75f" />
 
+<table>
+  <tr>
+    <td>  <img width="316" height="689" alt="image" src="https://github.com/user-attachments/assets/36dc9961-ff1a-449f-bfb4-03544d722968" width="100%" />  </td>
+    <td>  <img width="314" height="688" alt="image" src="https://github.com/user-attachments/assets/1dc00753-0223-4f88-a939-6e237e50f5b9" width="100%" />  </td>
+  </tr>
+</table>
+
 ---
 
 ## 👤 환경설정 & 계정 관리
@@ -224,10 +231,27 @@ AI 상담 기능은 다음 공공 데이터 및 외부 API를 활용합니다.
 - 답변 상태 자동 변경
 
 실제 고객센터(CS) 운영을 고려한 구조입니다.
-
-<스크린샷: 문의 게시판 목록>  
-<스크린샷: 관리자 문의 상세 + 답변 화면>
-![인증 결과 화면](https://raw.githubusercontent.com/StudyLink-Web/StudyLink-Web/dev/src/readme/email-verification2.png)
+ㅤ
+대시보드
+<img width="1266" height="667" alt="image" src="https://github.com/user-attachments/assets/9ee0d1a0-c19e-4685-a859-c5b5f0645be0" />
+ㅤ
+회원 관리
+<img width="1264" height="674" alt="image" src="https://github.com/user-attachments/assets/0cee027a-db94-4bdf-adf2-9265b7760d20" />
+ㅤ
+결제 내역
+<img width="1270" height="673" alt="image" src="https://github.com/user-attachments/assets/9fb54551-619d-41be-8e38-4032e71e5732" />
+ㅤ
+환전 관리
+<img width="1268" height="671" alt="image" src="https://github.com/user-attachments/assets/fe5738e1-30fd-4bc8-bc22-863638848dbd" />
+ㅤ
+알림 / 공지
+<img width="1267" height="669" alt="image" src="https://github.com/user-attachments/assets/991a76ff-b9dc-4939-8964-f2c752cb564d" />
+ㅤ
+문의 게시판 목록    
+<img width="1265" height="671" alt="image" src="https://github.com/user-attachments/assets/b0b62c7d-883f-4f3f-9904-5c916ceebda9" />
+ㅤ
+관리자 문의 상세 + 답변 화면
+<img width="1266" height="671" alt="image" src="https://github.com/user-attachments/assets/dc4d5f3b-3ff5-48b2-8fd8-817e6edf2075" />
 
 ---
 
